@@ -1,7 +1,7 @@
 # TraceDiary - AI 编码智能体开发指南
 
 > **目标读者**: 在本仓库中工作的 AI 编码智能体  
-> **最后更新**: 2026-02-02  
+> **最后更新**: 2026-02-05  
 > **项目状态**: 初始开发阶段（仅有规格说明，暂无代码）  
 > **重要**: 请使用中文与用户交流
 
@@ -14,6 +14,7 @@
 **核心特点**:
 - 🔒 隐私优先（本地 AES-256 加密）
 - ⏳ 历史回顾（往年今日功能）
+- 🗓️ 年度总结（按年创建/编辑/查看，复用编辑器与加密存储）
 - ✍️ Markdown 所见即所得（Milkdown 编辑器，3 种视图模式）
 - ☁️ 加密 GitHub 同步
 - 📦 轻量级（<20MB 安装包，Tauri 架构）
@@ -94,9 +95,12 @@ TraceDiary/
 ├── src/                          # 前端（React + TypeScript）
 │   ├── components/
 │   │   ├── Calendar/             # 日期选择 UI
+│   │   │   └── YearHeader.tsx     # 年份标题 + 年度总结入口（📝 年度总结）
 │   │   ├── Editor/               # Milkdown WYSIWYG（3 种视图）
 │   │   ├── HistoryPanel/         # 往年今日侧边栏
 │   │   └── Dialogs/              # 密码、同步配置、冲突对话框
+│   ├── pages/                    # 路由页面
+│   │   └── YearlySummaryPage.tsx # 年度总结页面（/yearly-summary/:year）
 │   ├── hooks/                    # React hooks（useDiary、useHistory）
 │   ├── services/                 # Tauri 命令封装（类型化）
 │   ├── types/                    # TypeScript 类型定义
@@ -108,7 +112,8 @@ TraceDiary/
 │   │   │   ├── diary.rs          # CRUD 操作
 │   │   │   ├── history.rs        # 往年今日查询逻辑
 │   │   │   ├── password.rs       # Argon2 验证
-│   │   │   └── sync.rs           # GitHub API 集成
+│   │   │   ├── sync.rs           # GitHub API 集成
+│   │   │   └── yearly_summary.rs  # 年度总结（get/save/list）
 │   │   ├── database/             # SQLite 数据仓库层
 │   │   ├── crypto/               # AES-256-GCM + Argon2
 │   │   └── sync/                 # 防抖同步引擎
@@ -268,6 +273,7 @@ let conn = self.pool.get().unwrap(); // ❌ 会 PANIC
 2. ✅ 往年今日查询（正确的年份过滤、排序）
 3. ✅ Argon2 密码验证（正确/错误密码）
 4. ✅ 同步冲突检测（本地 vs. 远程时间戳）
+5. ✅ 年度总结（get/save/list 命令 + `summaries/` 文件存储 + `date=YYYY-00-00` 伪日期）
 
 **示例**:
 ```rust
@@ -344,6 +350,7 @@ describe('Calendar', () => {
 
 **存储**:
 - ✅ 加密日记文件: `diaries/YYYY-MM-DD.md`（AES-256）
+- ✅ 加密年度总结: `summaries/YYYY-summary.md`（AES-256）
 - ✅ 密码哈希: SQLite `settings` 表（Argon2）
 - ✅ 主密钥: Windows 凭据管理器（通过 `keyring` crate）
 - 🚫 绝不在 SQLite 或文件中存储明文密码/密钥
@@ -641,7 +648,7 @@ ORDER BY year DESC
 2. 启动 30 秒倒计时（新更改时重置）
 3. 倒计时到期时:
    - 加密文件
-   - 保存到本地 `diaries/` 文件夹
+   - 保存到本地 `diaries/`（日记）与 `summaries/`（年度总结）文件夹
    - 如果配置了 GitHub:
      - 提交: `chore: auto-sync YYYY-MM-DD`
      - 推送到私有仓库
@@ -653,6 +660,24 @@ ORDER BY year DESC
   - 保留本地（覆盖远程）
   - 保留远程（丢弃本地）
   - 保存两者（在文件名后附加时间戳）
+
+### 5. 年度总结
+
+**目标**：提供年度总结的创建、编辑、查看；与日常日记共用编辑器组件与 AES-256-GCM 加密存储。
+
+**入口（UI）**：在日历视图的“年份标题区域”提供按钮 `📝 年度总结`，点击跳转到 `/yearly-summary/:year`。
+
+**存储**:
+- 文件：`summaries/YYYY-summary.md`（如 `2026-summary.md`），必须加密
+- 数据库：在 `diaries` 表中使用伪日期 `date = YYYY-00-00` 标识；字段约束：
+  - `entry_type = 'yearly_summary'`
+  - `month = 0`
+  - `day = 0`
+
+**Tauri 命令（IPC）**（与 SPEC.md 对齐）:
+- `get_yearly_summary(year)`
+- `save_yearly_summary(year, content)`
+- `list_yearly_summaries()`
 
 ---
 

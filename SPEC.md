@@ -40,9 +40,9 @@
 
 **§8 边界约束（三级系统）** → ✅ 始终执行：运行测试、遵循命名规范、类型检查、错误处理；⚠️ 先询问：添加依赖（说明大小影响）、架构变更、数据库 schema 修改；🚫 禁止执行：提交明文密码/API 密钥、记录敏感数据、使用弱加密、删除用户数据、修改 node_modules/。*详见完整规格 [§8](#8-边界约束三级系统)*
 
-**§9 功能模块详细规格** → 四个核心模块：9.1 Milkdown 编辑器（三种视图：阅读/编辑/源码，无工具栏设计）；9.2 往年今日查询（2022-至今，虚拟滚动优化，固定 3 行预览）；9.3 密码验证（首次设置 + 每 7 天验证，Argon2 哈希）；9.4 GitHub 自动同步（30 秒防抖 + 冲突解决对话框）。每个模块包含完整 TypeScript 和 Rust 代码示例。*详见完整规格 [§9](#9-功能模块详细规格)*
+**§9 功能模块详细规格** → 五个核心模块：9.1 Milkdown 编辑器（三种视图：阅读/编辑/源码，无工具栏设计）；9.2 往年今日查询（2022-至今，虚拟滚动优化，固定 3 行预览）；9.3 密码验证（首次设置 + 每 7 天验证，Argon2 哈希）；9.4 GitHub 自动同步（30 秒防抖 + 冲突解决对话框）；9.5 年度总结（YYYY-summary.md 格式，与日记共用编辑器和加密存储）。每个模块包含完整 TypeScript 和 Rust 代码示例。*详见完整规格 [§9](#9-功能模块详细规格)*
 
-**§10 数据结构与存储** → SQLite schema：diaries 表（date/year/month/day/filename/word_count/created_at/modified_at）+ 索引（month, day, year DESC）。文件系统：diaries/YYYY-MM-DD.md（AES-256-GCM 加密）。包含完整 Rust 数据模型和 TypeScript 类型定义。*详见完整规格 [§10](#10-数据结构与存储)*
+**§10 数据结构与存储** → SQLite schema：diaries 表（date/year/month/day/entry_type/filename/word_count/created_at/modified_at）+ 索引（month, day, year DESC）+ entry_type 索引。文件系统：diaries/YYYY-MM-DD.md（日常日记）+ summaries/YYYY-summary.md（年度总结），均使用 AES-256-GCM 加密。包含完整 Rust 数据模型和 TypeScript 类型定义。*详见完整规格 [§10](#10-数据结构与存储)*
 
 **§11 安全与隐私** → 加密算法：AES-256-GCM（数据加密）+ Argon2（密钥派生）。密码要求：≥8 字符，必须包含字母和数字。密钥存储：Windows Credential Manager（keyring 库）。Tauri 安全配置：禁用危险 API（shell/clipboard/notification），启用 CSP。*详见完整规格 [§11](#11-安全与隐私)*
 
@@ -79,6 +79,7 @@
 **第一版（MVP）必须包含：**
 - ✅ Markdown 编辑器（WYSIWYG，三种视图）
 - ✅ 日记创建、保存、加载
+- ✅ 年度总结创建、编辑、查看
 - ✅ 往年今日查询（2022 至今，虚拟滚动）
 - ✅ 日历导航（月份切换、日期选择）
 - ✅ 本地 AES-256 加密存储
@@ -2174,6 +2175,188 @@ export const StatusBar: React.FC = () => {
 - [ ] ✅ 同步冲突时弹出对话框让用户选择
 - [ ] ✅ 网络断开时同步失败，恢复后可重试
 
+### 9.5 模块 E：年度总结
+
+**职责**：提供年度总结的创建、编辑和查看功能，与日常日记共用编辑器和存储架构
+
+#### 9.5.1 数据结构特点
+
+**与日常日记的区别**：
+- 文件名格式：`YYYY-summary.md`（如 `2026-summary.md`）
+- 数据库字段：`entry_type = 'yearly_summary'`，`month = 0`，`day = 0`
+- 存储目录：`summaries/` 而非 `diaries/`
+
+#### 9.5.2 UI 交互设计
+
+**日历视图集成**：
+
+在日历视图的年份标题区域添加"年度总结"入口：
+
+```typescript
+// components/Calendar/YearHeader.tsx
+export const YearHeader: React.FC<{ year: number }> = ({ year }) => {
+  const navigate = useNavigate();
+
+  const handleYearlySummary = () => {
+    navigate(`/yearly-summary/${year}`);
+  };
+
+  return (
+    <div className="year-header flex items-center justify-between p-4">
+      <button onClick={() => navigate(`/calendar/${year - 1}`)}>
+        ◀
+      </button>
+
+      <h2 className="text-xl font-bold">{year} 年</h2>
+
+      <button onClick={() => navigate(`/calendar/${year + 1}`)}>
+        ▶
+      </button>
+
+      <button
+        onClick={handleYearlySummary}
+        className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        📝 年度总结
+      </button>
+    </div>
+  );
+};
+```
+
+**编辑器路由**：
+
+年度总结使用与日常日记相同的编辑器组件，仅在标题和保存逻辑上有差异：
+
+```typescript
+// pages/YearlySummaryPage.tsx
+export const YearlySummaryPage: React.FC = () => {
+  const { year } = useParams<{ year: string }>();
+  const [summary, setSummary] = useState<DiaryEntry | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadYearlySummary(parseInt(year!)).then(data => {
+      setSummary(data);
+      setLoading(false);
+    });
+  }, [year]);
+
+  const handleSave = async (content: string) => {
+    await invoke('save_yearly_summary', {
+      year: parseInt(year!),
+      content
+    });
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="yearly-summary-page h-screen flex flex-col">
+      <header className="p-4 border-b">
+        <h1 className="text-2xl font-bold">{year} 年度总结</h1>
+      </header>
+
+      <EditorContainer
+        content={summary?.content || ''}
+        onSave={handleSave}
+        mode="editing"
+      />
+    </div>
+  );
+};
+```
+
+#### 9.5.3 Rust 后端命令
+
+```rust
+// src-tauri/src/commands/yearly_summary.rs
+
+#[tauri::command]
+pub async fn get_yearly_summary(
+    year: i32,
+    diary_repo: State<'_, DiaryRepository>,
+    encryption: State<'_, EncryptionService>,
+) -> Result<Option<DiaryEntry>, AppError> {
+    let date = format!("{}-00-00", year);
+
+    if let Some(entry) = diary_repo.find_by_date(&date).await? {
+        let file_path = format!("summaries/{}-summary.md", year);
+        if let Ok(encrypted_content) = std::fs::read_to_string(&file_path) {
+            let content = encryption.decrypt(&encrypted_content)?;
+            Ok(Some(DiaryEntry {
+                content,
+                ..entry
+            }))
+        } else {
+            Ok(Some(entry))
+        }
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
+pub async fn save_yearly_summary(
+    year: i32,
+    content: String,
+    diary_repo: State<'_, DiaryRepository>,
+    encryption: State<'_, EncryptionService>,
+) -> Result<(), AppError> {
+    let date = format!("{}-00-00", year);
+    let filename = format!("{}-summary.md", year);
+    let encrypted_content = encryption.encrypt(&content)?;
+
+    // 保存加密文件
+    let file_path = format!("summaries/{}", filename);
+    std::fs::write(&file_path, encrypted_content)?;
+
+    // 更新数据库
+    let word_count = content.chars().count() as i32;
+    let now = chrono::Utc::now().to_rfc3339();
+
+    diary_repo.upsert(DiaryEntry {
+        date: date.clone(),
+        year,
+        month: 0,
+        day: 0,
+        entry_type: "yearly_summary".to_string(),
+        filename,
+        word_count,
+        created_at: now.clone(),
+        modified_at: now,
+    }).await?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_yearly_summaries(
+    diary_repo: State<'_, DiaryRepository>,
+) -> Result<Vec<i32>, AppError> {
+    let summaries = diary_repo
+        .find_by_entry_type("yearly_summary")
+        .await?;
+
+    let years: Vec<i32> = summaries
+        .into_iter()
+        .map(|entry| entry.year)
+        .collect();
+
+    Ok(years)
+}
+```
+
+#### 9.5.4 验收标准
+
+- [ ] ✅ 点击日历年份标题旁的"年度总结"按钮，正确跳转到对应年份总结页面
+- [ ] ✅ 首次打开不存在的年度总结时，显示空白编辑器
+- [ ] ✅ 年度总结使用与日常日记相同的 AES-256-GCM 加密存储
+- [ ] ✅ 年度总结文件保存在 `summaries/YYYY-summary.md` 路径
+- [ ] ✅ 年度总结在数据库中 `entry_type` 字段为 `'yearly_summary'`
+- [ ] ✅ 编辑年度总结后能正常保存，刷新页面内容不丢失
+- [ ] ✅ 年度总结同步到 GitHub（与日常日记一样）
+
 ---
 
 ## 10. 数据结构与存储
@@ -2185,11 +2368,12 @@ export const StatusBar: React.FC = () => {
 
 CREATE TABLE IF NOT EXISTS diaries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  date TEXT NOT NULL UNIQUE,          -- 格式：YYYY-MM-DD
+  date TEXT NOT NULL UNIQUE,          -- 格式：YYYY-MM-DD 或 YYYY-00-00（年度总结）
   year INTEGER NOT NULL,              -- 年份（用于快速查询）
-  month INTEGER NOT NULL,             -- 月份（1-12）
-  day INTEGER NOT NULL,               -- 日（1-31）
-  filename TEXT NOT NULL,             -- 文件名（YYYY-MM-DD.md）
+  month INTEGER NOT NULL,             -- 月份（1-12，年度总结为 0）
+  day INTEGER NOT NULL,               -- 日（1-31，年度总结为 0）
+  entry_type TEXT NOT NULL DEFAULT 'daily',  -- 'daily' | 'yearly_summary'
+  filename TEXT NOT NULL,             -- 文件名（YYYY-MM-DD.md 或 YYYY-summary.md）
   word_count INTEGER DEFAULT 0,       -- 字数统计
   created_at TEXT NOT NULL,           -- 创建时间（RFC3339）
   modified_at TEXT NOT NULL           -- 修改时间（RFC3339）
@@ -2202,6 +2386,10 @@ ON diaries(month, day, year DESC);
 -- 索引：按年份查询
 CREATE INDEX IF NOT EXISTS idx_year
 ON diaries(year);
+
+-- 索引：按类型查询
+CREATE INDEX IF NOT EXISTS idx_entry_type
+ON diaries(entry_type);
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -2226,9 +2414,13 @@ INSERT OR IGNORE INTO settings (key, value) VALUES
 %APPDATA%/TraceDiary/
 ├── database/
 │   └── trace.db                # SQLite 数据库
-├── diaries/                    # 加密的日记文件
+├── diaries/                    # 加密的日常日记文件
 │   ├── 2026-01-31.md
 │   ├── 2026-01-30.md
+│   └── ...
+├── summaries/                  # 加密的年度总结文件
+│   ├── 2026-summary.md
+│   ├── 2025-summary.md
 │   └── ...
 └── logs/
     └── app.log                 # 应用日志
@@ -2243,10 +2435,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiaryEntry {
     pub id: i64,
-    pub date: String,          // YYYY-MM-DD
+    pub date: String,          // YYYY-MM-DD 或 YYYY-00-00（年度总结）
     pub year: i32,
-    pub month: i32,
-    pub day: i32,
+    pub month: i32,            // 0-12（0 表示年度总结）
+    pub day: i32,              // 0-31（0 表示年度总结）
+    pub entry_type: String,    // "daily" | "yearly_summary"
     pub filename: String,
     pub content: String,       // 解密后的 Markdown 内容
     pub word_count: i32,
@@ -2272,10 +2465,11 @@ pub struct UpdateDiaryInput {
 // src/types/diary.ts
 export interface DiaryEntry {
   id: number;
-  date: string;              // YYYY-MM-DD
+  date: string;              // YYYY-MM-DD 或 YYYY-00-00（年度总结）
   year: number;
-  month: number;
-  day: number;
+  month: number;             // 0-12（0 表示年度总结）
+  day: number;               // 0-31（0 表示年度总结）
+  entryType: 'daily' | 'yearly_summary';
   filename: string;
   content: string;           // 解密后的 Markdown 内容
   wordCount: number;
