@@ -12,7 +12,13 @@
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:serial": "jest --runInBand",
+    "check": "npm run type-check && npm run lint && npm test",
+    "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "rust:clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml --locked",
+    "rust:fmt": "cargo fmt --manifest-path src-tauri/Cargo.toml",
+    "check:all": "npm run check && npm run rust:test && npm run rust:clippy"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
