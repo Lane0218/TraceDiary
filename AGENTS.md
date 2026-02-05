@@ -93,37 +93,19 @@ npm test -- --watch
 
 ```
 TraceDiary/
-├── src/                          # 前端（React + TypeScript）
-│   ├── components/
-│   │   ├── Calendar/             # 日期选择 UI
-│   │   │   └── YearHeader.tsx     # 年份标题 + 年度总结入口（📝 年度总结）
-│   │   ├── Editor/               # Milkdown WYSIWYG（3 种视图）
-│   │   ├── HistoryPanel/         # 往年今日侧边栏
-│   │   └── Dialogs/              # 密码、同步配置、冲突对话框
-│   ├── pages/                    # 路由页面
-│   │   └── YearlySummaryPage.tsx # 年度总结页面（/yearly-summary/:year）
-│   ├── hooks/                    # React hooks（useDiary、useHistory）
-│   ├── services/                 # Tauri 命令封装（类型化）
-│   ├── types/                    # TypeScript 类型定义
-│   └── utils/                    # 日期/markdown 工具函数
-│
-├── src-tauri/                    # 后端（Rust）
-│   ├── src/
-│   │   ├── commands/             # Tauri IPC 处理程序
-│   │   │   ├── diary.rs          # CRUD 操作
-│   │   │   ├── history.rs        # 往年今日查询逻辑
-│   │   │   ├── password.rs       # Argon2 验证
-│   │   │   ├── sync.rs           # GitHub API 集成
-│   │   │   └── yearly_summary.rs  # 年度总结（get/save/list）
-│   │   ├── database/             # SQLite 数据仓库层
-│   │   ├── crypto/               # AES-256-GCM + Argon2
-│   │   └── sync/                 # 防抖同步引擎
-│   ├── Cargo.toml
-│   └── tauri.conf.json
-│
-├── tests/                        # E2E 测试（仅核心流程）
-├── docs/                         # 用户文档
-└── package.json                  # 前端依赖
+├── AGENTS.md                     # AI 开发指南
+├── SPEC.md                       # 规格说明书
+└── app/                          # 应用工程（前端 + Tauri Rust 后端）
+    ├── src/                      # 前端（React + TypeScript）
+    │   ├── services/             # Tauri 命令封装（类型化）
+    │   ├── types/                # TypeScript 类型定义
+    │   └── utils/                # 日期/markdown 工具函数
+    ├── src-tauri/                # 后端（Rust）
+    │   └── src/
+    │       ├── commands/         # Tauri IPC 处理程序
+    │       ├── database/         # SQLite 数据仓库层
+    │       └── crypto/           # AES-256-GCM + Argon2 + keyring
+    └── package.json              # 前端依赖
 ```
 
 ---
@@ -139,8 +121,9 @@ import React, { useState, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 
 // 2. Tauri API
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
+// （可选）若配置了路径别名 @/，可使用 '@/types/...' 这类导入
 // 3. 内部类型
 import type { DiaryEntry } from '@/types/diary';
 

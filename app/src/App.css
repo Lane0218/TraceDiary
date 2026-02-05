@@ -46,6 +46,47 @@
   justify-content: center;
 }
 
+.auth-panel,
+.diary-panel {
+  width: min(920px, 92vw);
+  margin: 0 auto;
+}
+
+.hint {
+  opacity: 0.75;
+  margin-top: 0.5rem;
+}
+
+.diary-textarea {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  resize: vertical;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+.status {
+  margin-top: 10px;
+  color: #0b5c2a;
+}
+
+.error {
+  margin-top: 10px;
+  color: #b42318;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

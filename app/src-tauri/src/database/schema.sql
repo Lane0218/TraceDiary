@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT OR IGNORE INTO settings (key, value) VALUES
   ('theme', 'light'),
   ('password_hash', ''),
+  ('kdf_salt', ''),
   ('password_set_at', ''),
   ('last_verified_at', ''),
   ('github_token', ''),

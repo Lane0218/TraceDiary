@@ -1,8 +1,10 @@
 use std::error::Error;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use rusqlite::Connection;
-use tauri::{AppHandle, Manager};
+
+pub mod diary_repo;
+pub mod settings_repo;
 
 fn apply_schema(conn: &Connection) -> Result<(), rusqlite::Error> {
     conn.execute_batch(include_str!("schema.sql"))
@@ -15,14 +17,12 @@ fn ensure_parent_dir_exists(path: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn resolve_db_path(app: &AppHandle) -> Result<PathBuf, Box<dyn Error>> {
-    let app_data_dir = app.path().app_data_dir()?;
-    Ok(app_data_dir.join("database").join("trace.db"))
+pub fn open_connection(db_path: &Path) -> Result<Connection, rusqlite::Error> {
+    Connection::open(db_path)
 }
 
-pub fn init_database(app: &AppHandle) -> Result<(), Box<dyn Error>> {
-    let db_path = resolve_db_path(app)?;
-    ensure_parent_dir_exists(&db_path)?;
+pub fn init_database(db_path: &Path) -> Result<(), Box<dyn Error>> {
+    ensure_parent_dir_exists(db_path)?;
 
     let conn = Connection::open(db_path)?;
     apply_schema(&conn)?;
@@ -58,3 +58,4 @@ mod tests {
         assert_eq!(settings_count, 1);
     }
 }
+
