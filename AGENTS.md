@@ -532,6 +532,29 @@ Fixes #24
 
 ## 📝 Windows 开发注意事项
 
+### VS Build Tools（MSVC）与 Tauri 编译
+
+在 Windows 上构建 Tauri（Rust `x86_64-pc-windows-msvc`）需要 MSVC 工具链（`cl.exe`/`link.exe`）。
+
+**推荐方式（优先使用）**：用「x64 Native Tools Command Prompt for VS Build Tools」打开终端后再运行项目命令。
+
+**原因**：如果直接在普通 PowerShell 中运行，可能会命中 Git 自带的 `link.exe`（如 `C:\Program Files\Git\usr\bin\link.exe`），导致 Rust 编译报错（常见为 `link: extra operand '*.rcgu.o'`）。
+
+**自检命令**（在上述 Native Tools 终端里执行）：
+
+```powershell
+where cl.exe
+where link.exe
+```
+
+期望：输出路径在 `...\Microsoft Visual Studio\...\VC\Tools\MSVC\...\bin\Hostx64\x64\`，且 `link.exe` 不应只指向 Git 目录。
+
+如果必须在普通 PowerShell 运行，可用 `cmd /c` 临时加载环境（不建议长期依赖）：
+
+```powershell
+cmd /c "call \"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\Tools\VsDevCmd.bat\" -no_logo -arch=x64 -host_arch=x64 && npm run tauri dev"
+```
+
 ### 命令格式调整
 
 ```bash
