@@ -30,7 +30,7 @@
 
 **§3 技术栈与依赖** → 前端：React 18 + TypeScript 5 + Milkdown 7.x（WYSIWYG 编辑器）+ react-window（虚拟滚动）；后端：Rust（rusqlite + aes-gcm + argon2 + octocrab）。完整依赖清单见 package.json 和 Cargo.toml。选择 Tauri 以减小体积，Milkdown 实现真正的所见即所得。*详见完整规格 [§3](#3-技术栈与依赖)*
 
-**§4 项目结构** → 前端代码在 `app/src/`（组件/hooks/utils），后端代码在 `app/src-tauri/`（commands/database/crypto/sync）。命名规范：前端 kebab-case，后端 snake_case。模块职责清晰划分，避免循环依赖。*详见完整规格 [§4](#4-项目结构)*
+**§4 项目结构** → 前端代码在 `src/`（组件/hooks/utils），后端代码在 `src-tauri/`（commands/database/crypto/sync）。命名规范：前端 kebab-case，后端 snake_case。模块职责清晰划分，避免循环依赖。*详见完整规格 [§4](#4-项目结构)*
 
 **§5 代码风格** → TypeScript 风格：函数组件 + 严格类型安全（禁用 `any`）+ 显式返回类型。Rust 风格：遵循官方规范（rustfmt）+ 避免 `unwrap()` + 使用 `Result<T, E>` 错误处理。包含完整代码示例（EditorContainer、EncryptionService 等）。*详见完整规格 [§5](#5-代码风格)*
 
@@ -137,7 +137,6 @@ cargo tauri --version
 # 克隆项目
 git clone https://github.com/Lane0218/TraceDiary.git
 cd TraceDiary
-cd app
 
 # 安装前端依赖
 npm install
@@ -294,103 +293,87 @@ tauri-build = { version = "1.5" }
 
 ```
 TraceDiary/
-├── AGENTS.md                     # AI 开发指南
-├── SPEC.md                       # 规格说明书
-├── app/                          # 应用工程（前端 + Tauri Rust 后端）
-│   ├── src/                      # 前端代码（React + TypeScript）
-│   │   ├── App.tsx               # 根组件
-│   │   ├── main.tsx              # 入口文件
-│   │   ├── components/
-│   │   │   ├── Calendar/
-│   │   │   │   ├── Calendar.tsx      # 日历组件
-│   │   │   │   ├── MonthView.tsx     # 月份视图
-│   │   │   │   └── Calendar.module.css
-│   │   │   ├── Editor/
-│   │   │   │   ├── EditorContainer.tsx  # 编辑器容器
-│   │   │   │   ├── ReadingView.tsx      # 阅读视图（只读）
-│   │   │   │   ├── EditingView.tsx      # 编辑视图（WYSIWYG）
-│   │   │   │   ├── SourceView.tsx       # 源码视图
-│   │   │   │   └── ViewSwitcher.tsx     # 视图切换器
-│   │   │   ├── HistoryPanel/
-│   │   │   │   ├── HistoryPanel.tsx     # 往年今日面板
-│   │   │   │   ├── HistoryCard.tsx      # 历史卡片
-│   │   │   │   └── VirtualList.tsx      # 虚拟滚动列表
-│   │   │   ├── StatusBar/
-│   │   │   │   └── StatusBar.tsx        # 底部状态栏（同步状态）
-│   │   │   └── Dialogs/
-│   │   │       ├── PasswordDialog.tsx   # 密码输入对话框
-│   │   │       ├── SyncConfigDialog.tsx # 同步配置对话框
-│   │   │       └── ConflictDialog.tsx   # 冲突解决对话框
-│   │   ├── hooks/
-│   │   │   ├── useDiary.ts          # 日记操作 Hook
-│   │   │   ├── useHistory.ts        # 往年今日 Hook
-│   │   │   ├── useSync.ts           # 同步状态 Hook
-│   │   │   └── useTheme.ts          # 主题切换 Hook
-│   │   ├── services/
-│   │   │   └── tauriCommands.ts     # 类型化的 Tauri 命令封装
-│   │   ├── types/
-│   │   │   ├── diary.ts             # 日记类型定义
-│   │   │   ├── sync.ts              # 同步类型定义
-│   │   │   └── history.ts           # 历史记录类型
-│   │   ├── utils/
-│   │   │   ├── dateUtils.ts         # 日期工具函数
-│   │   │   └── markdownUtils.ts     # Markdown 工具函数
-│   │   └── styles/
-│   │       ├── globals.css          # 全局样式
-│   │       └── milkdown-theme.css   # Milkdown 自定义主题
-│   │
-│   ├── src-tauri/                # Rust 后端代码
-│   │   ├── src/
-│   │   │   ├── main.rs            # Tauri 主入口
-│   │   │   ├── lib.rs             # 库根模块
-│   │   │   ├── commands/          # Tauri 命令（前端调用接口）
-│   │   │   │   ├── mod.rs
-│   │   │   │   ├── diary.rs       # 日记 CRUD 命令
-│   │   │   │   ├── history.rs     # 往年今日查询命令
-│   │   │   │   ├── password.rs    # 密码验证命令
-│   │   │   │   └── sync.rs        # GitHub 同步命令
-│   │   │   ├── database/          # SQLite 数据库模块
-│   │   │   │   ├── mod.rs
-│   │   │   │   ├── connection.rs  # 数据库连接管理
-│   │   │   │   ├── schema.rs      # 表结构定义
-│   │   │   │   ├── diary_repo.rs  # 日记数据仓库
-│   │   │   │   └── settings_repo.rs  # 设置数据仓库
-│   │   │   ├── crypto/            # 加密模块
-│   │   │   │   ├── mod.rs
-│   │   │   │   ├── encryption.rs  # AES-256 加密/解密
-│   │   │   │   └── password.rs    # Argon2 密码哈希
-│   │   │   ├── sync/              # GitHub 同步模块
-│   │   │   │   ├── mod.rs
-│   │   │   │   ├── github_client.rs  # GitHub API 客户端
-│   │   │   │   ├── sync_engine.rs    # 同步引擎（防抖、队列）
-│   │   │   │   └── conflict.rs       # 冲突检测与解决
-│   │   │   ├── models/            # 数据模型
-│   │   │   │   ├── mod.rs
-│   │   │   │   ├── diary.rs
-│   │   │   │   └── settings.rs
-│   │   │   └── error.rs           # 统一错误类型
-│   │   ├── Cargo.toml             # Rust 依赖配置
-│   │   ├── tauri.conf.json        # Tauri 配置文件
-│   │   └── build.rs               # 构建脚本
-│   │
-│   ├── package.json               # 前端依赖
-│   ├── tsconfig.json              # TypeScript 配置
-│   ├── tailwind.config.js         # Tailwind 配置
-│   ├── vite.config.ts             # Vite 配置
-│   └── README.md                  # 项目说明
+├── AGENTS.md                     # AI 开发指南（本文件）
+├── SPEC.md                       # 完整规格说明
+├── src/                          # 前端代码（React + TypeScript）
+│   ├── App.tsx                   # 根组件
+│   ├── main.tsx                  # 入口文件
+│   ├── components/
+│   │   ├── Calendar/
+│   │   │   ├── Calendar.tsx      # 日历组件
+│   │   │   ├── MonthView.tsx     # 月份视图
+│   │   │   └── Calendar.module.css
+│   │   ├── Editor/
+│   │   │   ├── EditorContainer.tsx  # 编辑器容器
+│   │   │   ├── ReadingView.tsx      # 阅读视图（只读）
+│   │   │   ├── EditingView.tsx      # 编辑视图（WYSIWYG）
+│   │   │   ├── SourceView.tsx       # 源码视图
+│   │   │   └── ViewSwitcher.tsx     # 视图切换器
+│   │   ├── HistoryPanel/
+│   │   │   ├── HistoryPanel.tsx     # 往年今日面板
+│   │   │   ├── HistoryCard.tsx      # 历史卡片
+│   │   │   └── VirtualList.tsx      # 虚拟滚动列表
+│   │   ├── StatusBar/
+│   │   │   └── StatusBar.tsx        # 底部状态栏（同步状态）
+│   │   └── Dialogs/
+│   │       ├── PasswordDialog.tsx   # 密码输入对话框
+│   │       ├── SyncConfigDialog.tsx # 同步配置对话框
+│   │       └── ConflictDialog.tsx   # 冲突解决对话框
+│   ├── hooks/
+│   │   ├── useDiary.ts              # 日记操作 Hook
+│   │   ├── useHistory.ts            # 往年今日 Hook
+│   │   ├── useSync.ts               # 同步状态 Hook
+│   │   └── useTheme.ts              # 主题切换 Hook
+│   ├── services/
+│   │   └── tauriCommands.ts         # 类型化的 Tauri 命令封装
+│   ├── types/
+│   │   ├── diary.ts                 # 日记类型定义
+│   │   ├── sync.ts                  # 同步类型定义
+│   │   └── history.ts               # 历史记录类型
+│   ├── utils/
+│   │   ├── dateUtils.ts             # 日期工具函数
+│   │   └── markdownUtils.ts         # Markdown 工具函数
+│   └── styles/
+│       ├── globals.css              # 全局样式
+│       └── milkdown-theme.css       # Milkdown 自定义主题
 │
-├── tests/                         # E2E 测试
-│   ├── core-flow.spec.ts          # 核心流程测试
-│   └── setup.ts                   # 测试环境配置
+├── src-tauri/                    # Rust 后端代码
+│   ├── src/
+│   │   ├── main.rs               # Tauri 主入口
+│   │   ├── lib.rs                # 库根模块
+│   │   ├── commands/             # Tauri 命令（前端调用接口）
+│   │   │   ├── mod.rs
+│   │   │   ├── diary.rs          # 日记 CRUD 命令
+│   │   │   ├── history.rs        # 往年今日查询命令
+│   │   │   ├── password.rs       # 密码验证命令
+│   │   │   └── sync.rs           # GitHub 同步命令
+│   │   ├── database/             # SQLite 数据库模块
+│   │   │   ├── mod.rs
+│   │   │   ├── connection.rs     # 数据库连接管理
+│   │   │   ├── schema.rs         # 表结构定义
+│   │   │   ├── diary_repo.rs     # 日记数据仓库
+│   │   │   └── settings_repo.rs  # 设置数据仓库
+│   │   ├── crypto/               # 加密模块
+│   │   │   ├── mod.rs
+│   │   │   ├── encryption.rs     # AES-256 加密/解密
+│   │   │   └── password.rs       # Argon2 密码哈希
+│   │   ├── sync/                 # GitHub 同步模块
+│   │   │   ├── mod.rs
+│   │   │   ├── github_client.rs  # GitHub API 客户端
+│   │   │   ├── sync_engine.rs    # 同步引擎（防抖、队列）
+│   │   │   └── conflict.rs       # 冲突检测与解决
+│   │   ├── models/               # 数据模型
+│   │   │   ├── mod.rs
+│   │   │   ├── diary.rs
+│   │   │   └── settings.rs
+│   │   └── error.rs              # 统一错误类型
+│   ├── Cargo.toml                # Rust 依赖配置
+│   ├── tauri.conf.json           # Tauri 配置文件
+│   └── build.rs                  # 构建脚本
 │
-├── docs/                          # 文档
-│   ├── PRD.md                     # 产品需求文档
-│   ├── SPEC.md                    # 本规格说明书
-│   └── README.md                  # 用户使用指南
-│
-└── .github/
-    └── workflows/
-        └── ci.yml                 # CI/CD 配置
+├── tests/                        # E2E 测试
+├── docs/                         # 文档
+└── package.json                  # 前端依赖
 ```
 
 ### 4.2 命名规范
@@ -413,7 +396,7 @@ TraceDiary/
 - 调用 Tauri 命令（通过 IPC）
 - 不直接操作文件系统和数据库
 
-**后端（`app/src-tauri/`）：**
+**后端（`src-tauri/`）：**
 - 文件系统操作（加密文件读写）
 - SQLite 数据库操作
 - AES-256 加密/解密
@@ -2701,7 +2684,6 @@ export interface HistoricalDiary {
 ```powershell
 git clone https://github.com/Lane0218/TraceDiary.git
 cd TraceDiary
-cd app
 npm install
 ```
 
@@ -2711,7 +2693,7 @@ npm install
 npm install @milkdown/core @milkdown/react @milkdown/preset-commonmark @milkdown/preset-gfm
 npm install react-window date-fns
 
-# Rust 依赖（添加到 app/src-tauri/Cargo.toml）
+# Rust 依赖（添加到 src-tauri/Cargo.toml）
 rusqlite = { version = "0.30", features = ["bundled"] }
 aes-gcm = "0.10"
 argon2 = "0.5"
@@ -2765,7 +2747,7 @@ A：用户要求纯 Markdown 输入体验，避免干扰。高级用户可切换
 
 **下一步行动：**
 1. 将本规格保存并提交到 Git
-2. 进入 `app/` 并安装依赖（`npm install`）
+2. 安装依赖（`npm install`）
 3. 开始阶段 1 开发（基础框架）
 4. 每个阶段完成后验证验收标准
 

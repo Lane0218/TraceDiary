@@ -32,7 +32,6 @@ winget install OpenJS.NodeJS.LTS
 cargo install tauri-cli
 
 # 项目初始化
-cd app                         # 进入应用目录（前端 + src-tauri）
 npm install                    # 安装前端依赖
 npm run tauri dev             # 启动开发服务器（热重载）
 ```
@@ -95,17 +94,16 @@ npm test -- --watch
 TraceDiary/
 ├── AGENTS.md                     # AI 开发指南
 ├── SPEC.md                       # 规格说明书
-└── app/                          # 应用工程（前端 + Tauri Rust 后端）
-    ├── src/                      # 前端（React + TypeScript）
-    │   ├── services/             # Tauri 命令封装（类型化）
-    │   ├── types/                # TypeScript 类型定义
-    │   └── utils/                # 日期/markdown 工具函数
-    ├── src-tauri/                # 后端（Rust）
-    │   └── src/
-    │       ├── commands/         # Tauri IPC 处理程序
-    │       ├── database/         # SQLite 数据仓库层
-    │       └── crypto/           # AES-256-GCM + Argon2 + keyring
-    └── package.json              # 前端依赖
+├── src/                          # 前端（React + TypeScript）
+│   ├── services/                 # Tauri 命令封装（类型化）
+│   ├── types/                    # TypeScript 类型定义
+│   └── utils/                    # 日期/markdown 工具函数
+├── src-tauri/                    # 后端（Rust）
+│   └── src/
+│       ├── commands/             # Tauri IPC 处理程序
+│       ├── database/             # SQLite 数据仓库层
+│       └── crypto/               # AES-256-GCM + Argon2 + keyring
+└── package.json                  # 前端依赖
 ```
 
 ---
@@ -552,10 +550,10 @@ cmd /c "call \"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Comm
 ```bash
 # ✅ 使用正斜杠或转义反斜杠
 npm run build -- --config ./config.json
-cargo test --manifest-path=app/src-tauri/Cargo.toml
+cargo test --manifest-path=src-tauri/Cargo.toml
 
 # 🚫 避免使用裸反斜杠（可能导致问题）
-cargo test --manifest-path=app/src-tauri\Cargo.toml  # 某些 shell 中可能失败
+cargo test --manifest-path=src-tauri\Cargo.toml  # 某些 shell 中可能失败
 ```
 
 ### 代码中的路径处理
@@ -722,7 +720,7 @@ ORDER BY year DESC
 - [x] Tauri 项目脚手架
 - [x] React + TypeScript 设置（Vite）
 - [x] SQLite 数据库（架构 + 初始化建表）
-- [ ] AES-256 加密服务
+- [x] AES-256 加密服务
 - [ ] 基础 Milkdown 编辑器（仅编辑视图）
 - [ ] 日历导航 UI
 
