@@ -9,7 +9,7 @@ import {
   setPassword,
   verifyPassword,
 } from './services/tauriCommands';
-import { getTodayYmd } from './utils/dateUtils';
+import { formatDateTimeLocal, getTodayYmd } from './utils/dateUtils';
 import { MonthView } from './components/Calendar/MonthView';
 
 import './App.css';
@@ -28,6 +28,25 @@ const formatInvokeErrorMessage = (error: unknown): string => {
     if (typeof maybeMessage === 'string' && maybeMessage.trim()) return maybeMessage;
   }
   return String(error);
+};
+
+const formatModifiedAt = (modifiedAt: string | null | undefined): string => {
+  if (!modifiedAt) return '-';
+  const s = modifiedAt.trim();
+  if (!s) return '-';
+
+  // Early versions store unix seconds; accept seconds or ms.
+  if (/^\d+$/.test(s)) {
+    const n = Number(s);
+    const ms = s.length >= 13 ? n : n * 1000;
+    const d = new Date(ms);
+    if (!Number.isNaN(d.getTime())) return formatDateTimeLocal(d);
+  }
+
+  // Fallback: try parsing ISO/RFC strings.
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return formatDateTimeLocal(d);
+  return s;
 };
 
 function App(): React.ReactElement {
@@ -188,7 +207,7 @@ function App(): React.ReactElement {
           <MonthView selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           <button
             type="button"
-            className="td-btn td-btn--ghost td-btn--block"
+            className="td-btn td-btn--soft td-btn--block"
             onClick={() => setSelectedDate(today)}
           >
             回到今天
@@ -229,7 +248,7 @@ function App(): React.ReactElement {
 
           <div className="td-meta" aria-label="元信息">
             <span>字数：{diaryMeta?.word_count ?? 0}</span>
-            <span>修改时间：{diaryMeta?.modified_at ? diaryMeta.modified_at : '-'}</span>
+            <span>修改时间：{formatModifiedAt(diaryMeta?.modified_at)}</span>
           </div>
         </section>
 

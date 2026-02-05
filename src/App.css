@@ -238,6 +238,19 @@ body {
   background: rgba(255, 255, 255, 0.55);
 }
 
+.td-btn--soft {
+  border-color: rgba(37, 99, 235, 0.22);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(37, 99, 235, 0.06));
+  color: rgba(29, 78, 216, 0.96);
+  box-shadow: none;
+}
+
+.td-btn--soft:hover {
+  border-color: rgba(37, 99, 235, 0.34);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.08));
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.12);
+}
+
 .td-btn--block {
   width: 100%;
 }
@@ -558,6 +571,7 @@ body {
   }
 
   .td-btn--ghost,
+  .td-btn--soft,
   .td-input,
   .td-editor,
   .td-cal,
@@ -583,5 +597,11 @@ body {
   .td-authCard {
     background: rgba(17, 24, 39, 0.82);
     border-color: rgba(226, 232, 240, 0.14);
+  }
+
+  .td-btn--soft {
+    border-color: rgba(96, 165, 250, 0.22);
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.08));
+    color: rgba(191, 219, 254, 0.96);
   }
 }
