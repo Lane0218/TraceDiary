@@ -41,6 +41,9 @@ npm run tauri dev             # 启动开发服务器（热重载）
 **关键**: 每次提交前必须运行以下命令：
 
 ```bash
+# ✅ 一键检查（推荐）
+npm run check:all
+
 # 后端测试（必须通过）
 cargo test --manifest-path src-tauri/Cargo.toml
 
@@ -718,11 +721,13 @@ ORDER BY year DESC
 
 ### 当前任务板（滚动 TODO，优先级从上到下）
 
-- [ ] 日历导航 UI（替换 `<input type="date">`）
-- [ ] 往年今日（后端查询 + 前端列表；后续再加虚拟滚动）
-- [ ] 编辑器升级：Milkdown（阅读/编辑/源码三视图）
-- [ ] 年度总结：路由入口 + get/save/list + 加密存储
-- [ ] GitHub 自动同步（30s 防抖 + 冲突对话框）
+- [ ] 日历导航 UI：MonthView（上月/下月）、选中日期、高亮今天、点击切换日期（≤200ms）
+- [ ] 日历蓝点：按月查询有日记日期并标记（为“往年今日/历史面板”打基础）
+- [ ] 往年今日（后端查询）：month/day + year 范围（2022..current_year-1）+ year DESC
+- [ ] 往年今日（前端 UI）：HistoryPanel 列表（后续再上 react-window 虚拟滚动）
+- [ ] 编辑器升级：Milkdown（先替换临时 textarea；再实现阅读/编辑/源码三视图）
+- [ ] 年度总结：入口 + get/save/list + 加密存储（date=YYYY-00-00 伪日期）
+- [ ] GitHub 自动同步：30s 防抖 + 冲突解决对话框 + 状态栏
 
 ### 阶段 1: 基础（第 1-2 周）
 - [x] Tauri 项目脚手架

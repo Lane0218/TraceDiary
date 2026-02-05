@@ -46,6 +46,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Local npm cache
+.npm-cache/
+
 # User data
 diaries/
 *.db
