@@ -13,6 +13,16 @@ type AuthMode = "none" | "set" | "verify";
 const PASSWORD_PLACEHOLDER = "至少 8 位，包含字母和数字";
 const AUTOSAVE_DELAY_MS = 30_000;
 
+const formatInvokeErrorMessage = (error: unknown): string => {
+  if (typeof error === "string") return error;
+  if (error instanceof Error && typeof error.message === "string" && error.message.trim()) return error.message;
+  if (error && typeof error === "object") {
+    const maybeMessage = (error as { message?: unknown }).message;
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
+  }
+  return String(error);
+};
+
 function App(): React.ReactElement {
   const today = useMemo(() => getTodayYmd(), []);
 
@@ -113,7 +123,8 @@ function App(): React.ReactElement {
       await loadAuthStatus();
       await loadDiary(selectedDate);
     } catch (error: unknown) {
-      setErrorText(authMode === "set" ? "设置密码失败，请检查规则后重试" : "密码错误，请重试");
+      const detail = formatInvokeErrorMessage(error);
+      setErrorText(authMode === "set" ? `设置密码失败：${detail}` : `密码验证失败：${detail}`);
       console.error("Auth failed:", error);
     }
   };
@@ -152,6 +163,7 @@ function App(): React.ReactElement {
               {authMode === "set" ? "设置" : "解锁"}
             </button>
           </div>
+          <p className="hint">{authMode === "set" ? "规则：至少 8 位，且必须同时包含字母和数字（例如：Trace2026）" : ""}</p>
           <p className="hint">
             {authMode === "verify" && authStatus?.needs_verify ? "距离上次验证超过 7 天，需要重新验证。" : ""}
           </p>
