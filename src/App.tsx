@@ -16,6 +16,7 @@ import {
 } from './services/tauriCommands';
 import { formatDateTimeLocal, getTodayYmd } from './utils/dateUtils';
 import { MonthView } from './components/Calendar/MonthView';
+import { MarkdownEditor } from './components/Editor/MarkdownEditor';
 
 import './App.css';
 
@@ -118,6 +119,7 @@ function App(): React.ReactElement {
 
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [content, setContent] = useState<string>('');
+  const [editorSeed, setEditorSeed] = useState<number>(0);
   const [diaryMeta, setDiaryMeta] = useState<Pick<
     DiaryEntry,
     'word_count' | 'modified_at'
@@ -162,6 +164,7 @@ function App(): React.ReactElement {
         setContent('');
         setLastSavedContent('');
         setDiaryMeta(null);
+        setEditorSeed((seed) => seed + 1);
         setStatusText('未找到该日期的日记');
         return;
       }
@@ -169,6 +172,7 @@ function App(): React.ReactElement {
       setContent(entry.content);
       setLastSavedContent(entry.content);
       setDiaryMeta({ word_count: entry.word_count, modified_at: entry.modified_at });
+      setEditorSeed((seed) => seed + 1);
       setStatusText('已加载');
     } catch (error: unknown) {
       setErrorText('加载失败，请先完成密码验证');
@@ -365,13 +369,11 @@ function App(): React.ReactElement {
             </button>
           </div>
 
-          <textarea
-            className="td-editor"
+          <MarkdownEditor
+            key={`${selectedDate}:${editorSeed}`}
             value={content}
-            onChange={(e) => setContent(e.currentTarget.value)}
-            placeholder="写点什么..."
-            rows={18}
-            aria-label="日记内容"
+            onChange={setContent}
+            ariaLabel="日记内容"
           />
 
           <div className="td-meta" aria-label="元信息">

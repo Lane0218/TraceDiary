@@ -725,7 +725,9 @@ ORDER BY year DESC
 - [x] 日历蓝点：按月查询有日记日期并标记（为“往年今日/历史面板”打基础）
 - [x] 往年今日（后端查询）：month/day + year 范围（2022..current_year-1）+ year DESC
 - [x] 往年今日（前端 UI）：HistoryPanel 列表（react-window 虚拟滚动）
-- [ ] 编辑器升级：Milkdown（先替换临时 textarea；再实现阅读/编辑/源码三视图）
+- [x] 编辑器升级：Milkdown（编辑视图，替换临时 textarea）
+- [ ] 编辑器升级：Milkdown 阅读视图（历史日记默认只读 + 双击切换）
+- [ ] 编辑器升级：Milkdown 源码视图（textarea + 手动切换按钮）
 - [ ] 年度总结：入口 + get/save/list + 加密存储（date=YYYY-00-00 伪日期）
 - [ ] GitHub 自动同步：30s 防抖 + 冲突解决对话框 + 状态栏
 
@@ -737,7 +739,7 @@ ORDER BY year DESC
 - [x] 密码设置 + 验证（Argon2 + keyring，含 7 天有效期）
 - [x] 日记读写闭环（get/save + 加密文件落地）
 - [x] 编辑 30 秒后自动保存（前端防抖）
-- [ ] 基础 Milkdown 编辑器（仅编辑视图，替换临时 textarea）
+- [x] 基础 Milkdown 编辑器（仅编辑视图，替换临时 textarea）
 - [x] 日历导航 UI
 
 ### 阶段 2: 核心功能（第 3-4 周）
