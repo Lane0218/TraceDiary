@@ -127,13 +127,15 @@ pub fn save_diary(state: State<'_, AppState>, input: SaveDiaryInput) -> Result<D
     let conn = open_connection(&state.db_path).map_err(|e| format!("open db failed: {e}"))?;
     diary_repo::upsert_daily(
         &conn,
-        &input.date,
-        year,
-        month,
-        day,
-        &rel_filename,
-        word_count,
-        &now_ts,
+        diary_repo::UpsertDailyInput {
+            date: &input.date,
+            year,
+            month,
+            day,
+            filename: &rel_filename,
+            word_count,
+            now_ts: &now_ts,
+        },
     )
     .map_err(|e| format!("save meta failed: {e}"))?;
 
@@ -144,4 +146,3 @@ pub fn save_diary(state: State<'_, AppState>, input: SaveDiaryInput) -> Result<D
         modified_at: now_ts,
     })
 }
-

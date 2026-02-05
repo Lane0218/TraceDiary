@@ -29,8 +29,8 @@ impl AppState {
         self.app_data_dir.join("diaries")
     }
 
+    #[allow(dead_code)]
     pub fn summaries_dir(&self) -> PathBuf {
         self.app_data_dir.join("summaries")
     }
 }
-

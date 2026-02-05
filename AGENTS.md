@@ -43,7 +43,7 @@ npm run tauri dev             # 启动开发服务器（热重载）
 
 ```bash
 # 后端测试（必须通过）
-cargo test
+cargo test --manifest-path src-tauri/Cargo.toml
 
 # 前端测试（必须通过）
 npm test
@@ -51,10 +51,10 @@ npm test
 # 代码质量检查（必须 0 错误）
 npm run lint
 npm run type-check
-cargo clippy
+cargo clippy --manifest-path src-tauri/Cargo.toml
 
 # 自动格式化（提交前运行）
-cargo fmt
+cargo fmt --manifest-path src-tauri/Cargo.toml
 npm run format
 ```
 

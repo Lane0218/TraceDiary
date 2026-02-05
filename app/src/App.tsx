@@ -10,6 +10,7 @@ import "./App.css";
 type AuthMode = "none" | "set" | "verify";
 
 const PASSWORD_PLACEHOLDER = "至少 8 位，包含字母和数字";
+const AUTOSAVE_DELAY_MS = 30_000;
 
 function App(): React.ReactElement {
   const today = useMemo(() => getTodayYmd(), []);
@@ -23,6 +24,7 @@ function App(): React.ReactElement {
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [content, setContent] = useState<string>("");
   const [diaryMeta, setDiaryMeta] = useState<Pick<DiaryEntry, "word_count" | "modified_at"> | null>(null);
+  const [lastSavedContent, setLastSavedContent] = useState<string>("");
 
   const loadAuthStatus = async (): Promise<void> => {
     try {
@@ -43,12 +45,14 @@ function App(): React.ReactElement {
       const entry = await getDiary(date);
       if (!entry) {
         setContent("");
+        setLastSavedContent("");
         setDiaryMeta(null);
         setStatusText("未找到该日期的日记");
         return;
       }
 
       setContent(entry.content);
+      setLastSavedContent(entry.content);
       setDiaryMeta({ word_count: entry.word_count, modified_at: entry.modified_at });
       setStatusText("已加载");
     } catch (error: unknown) {
@@ -66,6 +70,35 @@ function App(): React.ReactElement {
     if (!authStatus) return;
     void loadDiary(selectedDate);
   }, [authMode, authStatus, selectedDate]);
+
+  // 30 秒无输入自动保存（防抖）。
+  useEffect(() => {
+    if (authMode !== "none") return;
+
+    // 未解锁 / 尚未加载认证状态时，不触发自动保存。
+    if (!authStatus) return;
+
+    // 内容没变就不保存。
+    if (content === lastSavedContent) return;
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          setErrorText("");
+          setStatusText("自动保存中...");
+          const saved = await saveDiary({ date: selectedDate, content });
+          setDiaryMeta({ word_count: saved.word_count, modified_at: saved.modified_at });
+          setLastSavedContent(content);
+          setStatusText("已自动保存");
+        } catch (error: unknown) {
+          setErrorText("自动保存失败，请重试");
+          console.error("Failed to auto-save diary:", error);
+        }
+      })();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [authMode, authStatus, content, lastSavedContent, selectedDate]);
 
   const handleAuthSubmit = async (): Promise<void> => {
     try {
@@ -91,6 +124,7 @@ function App(): React.ReactElement {
 
       const saved = await saveDiary({ date: selectedDate, content });
       setDiaryMeta({ word_count: saved.word_count, modified_at: saved.modified_at });
+      setLastSavedContent(content);
       setStatusText("已保存");
     } catch (error: unknown) {
       setErrorText("保存失败，请先完成密码验证");
