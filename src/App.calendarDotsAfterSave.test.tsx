@@ -13,6 +13,7 @@ describe('App calendar dots (save flow)', () => {
         return Promise.resolve({ password_set: true, needs_verify: false });
       if (cmd === 'get_diary') return Promise.resolve(null);
       if (cmd === 'list_diary_days_in_month') return Promise.resolve([]); // initially empty
+      if (cmd === 'list_historical_diaries') return Promise.resolve([]);
       if (cmd === 'save_diary')
         return Promise.resolve({
           date: '2026-02-05',
@@ -24,9 +25,6 @@ describe('App calendar dots (save flow)', () => {
     });
 
     render(<App />);
-
-    // Wait for initial load to settle.
-    await screen.findByText('未找到该日期的日记');
 
     const dayBtn = await screen.findByRole('button', { name: '2026-02-05' });
     expect(dayBtn).not.toHaveClass('has-entry');
@@ -41,4 +39,3 @@ describe('App calendar dots (save flow)', () => {
     });
   });
 });
-

@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import type { AuthStatus } from '../types/auth';
 import type { DiaryEntry, SaveDiaryInput } from '../types/diary';
+import type { HistoricalDiary } from '../types/history';
 
 export const getAuthStatus = async (): Promise<AuthStatus> => {
   return invoke<AuthStatus>('get_auth_status');
@@ -29,4 +30,16 @@ export const listDiaryDaysInMonth = async (
   month: number,
 ): Promise<number[]> => {
   return invoke<number[]>('list_diary_days_in_month', { year, month });
+};
+
+export const listHistoricalDiaries = async (
+  month: number,
+  day: number,
+  currentYear: number,
+): Promise<HistoricalDiary[]> => {
+  return invoke<HistoricalDiary[]>('list_historical_diaries', {
+    month,
+    day,
+    currentYear,
+  });
 };

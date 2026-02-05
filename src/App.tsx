@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { AuthStatus } from './types/auth';
 import type { DiaryEntry } from './types/diary';
+import type { HistoricalDiary } from './types/history';
 import {
   getAuthStatus,
   getDiary,
   listDiaryDaysInMonth,
+  listHistoricalDiaries,
   saveDiary,
   setPassword,
   verifyPassword,
@@ -50,18 +52,23 @@ const formatModifiedAt = (modifiedAt: string | null | undefined): string => {
   return s;
 };
 
-const ymdToYearMonthDay = (ymd: string): { year: number; month: number; day: number } | null => {
+const ymdToYearMonthDay = (
+  ymd: string,
+): { year: number; month: number; day: number } | null => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
   if (!match) return null;
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day))
+    return null;
   return { year, month, day };
 };
 
 function App(): React.ReactElement {
   const today = useMemo(() => getTodayYmd(), []);
+
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const [authMode, setAuthMode] = useState<AuthMode>('none');
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
@@ -78,6 +85,8 @@ function App(): React.ReactElement {
   const [lastSavedContent, setLastSavedContent] = useState<string>('');
   const [monthEntryDays, setMonthEntryDays] = useState<ReadonlySet<number> | null>(null);
   const monthKeyRef = useRef<string>('');
+  const [historyItems, setHistoryItems] = useState<HistoricalDiary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
 
   const markSavedDayInCalendar = useCallback((dateYmd: string): void => {
     const parts = ymdToYearMonthDay(dateYmd);
@@ -137,6 +146,28 @@ function App(): React.ReactElement {
     void loadDiary(selectedDate);
   }, [authMode, authStatus, selectedDate]);
 
+  useEffect(() => {
+    if (authMode !== 'none') return;
+    if (!authStatus) return;
+
+    const parts = ymdToYearMonthDay(selectedDate);
+    if (!parts) return;
+
+    setHistoryLoading(true);
+    void (async () => {
+      try {
+        const items = await listHistoricalDiaries(parts.month, parts.day, currentYear);
+        setHistoryItems(Array.isArray(items) ? items : []);
+      } catch (error: unknown) {
+        // Non-blocking: history panel should not break the editor.
+        console.error('Failed to load historical diaries:', error);
+        setHistoryItems([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    })();
+  }, [authMode, authStatus, currentYear, selectedDate]);
+
   // 30 秒无输入自动保存（防抖）。
   useEffect(() => {
     if (authMode !== 'none') return;
@@ -165,7 +196,14 @@ function App(): React.ReactElement {
     }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [authMode, authStatus, content, lastSavedContent, markSavedDayInCalendar, selectedDate]);
+  }, [
+    authMode,
+    authStatus,
+    content,
+    lastSavedContent,
+    markSavedDayInCalendar,
+    selectedDate,
+  ]);
 
   const handleAuthSubmit = async (): Promise<void> => {
     try {
@@ -304,12 +342,39 @@ function App(): React.ReactElement {
 
         <aside className="td-panel td-panel--right" aria-label="往年今日">
           <div className="td-panel__title">往年今日</div>
-          <div className="td-empty">
-            <div className="td-empty__kicker">即将上线</div>
-            <div className="td-empty__text">
-              这里会按“月/日”展示 2022 年至去年同一天的日记片段。
+          {historyLoading ? (
+            <div className="td-empty">
+              <div className="td-empty__kicker">加载中</div>
+              <div className="td-empty__text">正在查询往年今日…</div>
             </div>
-          </div>
+          ) : historyItems.length === 0 ? (
+            <div className="td-empty">
+              <div className="td-empty__kicker">暂无记录</div>
+              <div className="td-empty__text">还没有“往年今日”的历史日记。</div>
+            </div>
+          ) : (
+            <div className="td-historyList" aria-label="历史列表">
+              {historyItems.map((item) => (
+                <button
+                  key={item.date}
+                  type="button"
+                  className="td-historyCard"
+                  onClick={() => setSelectedDate(item.date)}
+                >
+                  <div className="td-historyCard__top">
+                    <span className="td-historyCard__year">{item.year}年</span>
+                    <span className="td-historyCard__ago">
+                      {Math.max(1, currentYear - item.year)}年前
+                    </span>
+                  </div>
+                  <div className="td-historyCard__preview">
+                    {item.preview || '（无内容）'}
+                  </div>
+                  <div className="td-historyCard__meta">字数：{item.word_count}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </aside>
       </main>
 

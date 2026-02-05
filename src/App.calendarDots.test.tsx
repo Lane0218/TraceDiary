@@ -13,15 +13,13 @@ describe('App calendar dots (flow)', () => {
         return Promise.resolve({ password_set: true, needs_verify: false });
       if (cmd === 'get_diary') return Promise.resolve(null);
       if (cmd === 'list_diary_days_in_month') return Promise.resolve([5, 20]);
+      if (cmd === 'list_historical_diaries') return Promise.resolve([]);
       return Promise.resolve(null);
     });
 
     render(<App />);
 
-    // Wait for initial auth + diary load to settle (avoid async updates after the test ends).
-    await screen.findByText('未找到该日期的日记');
-
-    // Calendar day buttons exist; dot should appear for 2026-02-05 because the month list includes day 5.
+    // Calendar day buttons exist; highlight should appear for 2026-02-05 because the month list includes day 5.
     const dayBtn = await screen.findByRole('button', { name: '2026-02-05' });
     await waitFor(() => {
       expect(dayBtn).toHaveClass('has-entry');

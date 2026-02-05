@@ -14,6 +14,9 @@ jest.mock('@tauri-apps/api/core', () => {
       if (cmd === 'list_diary_days_in_month') {
         return Promise.resolve([]);
       }
+      if (cmd === 'list_historical_diaries') {
+        return Promise.resolve([]);
+      }
       return Promise.resolve(null);
     }),
   };

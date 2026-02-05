@@ -1,6 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
 
-import { listDiaryDaysInMonth, setPassword, verifyPassword } from './tauriCommands';
+import {
+  listDiaryDaysInMonth,
+  listHistoricalDiaries,
+  setPassword,
+  verifyPassword,
+} from './tauriCommands';
 
 jest.mock('@tauri-apps/api/core', () => ({ invoke: jest.fn() }));
 
@@ -37,6 +42,24 @@ describe('tauriCommands', () => {
     expect(invokeMock).toHaveBeenCalledWith('list_diary_days_in_month', {
       year: 2026,
       month: 2,
+    });
+  });
+
+  it('listHistoricalDiaries calls the expected command', async () => {
+    const invokeMock = invoke as unknown as jest.Mock;
+    invokeMock.mockResolvedValueOnce([
+      { date: '2025-02-05', year: 2025, preview: 'x', word_count: 1 },
+    ]);
+
+    const items = await listHistoricalDiaries(2, 5, 2026);
+
+    expect(items).toEqual([
+      { date: '2025-02-05', year: 2025, preview: 'x', word_count: 1 },
+    ]);
+    expect(invokeMock).toHaveBeenCalledWith('list_historical_diaries', {
+      month: 2,
+      day: 5,
+      currentYear: 2026,
     });
   });
 });

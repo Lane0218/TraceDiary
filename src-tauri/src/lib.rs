@@ -32,6 +32,7 @@ pub fn run() {
             commands::diary::get_diary,
             commands::diary::save_diary,
             commands::diary::list_diary_days_in_month,
+            commands::history::list_historical_diaries,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
