@@ -60,6 +60,14 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 npm run format
 ```
 
+### 完整测试要求（必须执行）
+
+当完成一个相对独立的任务并准备提交时，必须至少做到：
+- `npm run check:all` 全绿（type-check + lint + jest + cargo test + clippy）
+- **冒烟启动**（避免“只在测试里通过，实际跑不起来”）：
+  - 若涉及前端依赖/Vite/Tauri 相关变更：至少跑一次 `npm run tauri dev`，确认能启动到窗口
+  - 若本机环境不满足（例如 Node 版本不匹配导致 Vite 无法启动），必须在提交说明中写清楚阻塞原因与修复方式
+
 ### 构建命令
 
 ```bash
