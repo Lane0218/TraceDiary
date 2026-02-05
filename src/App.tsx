@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AuthStatus } from './types/auth';
 import type { DiaryEntry } from './types/diary';
 import {
   getAuthStatus,
   getDiary,
+  listDiaryDaysInMonth,
   saveDiary,
   setPassword,
   verifyPassword,
@@ -65,6 +66,8 @@ function App(): React.ReactElement {
     'word_count' | 'modified_at'
   > | null>(null);
   const [lastSavedContent, setLastSavedContent] = useState<string>('');
+  const [monthEntryDays, setMonthEntryDays] = useState<ReadonlySet<number> | null>(null);
+  const monthKeyRef = useRef<string>('');
 
   const loadAuthStatus = async (): Promise<void> => {
     try {
@@ -175,6 +178,23 @@ function App(): React.ReactElement {
     }
   };
 
+  const handleMonthChange = useCallback((year: number, month: number): void => {
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    if (key === monthKeyRef.current) return;
+    monthKeyRef.current = key;
+
+    void (async () => {
+      try {
+        const days = await listDiaryDaysInMonth(year, month);
+        setMonthEntryDays(new Set(days));
+      } catch (error: unknown) {
+        // Non-blocking: calendar dots are just a hint.
+        console.error('Failed to load diary days in month:', error);
+        setMonthEntryDays(null);
+      }
+    })();
+  }, []);
+
   return (
     <div className="td-app">
       <header className="td-topbar" aria-label="应用标题栏">
@@ -204,7 +224,12 @@ function App(): React.ReactElement {
       <main className="td-main" aria-label="主界面">
         <aside className="td-panel td-panel--left" aria-label="日历面板">
           <div className="td-panel__title">日历</div>
-          <MonthView selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+          <MonthView
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            entryDays={monthEntryDays}
+            onMonthChange={handleMonthChange}
+          />
           <button
             type="button"
             className="td-btn td-btn--soft td-btn--block"

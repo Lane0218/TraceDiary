@@ -44,15 +44,9 @@ fn parse_ymd(date: &str) -> Result<(i32, i32, i32), String> {
         return Err("日期格式错误，应为 YYYY-MM-DD".to_string());
     }
 
-    let year: i32 = parts[0]
-        .parse()
-        .map_err(|_| "年份格式错误".to_string())?;
-    let month: i32 = parts[1]
-        .parse()
-        .map_err(|_| "月份格式错误".to_string())?;
-    let day: i32 = parts[2]
-        .parse()
-        .map_err(|_| "日期格式错误".to_string())?;
+    let year: i32 = parts[0].parse().map_err(|_| "年份格式错误".to_string())?;
+    let month: i32 = parts[1].parse().map_err(|_| "月份格式错误".to_string())?;
+    let day: i32 = parts[2].parse().map_err(|_| "日期格式错误".to_string())?;
 
     if year < 2022 {
         return Err("仅支持 2022 年及之后的日期".to_string());
@@ -92,7 +86,8 @@ pub fn get_diary(state: State<'_, AppState>, date: String) -> Result<Option<Diar
         .map_err(|e| format!("decrypt diary failed: {e}"))?;
 
     let conn = open_connection(&state.db_path).map_err(|e| format!("open db failed: {e}"))?;
-    let meta = diary_repo::find_by_date(&conn, &date).map_err(|e| format!("read meta failed: {e}"))?;
+    let meta =
+        diary_repo::find_by_date(&conn, &date).map_err(|e| format!("read meta failed: {e}"))?;
 
     let (word_count, modified_at) = match meta {
         None => (count_non_whitespace_chars(&content), "".to_string()),
@@ -145,4 +140,22 @@ pub fn save_diary(state: State<'_, AppState>, input: SaveDiaryInput) -> Result<D
         word_count,
         modified_at: now_ts,
     })
+}
+
+#[tauri::command]
+pub fn list_diary_days_in_month(
+    state: State<'_, AppState>,
+    year: i32,
+    month: i32,
+) -> Result<Vec<i32>, String> {
+    if year < 2022 {
+        return Err("仅支持 2022 年及之后".to_string());
+    }
+    if !(1..=12).contains(&month) {
+        return Err("月份必须在 1-12".to_string());
+    }
+
+    let conn = open_connection(&state.db_path).map_err(|e| format!("open db failed: {e}"))?;
+    diary_repo::list_daily_days_in_month(&conn, year, month)
+        .map_err(|e| format!("list days failed: {e}"))
 }

@@ -376,6 +376,7 @@ body {
   background: rgba(255, 255, 255, 0.62);
   box-shadow: none;
   cursor: pointer;
+  position: relative;
   font-size: 12px;
   font-weight: 650;
   color: rgba(2, 6, 23, 0.78);
@@ -383,6 +384,17 @@ body {
     transform 120ms ease,
     border-color 120ms ease,
     background 120ms ease;
+}
+
+.td-cal__dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.92);
+  bottom: 7px;
+  right: 7px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .td-cal__cell:hover {
