@@ -49,6 +49,9 @@ coverage/
 # Local npm cache
 .npm-cache/
 
+# Local reference / scratch files (do not commit)
+_ref_style.html
+
 # User data
 diaries/
 *.db
