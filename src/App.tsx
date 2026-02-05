@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { List } from 'react-window';
+import type { RowComponentProps } from 'react-window';
 
 import type { AuthStatus } from './types/auth';
 import type { DiaryEntry } from './types/diary';
@@ -63,6 +65,44 @@ const ymdToYearMonthDay = (
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day))
     return null;
   return { year, month, day };
+};
+
+type HistoryRowExtraProps = {
+  items: HistoricalDiary[];
+  currentYear: number;
+  onSelectDate: (ymd: string) => void;
+};
+
+const HistoryRow = ({
+  index,
+  style,
+  ariaAttributes,
+  items,
+  currentYear,
+  onSelectDate,
+}: RowComponentProps<HistoryRowExtraProps>): React.ReactElement | null => {
+  const item = items[index];
+  if (!item) return null;
+
+  return (
+    <div style={style} {...ariaAttributes}>
+      <button
+        type="button"
+        className="td-historyCard td-historyCard--virtual"
+        onClick={() => onSelectDate(item.date)}
+        aria-label={`${item.year}年 ${item.date}`}
+      >
+        <div className="td-historyCard__top">
+          <span className="td-historyCard__year">{item.year}年</span>
+          <span className="td-historyCard__ago">
+            {Math.max(1, currentYear - item.year)}年前
+          </span>
+        </div>
+        <div className="td-historyCard__preview">{item.preview || '（无内容）'}</div>
+        <div className="td-historyCard__meta">字数：{item.word_count}</div>
+      </button>
+    </div>
+  );
 };
 
 function App(): React.ReactElement {
@@ -353,26 +393,20 @@ function App(): React.ReactElement {
               <div className="td-empty__text">还没有“往年今日”的历史日记。</div>
             </div>
           ) : (
-            <div className="td-historyList" aria-label="历史列表">
-              {historyItems.map((item) => (
-                <button
-                  key={item.date}
-                  type="button"
-                  className="td-historyCard"
-                  onClick={() => setSelectedDate(item.date)}
-                >
-                  <div className="td-historyCard__top">
-                    <span className="td-historyCard__year">{item.year}年</span>
-                    <span className="td-historyCard__ago">
-                      {Math.max(1, currentYear - item.year)}年前
-                    </span>
-                  </div>
-                  <div className="td-historyCard__preview">
-                    {item.preview || '（无内容）'}
-                  </div>
-                  <div className="td-historyCard__meta">字数：{item.word_count}</div>
-                </button>
-              ))}
+            <div className="td-historyViewport" aria-label="历史列表">
+              <List<HistoryRowExtraProps>
+                rowComponent={HistoryRow}
+                rowCount={historyItems.length}
+                rowHeight={116}
+                rowProps={{
+                  items: historyItems,
+                  currentYear,
+                  onSelectDate: setSelectedDate,
+                }}
+                overscanCount={4}
+                defaultHeight={420}
+                style={{ height: '100%', width: '100%' }}
+              />
             </div>
           )}
         </aside>
