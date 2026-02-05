@@ -44,6 +44,7 @@
 .row {
   display: flex;
   justify-content: center;
+  gap: 12px;
 }
 
 .auth-panel,
@@ -75,6 +76,111 @@
   width: 100%;
   margin-top: 8px;
   opacity: 0.8;
+}
+
+.diary-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.calendar-panel {
+  width: 320px;
+}
+
+.editor-panel {
+  flex: 1;
+  min-width: 280px;
+}
+
+.editor-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.selected-date {
+  font-weight: 600;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.calendar-today {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.td-cal {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.td-cal__header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.td-cal__nav {
+  padding: 0.4em 0.6em;
+  box-shadow: none;
+}
+
+.td-cal__title {
+  font-weight: 700;
+}
+
+.td-cal__weekdays,
+.td-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.td-cal__weekday {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.td-cal__cell {
+  padding: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.td-cal__cell--empty {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.td-cal__cell.is-today {
+  border-color: #396cd8;
+}
+
+.td-cal__cell.is-selected {
+  background: rgba(57, 108, 216, 0.15);
+  border-color: rgba(57, 108, 216, 0.5);
+}
+
+@media (max-width: 860px) {
+  .diary-layout {
+    flex-direction: column;
+  }
+
+  .calendar-panel {
+    width: 100%;
+  }
 }
 
 .status {
@@ -153,5 +259,15 @@ button {
   }
   button:active {
     background-color: #0f0f0f69;
+  }
+
+  .td-cal,
+  .selected-date {
+    background: rgba(15, 15, 15, 0.45);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .td-cal__cell {
+    border-color: rgba(255, 255, 255, 0.12);
   }
 }

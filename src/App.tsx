@@ -4,6 +4,7 @@ import type { AuthStatus } from "./types/auth";
 import type { DiaryEntry } from "./types/diary";
 import { getAuthStatus, getDiary, saveDiary, setPassword, verifyPassword } from "./services/tauriCommands";
 import { getTodayYmd } from "./utils/dateUtils";
+import { MonthView } from "./components/Calendar/MonthView";
 
 import "./App.css";
 
@@ -157,33 +158,40 @@ function App(): React.ReactElement {
         </section>
       ) : (
         <section className="diary-panel" aria-label="日记编辑器">
-          <div className="row">
-            <label htmlFor="date-input">日期</label>
-            <input
-              id="date-input"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.currentTarget.value)}
-            />
-            <button type="button" onClick={() => void loadDiary(selectedDate)}>
-              加载
-            </button>
-            <button type="button" onClick={() => void handleSave()}>
-              保存
-            </button>
-          </div>
+          <div className="diary-layout">
+            <aside className="calendar-panel">
+              <MonthView selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+              <button type="button" className="calendar-today" onClick={() => setSelectedDate(today)}>
+                回到今天
+              </button>
+            </aside>
 
-          <textarea
-            className="diary-textarea"
-            value={content}
-            onChange={(e) => setContent(e.currentTarget.value)}
-            placeholder="写点什么..."
-            rows={14}
-          />
+            <div className="editor-panel">
+              <div className="row editor-actions">
+                <div className="selected-date" aria-label="当前选择日期">
+                  {selectedDate}
+                </div>
+                <button type="button" onClick={() => void loadDiary(selectedDate)}>
+                  刷新
+                </button>
+                <button type="button" onClick={() => void handleSave()}>
+                  保存
+                </button>
+              </div>
 
-          <div className="meta-row">
-            <span>字数：{diaryMeta?.word_count ?? 0}</span>
-            <span>修改时间：{diaryMeta?.modified_at ? diaryMeta.modified_at : "-"}</span>
+              <textarea
+                className="diary-textarea"
+                value={content}
+                onChange={(e) => setContent(e.currentTarget.value)}
+                placeholder="写点什么..."
+                rows={14}
+              />
+
+              <div className="meta-row">
+                <span>字数：{diaryMeta?.word_count ?? 0}</span>
+                <span>修改时间：{diaryMeta?.modified_at ? diaryMeta.modified_at : "-"}</span>
+              </div>
+            </div>
           </div>
         </section>
       )}

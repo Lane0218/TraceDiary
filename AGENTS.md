@@ -721,7 +721,7 @@ ORDER BY year DESC
 
 ### 当前任务板（滚动 TODO，优先级从上到下）
 
-- [ ] 日历导航 UI：MonthView（上月/下月）、选中日期、高亮今天、点击切换日期（≤200ms）
+- [x] 日历导航 UI：MonthView（上月/下月）、选中日期、高亮今天、点击切换日期（≤200ms）
 - [ ] 日历蓝点：按月查询有日记日期并标记（为“往年今日/历史面板”打基础）
 - [ ] 往年今日（后端查询）：month/day + year 范围（2022..current_year-1）+ year DESC
 - [ ] 往年今日（前端 UI）：HistoryPanel 列表（后续再上 react-window 虚拟滚动）
@@ -738,7 +738,7 @@ ORDER BY year DESC
 - [x] 日记读写闭环（get/save + 加密文件落地）
 - [x] 编辑 30 秒后自动保存（前端防抖）
 - [ ] 基础 Milkdown 编辑器（仅编辑视图，替换临时 textarea）
-- [ ] 日历导航 UI
+- [x] 日历导航 UI
 
 ### 阶段 2: 核心功能（第 3-4 周）
 - [ ] 往年今日查询 + UI（虚拟滚动）
