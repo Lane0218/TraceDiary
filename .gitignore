@@ -51,3 +51,6 @@ diaries/
 *.db
 *.db-shm
 *.db-wal
+
+# Local toolchains
+TraceDiaryTools/
