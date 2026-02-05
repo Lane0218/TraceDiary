@@ -14,7 +14,7 @@ describe('MonthView', () => {
     expect(onSelectDate).toHaveBeenCalledWith('2026-02-06');
   });
 
-  it('renders a dot when the day is included in entryDays', () => {
+  it('marks the day when it is included in entryDays', () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-02-05T12:00:00'));
 
     const onSelectDate = jest.fn();
@@ -29,6 +29,6 @@ describe('MonthView', () => {
     );
 
     const dayBtn = screen.getByRole('button', { name: '2026-02-05' });
-    expect(dayBtn.querySelector('.td-cal__dot')).toBeInTheDocument();
+    expect(dayBtn).toHaveClass('has-entry');
   });
 });

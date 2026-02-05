@@ -124,6 +124,7 @@ export function MonthView({
 
           const className = [
             'td-cal__cell',
+            cell.hasEntry ? 'has-entry' : '',
             cell.isToday ? 'is-today' : '',
             cell.isSelected ? 'is-selected' : '',
           ]
@@ -141,7 +142,6 @@ export function MonthView({
               aria-pressed={cell.isSelected}
             >
               {cell.dayNumber}
-              {cell.hasEntry ? <span className="td-cal__dot" aria-hidden="true" /> : null}
             </button>
           );
         })}

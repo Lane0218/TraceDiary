@@ -50,6 +50,16 @@ const formatModifiedAt = (modifiedAt: string | null | undefined): string => {
   return s;
 };
 
+const ymdToYearMonthDay = (ymd: string): { year: number; month: number; day: number } | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  return { year, month, day };
+};
+
 function App(): React.ReactElement {
   const today = useMemo(() => getTodayYmd(), []);
 
@@ -68,6 +78,19 @@ function App(): React.ReactElement {
   const [lastSavedContent, setLastSavedContent] = useState<string>('');
   const [monthEntryDays, setMonthEntryDays] = useState<ReadonlySet<number> | null>(null);
   const monthKeyRef = useRef<string>('');
+
+  const markSavedDayInCalendar = useCallback((dateYmd: string): void => {
+    const parts = ymdToYearMonthDay(dateYmd);
+    if (!parts) return;
+    const key = `${parts.year}-${String(parts.month).padStart(2, '0')}`;
+    if (key !== monthKeyRef.current) return;
+
+    setMonthEntryDays((prev) => {
+      const next = new Set(prev ?? []);
+      next.add(parts.day);
+      return next;
+    });
+  }, []);
 
   const loadAuthStatus = async (): Promise<void> => {
     try {
@@ -132,6 +155,7 @@ function App(): React.ReactElement {
           const saved = await saveDiary({ date: selectedDate, content });
           setDiaryMeta({ word_count: saved.word_count, modified_at: saved.modified_at });
           setLastSavedContent(content);
+          markSavedDayInCalendar(saved.date);
           setStatusText('已自动保存');
         } catch (error: unknown) {
           setErrorText('自动保存失败，请重试');
@@ -141,7 +165,7 @@ function App(): React.ReactElement {
     }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [authMode, authStatus, content, lastSavedContent, selectedDate]);
+  }, [authMode, authStatus, content, lastSavedContent, markSavedDayInCalendar, selectedDate]);
 
   const handleAuthSubmit = async (): Promise<void> => {
     try {
@@ -171,6 +195,7 @@ function App(): React.ReactElement {
       const saved = await saveDiary({ date: selectedDate, content });
       setDiaryMeta({ word_count: saved.word_count, modified_at: saved.modified_at });
       setLastSavedContent(content);
+      markSavedDayInCalendar(saved.date);
       setStatusText('已保存');
     } catch (error: unknown) {
       setErrorText('保存失败，请先完成密码验证');

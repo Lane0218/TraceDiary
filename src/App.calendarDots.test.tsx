@@ -24,7 +24,7 @@ describe('App calendar dots (flow)', () => {
     // Calendar day buttons exist; dot should appear for 2026-02-05 because the month list includes day 5.
     const dayBtn = await screen.findByRole('button', { name: '2026-02-05' });
     await waitFor(() => {
-      expect(dayBtn.querySelector('.td-cal__dot')).toBeInTheDocument();
+      expect(dayBtn).toHaveClass('has-entry');
     });
   });
 });
