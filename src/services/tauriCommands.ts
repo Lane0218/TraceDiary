@@ -8,11 +8,12 @@ export const getAuthStatus = async (): Promise<AuthStatus> => {
 };
 
 export const setPassword = async (password: string): Promise<void> => {
-  await invoke("set_password", { password_input: password });
+  // Tauri 会将 Rust 的 snake_case 参数名映射为 JS 侧 camelCase（password_input -> passwordInput）
+  await invoke("set_password", { passwordInput: password });
 };
 
 export const verifyPassword = async (password: string): Promise<void> => {
-  await invoke("verify_password", { password_input: password });
+  await invoke("verify_password", { passwordInput: password });
 };
 
 export const getDiary = async (date: string): Promise<DiaryEntry | null> => {
