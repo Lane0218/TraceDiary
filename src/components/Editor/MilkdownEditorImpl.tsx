@@ -11,7 +11,7 @@ export interface MilkdownEditorImplProps {
   ariaLabel: string;
 }
 
-export const MilkdownEditorImpl: React.FC<MilkdownEditorImplProps> = ({
+const MilkdownEditorInner: React.FC<MilkdownEditorImplProps> = ({
   value,
   onChange,
   ariaLabel,
@@ -62,13 +62,18 @@ export const MilkdownEditorImpl: React.FC<MilkdownEditorImplProps> = ({
   );
 
   return (
+    <Milkdown />
+  );
+};
+
+export const MilkdownEditorImpl: React.FC<MilkdownEditorImplProps> = (props) => {
+  return (
     <div className="td-editorShell" data-testid="milkdown-editor">
       <MilkdownProvider>
-        <Milkdown />
+        <MilkdownEditorInner {...props} />
       </MilkdownProvider>
     </div>
   );
 };
 
 export default MilkdownEditorImpl;
-
