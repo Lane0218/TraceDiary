@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`38`
-- 状态统计：`DONE=12` / `DOING=0` / `TODO=26` / `BLOCKED=0`
-- 建议下一步：`TD-DATA-001`
+- 状态统计：`DONE=12` / `DOING=1` / `TODO=25` / `BLOCKED=0`
+- 当前进行中：`TD-DATA-001`
 
 ## 1. 任务清单（按模块）
 
@@ -39,7 +39,7 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-DATA-001` | `TODO` | 实现 IndexedDB 数据库与对象仓库（diaries/metadata/config） | 可读写并按索引查询 | `src/services/indexeddb.ts` | — | — |
+| `TD-DATA-001` | `DOING` | 实现 IndexedDB 数据库与对象仓库（diaries/metadata/config） | 可读写并按索引查询 | `src/services/indexeddb.ts` | — | — |
 | `TD-DATA-002` | `TODO` | 实现 `DiaryEntry` 与 `MetadataEntry` 类型（含 yearly `year + date`） | 类型与 SPEC 一致 | `src/types/diary.ts` `src/types/metadata.ts` | — | — |
 | `TD-DATA-003` | `TODO` | 实现 metadata 本地解密缓存与远端 `metadata.json.enc` 同步 | 首次加载可拉取并解密 | `src/services/sync.ts` | — | — |
 
