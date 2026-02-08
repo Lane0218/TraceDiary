@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`38`
-- 状态统计：`DONE=5` / `DOING=1` / `TODO=32` / `BLOCKED=0`
-- 当前进行中：`TD-SEC-001`
+- 状态统计：`DONE=12` / `DOING=0` / `TODO=26` / `BLOCKED=0`
+- 建议下一步：`TD-DATA-001`
 
 ## 1. 任务清单（按模块）
 
@@ -27,13 +27,13 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-SEC-001` | `DOING` | 实现首次欢迎页输入（Repo/Token/主密码） | 表单校验通过后进入初始化流程 | `src/pages/welcome.tsx` | — | — |
-| `TD-SEC-002` | `TODO` | 实现 Gitee 仓库访问校验 | 无效 Token/Repo 可提示错误 | `src/services/gitee.ts` | — | — |
-| `TD-SEC-003` | `TODO` | 实现 PBKDF2 动态迭代参数校准（200ms~500ms） | 生成并持久化 `kdfParams` | `src/services/crypto.ts` `src/types/config.ts` | — | — |
-| `TD-SEC-004` | `TODO` | 实现 AES-256-GCM 加解密工具（IV+ciphertext Base64） | 加密后可无损解密 | `src/services/crypto.ts` | — | — |
-| `TD-SEC-005` | `TODO` | 实现 `encryptedToken` 存储与恢复 | 本地无 Token 明文 | `src/services/crypto.ts` `src/hooks/use-auth.ts` | — | — |
-| `TD-SEC-006` | `TODO` | 实现 7 天免输主密码机制（不存主密码明文） | 过期后强制重输密码 | `src/hooks/use-auth.ts` | — | — |
-| `TD-SEC-007` | `TODO` | 实现 Token 解密失败/失效回退输入流程 | 失败时可补输并覆盖本地密文 | `src/pages/welcome.tsx` `src/hooks/use-auth.ts` | — | — |
+| `TD-SEC-001` | `DONE` | 实现首次欢迎页输入（Repo/Token/主密码） | 表单校验通过后进入初始化流程 | `src/pages/welcome.tsx` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-002` | `DONE` | 实现 Gitee 仓库访问校验 | 无效 Token/Repo 可提示错误 | `src/services/gitee.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-003` | `DONE` | 实现 PBKDF2 动态迭代参数校准（200ms~500ms） | 生成并持久化 `kdfParams` | `src/services/crypto.ts` `src/types/config.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-004` | `DONE` | 实现 AES-256-GCM 加解密工具（IV+ciphertext Base64） | 加密后可无损解密 | `src/services/crypto.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-005` | `DONE` | 实现 `encryptedToken` 存储与恢复 | 本地无 Token 明文 | `src/services/crypto.ts` `src/hooks/use-auth.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-006` | `DONE` | 实现 7 天免输主密码机制（不存主密码明文） | 过期后强制重输密码 | `src/hooks/use-auth.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
+| `TD-SEC-007` | `DONE` | 实现 Token 解密失败/失效回退输入流程 | 失败时可补输并覆盖本地密文 | `src/pages/welcome.tsx` `src/hooks/use-auth.ts` | `npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / cb09c7f` |
 
 ### 6.3 数据层与本地缓存
 
