@@ -3,16 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TraceDiary UI Layout Prototype</title>
+    <title>TraceDiary 单页工作台原型</title>
     <style>
       :root {
-        --bg: #f6f7f9;
+        --bg: #f3f5f8;
         --surface: #ffffff;
-        --surface-2: #f9fafb;
-        --line: #e5e7eb;
+        --surface-soft: #f8fafc;
+        --line: #dbe1ea;
         --text: #111827;
-        --muted: #6b7280;
+        --muted: #667085;
         --accent: #2563eb;
+        --accent-soft: #eaf1ff;
         --success: #15803d;
         --warning: #b45309;
       }
@@ -24,140 +25,52 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background: var(--bg);
+        background: radial-gradient(circle at 12% 10%, #eef4ff 0%, transparent 28%), var(--bg);
         color: var(--text);
         font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
       }
 
       .shell {
         margin: 0 auto;
-        max-width: 1180px;
-        padding: 0 24px 28px;
+        max-width: 1200px;
+        padding: 0 22px 28px;
       }
 
       .topbar {
         position: sticky;
         top: 0;
-        z-index: 3;
+        z-index: 5;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        height: 64px;
+        gap: 12px;
+        min-height: 68px;
         border-bottom: 1px solid var(--line);
-        background: rgba(246, 247, 249, 0.94);
+        background: rgba(243, 245, 248, 0.92);
         backdrop-filter: blur(8px);
       }
 
       .brand {
         font-family: "Noto Serif SC", "Songti SC", serif;
-        font-size: 20px;
+        font-size: 22px;
         letter-spacing: 0.02em;
       }
 
-      .tabs {
+      .top-meta {
         display: flex;
-        gap: 18px;
+        align-items: center;
+        gap: 8px;
       }
 
-      .tab {
-        border: 0;
-        background: transparent;
-        color: var(--muted);
-        padding: 8px 0;
-        font-size: 14px;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-      }
-
-      .tab.active {
-        color: var(--text);
-        border-bottom-color: var(--accent);
-      }
-
-      .status-chip {
+      .chip {
+        display: inline-flex;
+        align-items: center;
         border: 1px solid var(--line);
         border-radius: 999px;
         background: var(--surface);
         color: var(--muted);
-        padding: 6px 10px;
         font-size: 12px;
-      }
-
-      .page {
-        display: none;
-        animation: page-in 0.2s ease;
-      }
-
-      .page.active {
-        display: block;
-      }
-
-      @keyframes page-in {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .page-header {
-        margin: 22px 0 16px;
-      }
-
-      .page-header h1 {
-        margin: 0;
-        font-family: "Noto Serif SC", "Songti SC", serif;
-        font-size: 34px;
-      }
-
-      .page-header p {
-        margin: 8px 0 0;
-        color: var(--muted);
-      }
-
-      .card {
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        background: var(--surface);
-        box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
-      }
-
-      .grid {
-        display: grid;
-        gap: 16px;
-      }
-
-      .grid-two {
-        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-      }
-
-      .panel {
-        padding: 18px;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 12px;
-      }
-
-      .field label {
-        font-size: 13px;
-        color: var(--muted);
-      }
-
-      .field input,
-      .field textarea,
-      .field select {
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 10px 12px;
-        background: var(--surface);
-        color: var(--text);
+        padding: 6px 10px;
       }
 
       .btn {
@@ -166,7 +79,14 @@
         background: var(--surface);
         color: var(--text);
         padding: 9px 12px;
+        font-size: 13px;
         cursor: pointer;
+        transition: all 0.12s ease;
+      }
+
+      .btn:hover {
+        border-color: #c4cfdd;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
       }
 
       .btn.primary {
@@ -175,11 +95,45 @@
         color: #fff;
       }
 
+      .hero {
+        margin: 18px 0 14px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-family: "Noto Serif SC", "Songti SC", serif;
+        font-size: 34px;
+      }
+
+      .hero p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(300px, 1.05fr) minmax(0, 1.95fr);
+        gap: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
       .calendar-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        gap: 8px;
+        margin-bottom: 10px;
       }
 
       .month-title {
@@ -189,84 +143,224 @@
       .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 8px;
+        gap: 7px;
+      }
+
+      .weekday {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 4px 0;
       }
 
       .day {
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 10px;
+        min-height: 40px;
         background: var(--surface);
-        min-height: 42px;
+        color: #374151;
         font-size: 13px;
+        cursor: pointer;
+      }
+
+      .day:hover {
+        border-color: #c4cfdd;
+      }
+
+      .day.today {
+        box-shadow: inset 0 0 0 1px #93c5fd;
       }
 
       .day.active {
         border-color: var(--accent);
-        background: #eff6ff;
-        color: #1d4ed8;
+        background: var(--accent-soft);
+        color: #1e3a8a;
       }
 
-      .day.today {
-        box-shadow: inset 0 0 0 1px var(--accent);
-      }
-
-      .list {
-        max-height: 330px;
-        overflow: auto;
+      .side-block {
+        margin-top: 12px;
         border: 1px solid var(--line);
         border-radius: 12px;
-        background: var(--surface-2);
+        background: var(--surface-soft);
+        padding: 10px;
+      }
+
+      .side-block h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .history-list {
+        max-height: 180px;
+        overflow: auto;
+        display: grid;
+        gap: 8px;
+      }
+
+      .history-item {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
         padding: 8px;
       }
 
-      .list-item {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: var(--surface);
-        padding: 10px;
-        margin-bottom: 8px;
+      .history-item small {
+        color: var(--muted);
+      }
+
+      .editor-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .toolbar {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
-        padding: 12px;
-        margin-bottom: 12px;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface-soft);
+        padding: 10px;
       }
 
-      .editor {
-        min-height: 360px;
-        resize: vertical;
+      .toolbar .label {
+        color: var(--muted);
+        font-size: 12px;
       }
 
       .status {
         font-size: 13px;
       }
 
-      .status.saving {
-        color: var(--warning);
-      }
-
       .status.saved {
         color: var(--success);
       }
 
-      @media (max-width: 920px) {
+      .status.saving {
+        color: var(--warning);
+      }
+
+      .mode-switch {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .mode-btn {
+        border: 0;
+        background: transparent;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .mode-btn.active {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .editor {
+        min-height: 420px;
+        width: 100%;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--text);
+        padding: 14px;
+        line-height: 1.75;
+      }
+
+      .modal-mask {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.42);
+        padding: 16px;
+      }
+
+      .modal {
+        width: min(560px, 100%);
+        border: 1px solid #cdd8ea;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 22px 40px rgba(15, 23, 42, 0.26);
+      }
+
+      .modal-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .modal-head h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .modal-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .modal-body {
+        padding: 14px 16px 16px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .field input,
+      .field select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 10px;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .ghost {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 960px) {
         .shell {
-          padding: 0 16px 20px;
+          padding: 0 14px 20px;
         }
 
-        .grid-two {
+        .layout {
           grid-template-columns: 1fr;
         }
 
-        .topbar {
-          flex-wrap: wrap;
-          gap: 8px;
-          height: auto;
-          padding: 10px 0;
+        .hero h1 {
+          font-size: 30px;
         }
       }
     </style>
@@ -275,164 +369,242 @@
     <div class="shell">
       <header class="topbar">
         <div class="brand">TraceDiary</div>
-        <nav class="tabs" aria-label="页面切换">
-          <button class="tab active" data-page="welcome">欢迎</button>
-          <button class="tab" data-page="calendar">日历</button>
-          <button class="tab" data-page="editor">编辑</button>
-          <button class="tab" data-page="yearly">年度总结</button>
-        </nav>
-        <div class="status-chip" id="globalLockState">锁态：已解锁（演示）</div>
+        <div class="top-meta">
+          <span class="chip" id="sessionState">会话：未解锁</span>
+          <button class="btn" id="openAuth">解锁 / 配置</button>
+        </div>
       </header>
 
-      <section id="welcome" class="page active" aria-label="welcome-layout">
-        <div class="page-header">
-          <h1>欢迎使用 TraceDiary</h1>
-          <p>布局演示：左侧表单初始化，右侧系统状态与风险提示。</p>
-        </div>
-        <div class="grid grid-two">
+      <section class="hero">
+        <h1>日记工作台</h1>
+        <p>单页布局：左侧日历与往年今日，右侧同屏切换“日记 / 年度总结”。欢迎流程改为启动弹层，不再占用独立页面。</p>
+      </section>
+
+      <section class="layout" aria-label="workspace-layout">
+        <aside class="card panel">
+          <div class="calendar-head">
+            <button class="btn" id="prevMonth">上个月</button>
+            <strong class="month-title" id="monthTitle">2026年02月</strong>
+            <button class="btn" id="nextMonth">下个月</button>
+          </div>
+
+          <div class="calendar-grid" id="weekdayRow"></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+
+          <div class="side-block">
+            <h3>往年今日</h3>
+            <div class="history-list" id="historyList"></div>
+          </div>
+        </aside>
+
+        <main class="editor-shell">
+          <div class="toolbar">
+            <span class="label">当前日期</span>
+            <input type="date" id="activeDate" value="2026-02-08" />
+
+            <div class="mode-switch" role="tablist" aria-label="编辑模式切换">
+              <button class="mode-btn active" id="dailyMode" data-mode="daily" type="button">日记</button>
+              <button class="mode-btn" id="yearlyMode" data-mode="yearly" type="button">年度总结</button>
+            </div>
+
+            <span class="status saved" id="saveState">已保存到本地</span>
+            <button class="btn" id="syncNow">立即上传</button>
+            <span class="status" id="syncState">同步状态：idle</span>
+          </div>
+
           <article class="card panel">
+            <h2 id="editorTitle" style="margin: 0 0 10px; font-size: 18px">2026-02-08 日记</h2>
+            <textarea class="editor" id="editorArea"># 今天的记录
+
+这里演示“单页工作台”布局与状态流，不展示业务细节。</textarea>
+          </article>
+        </main>
+      </section>
+    </div>
+
+    <div class="modal-mask" id="authModal" role="dialog" aria-modal="true" aria-label="认证弹层">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>欢迎使用 TraceDiary</h2>
+          <p id="authDesc">首次使用请配置仓库与密钥；后续打开只需输入主密码。</p>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label>认证模式</label>
+            <select id="authMode">
+              <option value="first">首次使用（配置 Gitee）</option>
+              <option value="unlock">日常解锁（输入主密码）</option>
+            </select>
+          </div>
+
+          <div id="setupFields">
             <div class="field">
               <label>Gitee 仓库</label>
               <input placeholder="owner/repo" />
             </div>
             <div class="field">
               <label>Token</label>
-              <input placeholder="请输入 Token" type="password" />
+              <input type="password" placeholder="输入 Token" />
             </div>
-            <div class="field">
-              <label>主密码</label>
-              <input placeholder="至少 8 位" type="password" />
-            </div>
-            <button class="btn primary">初始化并保存配置</button>
-          </article>
-          <aside class="card panel">
-            <strong>系统状态</strong>
-            <p style="color: var(--muted)">stage: needs-setup</p>
-            <p style="color: var(--muted)">状态条会统一复用到其他页面。</p>
-          </aside>
-        </div>
-      </section>
+          </div>
 
-      <section id="calendar" class="page" aria-label="calendar-layout">
-        <div class="page-header">
-          <h1>日历</h1>
-          <p>布局演示：左侧月历，右侧“往年今日”滚动列表。</p>
-        </div>
-        <div class="grid grid-two">
-          <article class="card panel">
-            <div class="calendar-head">
-              <button class="btn" id="prevMonth">上个月</button>
-              <div class="month-title" id="monthTitle">2026年02月</div>
-              <button class="btn" id="nextMonth">下个月</button>
-            </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
-          </article>
-          <aside class="card panel">
-            <div class="field">
-              <label>查询日期</label>
-              <input id="historyDate" type="date" value="2026-02-08" />
-            </div>
-            <div class="list" id="historyList"></div>
-          </aside>
-        </div>
-      </section>
+          <div class="field">
+            <label>主密码</label>
+            <input id="masterPassword" type="password" placeholder="输入主密码" />
+          </div>
 
-      <section id="editor" class="page" aria-label="editor-layout">
-        <div class="page-header">
-          <h1>编辑</h1>
-          <p>布局演示：顶部工具条固定展示日期、保存状态和同步动作。</p>
+          <div class="modal-actions">
+            <span class="ghost">弹层提交后关闭，进入单页工作台。</span>
+            <button class="btn primary" id="submitAuth">提交并进入</button>
+          </div>
         </div>
-        <div class="card panel toolbar">
-          <input type="date" id="editorDate" value="2026-02-08" />
-          <span class="status saved" id="saveState">已保存到本地</span>
-          <button class="btn" id="syncNow">立即上传</button>
-          <span class="status" id="syncState">同步状态：idle</span>
-        </div>
-        <div class="card panel">
-          <textarea class="editor" id="editorArea"># 今天的记录
-
-这里是布局交互原型，不展示编辑器细节。</textarea>
-        </div>
-      </section>
-
-      <section id="yearly" class="page" aria-label="yearly-layout">
-        <div class="page-header">
-          <h1>年度总结</h1>
-          <p>布局演示：与编辑页同构，只替换时间维度为“年份”。</p>
-        </div>
-        <div class="card panel toolbar">
-          <select>
-            <option>2026</option>
-            <option>2025</option>
-            <option>2024</option>
-          </select>
-          <span class="status saved">已保存到本地</span>
-          <button class="btn">立即上传</button>
-          <span class="status">同步状态：success</span>
-        </div>
-        <div class="card panel">
-          <textarea class="editor">## 2026 年度总结
-
-- 关键成果
-- 复盘问题
-- 明年计划</textarea>
-        </div>
-      </section>
+      </div>
     </div>
 
     <script>
-      const tabs = document.querySelectorAll('.tab')
-      const pages = document.querySelectorAll('.page')
-      const monthTitle = document.getElementById('monthTitle')
+      const weekdayRow = document.getElementById('weekdayRow')
       const calendarGrid = document.getElementById('calendarGrid')
+      const monthTitle = document.getElementById('monthTitle')
       const historyList = document.getElementById('historyList')
+      const activeDateInput = document.getElementById('activeDate')
+      const editorTitle = document.getElementById('editorTitle')
+      const editorArea = document.getElementById('editorArea')
       const saveState = document.getElementById('saveState')
       const syncState = document.getElementById('syncState')
-      const editorArea = document.getElementById('editorArea')
+      const dailyModeBtn = document.getElementById('dailyMode')
+      const yearlyModeBtn = document.getElementById('yearlyMode')
+
+      const authModal = document.getElementById('authModal')
+      const openAuthBtn = document.getElementById('openAuth')
+      const submitAuthBtn = document.getElementById('submitAuth')
+      const authModeSelect = document.getElementById('authMode')
+      const setupFields = document.getElementById('setupFields')
+      const authDesc = document.getElementById('authDesc')
+      const sessionState = document.getElementById('sessionState')
 
       let currentMonth = new Date(2026, 1, 1)
-      let activeDay = 8
+      let activeDate = '2026-02-08'
+      let editorMode = 'daily'
       let saveTimer = null
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
       function formatMonth(date) {
         return `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月`
+      }
+
+      function pad(value) {
+        return String(value).padStart(2, '0')
+      }
+
+      function dateKey(date) {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+      }
+
+      function updateEditorTitle() {
+        if (editorMode === 'daily') {
+          editorTitle.textContent = `${activeDate} 日记`
+          return
+        }
+
+        const year = activeDate.slice(0, 4)
+        editorTitle.textContent = `${year} 年度总结`
+      }
+
+      function renderWeekday() {
+        weekdayRow.innerHTML = ''
+        weekdays.forEach((label) => {
+          const node = document.createElement('div')
+          node.className = 'weekday'
+          node.textContent = label
+          weekdayRow.appendChild(node)
+        })
       }
 
       function renderCalendar() {
         monthTitle.textContent = formatMonth(currentMonth)
         calendarGrid.innerHTML = ''
 
-        for (let i = 1; i <= 35; i += 1) {
+        const year = currentMonth.getFullYear()
+        const month = currentMonth.getMonth()
+        const firstDay = new Date(year, month, 1)
+        const start = new Date(year, month, 1 - firstDay.getDay())
+        const today = '2026-02-08'
+
+        for (let i = 0; i < 42; i += 1) {
+          const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+          const key = dateKey(date)
+
           const button = document.createElement('button')
+          button.type = 'button'
           button.className = 'day'
-          button.textContent = String(i > 28 ? i - 28 : i)
-          if (i === activeDay) button.classList.add('active')
-          if (i === 8) button.classList.add('today')
+          button.textContent = String(date.getDate())
+
+          if (key === today) button.classList.add('today')
+          if (key === activeDate) button.classList.add('active')
+
           button.addEventListener('click', () => {
-            activeDay = i
+            activeDate = key
+            activeDateInput.value = key
+            updateEditorTitle()
             renderCalendar()
+            renderHistory()
           })
+
           calendarGrid.appendChild(button)
         }
       }
 
       function renderHistory() {
         historyList.innerHTML = ''
-        for (let i = 0; i < 10; i += 1) {
+        const md = activeDate.slice(5)
+
+        for (let i = 1; i <= 6; i += 1) {
+          const year = 2026 - i
           const item = document.createElement('article')
-          item.className = 'list-item'
-          item.innerHTML = `<strong>${2025 - i} 年</strong><p style="margin:6px 0 0;color:#6b7280;">02-08</p><p style="margin:8px 0 0;">往年今日摘要演示，第 ${i + 1} 条。</p>`
+          item.className = 'history-item'
+          item.innerHTML = `<strong>${year} 年 ${md}</strong><br /><small>往年今日摘要（演示）</small>`
           historyList.appendChild(item)
         }
       }
 
-      tabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          tabs.forEach((item) => item.classList.remove('active'))
-          pages.forEach((page) => page.classList.remove('active'))
-          tab.classList.add('active')
-          document.getElementById(tab.dataset.page).classList.add('active')
-        })
+      function setMode(mode) {
+        editorMode = mode
+        dailyModeBtn.classList.toggle('active', mode === 'daily')
+        yearlyModeBtn.classList.toggle('active', mode === 'yearly')
+
+        if (mode === 'daily') {
+          editorArea.value = '# 今天的记录\n\n这里是日记模式。'
+        } else {
+          const year = activeDate.slice(0, 4)
+          editorArea.value = `## ${year} 年度总结\n\n- 年度成果\n- 问题复盘\n- 来年计划`
+        }
+
+        updateEditorTitle()
+      }
+
+      function openAuthModal() {
+        authModal.classList.remove('hidden')
+      }
+
+      function closeAuthModal() {
+        authModal.classList.add('hidden')
+      }
+
+      authModeSelect.addEventListener('change', () => {
+        const isFirstUse = authModeSelect.value === 'first'
+        setupFields.classList.toggle('hidden', !isFirstUse)
+        authDesc.textContent = isFirstUse
+          ? '首次使用请配置仓库与密钥；后续打开只需输入主密码。'
+          : '日常打开仅需输入主密码，认证后弹层关闭。'
+      })
+
+      submitAuthBtn.addEventListener('click', () => {
+        sessionState.textContent = '会话：已解锁（演示）'
+        closeAuthModal()
+      })
+
+      openAuthBtn.addEventListener('click', () => {
+        openAuthModal()
       })
 
       document.getElementById('prevMonth').addEventListener('click', () => {
@@ -445,6 +617,29 @@
         renderCalendar()
       })
 
+      activeDateInput.addEventListener('change', (event) => {
+        if (!event.target.value) return
+        activeDate = event.target.value
+        const parsed = new Date(`${activeDate}T00:00:00`)
+        if (!Number.isNaN(parsed.getTime())) {
+          currentMonth = new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+        }
+        updateEditorTitle()
+        renderCalendar()
+        renderHistory()
+      })
+
+      editorArea.addEventListener('input', () => {
+        if (saveTimer) clearTimeout(saveTimer)
+        saveState.textContent = '保存中...'
+        saveState.className = 'status saving'
+
+        saveTimer = setTimeout(() => {
+          saveState.textContent = '已保存到本地'
+          saveState.className = 'status saved'
+        }, 500)
+      })
+
       document.getElementById('syncNow').addEventListener('click', () => {
         syncState.textContent = '同步状态：syncing'
         setTimeout(() => {
@@ -452,18 +647,14 @@
         }, 800)
       })
 
-      editorArea.addEventListener('input', () => {
-        if (saveTimer) clearTimeout(saveTimer)
-        saveState.textContent = '保存中...'
-        saveState.className = 'status saving'
-        saveTimer = setTimeout(() => {
-          saveState.textContent = '已保存到本地'
-          saveState.className = 'status saved'
-        }, 600)
-      })
+      dailyModeBtn.addEventListener('click', () => setMode('daily'))
+      yearlyModeBtn.addEventListener('click', () => setMode('yearly'))
 
+      renderWeekday()
       renderCalendar()
       renderHistory()
+      setMode('daily')
+      openAuthModal()
     </script>
   </body>
 </html>
