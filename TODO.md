@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`39`
-- 状态统计：`DONE=23` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-001`
+- 状态统计：`DONE=24` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -90,4 +90,4 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-UI-001` | `DOING` | 提供极简专业风的布局与交互原型 HTML | 可在浏览器中演示导航切换、月份切换与状态反馈逻辑 | `docs/ui-layout-prototype.html` | — | — |
+| `TD-UI-001` | `DONE` | 提供极简专业风的布局与交互原型 HTML | 可在浏览器中演示导航切换、月份切换与状态反馈逻辑 | `docs/ui-layout-prototype.html` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / c45592a` |
