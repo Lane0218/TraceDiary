@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-08`
-- 总任务：`40`
-- 状态统计：`DONE=25` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 总任务：`41`
+- 状态统计：`DONE=26` / `DOING=0` / `TODO=15` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -92,3 +92,4 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `TD-UI-001` | `DONE` | 提供极简专业风的布局与交互原型 HTML | 可在浏览器中演示导航切换、月份切换与状态反馈逻辑 | `docs/ui-layout-prototype.html` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / c45592a` |
 | `TD-UI-002` | `DONE` | 调整原型为“欢迎弹层 + 单页工作台（日历与日记/年度总结同屏）” | 欢迎流程以弹层演示，主页面仅保留一个工作台并可切换日记/年度总结 | `docs/ui-layout-prototype.html` `src/hooks/use-diary.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / 4a4ff1c` |
+| `TD-UI-003` | `DONE` | 落地 blog 同源风格并重构为单页工作台（欢迎弹层 + 日历/日记/年度总结同屏） | 默认进入工作台；认证以弹层呈现；视觉风格与 blog 一致；旧路由可兼容跳转 | `src/App.tsx` `src/index.css` `tailwind.config.js` `src/pages/workspace.tsx` `src/components/auth/*` `src/components/calendar/*` `src/components/history/*` `src/components/editor/*` `src/__tests__/integration/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-08 / 661051b` |
