@@ -1,0 +1,28 @@
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.hero {
+  width: min(720px, 100%);
+  padding: 36px 28px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(135deg, #f7fafc 0%, #eef4ff 100%);
+  border: 1px solid #dde7f5;
+  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.08);
+}
+
+.hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.02em;
+}
+
+.hero p {
+  margin: 0;
+  color: #475569;
+  font-size: 1rem;
+}

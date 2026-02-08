@@ -6,7 +6,7 @@
 
 ### 6.1 基础工程与项目骨架
 
-- [ ] `ID: TD-BASE-001` 任务：初始化 React + TypeScript + Vite 工程骨架；状态：`TODO`；验收标准：可本地启动并渲染首页；关联文件：`package.json` `src/main.tsx` `src/App.tsx`；测试记录：；完成记录：
+- [ ] `ID: TD-BASE-001` 任务：初始化 React + TypeScript + Vite 工程骨架；状态：`DOING`；验收标准：可本地启动并渲染首页；关联文件：`package.json` `src/main.tsx` `src/App.tsx`；测试记录：；完成记录：
 - [ ] `ID: TD-BASE-002` 任务：接入 Tailwind CSS 并配置基础样式；状态：`TODO`；验收标准：工具类生效且构建通过；关联文件：`tailwind.config.*` `src/index.css`；测试记录：；完成记录：
 - [ ] `ID: TD-BASE-003` 任务：建立目录结构（components/pages/hooks/services/types/utils）；状态：`TODO`；验收标准：目录与 SPEC 对齐；关联文件：`src/`；测试记录：；完成记录：
 - [ ] `ID: TD-BASE-004` 任务：配置 React Router 基础路由（welcome/calendar/editor/yearly-summary）；状态：`TODO`；验收标准：页面可路由跳转；关联文件：`src/App.tsx` `src/pages/*`；测试记录：；完成记录：
