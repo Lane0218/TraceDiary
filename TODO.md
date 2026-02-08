@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`38`
-- 状态统计：`DONE=2` / `DOING=0` / `TODO=36` / `BLOCKED=0`
-- 建议下一步：`TD-BASE-003`
+- 状态统计：`DONE=2` / `DOING=1` / `TODO=35` / `BLOCKED=0`
+- 当前进行中：`TD-BASE-003`
 
 ## 1. 任务清单（按模块）
 
@@ -19,7 +19,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `TD-BASE-001` | `DONE` | 初始化 React + TypeScript + Vite 工程骨架 | 可本地启动并渲染首页 | `package.json` `src/main.tsx` `src/App.tsx` | `npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`timeout 10s npm run dev -- --host 127.0.0.1 --port 4174 --strictPort` 启动成功（Vite ready） | `2026-02-08 / 74e583b` |
 | `TD-BASE-002` | `DONE` | 接入 Tailwind CSS 并配置基础样式 | 工具类生效且构建通过 | `tailwind.config.*` `src/index.css` | `npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`npm run build` 通过 | `2026-02-08 / 064c39d` |
-| `TD-BASE-003` | `TODO` | 建立目录结构（components/pages/hooks/services/types/utils） | 目录与 SPEC 对齐 | `src/` | — | — |
+| `TD-BASE-003` | `DOING` | 建立目录结构（components/pages/hooks/services/types/utils） | 目录与 SPEC 对齐 | `src/` | — | — |
 | `TD-BASE-004` | `TODO` | 配置 React Router 基础路由（welcome/calendar/editor/yearly-summary） | 页面可路由跳转 | `src/App.tsx` `src/pages/*` | — | — |
 | `TD-BASE-005` | `TODO` | 接入 TanStack Query 并提供全局 QueryClient | 页面可使用 query/mutation | `src/main.tsx` | — | — |
 
