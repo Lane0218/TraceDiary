@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:unit": "vitest run src/__tests__/unit",
-    "test:integration": "vitest run --environment jsdom src/__tests__/integration",
+    "test:unit": "vitest run src/__tests__/unit src/services/__tests__",
+    "test:integration": "vitest run --environment jsdom src/__tests__/integration src/hooks/__tests__",
     "test:e2e": "bash ./scripts/e2e-smoke.sh"
   },
   "dependencies": {

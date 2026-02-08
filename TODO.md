@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`38`
-- 状态统计：`DONE=5` / `DOING=0` / `TODO=33` / `BLOCKED=0`
-- 建议下一步：`TD-SEC-001`
+- 状态统计：`DONE=5` / `DOING=1` / `TODO=32` / `BLOCKED=0`
+- 当前进行中：`TD-SEC-001`
 
 ## 1. 任务清单（按模块）
 
@@ -27,7 +27,7 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-SEC-001` | `TODO` | 实现首次欢迎页输入（Repo/Token/主密码） | 表单校验通过后进入初始化流程 | `src/pages/welcome.tsx` | — | — |
+| `TD-SEC-001` | `DOING` | 实现首次欢迎页输入（Repo/Token/主密码） | 表单校验通过后进入初始化流程 | `src/pages/welcome.tsx` | — | — |
 | `TD-SEC-002` | `TODO` | 实现 Gitee 仓库访问校验 | 无效 Token/Repo 可提示错误 | `src/services/gitee.ts` | — | — |
 | `TD-SEC-003` | `TODO` | 实现 PBKDF2 动态迭代参数校准（200ms~500ms） | 生成并持久化 `kdfParams` | `src/services/crypto.ts` `src/types/config.ts` | — | — |
 | `TD-SEC-004` | `TODO` | 实现 AES-256-GCM 加解密工具（IV+ciphertext Base64） | 加密后可无损解密 | `src/services/crypto.ts` | — | — |

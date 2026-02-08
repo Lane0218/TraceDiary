@@ -1,32 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  calibrateKdfParams,
+  decryptToken as decryptTokenWithPassword,
+  encryptToken as encryptTokenWithPassword,
+  hashMasterPassword as hashMasterPasswordWithKdf,
+} from '../services/crypto'
+import { validateGiteeRepoAccess as validateGiteeRepoAccessService } from '../services/gitee'
+import type { AppConfig, KdfParams } from '../types/config'
+export type { AppConfig, KdfParams } from '../types/config'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const PASSWORD_VALIDATION = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
-const DEFAULT_KDF_ITERATIONS = 300_000
-const MIN_KDF_ITERATIONS = 150_000
-const MAX_KDF_ITERATIONS = 1_000_000
 
 const CONFIG_STORAGE_KEY = 'trace-diary:app-config'
 export const AUTH_LOCK_STATE_KEY = 'trace-diary:auth:lock-state'
 export const AUTH_PASSWORD_EXPIRY_KEY = 'trace-diary:auth:password-expiry'
-
-export interface KdfParams {
-  algorithm: 'PBKDF2'
-  hash: 'SHA-256'
-  iterations: number
-  salt: string
-}
-
-export interface AppConfig {
-  giteeRepo: string
-  giteeOwner: string
-  giteeRepoName: string
-  passwordHash: string
-  passwordExpiry: string
-  kdfParams: KdfParams
-  encryptedToken?: string
-  tokenCipherVersion: 'v1'
-}
+const AUTH_UNLOCK_SECRET_KEY = 'trace-diary:auth:unlock-secret'
+const AUTH_UNLOCKED_TOKEN_KEY = 'trace-diary:auth:unlocked-token'
+const UNLOCK_KEY_LENGTH = 32
 
 export interface RepoRef {
   owner: string
@@ -80,31 +71,6 @@ export interface UseAuthResult {
   updateTokenCiphertext: (payload: RefreshTokenPayload) => Promise<void>
   lockNow: () => void
   clearError: () => void
-}
-
-function toBase64(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
-}
-
-function fromBase64(value: string): Uint8Array {
-  const binary = atob(value)
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0))
-}
-
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const copied = new Uint8Array(bytes.byteLength)
-  copied.set(bytes)
-  return copied.buffer
-}
-
-function randomBytes(length: number): Uint8Array {
-  const bytes = new Uint8Array(length)
-  crypto.getRandomValues(bytes)
-  return bytes
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
 }
 
 function parseGiteeRepo(repoInput: string): RepoRef {
@@ -188,33 +154,86 @@ function writeExpiryTimestamp(expiryTimestamp: number): void {
   localStorage.setItem(AUTH_PASSWORD_EXPIRY_KEY, String(expiryTimestamp))
 }
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return btoa(binary)
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
+}
+
+async function importUnlockStateKey(secretBase64: string): Promise<CryptoKey> {
+  const secret = base64ToBytes(secretBase64)
+  return crypto.subtle.importKey('raw', toArrayBuffer(secret), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+}
+
+function getOrCreateUnlockSecret(): string {
+  const existing = localStorage.getItem(AUTH_UNLOCK_SECRET_KEY)
+  if (existing) {
+    return existing
+  }
+
+  const bytes = crypto.getRandomValues(new Uint8Array(UNLOCK_KEY_LENGTH))
+  const secret = bytesToBase64(bytes)
+  localStorage.setItem(AUTH_UNLOCK_SECRET_KEY, secret)
+  return secret
+}
+
+async function cacheUnlockedToken(token: string): Promise<void> {
+  const secret = getOrCreateUnlockSecret()
+  const key = await importUnlockStateKey(secret)
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const plaintext = new TextEncoder().encode(token)
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: toArrayBuffer(iv) }, key, toArrayBuffer(plaintext))
+
+  const cipher = new Uint8Array(encrypted)
+  const payload = new Uint8Array(iv.length + cipher.length)
+  payload.set(iv, 0)
+  payload.set(cipher, iv.length)
+  localStorage.setItem(AUTH_UNLOCKED_TOKEN_KEY, bytesToBase64(payload))
+}
+
+async function restoreUnlockedTokenFromCache(): Promise<string | null> {
+  const secret = localStorage.getItem(AUTH_UNLOCK_SECRET_KEY)
+  const cached = localStorage.getItem(AUTH_UNLOCKED_TOKEN_KEY)
+  if (!secret || !cached) {
+    return null
+  }
+
+  const payload = base64ToBytes(cached)
+  if (payload.byteLength <= 12) {
+    return null
+  }
+
+  const iv = payload.subarray(0, 12)
+  const cipher = payload.subarray(12)
+  const key = await importUnlockStateKey(secret)
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: toArrayBuffer(iv) }, key, toArrayBuffer(cipher))
+  return new TextDecoder().decode(decrypted)
+}
+
+function clearUnlockStateCache(): void {
+  localStorage.removeItem(AUTH_UNLOCKED_TOKEN_KEY)
+  localStorage.removeItem(AUTH_UNLOCK_SECRET_KEY)
+}
+
 function createDefaultDependencies(): AuthDependencies {
-  const importPbkdfKey = async (masterPassword: string): Promise<CryptoKey> => {
-    const source = toArrayBuffer(new TextEncoder().encode(masterPassword))
-    return crypto.subtle.importKey('raw', source, 'PBKDF2', false, ['deriveBits', 'deriveKey'])
-  }
-
-  const deriveBits = async (payload: {
-    masterPassword: string
-    kdfParams: KdfParams
-    bits: number
-  }): Promise<Uint8Array> => {
-    const key = await importPbkdfKey(payload.masterPassword)
-    const salt = fromBase64(payload.kdfParams.salt)
-    const bits = await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        hash: payload.kdfParams.hash,
-        iterations: payload.kdfParams.iterations,
-        salt: toArrayBuffer(salt),
-      },
-      key,
-      payload.bits,
-    )
-
-    return new Uint8Array(bits)
-  }
-
   return {
     loadConfig: async () => {
       const raw = localStorage.getItem(CONFIG_STORAGE_KEY)
@@ -232,106 +251,27 @@ function createDefaultDependencies(): AuthDependencies {
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
     },
     validateGiteeRepoAccess: async ({ owner, repoName, token }) => {
-      const endpoint = `https://gitee.com/api/v5/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}`
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: 'application/json',
-        },
+      const result = await validateGiteeRepoAccessService({
+        token,
+        repoUrl: `https://gitee.com/${owner}/${repoName}`,
       })
 
-      if (!response.ok) {
-        throw new Error('Token 或仓库权限校验失败')
+      if (!result.ok) {
+        throw new Error(result.error)
       }
     },
-    generateKdfParams: async (masterPassword) => {
-      const baseline = {
-        algorithm: 'PBKDF2' as const,
-        hash: 'SHA-256' as const,
-        iterations: DEFAULT_KDF_ITERATIONS,
-        salt: toBase64(randomBytes(16)),
-      }
-      const start = performance.now()
-      await deriveBits({ masterPassword, kdfParams: baseline, bits: 256 })
-      const elapsed = Math.max(1, performance.now() - start)
-      const tunedIterations = clamp(
-        Math.round((DEFAULT_KDF_ITERATIONS * 260) / elapsed),
-        MIN_KDF_ITERATIONS,
-        MAX_KDF_ITERATIONS,
-      )
-
-      return {
-        ...baseline,
-        iterations: tunedIterations,
-      }
-    },
+    generateKdfParams: (masterPassword) => calibrateKdfParams(masterPassword),
     hashMasterPassword: async ({ masterPassword, kdfParams }) => {
-      const bits = await deriveBits({ masterPassword, kdfParams, bits: 256 })
-      return toBase64(bits)
+      return hashMasterPasswordWithKdf(masterPassword, kdfParams)
     },
     encryptToken: async ({ token, masterPassword, kdfParams }) => {
-      const keyMaterial = await importPbkdfKey(masterPassword)
-      const iv = randomBytes(12)
-      const aesKey = await crypto.subtle.deriveKey(
-        {
-          name: 'PBKDF2',
-          hash: kdfParams.hash,
-          iterations: kdfParams.iterations,
-          salt: toArrayBuffer(fromBase64(kdfParams.salt)),
-        },
-        keyMaterial,
-        {
-          name: 'AES-GCM',
-          length: 256,
-        },
-        false,
-        ['encrypt'],
-      )
-
-      const plaintext = new TextEncoder().encode(token)
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-        aesKey,
-        toArrayBuffer(plaintext),
-      )
-      const encryptedBytes = new Uint8Array(encrypted)
-      const merged = new Uint8Array(iv.length + encryptedBytes.length)
-      merged.set(iv, 0)
-      merged.set(encryptedBytes, iv.length)
-      return toBase64(merged)
+      return encryptTokenWithPassword(token, masterPassword, kdfParams)
     },
     decryptToken: async ({ encryptedToken, masterPassword, kdfParams }) => {
-      const keyMaterial = await importPbkdfKey(masterPassword)
-      const bytes = fromBase64(encryptedToken)
-      const iv = bytes.slice(0, 12)
-      const cipher = bytes.slice(12)
-      if (!iv.length || !cipher.length) {
-        throw new Error('Token 密文格式错误')
-      }
-
-      const aesKey = await crypto.subtle.deriveKey(
-        {
-          name: 'PBKDF2',
-          hash: kdfParams.hash,
-          iterations: kdfParams.iterations,
-          salt: toArrayBuffer(fromBase64(kdfParams.salt)),
-        },
-        keyMaterial,
-        {
-          name: 'AES-GCM',
-          length: 256,
-        },
-        false,
-        ['decrypt'],
-      )
-
-      const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-        aesKey,
-        toArrayBuffer(cipher),
-      )
-      return new TextDecoder().decode(decrypted)
+      return decryptTokenWithPassword(encryptedToken, masterPassword, kdfParams)
+    },
+    restoreUnlockedToken: async () => {
+      return restoreUnlockedTokenFromCache()
     },
     now: () => Date.now(),
   }
@@ -390,6 +330,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     const config = await dependencies.loadConfig()
     if (!config) {
       writeLockState(true)
+      clearUnlockStateCache()
       setState({
         stage: 'needs-setup',
         config: null,
@@ -410,6 +351,9 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
     if (isLocked) {
       writeLockState(true)
+      if (passwordExpired) {
+        clearUnlockStateCache()
+      }
       setState({
         stage: 'needs-unlock',
         config,
@@ -424,6 +368,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     }
 
     if (!config.encryptedToken) {
+      clearUnlockStateCache()
       setState({
         stage: 'needs-token-refresh',
         config,
@@ -457,6 +402,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         repoName: config.giteeRepoName,
         token: restoredToken,
       })
+      await cacheUnlockedToken(restoredToken)
 
       setState({
         stage: 'ready',
@@ -469,6 +415,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         errorMessage: null,
       })
     } catch {
+      clearUnlockStateCache()
       setState({
         stage: 'needs-token-refresh',
         config,
@@ -536,6 +483,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(config)
+        await cacheUnlockedToken(payload.token.trim())
         masterPasswordRef.current = payload.masterPassword
         setState({
           stage: 'ready',
@@ -595,6 +543,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
         if (!state.config.encryptedToken) {
           await dependencies.saveConfig(nextConfig)
+          clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
             config: nextConfig,
@@ -621,6 +570,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             passwordExpiry: expiry.iso,
           }
           await dependencies.saveConfig(nextConfig)
+          clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
             config: nextConfig,
@@ -646,6 +596,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             passwordExpiry: expiry.iso,
           }
           await dependencies.saveConfig(nextConfig)
+          clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
             config: nextConfig,
@@ -664,6 +615,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           passwordExpiry: expiry.iso,
         }
         await dependencies.saveConfig(nextConfig)
+        await cacheUnlockedToken(token)
 
         setState({
           stage: 'ready',
@@ -740,6 +692,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(nextConfig)
+        await cacheUnlockedToken(token)
         masterPasswordRef.current = masterPassword
 
         setState({
@@ -766,6 +719,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
   const lockNow = useCallback(() => {
     writeLockState(true)
+    clearUnlockStateCache()
     masterPasswordRef.current = null
     setState((prev) => ({
       ...prev,
