@@ -24,14 +24,14 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
       <button
         type="button"
         onClick={() => onSelectDate(entry.date)}
-        className="h-full w-full rounded-xl border border-slate-200 bg-white/90 p-3 text-left transition hover:border-brand-300 hover:shadow-sm"
+        className="h-full w-full rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc]"
         aria-label={`打开 ${entry.date}`}
         data-testid="history-card"
       >
-        <p className="text-sm font-semibold text-ink-900">{entry.year} 年</p>
-        <p className="text-xs text-slate-500">{entry.date}</p>
+        <p className="font-display text-sm text-td-text">{entry.year} 年</p>
+        <p className="text-xs text-td-muted">{entry.date}</p>
         <p
-          className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700"
+          className="mt-2 whitespace-pre-line text-sm leading-6 text-td-text"
           style={{
             display: '-webkit-box',
             WebkitLineClamp: 3,
@@ -41,7 +41,7 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
         >
           {entry.preview}
         </p>
-        <p className="mt-2 text-xs text-slate-500">字数 {entry.wordCount}</p>
+        <p className="mt-2 text-xs text-td-muted">字数 {entry.wordCount}</p>
       </button>
     </div>
   )
@@ -58,7 +58,7 @@ export function OnThisDayList({
 
   if (loadError) {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700">
+      <div className="rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         往年今日读取失败：{loadError}
       </div>
     )
@@ -66,7 +66,7 @@ export function OnThisDayList({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-500">
+      <div className="rounded-[10px] border border-td-line bg-td-soft p-4 text-sm text-td-muted">
         正在加载往年今日...
       </div>
     )
@@ -74,7 +74,7 @@ export function OnThisDayList({
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4 text-sm text-slate-500">
+      <div className="rounded-[10px] border border-dashed border-td-line bg-td-soft p-4 text-sm text-td-muted">
         当前日期暂无往年记录。
       </div>
     )
@@ -88,7 +88,7 @@ export function OnThisDayList({
       rowProps={{ entries, onSelectDate }}
       defaultHeight={360}
       overscanCount={4}
-      className="rounded-2xl border border-slate-200 bg-slate-50/70"
+      className="rounded-[10px] border border-td-line bg-td-soft"
       style={{ height: 360, width: '100%' }}
       aria-label="往年今日列表"
       data-testid="on-this-day-virtual-list"

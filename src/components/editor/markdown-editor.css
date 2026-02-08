@@ -1,18 +1,36 @@
 .trace-milkdown .milkdown {
-  min-height: 300px;
-  padding: 1rem 1.25rem;
-  border-radius: 1rem;
-  background-color: rgba(255, 255, 255, 0.88);
+  min-height: 380px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background-color: #ffffff;
 }
 
 .trace-milkdown .milkdown .editor {
-  min-height: 260px;
+  min-height: 340px;
 }
 
 .trace-milkdown .milkdown .ProseMirror {
-  min-height: 260px;
+  min-height: 340px;
   outline: none;
-  color: #334155;
+  color: #111111;
   font-size: 0.98rem;
-  line-height: 1.75;
+  line-height: 1.8;
+}
+
+.trace-milkdown .milkdown .ProseMirror h1,
+.trace-milkdown .milkdown .ProseMirror h2,
+.trace-milkdown .milkdown .ProseMirror h3 {
+  font-family: 'Bricolage Grotesque', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  margin: 1rem 0 0.5rem;
+}
+
+.trace-milkdown .milkdown .ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.trace-milkdown .milkdown .ProseMirror blockquote {
+  border-left: 4px solid #e6e6e6;
+  margin: 0.8rem 0;
+  padding-left: 0.8rem;
+  color: #666666;
 }

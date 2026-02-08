@@ -5,23 +5,27 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#eef4ff',
-          100: '#dfe9ff',
-          500: '#3b82f6',
+          50: '#eef2ff',
+          100: '#dbeafe',
+          500: '#2563eb',
+          600: '#1d4ed8',
         },
-        ink: {
-          900: '#0f172a',
+        td: {
+          bg: '#fffdfa',
+          text: '#111111',
+          muted: '#666666',
+          line: '#e6e6e6',
+          surface: '#ffffff',
+          soft: '#f5f5f5',
         },
       },
       fontFamily: {
+        display: ['"Bricolage Grotesque"', '"Noto Sans SC"', '"PingFang SC"', 'sans-serif'],
         sans: ['"Noto Sans SC"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
       },
       boxShadow: {
-        soft: '0 16px 44px rgba(15, 23, 42, 0.12)',
-      },
-      backgroundImage: {
-        mesh:
-          'radial-gradient(circle at 12% 18%, rgba(59,130,246,0.2), transparent 36%), radial-gradient(circle at 88% 82%, rgba(20,184,166,0.18), transparent 40%)',
+        card: '0 10px 24px rgba(0, 0, 0, 0.08)',
+        thin: '0 4px 10px rgba(0, 0, 0, 0.06)',
       },
     },
   },

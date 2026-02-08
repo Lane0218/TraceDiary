@@ -1,17 +1,34 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../App'
 
-describe('App 路由', () => {
-  it('应默认进入欢迎页并可跳转到其他页面', async () => {
+describe('App 路由与工作台入口', () => {
+  afterEach(() => {
+    window.history.replaceState({}, '', '/')
+    localStorage.clear()
+  })
+
+  it('应默认进入单页工作台并显示认证弹层', async () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: '欢迎使用 TraceDiary' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '日记工作台' })).toBeTruthy()
+    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
+    expect(screen.getByText(/^状态：/)).toBeTruthy()
+  })
 
-    fireEvent.click(screen.getByRole('link', { name: '日历' }))
-    expect(await screen.findByRole('heading', { name: '日历页面' })).toBeTruthy()
+  it('旧编辑路由应重定向到工作台并保留日期参数', async () => {
+    window.history.replaceState({}, '', '/editor?date=2026-02-20')
+    render(<App />)
 
-    fireEvent.click(screen.getByRole('link', { name: '编辑' }))
-    expect(await screen.findByRole('heading', { name: '编辑页面' })).toBeTruthy()
+    const dateInput = await screen.findByLabelText('当前日期')
+    expect((dateInput as HTMLInputElement).value).toBe('2026-02-20')
+  })
+
+  it('旧年度总结路由应重定向到工作台并启用年度模式', async () => {
+    window.history.replaceState({}, '', '/yearly-summary?year=2025')
+    render(<App />)
+
+    expect(await screen.findByRole('button', { name: '年度总结' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
   })
 })

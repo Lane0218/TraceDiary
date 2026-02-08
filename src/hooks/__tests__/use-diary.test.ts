@@ -130,7 +130,8 @@ describe('useDiary', () => {
 
     rerender({ date: '2026-02-11' as DateString })
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    await waitFor(() => expect(result.current.entryId).toBe('daily:2026-02-11'))
+    await waitFor(() => expect(result.current.content).toBe('# B'))
     expect(result.current.entryId).toBe('daily:2026-02-11')
     expect(result.current.content).toBe('# B')
   })

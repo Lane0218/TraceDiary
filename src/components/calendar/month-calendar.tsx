@@ -28,28 +28,28 @@ export function MonthCalendar({
   const grid = useMemo(() => buildMonthGrid(month, diaryDateSet), [month, diaryDateSet])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:p-5" aria-label="month-calendar">
-      <header className="mb-4 flex items-center justify-between">
+    <section className="space-y-3" aria-label="month-calendar">
+      <header className="flex items-center justify-between">
         <button
           type="button"
           onClick={onPreviousMonth}
           aria-label="上个月"
-          className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 transition hover:border-brand-200 hover:text-brand-600"
+          className="td-btn px-3 py-1 text-xs"
         >
           ◀
         </button>
-        <h3 className="text-lg font-semibold text-ink-900 sm:text-xl">{monthTitle}</h3>
+        <h3 className="font-display text-lg text-td-text sm:text-xl">{monthTitle}</h3>
         <button
           type="button"
           onClick={onNextMonth}
           aria-label="下个月"
-          className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 transition hover:border-brand-200 hover:text-brand-600"
+          className="td-btn px-3 py-1 text-xs"
         >
           ▶
         </button>
       </header>
 
-      <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-td-muted sm:gap-2">
         {WEEKDAY_LABELS.map((label) => (
           <span key={label} className="py-1">
             周{label}
@@ -61,12 +61,12 @@ export function MonthCalendar({
         {grid.map((cell) => {
           const isActive = cell.dateKey === activeDateKey
           const baseStyle =
-            'relative flex h-11 w-full items-center justify-center rounded-xl border text-sm transition sm:h-14 sm:text-base'
+            'relative flex h-10 w-full items-center justify-center rounded-[10px] border text-sm transition sm:h-12'
           const monthStyle = cell.inCurrentMonth
-            ? 'border-slate-200 bg-white text-slate-800 hover:border-brand-300 hover:text-brand-600'
-            : 'border-slate-100 bg-slate-50/80 text-slate-400 hover:border-slate-200'
-          const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-300' : ''
-          const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-700' : ''
+            ? 'border-td-line bg-td-surface text-td-text hover:border-[#cccccc]'
+            : 'border-[#f0f0f0] bg-[#fafafa] text-[#b1b1b1] hover:border-td-line'
+          const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
+          const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600' : ''
 
           return (
             <button
@@ -80,7 +80,7 @@ export function MonthCalendar({
               <span>{cell.day}</span>
               {cell.hasDiary ? (
                 <span
-                  className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-brand-500"
+                  className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-td-text"
                   aria-label={`${cell.dateKey} 已记录`}
                 />
               ) : null}

@@ -175,8 +175,6 @@ export function useDiary(
     let isCancelled = false
     const scopeVersion = scopeVersionRef.current + 1
     scopeVersionRef.current = scopeVersion
-    setIsLoading(true)
-    setError(null)
 
     void dependencies
       .getDiary(entryId)

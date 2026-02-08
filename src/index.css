@@ -1,20 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    font-synthesis: none;
+    --td-bg: #fffdfa;
+    --td-surface: #ffffff;
+    --td-surface-soft: #f5f5f5;
+    --td-line: #e6e6e6;
+    --td-text: #111111;
+    --td-muted: #666666;
+    --td-accent: #2563eb;
+    --td-accent-soft: #eef2ff;
+    --td-success: #15803d;
+    --td-warning: #b45309;
+    --td-danger: #b91c1c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  body {
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    line-height: 1.6;
+    color: var(--td-text);
+    background-color: var(--td-bg);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  body {
-    @apply m-0 min-w-[320px] bg-brand-50 bg-mesh text-ink-900 font-sans;
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-family: 'Bricolage Grotesque', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  a {
+    color: inherit;
   }
 
   #root {
-    @apply min-h-screen;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .td-card {
+    @apply rounded-[10px] border bg-td-surface;
+    border-color: var(--td-line);
+  }
+
+  .td-panel {
+    @apply p-4 sm:p-5;
+  }
+
+  .td-btn {
+    @apply rounded-[10px] border px-3 py-2 text-sm transition;
+    border-color: var(--td-line);
+    background-color: var(--td-surface);
+    color: var(--td-text);
+  }
+
+  .td-btn:hover {
+    @apply shadow-thin;
+    border-color: #cccccc;
+  }
+
+  .td-btn-primary {
+    border-color: var(--td-accent);
+    background-color: var(--td-accent);
+    color: #ffffff;
+  }
+
+  .td-btn-primary:hover {
+    border-color: #1d4ed8;
+    background-color: #1d4ed8;
+    box-shadow: none;
+  }
+
+  .td-input {
+    @apply w-full rounded-[10px] border px-3 py-2 text-sm outline-none transition;
+    border-color: var(--td-line);
+    background-color: var(--td-surface);
+    color: var(--td-text);
+  }
+
+  .td-input:focus {
+    border-color: var(--td-accent);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
+  }
+
+  .td-status {
+    @apply text-sm;
+  }
+
+  .td-status-success {
+    color: var(--td-success);
+  }
+
+  .td-status-warning {
+    color: var(--td-warning);
+  }
+
+  .td-status-danger {
+    color: var(--td-danger);
+  }
+
+  .td-status-muted {
+    color: var(--td-muted);
   }
 }

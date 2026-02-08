@@ -52,7 +52,7 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled }: MarkdownEdi
 
   return (
     <div
-      className={`trace-milkdown rounded-2xl border border-slate-200 bg-white/90 shadow-sm ${
+      className={`trace-milkdown rounded-[10px] border border-td-line bg-td-surface ${
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
       aria-disabled={disabled}
@@ -75,7 +75,7 @@ export default function MarkdownEditor({
         defaultValue={initialValue}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="min-h-[300px] w-full rounded-2xl border border-slate-200 bg-white/90 p-4 text-slate-700 shadow-sm outline-none focus:border-brand-500"
+        className="min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500"
       />
     )
   }
