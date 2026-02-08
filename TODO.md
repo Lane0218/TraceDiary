@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`38`
-- 状态统计：`DONE=15` / `DOING=0` / `TODO=23` / `BLOCKED=0`
-- 建议下一步：`TD-FUNC-001`
+- 状态统计：`DONE=23` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -47,14 +47,14 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-FUNC-001` | `TODO` | 实现月历视图与月份切换 | 可切换任意月份并点击日期 | `src/components/calendar/*` `src/pages/calendar.tsx` | — | — |
-| `TD-FUNC-002` | `TODO` | 集成 Milkdown 编辑器并支持基础 Markdown | 可编辑标题/列表/任务列表 | `src/components/editor/*` | — | — |
-| `TD-FUNC-003` | `TODO` | 实现日记创建/读取/编辑流程 | 按日期保存并可回显 | `src/pages/editor.tsx` `src/hooks/use-diary.ts` | — | — |
-| `TD-FUNC-004` | `TODO` | 实现编辑实时写入 IndexedDB | 刷新后本地内容不丢失 | `src/hooks/use-diary.ts` | — | — |
-| `TD-FUNC-005` | `TODO` | 实现 30 秒防抖上传与手动保存立即上传 | 符合触发时机定义 | `src/hooks/use-sync.ts` `src/services/sync.ts` | — | — |
-| `TD-FUNC-006` | `TODO` | 实现年度总结创建/编辑（`YYYY-summary.md.enc`） | 可按年份管理总结 | `src/pages/yearly-summary.tsx` | — | — |
-| `TD-FUNC-007` | `TODO` | 实现“往年今日”查询与预览 | 显示同月同日历史记录 | `src/components/history/*` | — | — |
-| `TD-FUNC-008` | `TODO` | 实现“往年今日”虚拟滚动（react-window） | 历史数据较多时滚动流畅 | `src/components/history/*` | — | — |
+| `TD-FUNC-001` | `DONE` | 实现月历视图与月份切换 | 可切换任意月份并点击日期 | `src/components/calendar/*` `src/pages/calendar.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-002` | `DONE` | 集成 Milkdown 编辑器并支持基础 Markdown | 可编辑标题/列表/任务列表 | `src/components/editor/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-003` | `DONE` | 实现日记创建/读取/编辑流程 | 按日期保存并可回显 | `src/pages/editor.tsx` `src/hooks/use-diary.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-004` | `DONE` | 实现编辑实时写入 IndexedDB | 刷新后本地内容不丢失 | `src/hooks/use-diary.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-005` | `DONE` | 实现 30 秒防抖上传与手动保存立即上传 | 符合触发时机定义 | `src/hooks/use-sync.ts` `src/services/sync.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-006` | `DONE` | 实现年度总结创建/编辑（`YYYY-summary.md.enc`） | 可按年份管理总结 | `src/pages/yearly-summary.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-007` | `DONE` | 实现“往年今日”查询与预览 | 显示同月同日历史记录 | `src/components/history/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-008` | `DONE` | 实现“往年今日”虚拟滚动（react-window） | 历史数据较多时滚动流畅 | `src/components/history/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
 
 ### 6.5 同步与冲突解决
 
