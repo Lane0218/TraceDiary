@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`40`
-- 状态统计：`DONE=24` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-002`
+- 状态统计：`DONE=25` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -91,4 +91,4 @@
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `TD-UI-001` | `DONE` | 提供极简专业风的布局与交互原型 HTML | 可在浏览器中演示导航切换、月份切换与状态反馈逻辑 | `docs/ui-layout-prototype.html` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / c45592a` |
-| `TD-UI-002` | `DOING` | 调整原型为“欢迎弹层 + 单页工作台（日历与日记/年度总结同屏）” | 欢迎流程以弹层演示，主页面仅保留一个工作台并可切换日记/年度总结 | `docs/ui-layout-prototype.html` | — | — |
+| `TD-UI-002` | `DONE` | 调整原型为“欢迎弹层 + 单页工作台（日历与日记/年度总结同屏）” | 欢迎流程以弹层演示，主页面仅保留一个工作台并可切换日记/年度总结 | `docs/ui-layout-prototype.html` `src/hooks/use-diary.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / 4a4ff1c` |
