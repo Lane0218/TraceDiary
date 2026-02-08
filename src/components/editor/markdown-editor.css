@@ -1,0 +1,18 @@
+.trace-milkdown .milkdown {
+  min-height: 300px;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  background-color: rgba(255, 255, 255, 0.88);
+}
+
+.trace-milkdown .milkdown .editor {
+  min-height: 260px;
+}
+
+.trace-milkdown .milkdown .ProseMirror {
+  min-height: 260px;
+  outline: none;
+  color: #334155;
+  font-size: 0.98rem;
+  line-height: 1.75;
+}

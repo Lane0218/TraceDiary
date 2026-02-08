@@ -1,3 +1,5 @@
+import type { DiaryEntry } from '../types/diary'
+
 export const TRACE_DIARY_DB_NAME = 'TraceDiary'
 export const TRACE_DIARY_DB_VERSION = 1
 
@@ -27,12 +29,14 @@ export type DiaryIndexName =
 
 export interface DiaryRecord {
   id: string
-  type: 'daily' | 'yearly_summary'
+  type: DiaryEntry['type']
   date: string
   year?: number
+  filename?: string
+  content?: string
+  wordCount?: number
   createdAt: string
   modifiedAt: string
-  [key: string]: unknown
 }
 
 interface StoredValue<T = unknown> {

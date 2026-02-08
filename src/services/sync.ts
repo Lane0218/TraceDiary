@@ -5,6 +5,25 @@ const DEFAULT_GITEE_API_BASE = 'https://gitee.com/api/v5'
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
 const DEFAULT_BRANCH = 'main'
 
+export type SyncTriggerReason = 'debounced' | 'manual'
+
+export interface UploadMetadataPayload<TMetadata = unknown> {
+  metadata: TMetadata
+  reason: SyncTriggerReason
+}
+
+export interface UploadMetadataResult {
+  syncedAt?: string
+}
+
+export type UploadMetadataFn<TMetadata = unknown> = (
+  payload: UploadMetadataPayload<TMetadata>,
+) => Promise<UploadMetadataResult | void>
+
+export interface CreateUploadMetadataDependencies<TMetadata = unknown> {
+  uploadMetadata?: UploadMetadataFn<TMetadata>
+}
+
 export interface MetadataCacheRecord<TMetadata = unknown> {
   key: 'metadata'
   metadata: TMetadata
@@ -121,6 +140,21 @@ function defaultParseMetadata<TMetadata>(decryptedContent: string): TMetadata {
 
 function nowIsoString(): string {
   return new Date().toISOString()
+}
+
+export async function placeholderUploadMetadata<TMetadata = unknown>(
+  payload: UploadMetadataPayload<TMetadata>,
+): Promise<UploadMetadataResult> {
+  void payload
+  return {
+    syncedAt: nowIsoString(),
+  }
+}
+
+export function createUploadMetadataExecutor<TMetadata = unknown>(
+  dependencies: CreateUploadMetadataDependencies<TMetadata> = {},
+): UploadMetadataFn<TMetadata> {
+  return dependencies.uploadMetadata ?? placeholderUploadMetadata<TMetadata>
 }
 
 export function createIndexedDbMetadataStore<TMetadata = Metadata>(): MetadataStoreApi<TMetadata> {
