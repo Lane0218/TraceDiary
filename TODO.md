@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`45`
-- 状态统计：`DONE=35` / `DOING=0` / `TODO=10` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`46`
+- 状态统计：`DONE=36` / `DOING=0` / `TODO=10` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -65,6 +65,7 @@
 | `TD-SYNC-003` | `DONE` | 实现 `sha mismatch` 冲突识别 | 冲突可被稳定检测 | `src/services/sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 247234f` |
 | `TD-SYNC-004` | `DONE` | 实现冲突弹窗（本地/远端/合并） | 三种分支均可完成 | `src/components/common/*` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/sync.ts` `src/hooks/use-sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 0616277` |
 | `TD-SYNC-005` | `DONE` | 实现离线检测与网络恢复自动重试 | 断网有提示，恢复后自动同步 | `src/hooks/use-sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / c991e44` |
+| `TD-SYNC-006` | `DONE` | 修复日期切换内容错位并提升云端上传可用性反馈（不含加密改造） | 标题日期与编辑器内容一致；未解锁/未配置时给出明确不可上传提示；手动上传失败可读 | `src/hooks/use-diary.ts` `src/components/editor/markdown-editor.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/use-sync.ts` `src/__tests__/*` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / cb7823e` |
 
 ### 6.6 PWA、部署与安全头
 
