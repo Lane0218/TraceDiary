@@ -136,6 +136,7 @@ export interface CreateDiaryUploadExecutorParams {
   owner: string
   repo: string
   dataEncryptionKey: CryptoKey
+  syncMetadata?: boolean
   branch?: string
   apiBase?: string
   fetchImpl?: typeof fetch
@@ -199,6 +200,11 @@ function bytesToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
   }
   return btoa(binary)
+}
+
+function utf8ToBase64(content: string): string {
+  const bytes = new TextEncoder().encode(content)
+  return bytesToBase64(bytes)
 }
 
 function base64ToBytes(base64: string): Uint8Array {
@@ -521,12 +527,185 @@ function toRemoteDiaryMetadata(
   }
 }
 
+function countWords(content: string): number {
+  const normalized = content.trim()
+  if (!normalized) {
+    return 0
+  }
+  return normalized.split(/\s+/u).length
+}
+
+function createEmptyMetadata(nowIso: string): Metadata {
+  return {
+    version: '1',
+    lastSync: nowIso,
+    entries: [],
+  }
+}
+
+function normalizeMetadata(raw: unknown, nowIso: string): Metadata {
+  if (!raw || typeof raw !== 'object') {
+    return createEmptyMetadata(nowIso)
+  }
+
+  const candidate = raw as Partial<Metadata>
+  const normalizedEntries = Array.isArray(candidate.entries)
+    ? candidate.entries.filter((entry): entry is Metadata['entries'][number] => {
+        if (!entry || typeof entry !== 'object') {
+          return false
+        }
+        const target = entry as Partial<Metadata['entries'][number]>
+        if (target.type === 'daily') {
+          return (
+            typeof target.date === 'string' &&
+            typeof target.filename === 'string' &&
+            typeof target.wordCount === 'number' &&
+            typeof target.createdAt === 'string' &&
+            typeof target.modifiedAt === 'string'
+          )
+        }
+
+        if (target.type === 'yearly_summary') {
+          return (
+            typeof target.year === 'number' &&
+            typeof target.date === 'string' &&
+            typeof target.filename === 'string' &&
+            typeof target.wordCount === 'number' &&
+            typeof target.createdAt === 'string' &&
+            typeof target.modifiedAt === 'string'
+          )
+        }
+
+        return false
+      })
+    : []
+
+  return {
+    version: typeof candidate.version === 'string' && candidate.version.trim() ? candidate.version : '1',
+    lastSync: typeof candidate.lastSync === 'string' && candidate.lastSync.trim() ? candidate.lastSync : nowIso,
+    entries: normalizedEntries,
+  }
+}
+
+function upsertMetadataEntryFromDiary(
+  metadata: Metadata,
+  diary: DiarySyncMetadata,
+  nowIso: string,
+): Metadata {
+  const entries = [...metadata.entries]
+
+  if (diary.type === 'daily') {
+    const existingIndex = entries.findIndex((entry) => entry.type === 'daily' && entry.date === diary.date)
+    const existing = existingIndex >= 0 ? entries[existingIndex] : null
+    const nextEntry: Metadata['entries'][number] = {
+      type: 'daily',
+      date: diary.date as `${number}-${number}-${number}`,
+      filename: `${diary.date}.md.enc`,
+      wordCount: countWords(diary.content),
+      createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
+      modifiedAt: diary.modifiedAt ?? nowIso,
+    }
+
+    if (existingIndex >= 0) {
+      entries[existingIndex] = nextEntry
+    } else {
+      entries.push(nextEntry)
+    }
+  } else {
+    const summaryDate = `${diary.year}-12-31` as `${number}-${number}-${number}`
+    const existingIndex = entries.findIndex(
+      (entry) => entry.type === 'yearly_summary' && entry.year === diary.year,
+    )
+    const existing = existingIndex >= 0 ? entries[existingIndex] : null
+    const nextEntry: Metadata['entries'][number] = {
+      type: 'yearly_summary',
+      year: diary.year,
+      date: summaryDate,
+      filename: `${diary.year}-summary.md.enc`,
+      wordCount: countWords(diary.content),
+      createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
+      modifiedAt: diary.modifiedAt ?? nowIso,
+    }
+
+    if (existingIndex >= 0) {
+      entries[existingIndex] = nextEntry
+    } else {
+      entries.push(nextEntry)
+    }
+  }
+
+  return {
+    version: metadata.version || '1',
+    lastSync: nowIso,
+    entries,
+  }
+}
+
 export function createDiaryUploadExecutor(
   params: CreateDiaryUploadExecutorParams,
 ): UploadMetadataFn<DiarySyncMetadata> {
   let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
   const now = params.now ?? nowIsoString
   const useAccessTokenQuery = params.useAccessTokenQuery ?? true
+  const shouldSyncMetadata = params.syncMetadata !== false
+
+  const syncMetadataForDiary = async (
+    payload: UploadMetadataPayload<DiarySyncMetadata>,
+    targetBranch: string,
+  ): Promise<void> => {
+    if (!shouldSyncMetadata) {
+      return
+    }
+
+    const maxAttempts = 2
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const nowIso = now()
+      const remoteMetadata = await readGiteeFileContents({
+        token: params.token,
+        owner: params.owner,
+        repo: params.repo,
+        path: DEFAULT_METADATA_PATH,
+        ref: targetBranch,
+        apiBase: params.apiBase,
+        fetchImpl: params.fetchImpl,
+        useAccessTokenQuery,
+      })
+
+      let baseMetadata = createEmptyMetadata(nowIso)
+      if (remoteMetadata.exists && typeof remoteMetadata.content === 'string' && remoteMetadata.content.trim()) {
+        try {
+          const decrypted = await decryptDiaryContent(remoteMetadata.content, params.dataEncryptionKey)
+          const parsed = defaultParseMetadata<unknown>(decrypted)
+          baseMetadata = normalizeMetadata(parsed, nowIso)
+        } catch {
+          baseMetadata = createEmptyMetadata(nowIso)
+        }
+      }
+
+      const mergedMetadata = upsertMetadataEntryFromDiary(baseMetadata, payload.metadata, nowIso)
+      const encryptedMetadata = await encryptDiaryContent(JSON.stringify(mergedMetadata), params.dataEncryptionKey)
+      try {
+        await upsertGiteeFile({
+          token: params.token,
+          owner: params.owner,
+          repo: params.repo,
+          path: DEFAULT_METADATA_PATH,
+          content: encryptedMetadata,
+          message: defaultBuildCommitMessage(payload),
+          branch: targetBranch,
+          expectedSha: remoteMetadata.exists ? remoteMetadata.sha : undefined,
+          apiBase: params.apiBase,
+          fetchImpl: params.fetchImpl,
+          useAccessTokenQuery,
+        })
+        return
+      } catch (error) {
+        if (!(isShaMismatchError(error) && attempt < maxAttempts - 1)) {
+          return
+        }
+      }
+    }
+  }
 
   const attemptUpload = async (
     payload: UploadMetadataPayload<DiarySyncMetadata>,
@@ -560,6 +739,14 @@ export function createDiaryUploadExecutor(
       fetchImpl: params.fetchImpl,
       useAccessTokenQuery,
     })
+
+    if (shouldSyncMetadata) {
+      try {
+        await syncMetadataForDiary(payload, targetBranch)
+      } catch {
+        // metadata 同步失败不应阻塞主日记上传结果，避免用户误判为整次同步失败。
+      }
+    }
 
     return {
       ok: true,
@@ -780,7 +967,7 @@ export async function uploadMetadataToGitee(
       branch: string
       sha?: string
     } = {
-      content: encryptedContent,
+      content: utf8ToBase64(encryptedContent),
       message,
       branch,
     }

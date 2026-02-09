@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { upsertGiteeFile } from './gitee-api'
+import { readGiteeFile, upsertGiteeFile } from './gitee-api'
 
 export interface ArmShaMismatchRaceParams {
   owner: string
@@ -11,6 +11,14 @@ export interface ArmShaMismatchRaceParams {
   conflictContent?: string
   conflictMessage?: string
   triggerTimeoutMs?: number
+  requiredCommitMessageSubstring?: string
+}
+
+function isShaMismatch(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+  return /sha/i.test(error.message) && /(mismatch|not\s+match|不一致|冲突)/i.test(error.message)
 }
 
 export interface ArmedShaMismatchRace {
@@ -64,6 +72,7 @@ export async function armShaMismatchRace(
 
     const body = route.request().postDataJSON() as {
       sha?: unknown
+      message?: unknown
     }
 
     if (typeof body.sha !== 'string' || !body.sha.trim()) {
@@ -71,20 +80,50 @@ export async function armShaMismatchRace(
       return
     }
 
+    const requiredMessage = params.requiredCommitMessageSubstring?.trim()
+    if (requiredMessage) {
+      if (typeof body.message !== 'string' || !body.message.includes(requiredMessage)) {
+        await route.continue()
+        return
+      }
+    }
+
     triggered = true
 
     try {
-      await upsertGiteeFile({
-        owner: params.owner,
-        repo: params.repo,
-        branch: params.branch,
-        token: params.token,
-        apiBase: params.apiBase,
-        path: params.path,
-        expectedSha: body.sha.trim(),
-        content: params.conflictContent ?? `race-conflict-${Date.now()}`,
-        message: params.conflictMessage ?? `test: 构造冲突 ${params.path}`,
-      })
+      const conflictContent = params.conflictContent ?? `race-conflict-${Date.now()}`
+      const conflictMessage = params.conflictMessage ?? `test: 构造冲突 ${params.path}`
+      const tryUpsert = async (expectedSha?: string): Promise<void> => {
+        await upsertGiteeFile({
+          owner: params.owner,
+          repo: params.repo,
+          branch: params.branch,
+          token: params.token,
+          apiBase: params.apiBase,
+          path: params.path,
+          expectedSha,
+          content: conflictContent,
+          message: conflictMessage,
+        })
+      }
+
+      try {
+        await tryUpsert(body.sha.trim())
+      } catch (error) {
+        if (!isShaMismatch(error)) {
+          throw error
+        }
+
+        const latestSnapshot = await readGiteeFile({
+          owner: params.owner,
+          repo: params.repo,
+          branch: params.branch,
+          token: params.token,
+          apiBase: params.apiBase,
+          path: params.path,
+        })
+        await tryUpsert(latestSnapshot.sha)
+      }
 
       resolveTriggered()
       await route.continue()

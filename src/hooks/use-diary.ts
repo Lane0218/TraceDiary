@@ -26,6 +26,7 @@ export interface UseDiaryResult {
   isSaving: boolean
   error: string | null
   setContent: (nextContent: string) => void
+  waitForPersisted: () => Promise<DiaryEntry | null>
 }
 
 const defaultDependencies: DiaryDependencies = {
@@ -165,6 +166,7 @@ export function useDiary(
   const [error, setError] = useState<string | null>(null)
 
   const entryRef = useRef<DiaryEntry | null>(null)
+  const latestSaveTaskRef = useRef<Promise<void> | null>(null)
   const scopeVersionRef = useRef(0)
   const saveVersionRef = useRef(0)
   const isScopedEntryReady = loadedEntryId === entryId
@@ -191,6 +193,7 @@ export function useDiary(
         if (!stored) {
           setEntry(null)
           entryRef.current = null
+          latestSaveTaskRef.current = null
           setContentState('')
           setIsSaving(false)
           setError(null)
@@ -202,6 +205,7 @@ export function useDiary(
         const normalized = normalizeDiaryRecord(stableTarget, stored)
         setEntry(normalized)
         entryRef.current = normalized
+        latestSaveTaskRef.current = null
         setContentState(normalized.content)
         setIsSaving(false)
         setError(null)
@@ -215,6 +219,7 @@ export function useDiary(
 
         setIsSaving(false)
         setError(`读取失败：${getErrorMessage(loadError)}`)
+        latestSaveTaskRef.current = null
         setIsLoading(false)
         setLoadedEntryId(entryId)
       })
@@ -244,7 +249,7 @@ export function useDiary(
       setEntry(nextEntry)
       entryRef.current = nextEntry
 
-      void dependencies
+      const persistTask = dependencies
         .saveDiary(nextEntry)
         .then(() => {
           if (
@@ -266,9 +271,37 @@ export function useDiary(
           setIsSaving(false)
           setError(`保存失败：${getErrorMessage(saveError)}`)
         })
+      latestSaveTaskRef.current = persistTask.then(
+        () => undefined,
+        () => undefined,
+      )
+
+      void persistTask
     },
     [dependencies, stableTarget],
   )
+
+  const waitForPersisted = useCallback(async (): Promise<DiaryEntry | null> => {
+    const latestSaveTask = latestSaveTaskRef.current
+    if (latestSaveTask) {
+      await latestSaveTask
+    }
+
+    // 返回当前编辑态快照，避免 IndexedDB 异步写入时序导致读到旧内容。
+    if (entryRef.current) {
+      return entryRef.current
+    }
+
+    try {
+      const stored = await dependencies.getDiary(entryId)
+      if (!stored) {
+        return null
+      }
+      return normalizeDiaryRecord(stableTarget, stored)
+    } catch {
+      return entryRef.current
+    }
+  }, [dependencies, entryId, stableTarget])
 
   return {
     entryId,
@@ -278,5 +311,6 @@ export function useDiary(
     isSaving,
     error,
     setContent,
+    waitForPersisted,
   }
 }

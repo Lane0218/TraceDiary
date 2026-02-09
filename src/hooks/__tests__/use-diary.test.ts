@@ -92,6 +92,44 @@ describe('useDiary', () => {
     expect(stored?.year).toBe(2025)
   })
 
+  it('waitForPersisted 应等待最新保存完成并返回落库快照', async () => {
+    const date = '2026-02-12' as DateString
+    const store = new Map<string, DiaryRecord>()
+    let resolveSave!: () => void
+
+    const dependencies: DiaryDependencies = {
+      getDiary: vi.fn(async (id: string) => store.get(id) ?? null),
+      saveDiary: vi.fn(
+        async (record: DiaryRecord) =>
+          new Promise<void>((resolve) => {
+            resolveSave = () => {
+              store.set(record.id, { ...record })
+              resolve()
+            }
+          }),
+      ),
+      now: vi.fn(() => '2026-02-12T10:00:00.000Z'),
+    }
+
+    const { result } = renderHook(() => useDiary({ type: 'daily', date }, dependencies))
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    await act(async () => {
+      result.current.setContent('## 新内容')
+    })
+
+    const persistedPromise = result.current.waitForPersisted()
+    await act(async () => {
+      resolveSave()
+      await Promise.resolve()
+    })
+    const persisted = await persistedPromise
+
+    expect(persisted?.type).toBe('daily')
+    expect(persisted?.id).toBe('daily:2026-02-12')
+    expect(persisted?.content).toBe('## 新内容')
+  })
+
   it('切换日期后应读取对应条目', async () => {
     const { dependencies } = buildDependencies([
       {

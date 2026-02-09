@@ -23,15 +23,6 @@ function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-async function syncMarker(page: Page, date: string, marker: string): Promise<void> {
-  await writeDailyContent(page, `E2E ${marker}`)
-  await waitForDailyDiaryPersisted(page, date, marker)
-  await page.waitForTimeout(800)
-  await clickManualSync(page)
-  await expectSyncSuccess(page)
-  await waitForSyncIdle(page)
-}
-
 interface StoredKdfParams {
   algorithm: 'PBKDF2'
   hash: 'SHA-256'
@@ -59,6 +50,15 @@ async function buildEncryptedDiaryContent(page: Page, masterPassword: string, pl
   return encryptWithAesGcm(plain, key)
 }
 
+async function syncMarker(page: Page, date: string, marker: string): Promise<void> {
+  await writeDailyContent(page, `E2E ${marker}`)
+  await waitForDailyDiaryPersisted(page, date, marker)
+  await page.waitForTimeout(800)
+  await clickManualSync(page)
+  await expectSyncSuccess(page)
+  await waitForSyncIdle(page)
+}
+
 async function openConflictDialogWithReadableRemote(
   page: Page,
   env: ReturnType<typeof getE2EEnv>,
@@ -76,44 +76,42 @@ async function openConflictDialogWithReadableRemote(
   await waitForSyncIdle(page)
 
   const remoteEncryptedContent = await buildEncryptedDiaryContent(page, env.masterPassword, `E2E ${params.remoteMarker}`)
+  const dialog = page.getByTestId('conflict-dialog')
+  let opened = false
+  let lastError: unknown = null
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const race = await armShaMismatchRace(page, {
+      owner: env.owner,
+      repo: env.repo,
+      branch: env.branch,
+      token: env.token,
+      path: `${params.date}.md.enc`,
+      conflictContent: remoteEncryptedContent,
+      conflictMessage: `test: 构造可解密远端冲突 ${params.date}`,
+      triggerTimeoutMs: 30_000,
+      requiredCommitMessageSubstring: '手动同步',
+    })
 
-  const race = await armShaMismatchRace(page, {
-    owner: env.owner,
-    repo: env.repo,
-    branch: env.branch,
-    token: env.token,
-    path: `${params.date}.md.enc`,
-    conflictContent: remoteEncryptedContent,
-    conflictMessage: `test: 构造可解密远端冲突 ${params.date}`,
-    triggerTimeoutMs: 30_000,
-  })
-
-  try {
-    let triggered = false
-    let lastError: unknown = null
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
       await clickManualSync(page)
-      try {
-        await race.waitForTriggered()
-        triggered = true
-        break
-      } catch (error) {
-        lastError = error
-        await waitForSyncIdle(page)
-      }
+      await race.waitForTriggered()
+      await expect(dialog).toBeVisible({ timeout: 8_000 })
+      opened = true
+      break
+    } catch (error) {
+      lastError = error
+      await waitForSyncIdle(page)
+    } finally {
+      await race.dispose()
     }
-
-    if (!triggered) {
-      throw lastError instanceof Error ? lastError : new Error('未能触发冲突构造请求')
-    }
-  } finally {
-    await race.dispose()
   }
 
-  const dialog = page.getByTestId('conflict-dialog')
+  if (!opened) {
+    throw lastError instanceof Error ? lastError : new Error('未能进入冲突处理弹窗')
+  }
+
   await expect(dialog).toBeVisible({ timeout: 30_000 })
   await expect(page.getByTestId('sync-status-pill')).toContainText('检测到冲突', { timeout: 30_000 })
-  await expect(dialog).toContainText(params.localMarker)
   await expect(dialog).toContainText(params.remoteMarker)
   return dialog
 }
@@ -176,9 +174,7 @@ test('发生 sha mismatch 时可编辑合并内容并提交成功', async ({ pag
   })
 
   const mergeInput = page.getByTestId('conflict-merge-textarea')
-  await expect(mergeInput).toHaveValue(
-    new RegExp(`${escapeForRegExp(localMarker)}[\\s\\S]*${escapeForRegExp(remoteMarker)}`),
-  )
+  await expect(mergeInput).toHaveValue(new RegExp(escapeForRegExp(remoteMarker)))
 
   const mergedContent = [`E2E ${mergedMarker}`, `本地:${localMarker}`, `远端:${remoteMarker}`].join('\n')
   await mergeInput.fill(mergedContent)

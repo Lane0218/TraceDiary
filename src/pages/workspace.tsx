@@ -172,6 +172,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        syncMetadata: true,
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({
@@ -308,14 +309,16 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       return
     }
 
-    const modifiedAt = diary.entry?.modifiedAt ?? new Date().toISOString()
+    const persistedEntry = await diary.waitForPersisted()
+    const latestDailyEntry =
+      persistedEntry && persistedEntry.type === 'daily' ? persistedEntry : diary.entry
 
     const payload: DiarySyncMetadata = {
       type: 'daily',
       entryId: diary.entryId,
       date,
-      content: diary.content,
-      modifiedAt,
+      content: latestDailyEntry?.content ?? diary.content,
+      modifiedAt: latestDailyEntry?.modifiedAt ?? new Date().toISOString(),
     }
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     const result = await sync.saveNow(payload)

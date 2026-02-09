@@ -53,7 +53,7 @@ function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
 }
 
 function buildUseDiaryResult(overrides?: Partial<UseDiaryResult>): UseDiaryResult {
-  return {
+  const base: UseDiaryResult = {
     entryId: 'daily:2026-02-08',
     content: '',
     entry: null,
@@ -61,6 +61,10 @@ function buildUseDiaryResult(overrides?: Partial<UseDiaryResult>): UseDiaryResul
     isSaving: false,
     error: null,
     setContent: vi.fn(),
+    waitForPersisted: vi.fn(async () => null),
+  }
+  return {
+    ...base,
     ...overrides,
   }
 }

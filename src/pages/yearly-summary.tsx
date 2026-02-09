@@ -82,6 +82,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        syncMetadata: true,
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
@@ -292,8 +293,18 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                         return
                       }
                       void (async () => {
+                        const persistedEntry = await summary.waitForPersisted()
+                        const latestSummaryEntry =
+                          persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
+                        const manualPayload: DiarySyncMetadata = {
+                          type: 'yearly_summary',
+                          entryId: summary.entryId,
+                          year,
+                          content: latestSummaryEntry?.content ?? summary.content,
+                          modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
+                        }
                         setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
-                        const result = await sync.saveNow(syncPayload)
+                        const result = await sync.saveNow(manualPayload)
                         if (!result.ok) {
                           const message =
                             result.code === 'stale' ? BUSY_SYNC_MESSAGE : result.errorMessage || '上传未完成，请重试'

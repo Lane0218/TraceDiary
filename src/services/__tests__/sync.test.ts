@@ -398,6 +398,7 @@ describe('createDiaryUploadExecutor', () => {
       owner: 'owner',
       repo: 'repo',
       dataEncryptionKey,
+      syncMetadata: false,
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T10:00:00.000Z',
     })
@@ -455,6 +456,7 @@ describe('createDiaryUploadExecutor', () => {
       owner: 'owner',
       repo: 'repo',
       dataEncryptionKey,
+      syncMetadata: false,
       branch: 'main',
       fetchImpl: fetchMock as unknown as typeof fetch,
     })
@@ -476,6 +478,66 @@ describe('createDiaryUploadExecutor', () => {
     expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
       method: 'POST',
     })
+  })
+
+  it('启用 syncMetadata 时应追加 metadata.json.enc 上传请求', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-with-metadata')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-diary-created' },
+            commit: { sha: 'commit-diary-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-metadata-created' },
+            commit: { sha: 'commit-metadata-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      dataEncryptionKey,
+      syncMetadata: true,
+      branch: 'master',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T15:00:00.000Z',
+    })
+
+    const result = await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-13',
+        date: '2026-02-13',
+        content: 'with metadata',
+        modifiedAt: '2026-02-13T08:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-diary-created',
+      syncedAt: '2026-02-09T15:00:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-13.md.enc?ref=master')
+    expect(fetchMock.mock.calls[1]?.[0]).toContain('2026-02-13.md.enc?branch=master')
+    expect(fetchMock.mock.calls[2]?.[0]).toContain('metadata.json.enc?ref=master')
+    expect(fetchMock.mock.calls[3]?.[0]).toContain('metadata.json.enc?branch=master')
   })
 
   it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {
@@ -507,6 +569,7 @@ describe('createDiaryUploadExecutor', () => {
       owner: 'owner',
       repo: 'repo',
       dataEncryptionKey,
+      syncMetadata: false,
       branch: 'master',
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T12:00:00.000Z',
@@ -575,6 +638,7 @@ describe('createDiaryUploadExecutor', () => {
       owner: 'owner',
       repo: 'repo',
       dataEncryptionKey,
+      syncMetadata: false,
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T13:00:00.000Z',
     })
