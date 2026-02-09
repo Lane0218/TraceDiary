@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UploadMetadataFn } from '../../services/sync'
+import type { SaveNowResult } from '../use-sync'
 import { useSync } from '../use-sync'
 
 interface TestMetadata {
@@ -84,7 +85,7 @@ describe('useSync', () => {
       result.current.onInputChange({ content: 'draft' })
     })
 
-    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
+    let saveResult: SaveNowResult | null = null
     await act(async () => {
       saveResult = await result.current.saveNow({ content: 'final' })
     })
@@ -118,7 +119,7 @@ describe('useSync', () => {
       }),
     )
 
-    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
+    let saveResult: SaveNowResult | null = null
     await act(async () => {
       saveResult = await result.current.saveNow({ content: 'any' })
     })
@@ -129,8 +130,58 @@ describe('useSync', () => {
     expect(result.current.lastSyncedAt).toBeNull()
     expect(saveResult).toEqual({
       ok: false,
+      code: 'unknown',
       errorMessage: '远端不可用',
     })
+  })
+
+  it('上传进行中再次手动保存应返回 busy 且不发起并发上传', async () => {
+    let resolveFirstUpload!: (value: { syncedAt: string }) => void
+    const firstUploadPromise = new Promise<{ syncedAt: string }>((resolve) => {
+      resolveFirstUpload = resolve
+    })
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi
+      .fn()
+      .mockReturnValueOnce(firstUploadPromise)
+      .mockResolvedValueOnce({
+        syncedAt: '2026-02-08T13:30:00.000Z',
+      })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    let firstSavePromise: Promise<SaveNowResult> | null = null
+    act(() => {
+      firstSavePromise = result.current.saveNow({ content: 'first' })
+    })
+
+    let secondSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      secondSaveResult = await result.current.saveNow({ content: 'second' })
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(secondSaveResult).toEqual({
+      ok: false,
+      code: 'busy',
+      errorMessage: '当前正在上传，请稍候重试',
+    })
+
+    resolveFirstUpload({ syncedAt: '2026-02-08T13:00:00.000Z' })
+    let firstSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      firstSaveResult = await firstSavePromise!
+    })
+
+    expect(firstSaveResult).toEqual({
+      ok: true,
+      errorMessage: null,
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.lastSyncedAt).toBe('2026-02-08T13:00:00.000Z')
   })
 
   it('未注入上传实现时应使用默认占位上传并成功返回同步时间', async () => {
@@ -190,7 +241,7 @@ describe('useSync', () => {
       window.dispatchEvent(new Event('offline'))
     })
 
-    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
+    let saveResult: SaveNowResult | null = null
     await act(async () => {
       saveResult = await result.current.saveNow({ content: 'offline-draft' })
     })
@@ -201,6 +252,7 @@ describe('useSync', () => {
     expect(result.current.errorMessage).toBe('当前处于离线状态，网络恢复后将自动重试')
     expect(saveResult).toEqual({
       ok: false,
+      code: 'offline',
       errorMessage: '当前处于离线状态，网络恢复后将自动重试',
     })
 

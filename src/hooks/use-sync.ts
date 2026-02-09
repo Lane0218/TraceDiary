@@ -26,16 +26,26 @@ export interface UseSyncResult<TMetadata = unknown> {
     remote: TMetadata | null
   } | null
   onInputChange: (metadata: TMetadata) => void
-  saveNow: (metadata: TMetadata) => Promise<{
-    ok: boolean
-    errorMessage: string | null
-  }>
+  saveNow: (metadata: TMetadata) => Promise<SaveNowResult>
   resolveConflict: (
     choice: 'local' | 'remote' | 'merged',
     mergedMetadata?: TMetadata,
   ) => Promise<void>
   dismissConflict: () => void
 }
+
+export type SaveNowErrorCode = 'busy' | 'offline' | 'network' | 'auth' | 'conflict' | 'unknown' | 'stale'
+
+export type SaveNowResult =
+  | {
+      ok: true
+      errorMessage: null
+    }
+  | {
+      ok: false
+      code: SaveNowErrorCode
+      errorMessage: string
+    }
 
 function nowIsoString(): string {
   return new Date().toISOString()
@@ -96,6 +106,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestMetadataRef = useRef<TMetadata | null>(null)
   const pendingRetryPayloadRef = useRef<UploadMetadataPayload<TMetadata> | null>(null)
+  const queuedUploadPayloadRef = useRef<UploadMetadataPayload<TMetadata> | null>(null)
+  const inFlightRef = useRef(false)
   const resolvingConflictRef = useRef(false)
   const mountedRef = useRef(true)
   const taskIdRef = useRef(0)
@@ -130,12 +142,25 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   }, [])
 
   const runUpload = useCallback(
-    async (
-      payload: UploadMetadataPayload<TMetadata>,
-    ): Promise<{
-      ok: boolean
-      errorMessage: string | null
-    }> => {
+    async (payload: UploadMetadataPayload<TMetadata>): Promise<SaveNowResult> => {
+      if (inFlightRef.current) {
+        if (payload.reason === 'manual') {
+          return {
+            ok: false,
+            code: 'busy',
+            errorMessage: '当前正在上传，请稍候重试',
+          }
+        }
+
+        // 自动上传在进行中时仅保留最新请求，避免并发请求造成竞态覆盖。
+        queuedUploadPayloadRef.current = payload
+        return {
+          ok: false,
+          code: 'stale',
+          errorMessage: '同步请求已更新，当前任务完成后将继续上传最新内容',
+        }
+      }
+
       if (getIsOffline()) {
         const message = '当前处于离线状态，网络恢复后将自动重试'
         markPendingRetry(payload)
@@ -146,12 +171,14 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
         return {
           ok: false,
+          code: 'offline',
           errorMessage: message,
         }
       }
 
       const taskId = taskIdRef.current + 1
       taskIdRef.current = taskId
+      inFlightRef.current = true
       if (mountedRef.current) {
         setStatus('syncing')
         setErrorMessage(null)
@@ -162,7 +189,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         if (!mountedRef.current || taskIdRef.current !== taskId) {
           return {
             ok: false,
-            errorMessage: null,
+            code: 'stale',
+            errorMessage: '同步请求已更新，本次上传结果已忽略',
           }
         }
 
@@ -180,6 +208,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             resolvingConflictRef.current = false
             return {
               ok: false,
+              code: 'conflict',
               errorMessage: message,
             }
           }
@@ -191,6 +220,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             setErrorMessage(message)
             return {
               ok: false,
+              code: 'network',
               errorMessage: message,
             }
           }
@@ -201,6 +231,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             setErrorMessage(message)
             return {
               ok: false,
+              code: 'auth',
               errorMessage: message,
             }
           }
@@ -210,6 +241,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           setErrorMessage(message)
           return {
             ok: false,
+            code: 'unknown',
             errorMessage: message,
           }
         }
@@ -227,7 +259,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         if (!mountedRef.current || taskIdRef.current !== taskId) {
           return {
             ok: false,
-            errorMessage: null,
+            code: 'stale',
+            errorMessage: '同步请求已更新，本次上传结果已忽略',
           }
         }
 
@@ -239,6 +272,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           setErrorMessage(message)
           return {
             ok: false,
+            code: 'offline',
             errorMessage: message,
           }
         }
@@ -248,7 +282,19 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setErrorMessage(message)
         return {
           ok: false,
+          code: 'unknown',
           errorMessage: message,
+        }
+      } finally {
+        inFlightRef.current = false
+        if (!mountedRef.current) {
+          queuedUploadPayloadRef.current = null
+        } else {
+          const queuedPayload = queuedUploadPayloadRef.current
+          if (queuedPayload) {
+            queuedUploadPayloadRef.current = null
+            void runUpload(queuedPayload)
+          }
         }
       }
     },

@@ -309,8 +309,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       modifiedAt,
     }
     const result = await sync.saveNow(payload)
-    if (!result.ok && result.errorMessage) {
-      setManualSyncError(result.errorMessage)
+    if (!result.ok) {
+      setManualSyncError(result.errorMessage || '上传未完成，请重试')
       return
     }
     setManualSyncError(null)
@@ -384,6 +384,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     return 'td-status-muted'
   }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
   const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
+  const isManualSyncing = sync.status === 'syncing'
 
   return (
     <>
@@ -477,12 +478,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 <div className="ml-auto flex max-w-full items-center gap-2">
                   <button
                     type="button"
-                    className="td-btn"
+                    className="td-btn disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isManualSyncing}
                     onClick={() => {
                       void saveNow()
                     }}
                   >
-                    手动保存并立即上传
+                    {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
                   {manualSyncError ? (
                     <span

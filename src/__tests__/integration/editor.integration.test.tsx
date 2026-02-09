@@ -180,4 +180,35 @@ describe('年度总结页面', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
     expect(screen.getByRole('alert').textContent).toContain('鉴权失败，请重新解锁或更新 Token 配置')
   })
+
+  it('手动上传进行中应禁用按钮并显示上传中状态', async () => {
+    let resolveUpload!: (value: { ok: true; conflict: false; syncedAt: string }) => void
+    createDiaryUploadExecutorMock.mockImplementation(
+      () =>
+        () =>
+          new Promise((resolve) => {
+            resolveUpload = resolve
+          }),
+    )
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+
+    await waitFor(() => {
+      const uploadingButton = screen.getByRole('button', { name: '上传中...' }) as HTMLButtonElement
+      expect(uploadingButton.disabled).toBe(true)
+    })
+
+    resolveUpload({ ok: true, conflict: false, syncedAt: '2026-02-09T01:00:00.000Z' })
+
+    await waitFor(() => {
+      const idleButton = screen.getByRole('button', { name: '手动保存并立即上传' }) as HTMLButtonElement
+      expect(idleButton.disabled).toBe(false)
+    })
+  })
 })

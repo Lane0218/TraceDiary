@@ -170,6 +170,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }
   }
   const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
+  const isManualSyncing = sync.status === 'syncing'
 
   const resolveMergeConflict = (mergedContent: string) => {
     const local = sync.conflictState?.local
@@ -274,7 +275,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                 <div className="ml-auto flex max-w-full items-center gap-2">
                   <button
                     type="button"
-                    className="td-btn"
                     onClick={() => {
                       if (!canSyncToRemote) {
                         setManualSyncError(syncDisabledMessage)
@@ -282,15 +282,17 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                       }
                       void (async () => {
                         const result = await sync.saveNow(syncPayload)
-                        if (!result.ok && result.errorMessage) {
-                          setManualSyncError(result.errorMessage)
+                        if (!result.ok) {
+                          setManualSyncError(result.errorMessage || '上传未完成，请重试')
                           return
                         }
                         setManualSyncError(null)
                       })()
                     }}
+                    disabled={isManualSyncing}
+                    className="td-btn disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    手动保存并立即上传
+                    {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
                   {manualSyncError ? (
                     <span
