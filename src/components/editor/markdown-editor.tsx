@@ -12,9 +12,10 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void
   placeholder?: string
   disabled?: boolean
+  docKey?: string
 }
 
-function MilkdownRuntimeEditor({ initialValue, onChange, disabled }: MarkdownEditorProps) {
+function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey }: MarkdownEditorProps) {
   const onChangeRef = useRef(onChange)
 
   useEffect(() => {
@@ -48,7 +49,7 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled }: MarkdownEdi
       .use(commonmark)
       .use(gfm)
       .use(listener)
-  }, [])
+  }, [docKey])
 
   return (
     <div
@@ -67,10 +68,12 @@ export default function MarkdownEditor({
   onChange,
   placeholder = '开始记录今天...',
   disabled = false,
+  docKey = 'default',
 }: MarkdownEditorProps) {
   if (import.meta.env.MODE === 'test') {
     return (
       <textarea
+        key={docKey}
         aria-label={placeholder}
         defaultValue={initialValue}
         onChange={(event) => onChange(event.target.value)}
@@ -82,7 +85,12 @@ export default function MarkdownEditor({
 
   return (
     <MilkdownProvider>
-      <MilkdownRuntimeEditor initialValue={initialValue} onChange={onChange} disabled={disabled} />
+      <MilkdownRuntimeEditor
+        initialValue={initialValue}
+        onChange={onChange}
+        disabled={disabled}
+        docKey={docKey}
+      />
     </MilkdownProvider>
   )
 }

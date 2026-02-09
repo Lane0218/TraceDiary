@@ -139,6 +139,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
+  const [syncGuardMessage, setSyncGuardMessage] = useState<string | null>(null)
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
@@ -168,6 +169,18 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const sync = useSync<DiarySyncMetadata>({
     uploadMetadata,
   })
+  const syncDisabledMessage = useMemo(() => {
+    if (auth.state.stage !== 'ready') {
+      return '云端同步未就绪：请先完成解锁。'
+    }
+    if (!auth.state.config?.giteeOwner || !auth.state.config?.giteeRepoName) {
+      return '云端同步未就绪：请先配置 Gitee 仓库。'
+    }
+    if (!auth.state.tokenInMemory) {
+      return '云端同步未就绪：当前会话缺少可用 Token，请重新解锁/配置。'
+    }
+    return '云端同步未就绪。'
+  }, [auth.state.config?.giteeOwner, auth.state.config?.giteeRepoName, auth.state.stage, auth.state.tokenInMemory])
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
 
@@ -269,11 +282,24 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       content: nextContent,
       modifiedAt,
     }
-    sync.onInputChange(payload)
+    if (canSyncToRemote) {
+      sync.onInputChange(payload)
+      if (syncGuardMessage) {
+        setSyncGuardMessage(null)
+      }
+    }
     setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }
 
   const saveNow = () => {
+    if (!canSyncToRemote) {
+      setSyncGuardMessage(syncDisabledMessage)
+      return
+    }
+    if (syncGuardMessage) {
+      setSyncGuardMessage(null)
+    }
+
     const modifiedAt = diary.entry?.modifiedAt ?? new Date().toISOString()
 
     const payload: DiarySyncMetadata = {
@@ -311,6 +337,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   }, [auth.state.stage])
 
   const syncLabel = useMemo(() => {
+    if (!canSyncToRemote) {
+      return '云端未就绪'
+    }
     if (sync.conflictState) {
       return '检测到冲突'
     }
@@ -327,9 +356,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       return '云端同步失败'
     }
     return '云端待同步'
-  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const syncToneClass = useMemo(() => {
+    if (!canSyncToRemote) {
+      return 'td-status-warning'
+    }
     if (sync.conflictState) {
       return 'td-status-danger'
     }
@@ -346,7 +378,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       return 'td-status-danger'
     }
     return 'td-status-muted'
-  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  const displayedSyncMessage = syncGuardMessage ?? sync.errorMessage
 
   return (
     <>
@@ -438,7 +471,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   手动保存并立即上传
                 </button>
               </div>
-              {sync.errorMessage ? <p className="text-sm text-td-danger">{sync.errorMessage}</p> : null}
+              {displayedSyncMessage ? <p className="text-sm text-td-danger">{displayedSyncMessage}</p> : null}
             </div>
 
             <article className="td-card-primary td-panel">
@@ -447,6 +480,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 {!diary.isLoading ? (
                   <MarkdownEditor
                     key={diary.entryId}
+                    docKey={`${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}`}
                     initialValue={diary.content}
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"

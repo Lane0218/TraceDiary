@@ -160,12 +160,17 @@ export function useDiary(
   const [content, setContentState] = useState('')
   const [entry, setEntry] = useState<DiaryEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const entryRef = useRef<DiaryEntry | null>(null)
   const scopeVersionRef = useRef(0)
   const saveVersionRef = useRef(0)
+  const isScopedEntryReady = loadedEntryId === entryId
+  const visibleContent = useMemo(() => (isScopedEntryReady ? content : ''), [content, isScopedEntryReady])
+  const visibleEntry = useMemo(() => (isScopedEntryReady ? entry : null), [entry, isScopedEntryReady])
+  const visibleIsLoading = isLoading || !isScopedEntryReady
 
   useEffect(() => {
     entryRef.current = entry
@@ -190,6 +195,7 @@ export function useDiary(
           setIsSaving(false)
           setError(null)
           setIsLoading(false)
+          setLoadedEntryId(entryId)
           return
         }
 
@@ -200,6 +206,7 @@ export function useDiary(
         setIsSaving(false)
         setError(null)
         setIsLoading(false)
+        setLoadedEntryId(entryId)
       })
       .catch((loadError: unknown) => {
         if (isCancelled || scopeVersion !== scopeVersionRef.current) {
@@ -209,6 +216,7 @@ export function useDiary(
         setIsSaving(false)
         setError(`读取失败：${getErrorMessage(loadError)}`)
         setIsLoading(false)
+        setLoadedEntryId(entryId)
       })
 
     return () => {
@@ -264,9 +272,9 @@ export function useDiary(
 
   return {
     entryId,
-    content,
-    entry,
-    isLoading,
+    content: visibleContent,
+    entry: visibleEntry,
+    isLoading: visibleIsLoading,
     isSaving,
     error,
     setContent,

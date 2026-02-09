@@ -14,12 +14,15 @@ vi.mock('../../components/editor/markdown-editor', () => ({
     initialValue,
     onChange,
     placeholder,
+    docKey,
   }: {
     initialValue: string
     onChange: (value: string) => void
     placeholder?: string
+    docKey?: string
   }) => (
     <textarea
+      data-doc-key={docKey}
       aria-label={placeholder ?? 'mock-editor'}
       defaultValue={initialValue}
       onChange={(event) => onChange(event.target.value)}
@@ -110,5 +113,18 @@ describe('年度总结页面', () => {
     renderYearlyPage('/yearly/2026')
 
     expect(screen.getByText('本地保存异常')).toBeTruthy()
+  })
+
+  it('云端未就绪时点击手动上传应展示明确提示', () => {
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+
+    expect(screen.getByText('云端同步未就绪：请先配置 Gitee 仓库。')).toBeTruthy()
   })
 })

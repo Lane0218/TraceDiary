@@ -48,6 +48,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const params = useParams<{ year?: string }>()
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
+  const [syncGuardMessage, setSyncGuardMessage] = useState<string | null>(null)
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
@@ -76,6 +77,18 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
+  const syncDisabledMessage = useMemo(() => {
+    if (auth.state.stage !== 'ready') {
+      return '云端同步未就绪：请先完成解锁。'
+    }
+    if (!auth.state.config?.giteeOwner || !auth.state.config?.giteeRepoName) {
+      return '云端同步未就绪：请先配置 Gitee 仓库。'
+    }
+    if (!auth.state.tokenInMemory) {
+      return '云端同步未就绪：当前会话缺少可用 Token，请重新解锁/配置。'
+    }
+    return '云端同步未就绪。'
+  }, [auth.state.config?.giteeOwner, auth.state.config?.giteeRepoName, auth.state.stage, auth.state.tokenInMemory])
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
@@ -91,6 +104,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }, [auth.state.stage])
 
   const syncLabel = useMemo(() => {
+    if (!canSyncToRemote) {
+      return '云端未就绪'
+    }
     if (sync.conflictState) {
       return '检测到冲突'
     }
@@ -107,9 +123,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       return '云端同步失败'
     }
     return '云端待同步'
-  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const syncToneClass = useMemo(() => {
+    if (!canSyncToRemote) {
+      return 'td-status-warning'
+    }
     if (sync.conflictState) {
       return 'td-status-danger'
     }
@@ -126,7 +145,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       return 'td-status-danger'
     }
     return 'td-status-muted'
-  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const handleYearChange = (nextYear: number) => {
     if (!Number.isFinite(nextYear) || nextYear < 1970 || nextYear > 9999) {
@@ -137,12 +156,18 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
   const handleEditorChange = (nextContent: string) => {
     summary.setContent(nextContent)
-    sync.onInputChange({
-      ...syncPayload,
-      content: nextContent,
-      modifiedAt: new Date().toISOString(),
-    })
+    if (canSyncToRemote) {
+      sync.onInputChange({
+        ...syncPayload,
+        content: nextContent,
+        modifiedAt: new Date().toISOString(),
+      })
+      if (syncGuardMessage) {
+        setSyncGuardMessage(null)
+      }
+    }
   }
+  const displayedSyncMessage = syncGuardMessage ?? sync.errorMessage
 
   const resolveMergeConflict = (mergedContent: string) => {
     const local = sync.conflictState?.local
@@ -241,14 +266,27 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     最近同步：{sync.lastSyncedAt}
                   </span>
                 ) : null}
-                <button type="button" className="td-btn ml-auto" onClick={() => void sync.saveNow(syncPayload)}>
+                <button
+                  type="button"
+                  className="td-btn ml-auto"
+                  onClick={() => {
+                    if (!canSyncToRemote) {
+                      setSyncGuardMessage(syncDisabledMessage)
+                      return
+                    }
+                    if (syncGuardMessage) {
+                      setSyncGuardMessage(null)
+                    }
+                    void sync.saveNow(syncPayload)
+                  }}
+                >
                   手动保存并立即上传
                 </button>
               </div>
 
-              {sync.errorMessage ? (
+              {displayedSyncMessage ? (
                 <p className="text-sm text-td-danger" role="alert">
-                  {sync.errorMessage}
+                  {displayedSyncMessage}
                 </p>
               ) : null}
             </header>
@@ -256,6 +294,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
             {!summary.isLoading ? (
               <MarkdownEditor
                 key={summary.entryId}
+                docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}`}
                 initialValue={summary.content}
                 onChange={handleEditorChange}
                 placeholder="写下本年度总结（长文写作场景，支持 Markdown）"

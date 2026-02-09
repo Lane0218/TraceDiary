@@ -135,4 +135,60 @@ describe('useDiary', () => {
     expect(result.current.entryId).toBe('daily:2026-02-11')
     expect(result.current.content).toBe('# B')
   })
+
+  it('切换日期到新条目前不应继续显示旧日期内容', async () => {
+    const resolvers = new Map<string, (value: DiaryRecord | null) => void>()
+    const dependencies: DiaryDependencies = {
+      getDiary: vi.fn(
+        (id: string) =>
+          new Promise<DiaryRecord | null>((resolve) => {
+            resolvers.set(id, resolve)
+          }),
+      ),
+      saveDiary: vi.fn(async () => {}),
+      now: vi.fn(() => '2026-02-08T10:00:00.000Z'),
+    }
+
+    const { result, rerender } = renderHook(
+      ({ date }) => useDiary({ type: 'daily', date }, dependencies),
+      {
+        initialProps: { date: '2026-02-08' as DateString },
+      },
+    )
+
+    await act(async () => {
+      resolvers.get('daily:2026-02-08')?.({
+        id: 'daily:2026-02-08',
+        type: 'daily',
+        date: '2026-02-08',
+        filename: '2026-02-08.md.enc',
+        content: '# 2/8',
+        wordCount: 1,
+        createdAt: '2026-02-08T01:00:00.000Z',
+        modifiedAt: '2026-02-08T02:00:00.000Z',
+      })
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(result.current.content).toBe('# 2/8'))
+
+    rerender({ date: '2026-02-09' as DateString })
+    expect(result.current.entryId).toBe('daily:2026-02-09')
+    expect(result.current.content).toBe('')
+    expect(result.current.isLoading).toBe(true)
+
+    await act(async () => {
+      resolvers.get('daily:2026-02-09')?.({
+        id: 'daily:2026-02-09',
+        type: 'daily',
+        date: '2026-02-09',
+        filename: '2026-02-09.md.enc',
+        content: '# 2/9',
+        wordCount: 1,
+        createdAt: '2026-02-09T01:00:00.000Z',
+        modifiedAt: '2026-02-09T02:00:00.000Z',
+      })
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(result.current.content).toBe('# 2/9'))
+  })
 })
