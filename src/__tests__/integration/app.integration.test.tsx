@@ -11,7 +11,7 @@ describe('App 路由与工作台入口', () => {
   it('应默认进入单页工作台并显示认证弹层', async () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: '日记工作台' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
     expect(screen.getByText(/^状态：/)).toBeTruthy()
   })
@@ -20,8 +20,7 @@ describe('App 路由与工作台入口', () => {
     window.history.replaceState({}, '', '/editor?date=2026-02-20')
     render(<App />)
 
-    const dateInput = await screen.findByLabelText('当前日期')
-    expect((dateInput as HTMLInputElement).value).toBe('2026-02-20')
+    expect(await screen.findByRole('heading', { name: '2026-02-20 日记' })).toBeTruthy()
   })
 
   it('旧年度总结路由应重定向到工作台并启用年度模式', async () => {

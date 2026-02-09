@@ -72,6 +72,15 @@ export default function CalendarPage() {
     navigate(`/editor?date=${dateKey}`)
   }
 
+  const handlePickMonth = (year: number, monthIndex: number) => {
+    const day = Number.parseInt(activeDateKey.slice(8, 10), 10)
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate()
+    const nextDay = Number.isFinite(day) ? Math.min(day, lastDay) : 1
+    const nextDateKey = formatDateKey(new Date(year, monthIndex, nextDay))
+    setMonth(new Date(year, monthIndex, 1))
+    setActiveDateKey(nextDateKey)
+  }
+
   const handleHistoryDateChange = (dateKey: string) => {
     setActiveDateKey(dateKey)
     const nextDate = new Date(`${dateKey}T00:00:00`)
@@ -104,6 +113,7 @@ export default function CalendarPage() {
           onPreviousMonth={handlePreviousMonth}
           onNextMonth={handleNextMonth}
           onSelectDate={handleSelectDate}
+          onPickMonth={handlePickMonth}
         />
 
         <aside className="space-y-3 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:p-5">

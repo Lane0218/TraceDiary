@@ -30,6 +30,12 @@ function toMonthStartFromDateKey(dateKey: DateString): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
+function buildDateFromYearMonthDay(year: number, monthIndex: number, day: number): DateString {
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate()
+  const normalizedDay = Math.min(Math.max(day, 1), lastDay)
+  return formatDateKey(new Date(year, monthIndex, normalizedDay)) as DateString
+}
+
 function shiftMonth(month: Date, offset: number): Date {
   return new Date(month.getFullYear(), month.getMonth() + offset, 1)
 }
@@ -233,6 +239,15 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     [handleDateChange],
   )
 
+  const handlePickMonth = useCallback(
+    (year: number, monthIndex: number) => {
+      const day = Number.parseInt(date.slice(8, 10), 10)
+      const nextDate = buildDateFromYearMonthDay(year, monthIndex, day)
+      handleDateChange(nextDate)
+    },
+    [date, handleDateChange],
+  )
+
   const handleEditorChange = (nextContent: string) => {
     diary.setContent(nextContent)
 
@@ -322,7 +337,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
           <div>
             <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
-            <p className="text-xs text-td-muted">Private Writing Workspace</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
@@ -349,12 +363,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           </div>
         </header>
 
-        <section className="py-5 td-fade-in">
-          <h2 className="font-display text-[2rem] leading-tight text-td-text">日记工作台</h2>
-          <p className="mt-1 max-w-2xl text-sm text-td-muted">选日期、切模式、立即写。年度总结与日记同屏切换，避免跳转打断。</p>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
+        <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
           <aside className="td-card-muted td-panel space-y-3">
             <MonthCalendar
               month={month}
@@ -363,23 +372,11 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               onPreviousMonth={() => setMonthOffset((prev) => prev - 1)}
               onNextMonth={() => setMonthOffset((prev) => prev + 1)}
               onSelectDate={handleSelectDate}
+              onPickMonth={handlePickMonth}
             />
 
             <div className="space-y-2 rounded-[10px] border border-td-line bg-td-surface p-3">
-              <label htmlFor="history-date" className="text-sm text-td-muted">
-                查询日期
-              </label>
-              <input
-                id="history-date"
-                type="date"
-                value={date}
-                onChange={(event) => {
-                  if (isValidDateString(event.target.value)) {
-                    handleDateChange(event.target.value)
-                  }
-                }}
-                className="td-input"
-              />
+              <p className="text-sm text-td-muted">往年今日（基于当前选中日期）</p>
               <OnThisDayList
                 targetDate={date}
                 diaries={diaries}
@@ -393,21 +390,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           <section className="space-y-3">
             <div className="td-toolbar space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <label htmlFor="workspace-date" className="text-xs text-td-muted">
-                  当前日期
-                </label>
-                <input
-                  id="workspace-date"
-                  type="date"
-                  value={date}
-                  onChange={(event) => {
-                    if (isValidDateString(event.target.value)) {
-                      handleDateChange(event.target.value)
-                    }
-                  }}
-                  className="td-input w-auto min-w-[176px]"
-                />
-
                 <div className="inline-flex overflow-hidden rounded-[10px] border border-td-line">
                   <button
                     type="button"
