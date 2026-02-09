@@ -133,7 +133,7 @@ export function MonthCalendar({
         ) : null}
       </header>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-td-muted sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-td-muted sm:gap-1.5">
         {WEEKDAY_LABELS.map((label) => (
           <span key={label} className="py-1">
             周{label}
@@ -141,11 +141,11 @@ export function MonthCalendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
         {grid.map((cell) => {
           const isActive = cell.dateKey === activeDateKey
           const baseStyle =
-            'relative flex h-10 w-full items-center justify-center rounded-[10px] border text-sm transition sm:h-12'
+            'relative flex h-9 w-full items-center justify-center rounded-[8px] border text-sm transition sm:h-10'
           const monthStyle = cell.inCurrentMonth
             ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'

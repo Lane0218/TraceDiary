@@ -364,19 +364,21 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         </header>
 
         <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
-          <aside className="td-card-muted td-panel space-y-3">
-            <MonthCalendar
-              month={month}
-              activeDateKey={date}
-              diaryDateSet={diaryDateSet}
-              onPreviousMonth={() => setMonthOffset((prev) => prev - 1)}
-              onNextMonth={() => setMonthOffset((prev) => prev + 1)}
-              onSelectDate={handleSelectDate}
-              onPickMonth={handlePickMonth}
-            />
+          <aside className="space-y-3">
+            <section className="td-card-muted td-panel">
+              <MonthCalendar
+                month={month}
+                activeDateKey={date}
+                diaryDateSet={diaryDateSet}
+                onPreviousMonth={() => setMonthOffset((prev) => prev - 1)}
+                onNextMonth={() => setMonthOffset((prev) => prev + 1)}
+                onSelectDate={handleSelectDate}
+                onPickMonth={handlePickMonth}
+              />
+            </section>
 
-            <div className="space-y-2 rounded-[10px] border border-td-line bg-td-surface p-3">
-              <p className="text-sm text-td-muted">往年今日（基于当前选中日期）</p>
+            <section className="td-card-muted td-panel space-y-2">
+              <p className="text-sm text-td-muted">往年今日</p>
               <OnThisDayList
                 targetDate={date}
                 diaries={diaries}
@@ -384,7 +386,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 loadError={diaryLoadError}
                 onSelectDate={handleSelectDate}
               />
-            </div>
+            </section>
           </aside>
 
           <section className="space-y-3">
@@ -448,7 +450,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               <h3 className="font-display text-xl text-td-text">
                 {mode === 'daily' ? `${date} 日记` : `${year} 年度总结`}
               </h3>
-              <p className="mt-1 text-xs text-[#7a7a7a]">条目 ID：{diary.entryId}</p>
               <div className="mt-3">
                 {!diary.isLoading ? (
                   <MarkdownEditor
