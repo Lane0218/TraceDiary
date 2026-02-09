@@ -347,10 +347,17 @@ export async function readGiteeFileContents(
     await throwMappedHttpError(response, '读取文件')
   }
 
-  const body = (await response.json()) as {
-    content?: unknown
-    encoding?: unknown
-    sha?: unknown
+  const body = (await response.json()) as
+    | {
+        content?: unknown
+        encoding?: unknown
+        sha?: unknown
+      }
+    | unknown[]
+
+  // 部分 Gitee 实例在“文件不存在”时会返回 200 + 空数组，而非 404。
+  if (Array.isArray(body)) {
+    return { exists: false }
   }
 
   if (typeof body.content !== 'string') {

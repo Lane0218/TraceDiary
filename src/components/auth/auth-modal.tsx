@@ -32,6 +32,7 @@ function AuthField({
   value,
   onChange,
   placeholder,
+  testId,
   type = 'text',
   autoComplete,
 }: {
@@ -39,6 +40,7 @@ function AuthField({
   value: string
   onChange: (value: string) => void
   placeholder: string
+  testId?: string
   type?: 'text' | 'password'
   autoComplete?: string
 }) {
@@ -52,6 +54,7 @@ function AuthField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        data-testid={testId}
       />
     </label>
   )
@@ -177,6 +180,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 onChange={(next) => setForm((prev) => ({ ...prev, repoInput: next }))}
                 placeholder="owner/repo 或 https://gitee.com/owner/repo"
                 autoComplete="off"
+                testId="auth-setup-repo-input"
               />
               <AuthField
                 label="仓库分支"
@@ -184,6 +188,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 onChange={(next) => setForm((prev) => ({ ...prev, repoBranch: next }))}
                 placeholder="默认 master，可填写 main/dev 等"
                 autoComplete="off"
+                testId="auth-setup-branch-input"
               />
               <AuthField
                 label="Gitee Token"
@@ -192,6 +197,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 placeholder="请输入可访问私有仓库的 Token"
                 type="password"
                 autoComplete="off"
+                testId="auth-setup-token-input"
               />
               <AuthField
                 label="主密码"
@@ -200,9 +206,10 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 placeholder="至少 8 位，且包含字母和数字"
                 type="password"
                 autoComplete="new-password"
+                testId="auth-setup-password-input"
               />
               {form.masterPassword ? <p className="text-xs text-td-muted">{passwordHint ?? '主密码强度满足要求'}</p> : null}
-              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
+              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-setup-submit">
                 初始化并保存配置
               </button>
             </form>
@@ -217,8 +224,9 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 placeholder="请输入主密码解锁"
                 type="password"
                 autoComplete="current-password"
+                testId="auth-unlock-password-input"
               />
-              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
+              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-unlock-submit">
                 解锁
               </button>
             </form>
@@ -233,6 +241,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 placeholder="请输入新的 Token（覆盖本地密文）"
                 type="password"
                 autoComplete="off"
+                testId="auth-refresh-token-input"
               />
               <AuthField
                 label="主密码（可选）"
@@ -241,8 +250,13 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
                 type="password"
                 autoComplete="current-password"
+                testId="auth-refresh-password-input"
               />
-              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
+              <button
+                type="submit"
+                className="td-btn td-btn-primary w-full sm:w-auto"
+                data-testid="auth-refresh-submit"
+              >
                 覆盖本地 Token 密文
               </button>
             </form>

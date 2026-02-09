@@ -208,6 +208,25 @@ describe('readGiteeFileContents', () => {
     expect(result).toEqual({ exists: false })
   })
 
+  it('部分 Gitee 实例返回 200 + 空数组时也应视为不存在', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await readGiteeFileContents({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'metadata.json.enc',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({ exists: false })
+  })
+
   it('应支持 access_token query 兼容模式且保留 Authorization 头', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

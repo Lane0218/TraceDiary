@@ -10,7 +10,11 @@
     "preview": "vite preview",
     "test:unit": "vitest run src/__tests__/unit src/services/__tests__",
     "test:integration": "vitest run --environment jsdom src/__tests__/integration src/hooks/__tests__",
-    "test:e2e": "bash ./scripts/e2e-smoke.sh"
+    "test:e2e:smoke": "bash ./scripts/e2e-smoke.sh",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:headed": "playwright test --project=chromium --headed",
+    "test:e2e:ui": "playwright test --project=chromium --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@milkdown/kit": "^7.18.0",
@@ -24,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.10.1",

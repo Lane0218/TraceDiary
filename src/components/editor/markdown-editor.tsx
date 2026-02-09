@@ -13,9 +13,10 @@ interface MarkdownEditorProps {
   placeholder?: string
   disabled?: boolean
   docKey?: string
+  testId?: string
 }
 
-function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey }: MarkdownEditorProps) {
+function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
   const onChangeRef = useRef(onChange)
 
   useEffect(() => {
@@ -57,6 +58,7 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey }: Mar
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
       aria-disabled={disabled}
+      data-testid={testId}
     >
       <Milkdown />
     </div>
@@ -69,12 +71,14 @@ export default function MarkdownEditor({
   placeholder = '开始记录今天...',
   disabled = false,
   docKey = 'default',
+  testId,
 }: MarkdownEditorProps) {
   if (import.meta.env.MODE === 'test') {
     return (
       <textarea
         key={docKey}
         aria-label={placeholder}
+        data-testid={testId}
         defaultValue={initialValue}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
@@ -90,6 +94,7 @@ export default function MarkdownEditor({
         onChange={onChange}
         disabled={disabled}
         docKey={docKey}
+        testId={testId}
       />
     </MilkdownProvider>
   )

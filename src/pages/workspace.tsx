@@ -471,7 +471,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             <div className="td-toolbar space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
-                <span className={`td-status-pill ${syncToneClass}`}>{syncLabel}</span>
+                <span className={`td-status-pill ${syncToneClass}`} data-testid="sync-status-pill">
+                  {syncLabel}
+                </span>
                 {sync.lastSyncedAt ? (
                   <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
                     最近同步：{sync.lastSyncedAt}
@@ -487,12 +489,14 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onClick={() => {
                       void saveNow()
                     }}
+                    data-testid="manual-sync-button"
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
                   {manualSyncError ? (
                     <span
                       role="alert"
+                      data-testid="manual-sync-error"
                       className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
                     >
                       {manualSyncError}
@@ -513,6 +517,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     initialValue={diary.content}
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
+                    testId="daily-editor"
                   />
                 ) : null}
               </div>

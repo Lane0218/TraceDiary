@@ -452,6 +452,7 @@ export function createDiaryUploadExecutor(
 ): UploadMetadataFn<DiarySyncMetadata> {
   let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
   const now = params.now ?? nowIsoString
+  const useAccessTokenQuery = params.useAccessTokenQuery ?? true
 
   const attemptUpload = async (
     payload: UploadMetadataPayload<DiarySyncMetadata>,
@@ -467,7 +468,7 @@ export function createDiaryUploadExecutor(
       ref: targetBranch,
       apiBase: params.apiBase,
       fetchImpl: params.fetchImpl,
-      useAccessTokenQuery: params.useAccessTokenQuery,
+      useAccessTokenQuery,
     })
 
     const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
@@ -482,7 +483,7 @@ export function createDiaryUploadExecutor(
       expectedSha,
       apiBase: params.apiBase,
       fetchImpl: params.fetchImpl,
-      useAccessTokenQuery: params.useAccessTokenQuery,
+      useAccessTokenQuery,
     })
 
     return {
@@ -512,7 +513,7 @@ export function createDiaryUploadExecutor(
           ref: targetBranch,
           apiBase: params.apiBase,
           fetchImpl: params.fetchImpl,
-          useAccessTokenQuery: params.useAccessTokenQuery,
+          useAccessTokenQuery,
         })
         if (latestRemote.exists && typeof latestRemote.content === 'string') {
           remoteMetadata = toRemoteDiaryMetadata(metadata, latestRemote.content, now)

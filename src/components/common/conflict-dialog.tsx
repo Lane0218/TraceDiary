@@ -48,7 +48,11 @@ export default function ConflictDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm td-fade-in">
-      <article className="td-card w-full max-w-4xl bg-td-bg shadow-card" aria-label="conflict-dialog">
+      <article
+        className="td-card w-full max-w-4xl bg-td-bg shadow-card"
+        aria-label="conflict-dialog"
+        data-testid="conflict-dialog"
+      >
         <header className="border-b border-td-line px-4 py-3 sm:px-5">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xl text-td-text">检测到同步冲突</h2>
@@ -87,19 +91,27 @@ export default function ConflictDialog({
             id="merged-content"
             className="td-input min-h-[180px] font-mono text-sm"
             defaultValue={mergeInitialValue}
+            data-testid="conflict-merge-textarea"
           />
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="td-btn" onClick={onKeepLocal}>
+            <button type="button" className="td-btn" onClick={onKeepLocal} data-testid="conflict-keep-local">
               保留本地版本
             </button>
-            <button type="button" className="td-btn" onClick={onKeepRemote} disabled={!remote}>
+            <button
+              type="button"
+              className="td-btn"
+              onClick={onKeepRemote}
+              disabled={!remote}
+              data-testid="conflict-keep-remote"
+            >
               保留远端版本
             </button>
             <button
               type="button"
               className="td-btn td-btn-primary ml-auto"
               onClick={() => onMerge(mergeInputRef.current?.value ?? mergeInitialValue)}
+              data-testid="conflict-merge-submit"
             >
               合并后提交
             </button>
