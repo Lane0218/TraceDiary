@@ -3,20 +3,6 @@ import { useAuth } from './hooks/use-auth'
 import WorkspacePage from './pages/workspace'
 import YearlySummaryPage from './pages/yearly-summary'
 
-function EditorRedirect() {
-  const location = useLocation()
-  const query = new URLSearchParams(location.search)
-  const date = query.get('date')
-
-  if (date) {
-    const next = new URLSearchParams()
-    next.set('date', date)
-    return <Navigate to={`/workspace?${next.toString()}`} replace />
-  }
-
-  return <Navigate to="/workspace" replace />
-}
-
 function YearlySummaryRedirect() {
   const location = useLocation()
   const query = new URLSearchParams(location.search)
@@ -40,7 +26,6 @@ function AppRoutes() {
       <Route path="/yearly/:year?" element={<YearlySummaryPage auth={auth} />} />
       <Route path="/welcome" element={<Navigate to="/workspace" replace />} />
       <Route path="/calendar" element={<Navigate to="/workspace" replace />} />
-      <Route path="/editor" element={<EditorRedirect />} />
       <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
       <Route path="*" element={<Navigate to="/workspace" replace />} />
     </Routes>

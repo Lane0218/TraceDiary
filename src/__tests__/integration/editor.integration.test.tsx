@@ -1,8 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import type { ReactElement } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import EditorPage from '../../pages/editor'
 import YearlySummaryPage from '../../pages/yearly-summary'
 import type { UseAuthResult } from '../../hooks/use-auth'
 import { useDiary, type UseDiaryResult } from '../../hooks/use-diary'
@@ -30,10 +28,6 @@ vi.mock('../../components/editor/markdown-editor', () => ({
 }))
 
 const useDiaryMock = vi.mocked(useDiary)
-
-function renderWithRouter(node: ReactElement) {
-  return render(<MemoryRouter>{node}</MemoryRouter>)
-}
 
 function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
   return render(
@@ -79,39 +73,9 @@ function buildAuthResult(): UseAuthResult {
   }
 }
 
-describe('编辑与年度总结页面', () => {
+describe('年度总结页面', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('编辑页应展示加载状态', () => {
-    useDiaryMock.mockReturnValue(
-      buildUseDiaryResult({
-        isLoading: true,
-      }),
-    )
-
-    renderWithRouter(<EditorPage />)
-
-    expect(screen.getByRole('heading', { name: '编辑页面' })).toBeTruthy()
-    expect(screen.getByRole('status', { name: '' }).textContent).toContain('加载中')
-  })
-
-  it('编辑页切换日期时应按新日期读取', () => {
-    useDiaryMock.mockImplementation((target) => {
-      if (target.type === 'daily') {
-        return buildUseDiaryResult({
-          entryId: `daily:${target.date}`,
-        })
-      }
-      return buildUseDiaryResult()
-    })
-
-    renderWithRouter(<EditorPage />)
-
-    fireEvent.change(screen.getByLabelText('选择日期'), { target: { value: '2026-02-20' } })
-
-    expect(useDiaryMock).toHaveBeenLastCalledWith({ type: 'daily', date: '2026-02-20' })
   })
 
   it('年度总结页应展示保存中状态并响应年份切换', () => {

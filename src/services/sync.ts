@@ -1,4 +1,5 @@
 import { getMetadata, saveMetadata } from './indexeddb'
+import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import type { Metadata } from '../types/metadata'
 
 const DEFAULT_GITEE_API_BASE = 'https://gitee.com/api/v5'
@@ -17,6 +18,11 @@ export interface UploadRequest {
   expectedSha?: string
 }
 
+export interface UploadConflictPayload<TMetadata = unknown> {
+  local: TMetadata
+  remote?: TMetadata
+}
+
 export interface UploadResult {
   ok: boolean
   conflict: boolean
@@ -29,17 +35,18 @@ export interface UploadMetadataPayload<TMetadata = unknown> {
   reason: SyncTriggerReason
 }
 
-export interface UploadMetadataResult {
+export interface UploadMetadataResult<TMetadata = unknown> {
   syncedAt?: string
   ok?: boolean
   conflict?: boolean
   remoteSha?: string
   reason?: UploadFailureReason
+  conflictPayload?: UploadConflictPayload<TMetadata>
 }
 
 export type UploadMetadataFn<TMetadata = unknown> = (
   payload: UploadMetadataPayload<TMetadata>,
-) => Promise<UploadMetadataResult | void>
+) => Promise<UploadMetadataResult<TMetadata> | void>
 
 export interface CreateUploadMetadataDependencies<TMetadata = unknown> {
   uploadMetadata?: UploadMetadataFn<TMetadata>
@@ -106,6 +113,33 @@ export interface ReadRemoteMetadataFromGiteeParams {
 
 export interface UploadMetadataToGiteeParams extends ReadRemoteMetadataFromGiteeParams {
   request: UploadRequest
+}
+
+export type DiarySyncMetadata =
+  | {
+      type: 'daily'
+      entryId: string
+      date: string
+      content: string
+      modifiedAt: string
+    }
+  | {
+      type: 'yearly_summary'
+      entryId: string
+      year: number
+      content: string
+      modifiedAt: string
+    }
+
+export interface CreateDiaryUploadExecutorParams {
+  token: string
+  owner: string
+  repo: string
+  branch?: string
+  apiBase?: string
+  fetchImpl?: typeof fetch
+  useAccessTokenQuery?: boolean
+  now?: () => string
 }
 
 function normalizeApiBase(apiBase?: string): string {
@@ -250,7 +284,7 @@ function nowIsoString(): string {
 
 export async function placeholderUploadMetadata<TMetadata = unknown>(
   payload: UploadMetadataPayload<TMetadata>,
-): Promise<UploadMetadataResult> {
+): Promise<UploadMetadataResult<TMetadata>> {
   void payload
   return {
     ok: true,
@@ -282,7 +316,9 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
   const readRemoteMetadata = dependencies.readRemoteMetadata
   const uploadRequest = dependencies.uploadRequest
 
-  return async (payload: UploadMetadataPayload<TMetadata>): Promise<UploadMetadataResult> => {
+  return async (
+    payload: UploadMetadataPayload<TMetadata>,
+  ): Promise<UploadMetadataResult<TMetadata>> => {
     try {
       const encryptedContent = await serializeMetadata(payload.metadata)
       const remoteFile = await readRemoteMetadata()
@@ -327,6 +363,156 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
         }
       }
 
+      throw error
+    }
+  }
+}
+
+function buildDiaryPath(metadata: DiarySyncMetadata): string {
+  if (metadata.type === 'daily') {
+    return `${metadata.date}.md.enc`
+  }
+  return `${metadata.year}-summary.md.enc`
+}
+
+function buildDiaryCommitMessage(metadata: DiarySyncMetadata, reason: SyncTriggerReason): string {
+  if (metadata.type === 'daily') {
+    return reason === 'manual'
+      ? `chore: 手动同步日记 ${metadata.date}`
+      : `chore: 自动同步日记 ${metadata.date}`
+  }
+  return reason === 'manual'
+    ? `chore: 手动同步年度总结 ${metadata.year}`
+    : `chore: 自动同步年度总结 ${metadata.year}`
+}
+
+function isShaMismatchError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  if (error instanceof GiteeApiError && error.status === 409) {
+    return true
+  }
+
+  return looksLikeShaMismatch(
+    error instanceof GiteeApiError ? error.status : pickStatusFromError(error),
+    error.message,
+  )
+}
+
+function toRemoteDiaryMetadata(
+  local: DiarySyncMetadata,
+  remoteContent: string,
+  now: () => string,
+): DiarySyncMetadata {
+  return {
+    ...local,
+    content: remoteContent,
+    modifiedAt: now(),
+  }
+}
+
+export function createDiaryUploadExecutor(
+  params: CreateDiaryUploadExecutorParams,
+): UploadMetadataFn<DiarySyncMetadata> {
+  const branch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const now = params.now ?? nowIsoString
+
+  return async (payload) => {
+    const metadata = payload.metadata
+    const path = buildDiaryPath(metadata)
+
+    try {
+      const remoteFile = await readGiteeFileContents({
+        token: params.token,
+        owner: params.owner,
+        repo: params.repo,
+        path,
+        ref: branch,
+        apiBase: params.apiBase,
+        fetchImpl: params.fetchImpl,
+        useAccessTokenQuery: params.useAccessTokenQuery,
+      })
+
+      const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
+      const upsertResult = await upsertGiteeFile({
+        token: params.token,
+        owner: params.owner,
+        repo: params.repo,
+        path,
+        content: metadata.content,
+        message: buildDiaryCommitMessage(metadata, payload.reason),
+        branch,
+        expectedSha,
+        apiBase: params.apiBase,
+        fetchImpl: params.fetchImpl,
+        useAccessTokenQuery: params.useAccessTokenQuery,
+      })
+
+      return {
+        ok: true,
+        conflict: false,
+        remoteSha: upsertResult.sha,
+        syncedAt: now(),
+      }
+    } catch (error) {
+      if (isShaMismatchError(error)) {
+        let remoteMetadata: DiarySyncMetadata | undefined
+        try {
+          const latestRemote = await readGiteeFileContents({
+            token: params.token,
+            owner: params.owner,
+            repo: params.repo,
+            path,
+            ref: branch,
+            apiBase: params.apiBase,
+            fetchImpl: params.fetchImpl,
+            useAccessTokenQuery: params.useAccessTokenQuery,
+          })
+          if (latestRemote.exists && typeof latestRemote.content === 'string') {
+            remoteMetadata = toRemoteDiaryMetadata(metadata, latestRemote.content, now)
+          }
+        } catch {
+          remoteMetadata = undefined
+        }
+
+        return {
+          ok: false,
+          conflict: true,
+          reason: 'sha_mismatch',
+          conflictPayload: {
+            local: metadata,
+            remote: remoteMetadata,
+          },
+        }
+      }
+
+      if (error instanceof GiteeApiError) {
+        if (error.type === 'auth') {
+          return {
+            ok: false,
+            conflict: false,
+            reason: 'auth',
+          }
+        }
+        if (error.type === 'network') {
+          return {
+            ok: false,
+            conflict: false,
+            reason: 'network',
+          }
+        }
+      }
+
+      const reason = inferUploadFailureReason(error)
+      if (reason) {
+        return {
+          ok: false,
+          conflict: false,
+          reason,
+        }
+      }
       throw error
     }
   }

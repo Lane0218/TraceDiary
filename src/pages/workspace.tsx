@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
+import ConflictDialog from '../components/common/conflict-dialog'
 import MarkdownEditor from '../components/editor/markdown-editor'
 import OnThisDayList from '../components/history/on-this-day-list'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { DIARY_INDEX_TYPE, listDiariesByIndex, type DiaryRecord } from '../services/indexeddb'
+import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 
@@ -46,6 +48,10 @@ function shiftMonth(month: Date, offset: number): Date {
 
 function countWords(content: string): number {
   return content.trim().length === 0 ? 0 : content.trim().split(/\s+/u).length
+}
+
+function isDailySyncMetadata(value: DiarySyncMetadata): value is Extract<DiarySyncMetadata, { type: 'daily' }> {
+  return value.type === 'daily'
 }
 
 function upsertDailyRecord(records: DiaryRecord[], date: DateString, content: string): DiaryRecord[] {
@@ -147,13 +153,21 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
 
   const diary = useDiary({ type: 'daily', date })
-  const sync = useSync<{
-    type: 'daily'
-    entryId: string
-    date: DateString
-    content: string
-    modifiedAt: string
-  }>()
+  const canSyncToRemote =
+    auth.state.stage === 'ready' &&
+    Boolean(auth.state.tokenInMemory) &&
+    Boolean(auth.state.config?.giteeOwner) &&
+    Boolean(auth.state.config?.giteeRepoName)
+  const uploadMetadata = canSyncToRemote
+    ? createDiaryUploadExecutor({
+        token: auth.state.tokenInMemory as string,
+        owner: auth.state.config?.giteeOwner as string,
+        repo: auth.state.config?.giteeRepoName as string,
+      })
+    : undefined
+  const sync = useSync<DiarySyncMetadata>({
+    uploadMetadata,
+  })
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
 
@@ -248,26 +262,42 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     diary.setContent(nextContent)
 
     const modifiedAt = new Date().toISOString()
-    sync.onInputChange({
+    const payload: DiarySyncMetadata = {
       type: 'daily',
       entryId: diary.entryId,
       date,
       content: nextContent,
       modifiedAt,
-    })
+    }
+    sync.onInputChange(payload)
     setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }
 
   const saveNow = () => {
     const modifiedAt = diary.entry?.modifiedAt ?? new Date().toISOString()
 
-    void sync.saveNow({
+    const payload: DiarySyncMetadata = {
       type: 'daily',
       entryId: diary.entryId,
       date,
       content: diary.content,
       modifiedAt,
-    })
+    }
+    void sync.saveNow(payload)
+  }
+
+  const resolveMergeConflict = (mergedContent: string) => {
+    const local = sync.conflictState?.local
+    if (!local || !isDailySyncMetadata(local)) {
+      return
+    }
+
+    const mergedPayload: DiarySyncMetadata = {
+      ...local,
+      content: mergedContent,
+      modifiedAt: new Date().toISOString(),
+    }
+    void sync.resolveConflict('merged', mergedPayload)
   }
 
   const sessionLabel = useMemo(() => {
@@ -281,6 +311,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   }, [auth.state.stage])
 
   const syncLabel = useMemo(() => {
+    if (sync.conflictState) {
+      return '检测到冲突'
+    }
+    if (sync.isOffline || sync.hasPendingRetry) {
+      return '离线待重试'
+    }
     if (sync.status === 'syncing') {
       return '云端同步中'
     }
@@ -291,9 +327,15 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       return '云端同步失败'
     }
     return '云端待同步'
-  }, [sync.status])
+  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const syncToneClass = useMemo(() => {
+    if (sync.conflictState) {
+      return 'td-status-danger'
+    }
+    if (sync.isOffline || sync.hasPendingRetry) {
+      return 'td-status-warning'
+    }
     if (sync.status === 'syncing') {
       return 'td-status-warning'
     }
@@ -304,7 +346,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       return 'td-status-danger'
     }
     return 'td-status-muted'
-  }, [sync.status])
+  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   return (
     <>
@@ -396,6 +438,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   手动保存并立即上传
                 </button>
               </div>
+              {sync.errorMessage ? <p className="text-sm text-td-danger">{sync.errorMessage}</p> : null}
             </div>
 
             <article className="td-card-primary td-panel">
@@ -422,6 +465,36 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         onClose={() => {
           setManualAuthModalOpen(false)
         }}
+      />
+
+      <ConflictDialog
+        open={Boolean(sync.conflictState && isDailySyncMetadata(sync.conflictState.local))}
+        local={{
+          content:
+            sync.conflictState && isDailySyncMetadata(sync.conflictState.local)
+              ? sync.conflictState.local.content
+              : '',
+          modifiedAt:
+            sync.conflictState && isDailySyncMetadata(sync.conflictState.local)
+              ? sync.conflictState.local.modifiedAt
+              : undefined,
+        }}
+        remote={
+          sync.conflictState?.remote && isDailySyncMetadata(sync.conflictState.remote)
+            ? {
+                content: sync.conflictState.remote.content,
+                modifiedAt: sync.conflictState.remote.modifiedAt,
+              }
+            : null
+        }
+        onKeepLocal={() => {
+          void sync.resolveConflict('local')
+        }}
+        onKeepRemote={() => {
+          void sync.resolveConflict('remote')
+        }}
+        onMerge={resolveMergeConflict}
+        onClose={sync.dismissConflict}
       />
     </>
   )

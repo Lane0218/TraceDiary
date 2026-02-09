@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
+import ConflictDialog from '../components/common/conflict-dialog'
 import MarkdownEditor from '../components/editor/markdown-editor'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
+import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 
 interface YearlySummaryPageProps {
   auth: UseAuthResult
@@ -49,19 +51,10 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
-
   const summary = useDiary({ type: 'yearly_summary', year })
-  const sync = useSync<{
-    type: 'yearly_summary'
-    entryId: string
-    year: number
-    content: string
-    modifiedAt: string
-  }>()
-
-  const syncPayload = useMemo(
+  const syncPayload = useMemo<DiarySyncMetadata>(
     () => ({
-      type: 'yearly_summary' as const,
+      type: 'yearly_summary',
       entryId: summary.entryId,
       year,
       content: summary.content,
@@ -69,6 +62,20 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }),
     [summary.content, summary.entry?.modifiedAt, summary.entryId, year],
   )
+
+  const canSyncToRemote =
+    auth.state.stage === 'ready' &&
+    Boolean(auth.state.tokenInMemory) &&
+    Boolean(auth.state.config?.giteeOwner) &&
+    Boolean(auth.state.config?.giteeRepoName)
+  const uploadMetadata = canSyncToRemote
+    ? createDiaryUploadExecutor({
+        token: auth.state.tokenInMemory as string,
+        owner: auth.state.config?.giteeOwner as string,
+        repo: auth.state.config?.giteeRepoName as string,
+      })
+    : undefined
+  const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
@@ -84,6 +91,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }, [auth.state.stage])
 
   const syncLabel = useMemo(() => {
+    if (sync.conflictState) {
+      return '检测到冲突'
+    }
+    if (sync.isOffline || sync.hasPendingRetry) {
+      return '离线待重试'
+    }
     if (sync.status === 'syncing') {
       return '云端同步中'
     }
@@ -94,9 +107,15 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       return '云端同步失败'
     }
     return '云端待同步'
-  }, [sync.status])
+  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const syncToneClass = useMemo(() => {
+    if (sync.conflictState) {
+      return 'td-status-danger'
+    }
+    if (sync.isOffline || sync.hasPendingRetry) {
+      return 'td-status-warning'
+    }
     if (sync.status === 'syncing') {
       return 'td-status-warning'
     }
@@ -107,7 +126,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       return 'td-status-danger'
     }
     return 'td-status-muted'
-  }, [sync.status])
+  }, [sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
 
   const handleYearChange = (nextYear: number) => {
     if (!Number.isFinite(nextYear) || nextYear < 1970 || nextYear > 9999) {
@@ -123,6 +142,20 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       content: nextContent,
       modifiedAt: new Date().toISOString(),
     })
+  }
+
+  const resolveMergeConflict = (mergedContent: string) => {
+    const local = sync.conflictState?.local
+    if (!local || local.type !== 'yearly_summary') {
+      return
+    }
+
+    const mergedPayload: DiarySyncMetadata = {
+      ...local,
+      content: mergedContent,
+      modifiedAt: new Date().toISOString(),
+    }
+    void sync.resolveConflict('merged', mergedPayload)
   }
 
   return (
@@ -239,6 +272,36 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         onClose={() => {
           setManualAuthModalOpen(false)
         }}
+      />
+
+      <ConflictDialog
+        open={Boolean(sync.conflictState && sync.conflictState.local.type === 'yearly_summary')}
+        local={{
+          content:
+            sync.conflictState && sync.conflictState.local.type === 'yearly_summary'
+              ? sync.conflictState.local.content
+              : '',
+          modifiedAt:
+            sync.conflictState && sync.conflictState.local.type === 'yearly_summary'
+              ? sync.conflictState.local.modifiedAt
+              : undefined,
+        }}
+        remote={
+          sync.conflictState?.remote && sync.conflictState.remote.type === 'yearly_summary'
+            ? {
+                content: sync.conflictState.remote.content,
+                modifiedAt: sync.conflictState.remote.modifiedAt,
+              }
+            : null
+        }
+        onKeepLocal={() => {
+          void sync.resolveConflict('local')
+        }}
+        onKeepRemote={() => {
+          void sync.resolveConflict('remote')
+        }}
+        onMerge={resolveMergeConflict}
+        onClose={sync.dismissConflict}
       />
     </>
   )

@@ -237,4 +237,71 @@ describe('useSync', () => {
     })
     expect(uploadMetadata).toHaveBeenCalledTimes(1)
   })
+
+  it('上传返回冲突时应设置 conflictState 并提示用户处理', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async ({ metadata }) => ({
+      ok: false,
+      conflict: true,
+      reason: 'sha_mismatch' as const,
+      conflictPayload: {
+        local: metadata,
+        remote: { content: 'remote-version' },
+      },
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.saveNow({ content: 'local-version' })
+    })
+
+    expect(result.current.status).toBe('error')
+    expect(result.current.conflictState).toEqual({
+      local: { content: 'local-version' },
+      remote: { content: 'remote-version' },
+    })
+    expect(result.current.errorMessage).toContain('冲突')
+  })
+
+  it('选择保留本地版本后应重新提交冲突内容', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        conflict: true,
+        reason: 'sha_mismatch' as const,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        conflict: false,
+        syncedAt: '2026-02-08T17:00:00.000Z',
+      })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.saveNow({ content: 'retry-local' })
+    })
+    expect(result.current.conflictState).toBeTruthy()
+
+    await act(async () => {
+      await result.current.resolveConflict('local')
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(2)
+    expect(uploadMetadata).toHaveBeenLastCalledWith({
+      metadata: { content: 'retry-local' },
+      reason: 'manual',
+    })
+    expect(result.current.conflictState).toBeNull()
+    expect(result.current.status).toBe('success')
+  })
 })

@@ -36,7 +36,7 @@ describe('Calendar 页面集成', () => {
     vi.restoreAllMocks()
   })
 
-  it('应支持月份切换并在点击日期时跳转编辑页', async () => {
+  it('应支持月份切换并在点击日期时跳转工作台', async () => {
     vi.spyOn(indexedDbService, 'listDiariesByIndex').mockResolvedValue([
       buildDiaryRecord('2026-02-08', '今天写了集成测试'),
       buildDiaryRecord('2026-03-15', '三月记录'),
@@ -56,7 +56,7 @@ describe('Calendar 页面集成', () => {
     expect(screen.getByText(/2026年3月/)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: '选择 2026-03-15' }))
-    expect(navigateMock).toHaveBeenCalledWith('/editor?date=2026-03-15')
+    expect(navigateMock).toHaveBeenCalledWith('/workspace?date=2026-03-15')
   })
 
   it('应展示往年今日记录并截断为前三行预览', async () => {
@@ -80,7 +80,7 @@ describe('Calendar 页面集成', () => {
     expect(screen.queryByText('丁')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: '打开 2025-02-08' }))
-    expect(navigateMock).toHaveBeenCalledWith('/editor?date=2025-02-08')
+    expect(navigateMock).toHaveBeenCalledWith('/workspace?date=2025-02-08')
   })
 
   it('往年今日应使用虚拟滚动，仅渲染可视区域附近卡片', async () => {

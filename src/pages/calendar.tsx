@@ -69,7 +69,7 @@ export default function CalendarPage() {
 
   const handleSelectDate = (dateKey: string) => {
     setActiveDateKey(dateKey)
-    navigate(`/editor?date=${dateKey}`)
+    navigate(`/workspace?date=${dateKey}`)
   }
 
   const handlePickMonth = (year: number, monthIndex: number) => {

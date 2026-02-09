@@ -16,11 +16,12 @@ describe('App 路由与工作台入口', () => {
     expect(screen.getByText(/^状态：/)).toBeTruthy()
   })
 
-  it('旧编辑路由应重定向到工作台并保留日期参数', async () => {
+  it('未知路由应回退到工作台', async () => {
     window.history.replaceState({}, '', '/editor?date=2026-02-20')
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: '2026-02-20 日记' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
+    expect(screen.getByLabelText('workspace-layout')).toBeTruthy()
   })
 
   it('旧年度总结路由应重定向到年度总结独立页', async () => {
