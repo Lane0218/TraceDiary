@@ -1,31 +1,33 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/use-auth'
 import WorkspacePage from './pages/workspace'
+import YearlySummaryPage from './pages/yearly-summary'
 
 function EditorRedirect() {
   const location = useLocation()
   const query = new URLSearchParams(location.search)
   const date = query.get('date')
-  const next = new URLSearchParams()
-  next.set('mode', 'daily')
+
   if (date) {
+    const next = new URLSearchParams()
     next.set('date', date)
+    return <Navigate to={`/workspace?${next.toString()}`} replace />
   }
 
-  return <Navigate to={`/workspace?${next.toString()}`} replace />
+  return <Navigate to="/workspace" replace />
 }
 
-function YearlyRedirect() {
+function YearlySummaryRedirect() {
   const location = useLocation()
   const query = new URLSearchParams(location.search)
-  const year = query.get('year')
-  const next = new URLSearchParams()
-  next.set('mode', 'yearly')
-  if (year) {
-    next.set('year', year)
-  }
+  const parsedYear = Number.parseInt(query.get('year') ?? '', 10)
+  const currentYear = new Date().getFullYear()
+  const targetYear =
+    Number.isFinite(parsedYear) && parsedYear >= 1970 && parsedYear <= 9999
+      ? parsedYear
+      : currentYear
 
-  return <Navigate to={`/workspace?${next.toString()}`} replace />
+  return <Navigate to={`/yearly/${targetYear}`} replace />
 }
 
 function AppRoutes() {
@@ -35,10 +37,11 @@ function AppRoutes() {
     <Routes>
       <Route index element={<Navigate to="/workspace" replace />} />
       <Route path="/workspace" element={<WorkspacePage auth={auth} />} />
+      <Route path="/yearly/:year?" element={<YearlySummaryPage auth={auth} />} />
       <Route path="/welcome" element={<Navigate to="/workspace" replace />} />
       <Route path="/calendar" element={<Navigate to="/workspace" replace />} />
       <Route path="/editor" element={<EditorRedirect />} />
-      <Route path="/yearly-summary" element={<YearlyRedirect />} />
+      <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
       <Route path="*" element={<Navigate to="/workspace" replace />} />
     </Routes>
   )

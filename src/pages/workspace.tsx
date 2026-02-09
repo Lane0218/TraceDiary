@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
 import MarkdownEditor from '../components/editor/markdown-editor'
@@ -11,10 +11,14 @@ import { DIARY_INDEX_TYPE, listDiariesByIndex, type DiaryRecord } from '../servi
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 
-type WorkspaceMode = 'daily' | 'yearly'
-
 interface WorkspacePageProps {
   auth: UseAuthResult
+}
+
+interface YearlyReminder {
+  show: boolean
+  targetYear: number
+  message: string
 }
 
 function isValidDateString(value: string | null): value is DateString {
@@ -72,6 +76,34 @@ function upsertDailyRecord(records: DiaryRecord[], date: DateString, content: st
   return records.map((record, recordIndex) => (recordIndex === index ? merged : record))
 }
 
+function getYearlyReminder(now: Date): YearlyReminder {
+  const month = now.getMonth()
+  const day = now.getDate()
+  const year = now.getFullYear()
+
+  if (month === 11 && day >= 15) {
+    return {
+      show: true,
+      targetYear: year,
+      message: `年末阶段：建议开始整理 ${year} 年度总结。`,
+    }
+  }
+
+  if (month === 0 && day <= 15) {
+    return {
+      show: true,
+      targetYear: year - 1,
+      message: `新年初期：建议继续完善 ${year - 1} 年度总结。`,
+    }
+  }
+
+  return {
+    show: false,
+    targetYear: year,
+    message: '',
+  }
+}
+
 function StatusHint({
   isLoading,
   isSaving,
@@ -97,6 +129,7 @@ function StatusHint({
 }
 
 export default function WorkspacePage({ auth }: WorkspacePageProps) {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
@@ -105,46 +138,24 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
 
   const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
-  const mode: WorkspaceMode = searchParams.get('mode') === 'yearly' ? 'yearly' : 'daily'
   const date = useMemo(() => {
     const queryDate = searchParams.get('date')
     return isValidDateString(queryDate) ? queryDate : today
   }, [searchParams, today])
-  const year = useMemo(() => {
-    const queryYear = Number.parseInt(searchParams.get('year') ?? '', 10)
-    if (Number.isFinite(queryYear) && queryYear >= 1970 && queryYear <= 9999) {
-      return queryYear
-    }
-    return Number.parseInt(date.slice(0, 4), 10)
-  }, [date, searchParams])
 
   const baseMonth = useMemo(() => toMonthStartFromDateKey(date), [date])
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
 
-  const diary = useDiary(
-    mode === 'daily'
-      ? { type: 'daily', date }
-      : {
-          type: 'yearly_summary',
-          year,
-        },
-  )
-  const sync = useSync<
-    | {
-        type: 'daily'
-        entryId: string
-        date: DateString
-        content: string
-        modifiedAt: string
-      }
-    | {
-        type: 'yearly_summary'
-        entryId: string
-        year: number
-        content: string
-        modifiedAt: string
-      }
-  >()
+  const diary = useDiary({ type: 'daily', date })
+  const sync = useSync<{
+    type: 'daily'
+    entryId: string
+    date: DateString
+    content: string
+    modifiedAt: string
+  }>()
+
+  const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
 
   const diaryDateSet = useMemo(() => {
     return new Set(diaries.filter((record) => record.type === 'daily').map((record) => record.date))
@@ -206,29 +217,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     [patchSearch],
   )
 
-  const handleModeSwitch = useCallback(
-    (nextMode: WorkspaceMode) => {
-      patchSearch((next) => {
-        next.set('mode', nextMode)
-        if (nextMode === 'yearly') {
-          next.set('year', String(year))
-        } else {
-          next.delete('year')
-        }
-      })
-    },
-    [patchSearch, year],
-  )
-
-  const handleYearChange = useCallback(
-    (nextYear: number) => {
-      patchSearch((next) => {
-        next.set('year', String(nextYear))
-      })
-    },
-    [patchSearch],
-  )
-
   const handleSelectDate = useCallback(
     (dateKey: string) => {
       if (!isValidDateString(dateKey)) {
@@ -248,48 +236,35 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     [date, handleDateChange],
   )
 
+  const handleOpenYearly = useCallback(
+    (targetYear?: number) => {
+      const fallbackYear = Number.parseInt(date.slice(0, 4), 10)
+      navigate(`/yearly/${targetYear ?? fallbackYear}`)
+    },
+    [date, navigate],
+  )
+
   const handleEditorChange = (nextContent: string) => {
     diary.setContent(nextContent)
 
     const modifiedAt = new Date().toISOString()
-    if (mode === 'daily') {
-      sync.onInputChange({
-        type: 'daily',
-        entryId: diary.entryId,
-        date,
-        content: nextContent,
-        modifiedAt,
-      })
-      setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
-      return
-    }
-
     sync.onInputChange({
-      type: 'yearly_summary',
+      type: 'daily',
       entryId: diary.entryId,
-      year,
+      date,
       content: nextContent,
       modifiedAt,
     })
+    setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }
 
   const saveNow = () => {
     const modifiedAt = diary.entry?.modifiedAt ?? new Date().toISOString()
-    if (mode === 'daily') {
-      void sync.saveNow({
-        type: 'daily',
-        entryId: diary.entryId,
-        date,
-        content: diary.content,
-        modifiedAt,
-      })
-      return
-    }
 
     void sync.saveNow({
-      type: 'yearly_summary',
+      type: 'daily',
       entryId: diary.entryId,
-      year,
+      date,
       content: diary.content,
       modifiedAt,
     })
@@ -340,6 +315,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
+            <button type="button" className="td-btn" onClick={() => handleOpenYearly()}>
+              年度总结
+            </button>
             <button
               type="button"
               className="td-btn"
@@ -362,6 +340,21 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             ) : null}
           </div>
         </header>
+
+        {yearlyReminder.show ? (
+          <section className="mt-4 td-toolbar" aria-label="yearly-reminder">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-td-muted">{yearlyReminder.message}</p>
+              <button
+                type="button"
+                className="td-btn ml-auto"
+                onClick={() => handleOpenYearly(yearlyReminder.targetYear)}
+              >
+                开始/继续年度总结
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
           <aside className="space-y-3">
@@ -392,47 +385,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           <section className="space-y-3">
             <div className="td-toolbar space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex overflow-hidden rounded-[10px] border border-td-line">
-                  <button
-                    type="button"
-                    className={`px-3 py-2 text-sm transition ${mode === 'daily' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
-                    onClick={() => handleModeSwitch('daily')}
-                  >
-                    日记
-                  </button>
-                  <button
-                    type="button"
-                    className={`px-3 py-2 text-sm transition ${mode === 'yearly' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
-                    onClick={() => handleModeSwitch('yearly')}
-                  >
-                    年度总结
-                  </button>
-                </div>
-
-                {mode === 'yearly' ? (
-                  <>
-                    <label htmlFor="workspace-year" className="text-xs text-td-muted">
-                      年份
-                    </label>
-                    <input
-                      id="workspace-year"
-                      type="number"
-                      min={1970}
-                      max={9999}
-                      value={year}
-                      onChange={(event) => {
-                        const parsed = Number.parseInt(event.target.value, 10)
-                        if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
-                          handleYearChange(parsed)
-                        }
-                      }}
-                      className="td-input w-24"
-                    />
-                  </>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
                 <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
                 <span className={`td-status-pill ${syncToneClass}`}>{syncLabel}</span>
                 {sync.lastSyncedAt ? (
@@ -447,16 +399,14 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </div>
 
             <article className="td-card-primary td-panel">
-              <h3 className="font-display text-xl text-td-text">
-                {mode === 'daily' ? `${date} 日记` : `${year} 年度总结`}
-              </h3>
+              <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
               <div className="mt-3">
                 {!diary.isLoading ? (
                   <MarkdownEditor
                     key={diary.entryId}
                     initialValue={diary.content}
                     onChange={handleEditorChange}
-                    placeholder={mode === 'daily' ? '写下今天的记录（支持 Markdown）' : '写下本年度总结（支持 Markdown）'}
+                    placeholder="写下今天的记录（支持 Markdown）"
                   />
                 ) : null}
               </div>

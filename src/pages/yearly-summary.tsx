@@ -1,8 +1,22 @@
-import { useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import AuthModal from '../components/auth/auth-modal'
 import MarkdownEditor from '../components/editor/markdown-editor'
+import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
+
+interface YearlySummaryPageProps {
+  auth: UseAuthResult
+}
+
+function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
+  const parsed = Number.parseInt(yearParam ?? '', 10)
+  if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+    return parsed
+  }
+  return fallbackYear
+}
 
 function StatusHint({
   isLoading,
@@ -14,46 +28,28 @@ function StatusHint({
   error: string | null
 }) {
   if (isLoading) {
-    return (
-      <p role="status" className="text-sm text-slate-600">
-        加载中...
-      </p>
-    )
+    return <span className="td-status-pill td-status-muted">加载中</span>
   }
 
   if (error) {
-    return (
-      <p role="alert" className="text-sm text-rose-600">
-        {error}
-      </p>
-    )
+    return <span className="td-status-pill td-status-danger">本地保存异常</span>
   }
 
   if (isSaving) {
-    return (
-      <p role="status" className="text-sm text-amber-700">
-        保存中...
-      </p>
-    )
+    return <span className="td-status-pill td-status-warning">保存中</span>
   }
 
-  return (
-    <p role="status" className="text-sm text-emerald-700">
-      已保存到本地
-    </p>
-  )
+  return <span className="td-status-pill td-status-success">本地已保存</span>
 }
 
-export default function YearlySummaryPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
+  const navigate = useNavigate()
+  const params = useParams<{ year?: string }>()
+  const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
+
   const currentYear = useMemo(() => new Date().getFullYear(), [])
-  const year = useMemo(() => {
-    const queryYear = Number.parseInt(searchParams.get('year') ?? '', 10)
-    if (Number.isFinite(queryYear) && queryYear >= 1970 && queryYear <= 9999) {
-      return queryYear
-    }
-    return currentYear
-  }, [currentYear, searchParams])
+  const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
+
   const summary = useDiary({ type: 'yearly_summary', year })
   const sync = useSync<{
     type: 'yearly_summary'
@@ -74,12 +70,50 @@ export default function YearlySummaryPage() {
     [summary.content, summary.entry?.modifiedAt, summary.entryId, year],
   )
 
+  const forceOpenAuthModal = auth.state.stage !== 'ready'
+  const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
+
+  const sessionLabel = useMemo(() => {
+    if (auth.state.stage === 'ready') {
+      return '会话：已解锁'
+    }
+    if (auth.state.stage === 'checking') {
+      return '会话：认证处理中'
+    }
+    return '会话：待认证'
+  }, [auth.state.stage])
+
+  const syncLabel = useMemo(() => {
+    if (sync.status === 'syncing') {
+      return '云端同步中'
+    }
+    if (sync.status === 'success') {
+      return '云端已同步'
+    }
+    if (sync.status === 'error') {
+      return '云端同步失败'
+    }
+    return '云端待同步'
+  }, [sync.status])
+
+  const syncToneClass = useMemo(() => {
+    if (sync.status === 'syncing') {
+      return 'td-status-warning'
+    }
+    if (sync.status === 'success') {
+      return 'td-status-success'
+    }
+    if (sync.status === 'error') {
+      return 'td-status-danger'
+    }
+    return 'td-status-muted'
+  }, [sync.status])
+
   const handleYearChange = (nextYear: number) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      next.set('year', String(nextYear))
-      return next
-    })
+    if (!Number.isFinite(nextYear) || nextYear < 1970 || nextYear > 9999) {
+      return
+    }
+    navigate(`/yearly/${nextYear}`)
   }
 
   const handleEditorChange = (nextContent: string) => {
@@ -92,60 +126,120 @@ export default function YearlySummaryPage() {
   }
 
   return (
-    <article className="space-y-4" aria-label="yearly-summary-page">
-      <header className="space-y-2">
-        <h2 className="text-3xl font-semibold text-ink-900 sm:text-4xl">年度总结页面</h2>
-        <p className="text-slate-600">按年份编辑总结，文件名规则为 YYYY-summary.md.enc。</p>
-      </header>
+    <>
+      <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
+        <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
+            <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="td-btn" onClick={() => navigate('/workspace')}>
+              返回日记工作台
+            </button>
+            <button
+              type="button"
+              className="td-btn"
+              onClick={() => {
+                setManualAuthModalOpen(true)
+              }}
+            >
+              解锁/配置
+            </button>
+            {auth.state.stage === 'ready' ? (
+              <button
+                type="button"
+                className="td-btn"
+                onClick={() => {
+                  auth.lockNow()
+                }}
+              >
+                锁定
+              </button>
+            ) : null}
+          </div>
+        </header>
 
-      <section className="flex flex-wrap items-end gap-3">
-        <label htmlFor="summary-year" className="text-sm font-medium text-slate-700">
-          选择年份
-        </label>
-        <input
-          id="summary-year"
-          type="number"
-          min={1970}
-          max={9999}
-          value={year}
-          onChange={(event) => {
-            const parsed = Number.parseInt(event.target.value, 10)
-            if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
-              handleYearChange(parsed)
-            }
-          }}
-          className="w-28 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-500"
-        />
-        <p className="text-xs text-slate-500">条目 ID：{summary.entryId}</p>
-      </section>
+        <section className="mt-4 space-y-3 td-fade-in" aria-label="yearly-summary-page">
+          <article className="td-card-primary td-panel space-y-4">
+            <header className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-display text-2xl text-td-text sm:text-3xl">{year} 年度总结</h2>
+                <button
+                  type="button"
+                  className="td-btn"
+                  onClick={() => handleYearChange(year - 1)}
+                  aria-label="上一年"
+                >
+                  上一年
+                </button>
+                <button
+                  type="button"
+                  className="td-btn"
+                  onClick={() => handleYearChange(year + 1)}
+                  aria-label="下一年"
+                >
+                  下一年
+                </button>
+                <label htmlFor="summary-year" className="text-xs text-td-muted">
+                  跳转年份
+                </label>
+                <input
+                  id="summary-year"
+                  type="number"
+                  min={1970}
+                  max={9999}
+                  value={year}
+                  onChange={(event) => {
+                    const parsed = Number.parseInt(event.target.value, 10)
+                    if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+                      handleYearChange(parsed)
+                    }
+                  }}
+                  className="td-input w-28"
+                />
+              </div>
 
-      <StatusHint
-        isLoading={summary.isLoading}
-        isSaving={summary.isSaving}
-        error={summary.error}
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />
+                <span className={`td-status-pill ${syncToneClass}`}>{syncLabel}</span>
+                {sync.lastSyncedAt ? (
+                  <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
+                    最近同步：{sync.lastSyncedAt}
+                  </span>
+                ) : null}
+                <button type="button" className="td-btn ml-auto" onClick={() => void sync.saveNow(syncPayload)}>
+                  手动保存并立即上传
+                </button>
+              </div>
+
+              {sync.errorMessage ? (
+                <p className="text-sm text-td-danger" role="alert">
+                  {sync.errorMessage}
+                </p>
+              ) : null}
+            </header>
+
+            {!summary.isLoading ? (
+              <MarkdownEditor
+                key={summary.entryId}
+                initialValue={summary.content}
+                onChange={handleEditorChange}
+                placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
+              />
+            ) : null}
+          </article>
+        </section>
+      </main>
+
+      <AuthModal
+        auth={auth}
+        open={authModalOpen}
+        canClose={!forceOpenAuthModal}
+        onClose={() => {
+          setManualAuthModalOpen(false)
+        }}
       />
-
-      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-        <button
-          type="button"
-          className="rounded-full border border-slate-300 px-4 py-1.5 text-sm transition hover:bg-slate-100"
-          onClick={() => void sync.saveNow(syncPayload)}
-        >
-          手动保存并立即上传
-        </button>
-        <span>同步状态：{sync.status}</span>
-        {sync.lastSyncedAt ? <span>最近同步：{sync.lastSyncedAt}</span> : null}
-        {sync.errorMessage ? <span className="text-rose-600">{sync.errorMessage}</span> : null}
-      </div>
-
-      {!summary.isLoading ? (
-        <MarkdownEditor
-          key={summary.entryId}
-          initialValue={summary.content}
-          onChange={handleEditorChange}
-          placeholder="写下年度总结（支持标题、列表、任务列表）"
-        />
-      ) : null}
-    </article>
+    </>
   )
 }

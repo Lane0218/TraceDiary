@@ -23,11 +23,11 @@ describe('App 路由与工作台入口', () => {
     expect(await screen.findByRole('heading', { name: '2026-02-20 日记' })).toBeTruthy()
   })
 
-  it('旧年度总结路由应重定向到工作台并启用年度模式', async () => {
+  it('旧年度总结路由应重定向到年度总结独立页', async () => {
     window.history.replaceState({}, '', '/yearly-summary?year=2025')
     render(<App />)
 
-    expect(await screen.findByRole('button', { name: '年度总结' })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '返回日记工作台' })).toBeTruthy()
   })
 })

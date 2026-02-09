@@ -97,7 +97,7 @@ export default function CalendarPage() {
           <button
             type="button"
             className="rounded-full border border-slate-300 px-4 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
-            onClick={() => navigate(`/yearly-summary?year=${activeDateKey.slice(0, 4)}`)}
+            onClick={() => navigate(`/yearly/${activeDateKey.slice(0, 4)}`)}
           >
             年度总结
           </button>
