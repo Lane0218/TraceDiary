@@ -483,8 +483,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 <div className="ml-auto flex max-w-full items-center gap-2">
                   <button
                     type="button"
-                    className="td-btn disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isManualSyncing}
+                    className="td-btn"
                     onClick={() => {
                       void saveNow()
                     }}

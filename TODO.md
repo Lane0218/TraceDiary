@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`57`
-- 状态统计：`DONE=43` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`—`
+- 总任务：`58`
+- 状态统计：`DONE=43` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-SYNC-013`
 
 ## 1. 任务清单（按模块）
 
@@ -72,6 +72,7 @@
 | `TD-SYNC-010` | `DONE` | 修复上传分支不匹配导致的持续失败并增强失败可观测性 | 配置分支不存在时可自动回退到可用分支并上传成功；手动与自动失败原因可见且不被静默覆盖 | `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/__tests__/sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（32/32）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 996b21d` |
 | `TD-SYNC-011` | `DONE` | 修复上传请求卡死导致长期处于 syncing 的问题（增加超时保护） | 上传请求超时后应自动结束 syncing 并给出明确错误；后续手动上传可继续触发；不再长期显示“正在上传” | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 78152db` |
 | `TD-SYNC-012` | `DONE` | 修复失败后排队任务持续重入导致同步长时间不退出的问题 | 上传失败/超时后不应立刻重启下一轮上传；busy 提示在退出 syncing 后自动清理；状态可恢复到可重试 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 07de517` |
+| `TD-SYNC-013` | `DOING` | 修复同步中手动上传按钮无响应（移除 disabled 并保留忙碌反馈） | 同步中按钮可点击；点击后立刻提示“当前正在上传，请稍候重试”；不再出现无响应体感 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` | — | — |
 
 ### 6.6 PWA、部署与安全头
 

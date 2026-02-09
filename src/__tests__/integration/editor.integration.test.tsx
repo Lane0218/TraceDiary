@@ -182,7 +182,7 @@ describe('年度总结页面', () => {
     )
   })
 
-  it('手动上传进行中应禁用按钮并显示上传中状态', async () => {
+  it('手动上传进行中再次点击应提示忙碌而非无响应', async () => {
     let resolveUpload!: (value: { ok: true; conflict: false; syncedAt: string }) => void
     createDiaryUploadExecutorMock.mockImplementation(
       () =>
@@ -202,14 +202,18 @@ describe('年度总结页面', () => {
 
     await waitFor(() => {
       const uploadingButton = screen.getByRole('button', { name: '上传中...' }) as HTMLButtonElement
-      expect(uploadingButton.disabled).toBe(true)
+      expect(uploadingButton.disabled).toBe(false)
     })
+
+    fireEvent.click(screen.getByRole('button', { name: '上传中...' }))
+    await waitFor(() =>
+      expect(screen.getByText('当前正在上传，请稍候重试')).toBeTruthy(),
+    )
 
     resolveUpload({ ok: true, conflict: false, syncedAt: '2026-02-09T01:00:00.000Z' })
 
     await waitFor(() => {
-      const idleButton = screen.getByRole('button', { name: '手动保存并立即上传' }) as HTMLButtonElement
-      expect(idleButton.disabled).toBe(false)
+      expect(screen.getByRole('button', { name: '手动保存并立即上传' })).toBeTruthy()
     })
   })
 })

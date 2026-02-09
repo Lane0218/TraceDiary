@@ -295,8 +295,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                         setManualSyncError(null)
                       })()
                     }}
-                    disabled={isManualSyncing}
-                    className="td-btn disabled:cursor-not-allowed disabled:opacity-60"
+                    className="td-btn"
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
