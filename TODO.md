@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`61`
-- 状态统计：`DONE=47` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 总任务：`62`
+- 状态统计：`DONE=48` / `DOING=0` / `TODO=14` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -95,7 +95,7 @@
 | `TD-TEST-004` | `DONE` | 关键用户流程 E2E（创建、编辑、同步、冲突） | 核心链路自动化通过 | `e2e/*` | `npm run lint` 通过；`npm run test:unit` 通过（39/39）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过（7/7） | `2026-02-09 / f474348` |
 | `TD-TEST-005` | `TODO` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` | — | — |
 | `TD-TEST-006` | `TODO` | 兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS） | 验收清单全部勾选 | `docs/compatibility-report.md` | — | — |
-| `TD-TEST-007` | `DOING` | 补齐 Playwright 端到端关键验收场景（冲突三分支与再冲突、自动重试、年度总结、认证后续、日历导航、安全关键项） | 新增/改造 E2E 用例并通过完整测试（单元/集成/E2E） | `e2e/specs/*` `e2e/fixtures/*` `e2e/helpers/*` | — | — |
+| `TD-TEST-007` | `DONE` | 补齐 Playwright 端到端关键验收场景（冲突三分支与再冲突、自动重试、年度总结、认证后续、日历导航、安全关键项） | 新增/改造 E2E 用例并通过完整测试（单元/集成/E2E） | `e2e/specs/*` `e2e/fixtures/*` `e2e/helpers/*` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（17/17）；`npm run lint` 通过 | `2026-02-09 / a58cc80` |
 
 ### 6.8 UI 体验优化
 
