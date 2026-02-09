@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`63`
-- 状态统计：`DONE=49` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 总任务：`64`
+- 状态统计：`DONE=50` / `DOING=0` / `TODO=14` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -96,6 +96,7 @@
 | `TD-TEST-005` | `TODO` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` | — | — |
 | `TD-TEST-006` | `TODO` | 兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS） | 验收清单全部勾选 | `docs/compatibility-report.md` | — | — |
 | `TD-TEST-007` | `DONE` | 补齐 Playwright 端到端关键验收场景（冲突三分支与再冲突、自动重试、年度总结、认证后续、日历导航、安全关键项） | 新增/改造 E2E 用例并通过完整测试（单元/集成/E2E） | `e2e/specs/*` `e2e/fixtures/*` `e2e/helpers/*` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（17/17）；`npm run lint` 通过 | `2026-02-09 / a58cc80` |
+| `TD-TEST-008` | `DONE` | 修复 E2E 假阳性与冲突时序风险（metadata 应用链路断言 + 手动上传使用持久化快照） | metadata 加密断言基于应用真实上传链路；手动上传与冲突流程在快速输入场景下保持一致性并通过完整测试 | `src/services/sync.ts` `src/hooks/use-diary.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/*` `src/__tests__/integration/*` `e2e/specs/*` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium` 通过（4/4） | `2026-02-09 / 165cd5f` |
 
 ### 6.8 UI 体验优化
 
