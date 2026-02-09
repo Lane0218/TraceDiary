@@ -4,7 +4,7 @@ import type { Metadata } from '../types/metadata'
 
 const DEFAULT_GITEE_API_BASE = 'https://gitee.com/api/v5'
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
-const DEFAULT_BRANCH = 'main'
+const DEFAULT_BRANCH = 'master'
 
 export type SyncTriggerReason = 'debounced' | 'manual'
 

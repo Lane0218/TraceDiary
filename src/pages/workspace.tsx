@@ -154,6 +154,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
 
   const diary = useDiary({ type: 'daily', date })
+  const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const canSyncToRemote =
     auth.state.stage === 'ready' &&
     Boolean(auth.state.tokenInMemory) &&
@@ -164,6 +165,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         token: auth.state.tokenInMemory as string,
         owner: auth.state.config?.giteeOwner as string,
         repo: auth.state.config?.giteeRepoName as string,
+        branch: giteeBranch,
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({
@@ -467,6 +469,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     最近同步：{sync.lastSyncedAt}
                   </span>
                 ) : null}
+                <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
+                  分支：{giteeBranch}
+                </span>
                 <button type="button" className="td-btn ml-auto" onClick={saveNow}>
                   手动保存并立即上传
                 </button>

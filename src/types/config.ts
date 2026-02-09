@@ -11,6 +11,7 @@ export interface AppConfig {
   giteeRepo: string
   giteeOwner: string
   giteeRepoName: string
+  giteeBranch?: string
   passwordHash: string
   passwordExpiry: string
   kdfParams: KdfParams

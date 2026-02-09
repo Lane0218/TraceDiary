@@ -11,6 +11,7 @@ interface AuthModalProps {
 
 interface AuthFormState {
   repoInput: string
+  repoBranch: string
   token: string
   masterPassword: string
   refreshToken: string
@@ -19,6 +20,7 @@ interface AuthFormState {
 
 const initialFormState: AuthFormState = {
   repoInput: '',
+  repoBranch: 'master',
   token: '',
   masterPassword: '',
   refreshToken: '',
@@ -109,6 +111,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
     event.preventDefault()
     await initializeFirstTime({
       repoInput: form.repoInput,
+      giteeBranch: form.repoBranch,
       token: form.token,
       masterPassword: form.masterPassword,
     })
@@ -153,6 +156,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
           <div className="rounded-[10px] border border-td-line bg-td-surface-soft px-3 py-2 text-sm text-td-muted">
             <p>状态：{state.stage}</p>
             {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
+            {state.config ? <p>分支：{state.config.giteeBranch ?? 'master'}</p> : null}
           </div>
 
           <div className="min-h-[44px]">
@@ -172,6 +176,13 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 value={form.repoInput}
                 onChange={(next) => setForm((prev) => ({ ...prev, repoInput: next }))}
                 placeholder="owner/repo 或 https://gitee.com/owner/repo"
+                autoComplete="off"
+              />
+              <AuthField
+                label="仓库分支"
+                value={form.repoBranch}
+                onChange={(next) => setForm((prev) => ({ ...prev, repoBranch: next }))}
+                placeholder="默认 master，可填写 main/dev 等"
                 autoComplete="off"
               />
               <AuthField

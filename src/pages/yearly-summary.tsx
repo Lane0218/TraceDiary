@@ -63,6 +63,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }),
     [summary.content, summary.entry?.modifiedAt, summary.entryId, year],
   )
+  const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
 
   const canSyncToRemote =
     auth.state.stage === 'ready' &&
@@ -74,6 +75,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         token: auth.state.tokenInMemory as string,
         owner: auth.state.config?.giteeOwner as string,
         repo: auth.state.config?.giteeRepoName as string,
+        branch: giteeBranch,
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
@@ -266,6 +268,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     最近同步：{sync.lastSyncedAt}
                   </span>
                 ) : null}
+                <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
+                  分支：{giteeBranch}
+                </span>
                 <button
                   type="button"
                   className="td-btn ml-auto"

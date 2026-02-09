@@ -7,6 +7,7 @@ import type {
   PullAndCacheMetadataDependencies,
 } from '../sync'
 import {
+  createDiaryUploadExecutor,
   createUploadMetadataExecutor,
   pullAndCacheMetadata,
   readRemoteMetadataFromGitee,
@@ -207,7 +208,7 @@ describe('createUploadMetadataExecutor', () => {
       path: 'metadata.json.enc',
       encryptedContent: 'encrypted:2.0',
       message: 'sync:manual',
-      branch: 'main',
+      branch: 'master',
       expectedSha: 'sha-remote-old',
     })
     expect(result).toEqual({
@@ -249,7 +250,7 @@ describe('createUploadMetadataExecutor', () => {
     expect(uploadCall).toMatchObject({
       path: 'metadata.json.enc',
       encryptedContent: 'encrypted:created',
-      branch: 'main',
+      branch: 'master',
     })
     expect(Object.prototype.hasOwnProperty.call(uploadCall, 'expectedSha')).toBe(false)
     expect(result).toEqual({
@@ -344,7 +345,7 @@ describe('readRemoteMetadataFromGitee', () => {
       sha: 'sha-file-1',
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?ref=main',
+      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?ref=master',
       {
         method: 'GET',
         headers: {
@@ -353,5 +354,107 @@ describe('readRemoteMetadataFromGitee', () => {
         },
       },
     )
+  })
+})
+
+describe('createDiaryUploadExecutor', () => {
+  it('默认应使用 master 分支并在更新场景发送 PUT 请求', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: btoa('# day 1'),
+            encoding: 'base64',
+            sha: 'sha-old',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-new' },
+            commit: { sha: 'commit-new' },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T10:00:00.000Z',
+    })
+
+    const result = await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-09',
+        date: '2026-02-09',
+        content: '# 日记',
+        modifiedAt: '2026-02-09T09:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-new',
+      syncedAt: '2026-02-09T10:00:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-09.md.enc?ref=master')
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: 'GET',
+    })
+    expect(fetchMock.mock.calls[1]?.[0]).toContain('2026-02-09.md.enc?branch=master')
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      method: 'PUT',
+    })
+  })
+
+  it('指定 branch 时应覆盖默认分支', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-created' },
+            commit: { sha: 'commit-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-10',
+        date: '2026-02-10',
+        content: 'hello',
+        modifiedAt: '2026-02-10T09:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-10.md.enc?ref=main')
+    expect(fetchMock.mock.calls[1]?.[0]).toContain('2026-02-10.md.enc?branch=main')
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      method: 'POST',
+    })
   })
 })

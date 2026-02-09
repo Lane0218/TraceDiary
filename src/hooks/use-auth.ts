@@ -11,6 +11,7 @@ export type { AppConfig, KdfParams } from '../types/config'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const PASSWORD_VALIDATION = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+const DEFAULT_GITEE_BRANCH = 'master'
 
 const CONFIG_STORAGE_KEY = 'trace-diary:app-config'
 export const AUTH_LOCK_STATE_KEY = 'trace-diary:auth:lock-state'
@@ -41,6 +42,7 @@ export interface InitializeAuthPayload {
   repoInput: string
   token: string
   masterPassword: string
+  giteeBranch?: string
 }
 
 export interface UnlockPayload {
@@ -113,6 +115,21 @@ function parseGiteeRepo(repoInput: string): RepoRef {
     owner: parts[0],
     repoName: parts[1],
     canonicalRepo: `${parts[0]}/${parts[1]}`,
+  }
+}
+
+function normalizeGiteeBranch(branchInput: string | undefined): string {
+  const normalized = branchInput?.trim()
+  if (normalized) {
+    return normalized
+  }
+  return DEFAULT_GITEE_BRANCH
+}
+
+function normalizeAppConfig(config: AppConfig): AppConfig {
+  return {
+    ...config,
+    giteeBranch: normalizeGiteeBranch(config.giteeBranch),
   }
 }
 
@@ -327,8 +344,8 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   const bootstrap = useCallback(async () => {
     setState(createInitialState())
 
-    const config = await dependencies.loadConfig()
-    if (!config) {
+    const rawConfig = await dependencies.loadConfig()
+    if (!rawConfig) {
       writeLockState(true)
       clearUnlockStateCache()
       setState({
@@ -342,6 +359,14 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         errorMessage: null,
       })
       return
+    }
+    const config = normalizeAppConfig(rawConfig)
+    if (rawConfig.giteeBranch !== config.giteeBranch) {
+      try {
+        await dependencies.saveConfig(config)
+      } catch {
+        // 配置迁移失败不应阻断认证流程，后续仍可继续使用默认分支。
+      }
     }
 
     const now = dependencies.now()
@@ -475,6 +500,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           giteeRepo: `https://gitee.com/${repoRef.canonicalRepo}`,
           giteeOwner: repoRef.owner,
           giteeRepoName: repoRef.repoName,
+          giteeBranch: normalizeGiteeBranch(payload.giteeBranch),
           passwordHash,
           passwordExpiry: expiry.iso,
           kdfParams,

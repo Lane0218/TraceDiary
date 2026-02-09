@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/use-auth'
 
 type AuthFormState = {
   repoInput: string
+  repoBranch: string
   token: string
   masterPassword: string
   refreshToken: string
@@ -12,6 +13,7 @@ type AuthFormState = {
 
 const initialFormState: AuthFormState = {
   repoInput: '',
+  repoBranch: 'master',
   token: '',
   masterPassword: '',
   refreshToken: '',
@@ -59,6 +61,7 @@ export default function WelcomePage() {
     event.preventDefault()
     await initializeFirstTime({
       repoInput: form.repoInput,
+      giteeBranch: form.repoBranch,
       token: form.token,
       masterPassword: form.masterPassword,
     })
@@ -89,6 +92,7 @@ export default function WelcomePage() {
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700">
         <p>当前状态：{state.stage}</p>
         {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
+        {state.config ? <p>分支：{state.config.giteeBranch ?? 'master'}</p> : null}
         {state.stage === 'ready' ? <p className="text-emerald-700">已完成解锁，可以进入日历页。</p> : null}
       </div>
 
@@ -109,6 +113,13 @@ export default function WelcomePage() {
             value={form.repoInput}
             onChange={(next) => setForm((prev) => ({ ...prev, repoInput: next }))}
             placeholder="例如 owner/repo 或 https://gitee.com/owner/repo"
+            autoComplete="off"
+          />
+          <Field
+            label="仓库分支"
+            value={form.repoBranch}
+            onChange={(next) => setForm((prev) => ({ ...prev, repoBranch: next }))}
+            placeholder="默认 master，可填写 main/dev 等"
             autoComplete="off"
           />
           <Field

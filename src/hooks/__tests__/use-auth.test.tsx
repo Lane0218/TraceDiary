@@ -22,6 +22,7 @@ function buildConfig(overrides?: Partial<AppConfig>): AppConfig {
     giteeRepo: 'https://gitee.com/alice/trace-diary',
     giteeOwner: 'alice',
     giteeRepoName: 'trace-diary',
+    giteeBranch: 'master',
     passwordHash: 'hash:master1234',
     passwordExpiry: new Date(fixedNow + 7 * 24 * 60 * 60 * 1000).toISOString(),
     kdfParams: sampleKdf,
@@ -87,6 +88,33 @@ describe('useAuth', () => {
     const savedPayload = capturedConfig as AppConfig & { giteeToken?: string }
     expect(savedPayload.giteeToken).toBeUndefined()
     expect(savedPayload.encryptedToken).toBe('cipher:token-plain')
+    expect(savedPayload.giteeBranch).toBe('master')
+  })
+
+  it('首次初始化应支持自定义仓库分支', async () => {
+    const saveConfig = vi.fn(async (config: AppConfig) => {
+      void config
+    })
+    const dependencies = buildDependencies({
+      saveConfig,
+    })
+
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        giteeBranch: 'main',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(saveConfig).toHaveBeenCalledTimes(1)
+    const savedConfig = saveConfig.mock.calls[0]?.[0] as AppConfig | undefined
+    expect(savedConfig?.giteeBranch).toBe('main')
   })
 
   it('7天内未锁定时应可免输主密码恢复', async () => {

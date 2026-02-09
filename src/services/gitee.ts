@@ -1,5 +1,5 @@
 const DEFAULT_GITEE_API_BASE = 'https://gitee.com/api/v5'
-const DEFAULT_BRANCH = 'main'
+const DEFAULT_BRANCH = 'master'
 
 export interface GiteeRepoIdentifier {
   owner: string
@@ -401,8 +401,9 @@ export async function upsertGiteeFile(params: UpsertGiteeFileParams): Promise<Up
 
   let response: Response
   try {
+    const method = expectedSha ? 'PUT' : 'POST'
     response = await fetcher(requestUrl, {
-      method: 'POST',
+      method,
       headers: {
         Authorization: `token ${token}`,
         Accept: 'application/json',

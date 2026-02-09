@@ -178,7 +178,7 @@ describe('readGiteeFileContents', () => {
       sha: 'sha-read-1',
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?ref=main',
+      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?ref=master',
       {
         method: 'GET',
         headers: {
@@ -324,7 +324,7 @@ describe('upsertGiteeFile', () => {
     expect(requestUrl).toBe(
       'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?branch=main',
     )
-    expect(requestInit.method).toBe('POST')
+    expect(requestInit.method).toBe('PUT')
     expect(requestInit.headers).toEqual({
       Authorization: 'token test-token',
       Accept: 'application/json',
@@ -366,12 +366,13 @@ describe('upsertGiteeFile', () => {
 
     const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(requestUrl).toBe(
-      'https://gitee.com/api/v5/repos/owner/repo/contents/new-file.txt?branch=main&access_token=test-token',
+      'https://gitee.com/api/v5/repos/owner/repo/contents/new-file.txt?branch=master&access_token=test-token',
     )
+    expect(requestInit.method).toBe('POST')
     expect(JSON.parse(String(requestInit.body))).toEqual({
       message: 'create file',
       content: encodeBase64Utf8('v1'),
-      branch: 'main',
+      branch: 'master',
     })
   })
 
