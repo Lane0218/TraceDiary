@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-09`
 - 总任务：`45`
-- 状态统计：`DONE=34` / `DOING=1` / `TODO=10` / `BLOCKED=0`
-- 当前进行中：`TD-SYNC-004`
+- 状态统计：`DONE=35` / `DOING=0` / `TODO=10` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -63,7 +63,7 @@
 | `TD-SYNC-001` | `DONE` | 封装 Gitee 文件读取与写入（优先 Authorization） | 支持 contents API 拉取与更新 | `src/services/gitee.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 5a2eb1c` |
 | `TD-SYNC-002` | `DONE` | 实现上传前 SHA 预检与 `expectedSha` CAS 更新 | 更新请求携带正确 `sha` | `src/services/sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 247234f` |
 | `TD-SYNC-003` | `DONE` | 实现 `sha mismatch` 冲突识别 | 冲突可被稳定检测 | `src/services/sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 247234f` |
-| `TD-SYNC-004` | `DOING` | 实现冲突弹窗（本地/远端/合并） | 三种分支均可完成 | `src/components/common/*` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` | — | — |
+| `TD-SYNC-004` | `DONE` | 实现冲突弹窗（本地/远端/合并） | 三种分支均可完成 | `src/components/common/*` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/sync.ts` `src/hooks/use-sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 0616277` |
 | `TD-SYNC-005` | `DONE` | 实现离线检测与网络恢复自动重试 | 断网有提示，恢复后自动同步 | `src/hooks/use-sync.ts` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / c991e44` |
 
 ### 6.6 PWA、部署与安全头
