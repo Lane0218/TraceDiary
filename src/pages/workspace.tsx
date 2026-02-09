@@ -389,6 +389,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     return 'td-status-muted'
   }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
   const displayedSyncMessage = sync.errorMessage
+  const displayedManualSyncError =
+    sync.status === 'success' && manualSyncError === BUSY_SYNC_MESSAGE ? null : manualSyncError
   const isManualSyncing = sync.status === 'syncing'
 
   return (
@@ -493,13 +495,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
-                  {manualSyncError ? (
+                  {displayedManualSyncError ? (
                     <span
                       role="alert"
                       data-testid="manual-sync-error"
                       className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
                     >
-                      {manualSyncError}
+                      {displayedManualSyncError}
                     </span>
                   ) : null}
                 </div>

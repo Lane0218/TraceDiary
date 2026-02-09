@@ -215,6 +215,7 @@ describe('年度总结页面', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '手动保存并立即上传' })).toBeTruthy()
+      expect(screen.queryByText('当前正在上传，请稍候重试')).toBeNull()
     })
   })
 })

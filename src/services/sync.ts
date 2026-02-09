@@ -174,6 +174,61 @@ function encodePath(path: string): string {
     .join('/')
 }
 
+function assertCryptoAvailable(): Crypto {
+  if (typeof globalThis.crypto?.subtle === 'undefined') {
+    throw new Error('当前环境缺少 Web Crypto 能力')
+  }
+  return globalThis.crypto
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  if (typeof btoa !== 'function') {
+    throw new Error('当前环境缺少 Base64 编码能力')
+  }
+
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return btoa(binary)
+}
+
+async function deriveUploadKeyFromToken(token: string): Promise<CryptoKey> {
+  const trimmedToken = token.trim()
+  if (!trimmedToken) {
+    throw new Error('上传鉴权信息缺失，无法执行内容加密')
+  }
+
+  const cryptoApi = assertCryptoAvailable()
+  const tokenBytes = new TextEncoder().encode(trimmedToken)
+  const digest = await cryptoApi.subtle.digest('SHA-256', tokenBytes)
+
+  return cryptoApi.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, ['encrypt'])
+}
+
+async function encryptDiaryContent(content: string, key: CryptoKey): Promise<string> {
+  const cryptoApi = assertCryptoAvailable()
+  const iv = cryptoApi.getRandomValues(new Uint8Array(12))
+  const plaintextBytes = new TextEncoder().encode(content)
+  const encrypted = await cryptoApi.subtle.encrypt(
+    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
+    key,
+    plaintextBytes,
+  )
+  const encryptedBytes = new Uint8Array(encrypted)
+  const payload = new Uint8Array(iv.length + encryptedBytes.length)
+  payload.set(iv, 0)
+  payload.set(encryptedBytes, iv.length)
+  return bytesToBase64(payload)
+}
+
 async function readRemoteErrorMessage(response: Response): Promise<string | undefined> {
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
 
@@ -453,6 +508,14 @@ export function createDiaryUploadExecutor(
   let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
   const now = params.now ?? nowIsoString
   const useAccessTokenQuery = params.useAccessTokenQuery ?? true
+  let uploadKeyPromise: Promise<CryptoKey> | null = null
+
+  const getUploadKey = async (): Promise<CryptoKey> => {
+    if (!uploadKeyPromise) {
+      uploadKeyPromise = deriveUploadKeyFromToken(params.token)
+    }
+    return uploadKeyPromise
+  }
 
   const attemptUpload = async (
     payload: UploadMetadataPayload<DiarySyncMetadata>,
@@ -472,12 +535,13 @@ export function createDiaryUploadExecutor(
     })
 
     const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
+    const encryptedContent = await encryptDiaryContent(metadata.content, await getUploadKey())
     const upsertResult = await upsertGiteeFile({
       token: params.token,
       owner: params.owner,
       repo: params.repo,
       path,
-      content: metadata.content,
+      content: encryptedContent,
       message: buildDiaryCommitMessage(metadata, payload.reason),
       branch: targetBranch,
       expectedSha,

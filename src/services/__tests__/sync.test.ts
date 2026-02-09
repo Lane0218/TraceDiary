@@ -12,6 +12,7 @@ import {
   pullAndCacheMetadata,
   readRemoteMetadataFromGitee,
 } from '../sync'
+import { decodeBase64Utf8 } from '../gitee'
 
 interface TestMetadata {
   version: string
@@ -415,6 +416,11 @@ describe('createDiaryUploadExecutor', () => {
     expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
       method: 'PUT',
     })
+    const uploadRequestBody = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body ?? '{}')) as {
+      content: string
+    }
+    const uploadedPayload = decodeBase64Utf8(uploadRequestBody.content)
+    expect(uploadedPayload).not.toBe('# 日记')
   })
 
   it('指定 branch 时应覆盖默认分支', async () => {
