@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-09`
 - 总任务：`54`
-- 状态统计：`DONE=39` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-SYNC-009`
+- 状态统计：`DONE=40` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -68,7 +68,7 @@
 | `TD-SYNC-006` | `DONE` | 修复日期切换内容错位并提升云端上传可用性反馈（不含加密改造） | 标题日期与编辑器内容一致；未解锁/未配置时给出明确不可上传提示；手动上传失败可读 | `src/hooks/use-diary.ts` `src/components/editor/markdown-editor.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/use-sync.ts` `src/__tests__/*` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / cb7823e` |
 | `TD-SYNC-007` | `DONE` | 修复 Gitee 默认分支与写入方法导致的同步失败，并补齐可暴露该问题的测试 | 默认分支兼容 `master`；可配置分支；手动与自动上传可成功；测试可覆盖真实失败原因 | `src/types/config.ts` `src/hooks/use-auth.ts` `src/components/auth/auth-modal.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/gitee.ts` `src/services/sync.ts` `src/services/__tests__/*` `src/hooks/__tests__/*` `scripts/e2e-smoke.sh` | `npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（29/29）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / b87ead4` |
 | `TD-SYNC-008` | `DONE` | 手动上传失败原因改为按钮旁内联提示，并返回可消费的手动上传结果 | 手动点击失败时在按钮旁显示具体原因；自动上传失败不占用该提示位；日记与年度总结页行为一致 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/*` | `npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（30/30）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 932ab2c` |
-| `TD-SYNC-009` | `DOING` | 修复手动上传在并发场景下静默失败（禁止并发并提供明确反馈） | 上传进行中点击手动按钮会给出“请稍候”提示且不静默；按钮在同步中禁用；失败分支均有可消费错误信息 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` | — | — |
+| `TD-SYNC-009` | `DONE` | 修复手动上传在并发场景下静默失败（禁止并发并提供明确反馈） | 上传进行中点击手动按钮会给出“请稍候”提示且不静默；按钮在同步中禁用；失败分支均有可消费错误信息 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（32/32）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / c5cbdf2` |
 
 ### 6.6 PWA、部署与安全头
 
