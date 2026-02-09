@@ -401,6 +401,40 @@ function isShaMismatchError(error: unknown): boolean {
   )
 }
 
+function isBranchNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const status = error instanceof GiteeApiError ? error.status : pickStatusFromError(error)
+  if (status !== 400 && status !== 404 && status !== 422) {
+    return false
+  }
+
+  const message = error.message.toLowerCase()
+  const mentionsBranch = /(branch|分支)/i.test(message)
+  const indicatesMissing = /(not\s+exist|does\s+not\s+exist|not\s+found|unknown|invalid|不存在|未找到|无效)/i.test(
+    message,
+  )
+
+  return mentionsBranch && indicatesMissing
+}
+
+function buildBranchCandidates(branch: string): string[] {
+  const candidates = [branch, 'main', 'master']
+  const uniqueCandidates = new Set<string>()
+
+  candidates.forEach((item) => {
+    const normalized = item.trim()
+    if (!normalized) {
+      return
+    }
+    uniqueCandidates.add(normalized)
+  })
+
+  return Array.from(uniqueCandidates)
+}
+
 function toRemoteDiaryMetadata(
   local: DiarySyncMetadata,
   remoteContent: string,
@@ -416,105 +450,137 @@ function toRemoteDiaryMetadata(
 export function createDiaryUploadExecutor(
   params: CreateDiaryUploadExecutorParams,
 ): UploadMetadataFn<DiarySyncMetadata> {
-  const branch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
   const now = params.now ?? nowIsoString
 
-  return async (payload) => {
+  const attemptUpload = async (
+    payload: UploadMetadataPayload<DiarySyncMetadata>,
+    targetBranch: string,
+  ): Promise<UploadMetadataResult<DiarySyncMetadata>> => {
+    const metadata = payload.metadata
+    const path = buildDiaryPath(metadata)
+    const remoteFile = await readGiteeFileContents({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      ref: targetBranch,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery: params.useAccessTokenQuery,
+    })
+
+    const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
+    const upsertResult = await upsertGiteeFile({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      content: metadata.content,
+      message: buildDiaryCommitMessage(metadata, payload.reason),
+      branch: targetBranch,
+      expectedSha,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery: params.useAccessTokenQuery,
+    })
+
+    return {
+      ok: true,
+      conflict: false,
+      remoteSha: upsertResult.sha,
+      syncedAt: now(),
+    }
+  }
+
+  const mapUploadError = async (
+    error: unknown,
+    payload: UploadMetadataPayload<DiarySyncMetadata>,
+    targetBranch: string,
+  ): Promise<UploadMetadataResult<DiarySyncMetadata>> => {
     const metadata = payload.metadata
     const path = buildDiaryPath(metadata)
 
-    try {
-      const remoteFile = await readGiteeFileContents({
-        token: params.token,
-        owner: params.owner,
-        repo: params.repo,
-        path,
-        ref: branch,
-        apiBase: params.apiBase,
-        fetchImpl: params.fetchImpl,
-        useAccessTokenQuery: params.useAccessTokenQuery,
-      })
-
-      const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
-      const upsertResult = await upsertGiteeFile({
-        token: params.token,
-        owner: params.owner,
-        repo: params.repo,
-        path,
-        content: metadata.content,
-        message: buildDiaryCommitMessage(metadata, payload.reason),
-        branch,
-        expectedSha,
-        apiBase: params.apiBase,
-        fetchImpl: params.fetchImpl,
-        useAccessTokenQuery: params.useAccessTokenQuery,
-      })
+    if (isShaMismatchError(error)) {
+      let remoteMetadata: DiarySyncMetadata | undefined
+      try {
+        const latestRemote = await readGiteeFileContents({
+          token: params.token,
+          owner: params.owner,
+          repo: params.repo,
+          path,
+          ref: targetBranch,
+          apiBase: params.apiBase,
+          fetchImpl: params.fetchImpl,
+          useAccessTokenQuery: params.useAccessTokenQuery,
+        })
+        if (latestRemote.exists && typeof latestRemote.content === 'string') {
+          remoteMetadata = toRemoteDiaryMetadata(metadata, latestRemote.content, now)
+        }
+      } catch {
+        remoteMetadata = undefined
+      }
 
       return {
-        ok: true,
-        conflict: false,
-        remoteSha: upsertResult.sha,
-        syncedAt: now(),
+        ok: false,
+        conflict: true,
+        reason: 'sha_mismatch',
+        conflictPayload: {
+          local: metadata,
+          remote: remoteMetadata,
+        },
       }
-    } catch (error) {
-      if (isShaMismatchError(error)) {
-        let remoteMetadata: DiarySyncMetadata | undefined
-        try {
-          const latestRemote = await readGiteeFileContents({
-            token: params.token,
-            owner: params.owner,
-            repo: params.repo,
-            path,
-            ref: branch,
-            apiBase: params.apiBase,
-            fetchImpl: params.fetchImpl,
-            useAccessTokenQuery: params.useAccessTokenQuery,
-          })
-          if (latestRemote.exists && typeof latestRemote.content === 'string') {
-            remoteMetadata = toRemoteDiaryMetadata(metadata, latestRemote.content, now)
-          }
-        } catch {
-          remoteMetadata = undefined
-        }
+    }
 
-        return {
-          ok: false,
-          conflict: true,
-          reason: 'sha_mismatch',
-          conflictPayload: {
-            local: metadata,
-            remote: remoteMetadata,
-          },
-        }
-      }
-
-      if (error instanceof GiteeApiError) {
-        if (error.type === 'auth') {
-          return {
-            ok: false,
-            conflict: false,
-            reason: 'auth',
-          }
-        }
-        if (error.type === 'network') {
-          return {
-            ok: false,
-            conflict: false,
-            reason: 'network',
-          }
-        }
-      }
-
-      const reason = inferUploadFailureReason(error)
-      if (reason) {
+    if (error instanceof GiteeApiError) {
+      if (error.type === 'auth') {
         return {
           ok: false,
           conflict: false,
-          reason,
+          reason: 'auth',
         }
       }
-      throw error
+      if (error.type === 'network') {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'network',
+        }
+      }
     }
+
+    const reason = inferUploadFailureReason(error)
+    if (reason) {
+      return {
+        ok: false,
+        conflict: false,
+        reason,
+      }
+    }
+    throw error
+  }
+
+  return async (payload) => {
+    const branchCandidates = buildBranchCandidates(activeBranch)
+    let lastError: unknown = null
+
+    for (let index = 0; index < branchCandidates.length; index += 1) {
+      const candidateBranch = branchCandidates[index]!
+      try {
+        const result = await attemptUpload(payload, candidateBranch)
+        activeBranch = candidateBranch
+        return result
+      } catch (error) {
+        lastError = error
+        const hasFallback = index < branchCandidates.length - 1
+        if (hasFallback && isBranchNotFoundError(error)) {
+          continue
+        }
+        return mapUploadError(error, payload, candidateBranch)
+      }
+    }
+
+    return mapUploadError(lastError, payload, activeBranch)
   }
 }
 

@@ -169,7 +169,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       }
     }
   }
-  const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
+  const displayedSyncMessage = sync.errorMessage
   const isManualSyncing = sync.status === 'syncing'
 
   const resolveMergeConflict = (mergedContent: string) => {
@@ -283,7 +283,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                       void (async () => {
                         const result = await sync.saveNow(syncPayload)
                         if (!result.ok) {
-                          setManualSyncError(result.errorMessage || '上传未完成，请重试')
+                          const message =
+                            result.code === 'stale' ? '当前正在上传，请稍候重试' : result.errorMessage || '上传未完成，请重试'
+                          setManualSyncError(message)
                           return
                         }
                         setManualSyncError(null)

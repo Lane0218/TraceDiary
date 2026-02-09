@@ -310,7 +310,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     const result = await sync.saveNow(payload)
     if (!result.ok) {
-      setManualSyncError(result.errorMessage || '上传未完成，请重试')
+      const message = result.code === 'stale' ? '当前正在上传，请稍候重试' : result.errorMessage || '上传未完成，请重试'
+      setManualSyncError(message)
       return
     }
     setManualSyncError(null)
@@ -383,7 +384,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     return 'td-status-muted'
   }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
-  const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
+  const displayedSyncMessage = sync.errorMessage
   const isManualSyncing = sync.status === 'syncing'
 
   return (

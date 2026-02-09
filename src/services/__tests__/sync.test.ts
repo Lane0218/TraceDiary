@@ -457,4 +457,60 @@ describe('createDiaryUploadExecutor', () => {
       method: 'POST',
     })
   })
+
+  it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            message: 'The branch master does not exist',
+          }),
+          { status: 404, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-main-created' },
+            commit: { sha: 'commit-main-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'master',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T12:00:00.000Z',
+    })
+
+    const result = await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-11',
+        date: '2026-02-11',
+        content: 'fallback',
+        modifiedAt: '2026-02-11T08:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-main-created',
+      syncedAt: '2026-02-09T12:00:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-11.md.enc?ref=master')
+    expect(fetchMock.mock.calls[1]?.[0]).toContain('2026-02-11.md.enc?branch=master')
+    expect(fetchMock.mock.calls[2]?.[0]).toContain('2026-02-11.md.enc?ref=main')
+    expect(fetchMock.mock.calls[3]?.[0]).toContain('2026-02-11.md.enc?branch=main')
+  })
 })

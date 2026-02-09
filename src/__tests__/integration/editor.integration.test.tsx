@@ -177,8 +177,9 @@ describe('年度总结页面', () => {
     renderYearlyPage('/yearly/2026')
     fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
 
-    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
-    expect(screen.getByRole('alert').textContent).toContain('鉴权失败，请重新解锁或更新 Token 配置')
+    await waitFor(() =>
+      expect(screen.getAllByText('鉴权失败，请重新解锁或更新 Token 配置').length).toBeGreaterThan(0),
+    )
   })
 
   it('手动上传进行中应禁用按钮并显示上传中状态', async () => {
