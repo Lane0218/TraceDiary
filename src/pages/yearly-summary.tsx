@@ -48,7 +48,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const params = useParams<{ year?: string }>()
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
-  const [syncGuardMessage, setSyncGuardMessage] = useState<string | null>(null)
+  const [manualSyncError, setManualSyncError] = useState<string | null>(null)
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
@@ -164,12 +164,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         content: nextContent,
         modifiedAt: new Date().toISOString(),
       })
-      if (syncGuardMessage) {
-        setSyncGuardMessage(null)
+      if (manualSyncError) {
+        setManualSyncError(null)
       }
     }
   }
-  const displayedSyncMessage = syncGuardMessage ?? sync.errorMessage
+  const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
 
   const resolveMergeConflict = (mergedContent: string) => {
     const local = sync.conflictState?.local
@@ -271,22 +271,36 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                 <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
                   分支：{giteeBranch}
                 </span>
-                <button
-                  type="button"
-                  className="td-btn ml-auto"
-                  onClick={() => {
-                    if (!canSyncToRemote) {
-                      setSyncGuardMessage(syncDisabledMessage)
-                      return
-                    }
-                    if (syncGuardMessage) {
-                      setSyncGuardMessage(null)
-                    }
-                    void sync.saveNow(syncPayload)
-                  }}
-                >
-                  手动保存并立即上传
-                </button>
+                <div className="ml-auto flex max-w-full items-center gap-2">
+                  <button
+                    type="button"
+                    className="td-btn"
+                    onClick={() => {
+                      if (!canSyncToRemote) {
+                        setManualSyncError(syncDisabledMessage)
+                        return
+                      }
+                      void (async () => {
+                        const result = await sync.saveNow(syncPayload)
+                        if (!result.ok && result.errorMessage) {
+                          setManualSyncError(result.errorMessage)
+                          return
+                        }
+                        setManualSyncError(null)
+                      })()
+                    }}
+                  >
+                    手动保存并立即上传
+                  </button>
+                  {manualSyncError ? (
+                    <span
+                      role="alert"
+                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
+                    >
+                      {manualSyncError}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               {displayedSyncMessage ? (

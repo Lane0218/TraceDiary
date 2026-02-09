@@ -1,13 +1,23 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import YearlySummaryPage from '../../pages/yearly-summary'
-import type { UseAuthResult } from '../../hooks/use-auth'
+import type { AppConfig, UseAuthResult } from '../../hooks/use-auth'
 import { useDiary, type UseDiaryResult } from '../../hooks/use-diary'
+
+const createDiaryUploadExecutorMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../hooks/use-diary', () => ({
   useDiary: vi.fn(),
 }))
+
+vi.mock('../../services/sync', async () => {
+  const actual = await vi.importActual<typeof import('../../services/sync')>('../../services/sync')
+  return {
+    ...actual,
+    createDiaryUploadExecutor: createDiaryUploadExecutorMock,
+  }
+})
 
 vi.mock('../../components/editor/markdown-editor', () => ({
   default: ({
@@ -55,17 +65,34 @@ function buildUseDiaryResult(overrides?: Partial<UseDiaryResult>): UseDiaryResul
   }
 }
 
-function buildAuthResult(): UseAuthResult {
+function buildAuthResult(overrides?: Partial<UseAuthResult['state']>): UseAuthResult {
+  const config: AppConfig = {
+    giteeRepo: 'https://gitee.com/lane/diary',
+    giteeOwner: 'lane',
+    giteeRepoName: 'diary',
+    giteeBranch: 'master',
+    passwordHash: 'hash',
+    passwordExpiry: '2026-02-20T00:00:00.000Z',
+    kdfParams: {
+      algorithm: 'PBKDF2',
+      hash: 'SHA-256',
+      iterations: 300_000,
+      salt: 'salt',
+    },
+    encryptedToken: 'cipher',
+    tokenCipherVersion: 'v1',
+  }
   return {
     state: {
       stage: 'ready',
-      config: null,
+      config,
       tokenInMemory: 'mock-token',
       isLocked: false,
       passwordExpired: false,
       needsMasterPasswordForTokenRefresh: false,
       tokenRefreshReason: null,
       errorMessage: null,
+      ...overrides,
     },
     getMasterPasswordError: vi.fn(() => null),
     initializeFirstTime: vi.fn(async () => {}),
@@ -79,6 +106,10 @@ function buildAuthResult(): UseAuthResult {
 describe('年度总结页面', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    createDiaryUploadExecutorMock.mockReset()
+    createDiaryUploadExecutorMock.mockImplementation(
+      () => async () => ({ ok: true, conflict: false, syncedAt: '2026-02-09T00:00:00.000Z' }),
+    )
   })
 
   it('年度总结页应展示保存中状态并响应年份切换', () => {
@@ -122,9 +153,31 @@ describe('年度总结页面', () => {
       }),
     )
 
-    renderYearlyPage('/yearly/2026')
+    renderYearlyPage(
+      '/yearly/2026',
+      buildAuthResult({
+        config: null,
+      }),
+    )
     fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
 
     expect(screen.getByText('云端同步未就绪：请先配置 Gitee 仓库。')).toBeTruthy()
+  })
+
+  it('手动上传失败时应在按钮旁展示失败原因', async () => {
+    createDiaryUploadExecutorMock.mockImplementation(
+      () => async () => ({ ok: false, conflict: false, reason: 'auth' as const }),
+    )
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
+    expect(screen.getByRole('alert').textContent).toContain('鉴权失败，请重新解锁或更新 Token 配置')
   })
 })

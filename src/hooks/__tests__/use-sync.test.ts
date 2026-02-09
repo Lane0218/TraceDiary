@@ -84,8 +84,9 @@ describe('useSync', () => {
       result.current.onInputChange({ content: 'draft' })
     })
 
+    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
     await act(async () => {
-      await result.current.saveNow({ content: 'final' })
+      saveResult = await result.current.saveNow({ content: 'final' })
     })
 
     expect(uploadMetadata).toHaveBeenCalledTimes(1)
@@ -95,6 +96,10 @@ describe('useSync', () => {
     })
     expect(result.current.status).toBe('success')
     expect(result.current.lastSyncedAt).toBe('2026-02-08T12:00:00.000Z')
+    expect(saveResult).toEqual({
+      ok: true,
+      errorMessage: null,
+    })
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000)
@@ -113,14 +118,19 @@ describe('useSync', () => {
       }),
     )
 
+    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
     await act(async () => {
-      await result.current.saveNow({ content: 'any' })
+      saveResult = await result.current.saveNow({ content: 'any' })
     })
 
     expect(uploadMetadata).toHaveBeenCalledTimes(1)
     expect(result.current.status).toBe('error')
     expect(result.current.errorMessage).toBe('远端不可用')
     expect(result.current.lastSyncedAt).toBeNull()
+    expect(saveResult).toEqual({
+      ok: false,
+      errorMessage: '远端不可用',
+    })
   })
 
   it('未注入上传实现时应使用默认占位上传并成功返回同步时间', async () => {
@@ -180,14 +190,19 @@ describe('useSync', () => {
       window.dispatchEvent(new Event('offline'))
     })
 
+    let saveResult: { ok: boolean; errorMessage: string | null } | null = null
     await act(async () => {
-      await result.current.saveNow({ content: 'offline-draft' })
+      saveResult = await result.current.saveNow({ content: 'offline-draft' })
     })
 
     expect(uploadMetadata).not.toHaveBeenCalled()
     expect(result.current.isOffline).toBe(true)
     expect(result.current.hasPendingRetry).toBe(true)
     expect(result.current.errorMessage).toBe('当前处于离线状态，网络恢复后将自动重试')
+    expect(saveResult).toEqual({
+      ok: false,
+      errorMessage: '当前处于离线状态，网络恢复后将自动重试',
+    })
 
     setNavigatorOnline(true)
     await act(async () => {

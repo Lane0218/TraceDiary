@@ -26,7 +26,10 @@ export interface UseSyncResult<TMetadata = unknown> {
     remote: TMetadata | null
   } | null
   onInputChange: (metadata: TMetadata) => void
-  saveNow: (metadata: TMetadata) => Promise<void>
+  saveNow: (metadata: TMetadata) => Promise<{
+    ok: boolean
+    errorMessage: string | null
+  }>
   resolveConflict: (
     choice: 'local' | 'remote' | 'merged',
     mergedMetadata?: TMetadata,
@@ -127,15 +130,24 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   }, [])
 
   const runUpload = useCallback(
-    async (payload: UploadMetadataPayload<TMetadata>) => {
+    async (
+      payload: UploadMetadataPayload<TMetadata>,
+    ): Promise<{
+      ok: boolean
+      errorMessage: string | null
+    }> => {
       if (getIsOffline()) {
+        const message = '当前处于离线状态，网络恢复后将自动重试'
         markPendingRetry(payload)
         if (mountedRef.current) {
           setIsOffline(true)
           setStatus('error')
-          setErrorMessage('当前处于离线状态，网络恢复后将自动重试')
+          setErrorMessage(message)
         }
-        return
+        return {
+          ok: false,
+          errorMessage: message,
+        }
       }
 
       const taskId = taskIdRef.current + 1
@@ -148,41 +160,58 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       try {
         const result = await uploadMetadata(payload)
         if (!mountedRef.current || taskIdRef.current !== taskId) {
-          return
+          return {
+            ok: false,
+            errorMessage: null,
+          }
         }
 
         if (result?.ok === false || result?.conflict) {
           if (result.conflict) {
+            const message = resolvingConflictRef.current
+              ? '冲突仍未解决，请刷新远端版本后重新决策'
+              : '检测到同步冲突，请选择保留本地、远端或合并版本'
             setStatus('error')
             setConflictState({
               local: result.conflictPayload?.local ?? payload.metadata,
               remote: result.conflictPayload?.remote ?? null,
             })
-            setErrorMessage(
-              resolvingConflictRef.current
-                ? '冲突仍未解决，请刷新远端版本后重新决策'
-                : '检测到同步冲突，请选择保留本地、远端或合并版本',
-            )
+            setErrorMessage(message)
             resolvingConflictRef.current = false
-            return
+            return {
+              ok: false,
+              errorMessage: message,
+            }
           }
 
           if (result.reason === 'network') {
+            const message = '网络异常，已保留本次修改并将在恢复后自动重试'
             markPendingRetry(payload)
             setStatus('error')
-            setErrorMessage('网络异常，已保留本次修改并将在恢复后自动重试')
-            return
+            setErrorMessage(message)
+            return {
+              ok: false,
+              errorMessage: message,
+            }
           }
 
           if (result.reason === 'auth') {
+            const message = '鉴权失败，请重新解锁或更新 Token 配置'
             setStatus('error')
-            setErrorMessage('鉴权失败，请重新解锁或更新 Token 配置')
-            return
+            setErrorMessage(message)
+            return {
+              ok: false,
+              errorMessage: message,
+            }
           }
 
+          const message = '同步失败，请稍后重试'
           setStatus('error')
-          setErrorMessage('同步失败，请稍后重试')
-          return
+          setErrorMessage(message)
+          return {
+            ok: false,
+            errorMessage: message,
+          }
         }
 
         setStatus('success')
@@ -190,21 +219,37 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setConflictState(null)
         resolvingConflictRef.current = false
         setLastSyncedAt(result?.syncedAt ?? now())
+        return {
+          ok: true,
+          errorMessage: null,
+        }
       } catch (error) {
         if (!mountedRef.current || taskIdRef.current !== taskId) {
-          return
+          return {
+            ok: false,
+            errorMessage: null,
+          }
         }
 
         if (isNetworkOfflineError(error)) {
+          const message = '当前处于离线状态，网络恢复后将自动重试'
           markPendingRetry(payload)
           setIsOffline(true)
           setStatus('error')
-          setErrorMessage('当前处于离线状态，网络恢复后将自动重试')
-          return
+          setErrorMessage(message)
+          return {
+            ok: false,
+            errorMessage: message,
+          }
         }
 
+        const message = toErrorMessage(error)
         setStatus('error')
-        setErrorMessage(toErrorMessage(error))
+        setErrorMessage(message)
+        return {
+          ok: false,
+          errorMessage: message,
+        }
       }
     },
     [markPendingRetry, now, uploadMetadata],
@@ -261,7 +306,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     async (metadata: TMetadata) => {
       latestMetadataRef.current = metadata
       clearPendingTimer()
-      await runUpload({
+      return runUpload({
         metadata,
         reason: 'manual',
       })

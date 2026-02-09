@@ -139,7 +139,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
-  const [syncGuardMessage, setSyncGuardMessage] = useState<string | null>(null)
+  const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
@@ -286,20 +286,17 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     if (canSyncToRemote) {
       sync.onInputChange(payload)
-      if (syncGuardMessage) {
-        setSyncGuardMessage(null)
+      if (manualSyncError) {
+        setManualSyncError(null)
       }
     }
     setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }
 
-  const saveNow = () => {
+  const saveNow = async () => {
     if (!canSyncToRemote) {
-      setSyncGuardMessage(syncDisabledMessage)
+      setManualSyncError(syncDisabledMessage)
       return
-    }
-    if (syncGuardMessage) {
-      setSyncGuardMessage(null)
     }
 
     const modifiedAt = diary.entry?.modifiedAt ?? new Date().toISOString()
@@ -311,7 +308,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       content: diary.content,
       modifiedAt,
     }
-    void sync.saveNow(payload)
+    const result = await sync.saveNow(payload)
+    if (!result.ok && result.errorMessage) {
+      setManualSyncError(result.errorMessage)
+      return
+    }
+    setManualSyncError(null)
   }
 
   const resolveMergeConflict = (mergedContent: string) => {
@@ -381,7 +383,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     return 'td-status-muted'
   }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
-  const displayedSyncMessage = syncGuardMessage ?? sync.errorMessage
+  const displayedSyncMessage = manualSyncError ? null : sync.errorMessage
 
   return (
     <>
@@ -472,9 +474,25 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
                   分支：{giteeBranch}
                 </span>
-                <button type="button" className="td-btn ml-auto" onClick={saveNow}>
-                  手动保存并立即上传
-                </button>
+                <div className="ml-auto flex max-w-full items-center gap-2">
+                  <button
+                    type="button"
+                    className="td-btn"
+                    onClick={() => {
+                      void saveNow()
+                    }}
+                  >
+                    手动保存并立即上传
+                  </button>
+                  {manualSyncError ? (
+                    <span
+                      role="alert"
+                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
+                    >
+                      {manualSyncError}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               {displayedSyncMessage ? <p className="text-sm text-td-danger">{displayedSyncMessage}</p> : null}
             </div>
