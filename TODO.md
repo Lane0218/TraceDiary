@@ -91,7 +91,7 @@
 | `TD-TEST-001` | `TODO` | 加密与 KDF 参数升级单元测试 | 核心分支覆盖并通过 | `src/services/__tests__/*` | — | — |
 | `TD-TEST-002` | `TODO` | 同步与冲突（CAS/sha mismatch）单元测试 | 冲突分支断言完整 | `src/services/__tests__/*` | — | — |
 | `TD-TEST-003` | `TODO` | 认证流程集成测试（首次/7天内/过期/Token失效） | 4 条流程均通过 | `src/hooks/__tests__/*` | — | — |
-| `TD-TEST-004` | `TODO` | 关键用户流程 E2E（创建、编辑、同步、冲突） | 核心链路自动化通过 | `e2e/*` | — | — |
+| `TD-TEST-004` | `DONE` | 关键用户流程 E2E（创建、编辑、同步、冲突） | 核心链路自动化通过 | `e2e/*` | `npm run test:unit` 通过（39/39）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过（5/5）；`npm run lint` 通过 | `2026-02-09 / bbcc028` |
 | `TD-TEST-005` | `TODO` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` | — | — |
 | `TD-TEST-006` | `TODO` | 兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS） | 验收清单全部勾选 | `docs/compatibility-report.md` | — | — |
 
