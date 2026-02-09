@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type {
+  CreateUploadMetadataDependencies,
   MetadataCacheRecord,
   MetadataStoreApi,
   PullAndCacheMetadataDependencies,
 } from '../sync'
 import {
+  createUploadMetadataExecutor,
   pullAndCacheMetadata,
   readRemoteMetadataFromGitee,
 } from '../sync'
@@ -164,6 +166,150 @@ describe('pullAndCacheMetadata', () => {
     expect(readRemoteMetadata).toHaveBeenCalledTimes(1)
     expect(decryptMetadata).not.toHaveBeenCalled()
     expect(metadataStore.putMetadata).not.toHaveBeenCalled()
+  })
+})
+
+describe('createUploadMetadataExecutor', () => {
+  it('CAS 成功时应先读取远端 SHA，再携带 expectedSha 提交上传', async () => {
+    const readRemoteMetadata = vi.fn(async () => ({
+      missing: false as const,
+      encryptedContent: 'unused',
+      sha: 'sha-remote-old',
+    }))
+    const uploadRequest = vi.fn(async () => ({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-remote-new',
+    }))
+    const serializeMetadata = vi.fn(async (metadata: TestMetadata) => {
+      return `encrypted:${metadata.version}`
+    })
+
+    const dependencies: CreateUploadMetadataDependencies<TestMetadata> = {
+      readRemoteMetadata,
+      uploadRequest,
+      serializeMetadata,
+      now: () => '2026-02-09T00:00:00.000Z',
+      buildCommitMessage: ({ reason }) => `sync:${reason}`,
+    }
+    const uploadMetadata = createUploadMetadataExecutor(dependencies)
+
+    const result = await uploadMetadata({
+      metadata: {
+        version: '2.0',
+        entries: [{ date: '2026-02-09' }],
+      },
+      reason: 'manual',
+    })
+
+    expect(uploadRequest).toHaveBeenCalledTimes(1)
+    expect(uploadRequest).toHaveBeenCalledWith({
+      path: 'metadata.json.enc',
+      encryptedContent: 'encrypted:2.0',
+      message: 'sync:manual',
+      branch: 'main',
+      expectedSha: 'sha-remote-old',
+    })
+    expect(result).toEqual({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-remote-new',
+      syncedAt: '2026-02-09T00:00:00.000Z',
+    })
+  })
+
+  it('远端文件不存在时应走创建流程且不携带 expectedSha', async () => {
+    const readRemoteMetadata = vi.fn(async () => ({ missing: true as const }))
+    const uploadRequest = vi.fn(async (request: unknown) => {
+      void request
+      return {
+        ok: true,
+        conflict: false,
+        remoteSha: 'sha-created',
+      }
+    })
+
+    const uploadMetadata = createUploadMetadataExecutor<TestMetadata>({
+      readRemoteMetadata,
+      uploadRequest,
+      serializeMetadata: async () => 'encrypted:created',
+      now: () => '2026-02-09T00:01:00.000Z',
+    })
+
+    const result = await uploadMetadata({
+      metadata: {
+        version: '2.1',
+        entries: [],
+      },
+      reason: 'debounced',
+    })
+
+    expect(uploadRequest).toHaveBeenCalledTimes(1)
+    const uploadCall = uploadRequest.mock.calls[0]?.[0]
+    expect(uploadCall).toMatchObject({
+      path: 'metadata.json.enc',
+      encryptedContent: 'encrypted:created',
+      branch: 'main',
+    })
+    expect(Object.prototype.hasOwnProperty.call(uploadCall, 'expectedSha')).toBe(false)
+    expect(result).toEqual({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-created',
+      syncedAt: '2026-02-09T00:01:00.000Z',
+    })
+  })
+
+  it('出现 sha mismatch 时应返回冲突信号', async () => {
+    const uploadMetadata = createUploadMetadataExecutor<TestMetadata>({
+      readRemoteMetadata: async () => ({
+        missing: false,
+        encryptedContent: 'ignored',
+        sha: 'sha-old',
+      }),
+      uploadRequest: async () => {
+        throw new Error('更新远端 metadata 失败（409）：sha does not match')
+      },
+      serializeMetadata: async () => 'encrypted',
+    })
+
+    const result = await uploadMetadata({
+      metadata: {
+        version: '2.2',
+        entries: [],
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      conflict: true,
+      reason: 'sha_mismatch',
+    })
+  })
+
+  it('网络异常应映射为 reason=network', async () => {
+    const uploadMetadata = createUploadMetadataExecutor<TestMetadata>({
+      readRemoteMetadata: async () => ({ missing: true }),
+      uploadRequest: async () => {
+        throw new TypeError('Failed to fetch')
+      },
+      serializeMetadata: async () => 'encrypted',
+    })
+
+    const result = await uploadMetadata({
+      metadata: {
+        version: '2.3',
+        entries: [],
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      conflict: false,
+      reason: 'network',
+    })
   })
 })
 

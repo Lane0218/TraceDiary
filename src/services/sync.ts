@@ -7,6 +7,23 @@ const DEFAULT_BRANCH = 'main'
 
 export type SyncTriggerReason = 'debounced' | 'manual'
 
+export type UploadFailureReason = 'sha_mismatch' | 'network' | 'auth'
+
+export interface UploadRequest {
+  path: string
+  encryptedContent: string
+  message: string
+  branch: string
+  expectedSha?: string
+}
+
+export interface UploadResult {
+  ok: boolean
+  conflict: boolean
+  remoteSha?: string
+  reason?: UploadFailureReason
+}
+
 export interface UploadMetadataPayload<TMetadata = unknown> {
   metadata: TMetadata
   reason: SyncTriggerReason
@@ -14,6 +31,10 @@ export interface UploadMetadataPayload<TMetadata = unknown> {
 
 export interface UploadMetadataResult {
   syncedAt?: string
+  ok?: boolean
+  conflict?: boolean
+  remoteSha?: string
+  reason?: UploadFailureReason
 }
 
 export type UploadMetadataFn<TMetadata = unknown> = (
@@ -22,6 +43,13 @@ export type UploadMetadataFn<TMetadata = unknown> = (
 
 export interface CreateUploadMetadataDependencies<TMetadata = unknown> {
   uploadMetadata?: UploadMetadataFn<TMetadata>
+  readRemoteMetadata?: () => Promise<RemoteMetadataFile>
+  uploadRequest?: (request: UploadRequest) => Promise<UploadResult>
+  serializeMetadata?: (metadata: TMetadata) => Promise<string> | string
+  buildCommitMessage?: (payload: UploadMetadataPayload<TMetadata>) => string
+  path?: string
+  branch?: string
+  now?: () => string
 }
 
 export interface MetadataCacheRecord<TMetadata = unknown> {
@@ -74,6 +102,10 @@ export interface ReadRemoteMetadataFromGiteeParams {
   path?: string
   apiBase?: string
   fetchImpl?: typeof fetch
+}
+
+export interface UploadMetadataToGiteeParams extends ReadRemoteMetadataFromGiteeParams {
+  request: UploadRequest
 }
 
 function normalizeApiBase(apiBase?: string): string {
@@ -130,6 +162,80 @@ async function readRemoteErrorMessage(response: Response): Promise<string | unde
   }
 }
 
+function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
+  if (payload.reason === 'manual') {
+    return 'chore: 手动同步 metadata'
+  }
+  return 'chore: 自动同步 metadata'
+}
+
+function looksLikeShaMismatch(status?: number, message?: string): boolean {
+  if (status === 409) {
+    return true
+  }
+  if (!message) {
+    return false
+  }
+
+  const normalized = message.toLowerCase()
+  if (!normalized.includes('sha')) {
+    return false
+  }
+
+  return /(mismatch|not\s+match|does\s+not\s+match|冲突|不一致)/i.test(message)
+}
+
+function pickStatusFromError(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object') {
+    return undefined
+  }
+
+  const status = (error as { status?: unknown }).status
+  if (typeof status === 'number') {
+    return status
+  }
+
+  const message = (error as { message?: unknown }).message
+  if (typeof message !== 'string') {
+    return undefined
+  }
+
+  const matched = message.match(/[（(](\d{3})[）)]/)
+  if (!matched) {
+    return undefined
+  }
+
+  return Number(matched[1])
+}
+
+function inferUploadFailureReason(error: unknown): UploadFailureReason | undefined {
+  const status = pickStatusFromError(error)
+  if (status === 401 || status === 403) {
+    return 'auth'
+  }
+
+  if (error instanceof TypeError) {
+    return 'network'
+  }
+
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase()
+    if (/(401|403|unauthorized|forbidden|token|auth|权限|鉴权|认证)/i.test(message)) {
+      return 'auth'
+    }
+
+    if (
+      /(network|failed to fetch|fetch failed|timeout|timed out|econn|enotfound|offline|连接|网络)/i.test(
+        message,
+      )
+    ) {
+      return 'network'
+    }
+  }
+
+  return undefined
+}
+
 function defaultParseMetadata<TMetadata>(decryptedContent: string): TMetadata {
   try {
     return JSON.parse(decryptedContent) as TMetadata
@@ -147,6 +253,8 @@ export async function placeholderUploadMetadata<TMetadata = unknown>(
 ): Promise<UploadMetadataResult> {
   void payload
   return {
+    ok: true,
+    conflict: false,
     syncedAt: nowIsoString(),
   }
 }
@@ -154,7 +262,74 @@ export async function placeholderUploadMetadata<TMetadata = unknown>(
 export function createUploadMetadataExecutor<TMetadata = unknown>(
   dependencies: CreateUploadMetadataDependencies<TMetadata> = {},
 ): UploadMetadataFn<TMetadata> {
-  return dependencies.uploadMetadata ?? placeholderUploadMetadata<TMetadata>
+  if (dependencies.uploadMetadata) {
+    return dependencies.uploadMetadata
+  }
+
+  if (
+    !dependencies.readRemoteMetadata ||
+    !dependencies.uploadRequest ||
+    !dependencies.serializeMetadata
+  ) {
+    return placeholderUploadMetadata<TMetadata>
+  }
+
+  const metadataPath = (dependencies.path ?? DEFAULT_METADATA_PATH).trim() || DEFAULT_METADATA_PATH
+  const branch = (dependencies.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const now = dependencies.now ?? nowIsoString
+  const buildCommitMessage = dependencies.buildCommitMessage ?? defaultBuildCommitMessage
+  const serializeMetadata = dependencies.serializeMetadata
+  const readRemoteMetadata = dependencies.readRemoteMetadata
+  const uploadRequest = dependencies.uploadRequest
+
+  return async (payload: UploadMetadataPayload<TMetadata>): Promise<UploadMetadataResult> => {
+    try {
+      const encryptedContent = await serializeMetadata(payload.metadata)
+      const remoteFile = await readRemoteMetadata()
+
+      const request: UploadRequest = {
+        path: metadataPath,
+        encryptedContent,
+        message: buildCommitMessage(payload),
+        branch,
+      }
+
+      if (!remoteFile.missing && remoteFile.sha) {
+        request.expectedSha = remoteFile.sha
+      }
+
+      const uploadResult = await uploadRequest(request)
+      return {
+        ok: uploadResult.ok,
+        conflict: uploadResult.conflict,
+        remoteSha: uploadResult.remoteSha,
+        reason: uploadResult.reason,
+        syncedAt: uploadResult.ok ? now() : undefined,
+      }
+    } catch (error) {
+      const status = pickStatusFromError(error)
+      const message = error instanceof Error ? error.message : undefined
+
+      if (looksLikeShaMismatch(status, message)) {
+        return {
+          ok: false,
+          conflict: true,
+          reason: 'sha_mismatch',
+        }
+      }
+
+      const reason = inferUploadFailureReason(error)
+      if (reason) {
+        return {
+          ok: false,
+          conflict: false,
+          reason,
+        }
+      }
+
+      throw error
+    }
+  }
 }
 
 export function createIndexedDbMetadataStore<TMetadata = Metadata>(): MetadataStoreApi<TMetadata> {
@@ -235,6 +410,137 @@ export function createGiteeMetadataReader(
   params: ReadRemoteMetadataFromGiteeParams,
 ): () => Promise<RemoteMetadataFile> {
   return () => readRemoteMetadataFromGitee(params)
+}
+
+export async function uploadMetadataToGitee(
+  params: UploadMetadataToGiteeParams,
+): Promise<UploadResult> {
+  const token = params.token.trim()
+  const owner = params.owner.trim()
+  const repo = params.repo.trim()
+  const requestPath = params.request.path.trim() || DEFAULT_METADATA_PATH
+  const branch = params.request.branch.trim() || DEFAULT_BRANCH
+  const encryptedContent = params.request.encryptedContent.trim()
+  const message = params.request.message.trim()
+  const expectedSha = params.request.expectedSha?.trim()
+
+  if (!token) {
+    throw new Error('Gitee Token 不能为空')
+  }
+  if (!owner || !repo) {
+    throw new Error('owner 与 repo 不能为空')
+  }
+  if (!encryptedContent) {
+    throw new Error('上传内容不能为空')
+  }
+  if (!message) {
+    throw new Error('提交说明不能为空')
+  }
+
+  const requestUrl = `${normalizeApiBase(params.apiBase)}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePath(requestPath)}`
+  const fetcher = params.fetchImpl ?? fetch
+
+  try {
+    const body: {
+      content: string
+      message: string
+      branch: string
+      sha?: string
+    } = {
+      content: encryptedContent,
+      message,
+      branch,
+    }
+
+    if (expectedSha) {
+      body.sha = expectedSha
+    }
+
+    const response = await fetcher(requestUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (response.ok) {
+      let remoteSha: string | undefined
+      try {
+        const responseBody = (await response.json()) as {
+          sha?: unknown
+          content?: { sha?: unknown }
+          commit?: { sha?: unknown }
+        }
+        if (typeof responseBody.content?.sha === 'string') {
+          remoteSha = responseBody.content.sha
+        } else if (typeof responseBody.sha === 'string') {
+          remoteSha = responseBody.sha
+        } else if (typeof responseBody.commit?.sha === 'string') {
+          remoteSha = responseBody.commit.sha
+        }
+      } catch {
+        remoteSha = undefined
+      }
+
+      return {
+        ok: true,
+        conflict: false,
+        remoteSha,
+      }
+    }
+
+    const remoteMessage = await readRemoteErrorMessage(response)
+    if (response.status === 401 || response.status === 403) {
+      return {
+        ok: false,
+        conflict: false,
+        reason: 'auth',
+      }
+    }
+
+    if (looksLikeShaMismatch(response.status, remoteMessage)) {
+      return {
+        ok: false,
+        conflict: true,
+        reason: 'sha_mismatch',
+      }
+    }
+
+    return {
+      ok: false,
+      conflict: false,
+    }
+  } catch (error) {
+    const reason = inferUploadFailureReason(error)
+    if (reason === 'auth') {
+      return {
+        ok: false,
+        conflict: false,
+        reason: 'auth',
+      }
+    }
+    if (reason === 'network') {
+      return {
+        ok: false,
+        conflict: false,
+        reason: 'network',
+      }
+    }
+    throw error
+  }
+}
+
+export function createGiteeMetadataUploader(
+  params: ReadRemoteMetadataFromGiteeParams,
+): (request: UploadRequest) => Promise<UploadResult> {
+  return (request: UploadRequest) =>
+    uploadMetadataToGitee({
+      ...params,
+      request,
+    })
 }
 
 export async function pullAndCacheMetadata<TMetadata = unknown>(
