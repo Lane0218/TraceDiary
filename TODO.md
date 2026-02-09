@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-09`
 - 总任务：`52`
-- 状态统计：`DONE=36` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-DOC-001`
+- 状态统计：`DONE=37` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -113,4 +113,4 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-DOC-001` | `DOING` | 补充导入功能规格与 TODO 拆解（md/txt 文件名识别 + 系统自动生成 metadata） | `SPEC.md` 明确导入输入格式、识别规则、冲突策略、验收标准；`TODO.md` 新增导入任务组 | `SPEC.md` `TODO.md` | — | — |
+| `TD-DOC-001` | `DONE` | 补充导入功能规格与 TODO 拆解（md/txt 文件名识别 + 系统自动生成 metadata） | `SPEC.md` 明确导入输入格式、识别规则、冲突策略、验收标准；`TODO.md` 新增导入任务组 | `SPEC.md` `TODO.md` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过（冒烟） | `2026-02-09 / 05c0fb7` |
