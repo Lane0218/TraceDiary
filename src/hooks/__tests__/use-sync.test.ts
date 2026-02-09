@@ -8,12 +8,22 @@ interface TestMetadata {
 }
 
 describe('useSync', () => {
+  let navigatorOnline = true
+  let onLineGetterSpy: ReturnType<typeof vi.spyOn>
+
+  function setNavigatorOnline(nextOnline: boolean): void {
+    navigatorOnline = nextOnline
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    navigatorOnline = true
+    onLineGetterSpy = vi.spyOn(window.navigator, 'onLine', 'get').mockImplementation(() => navigatorOnline)
   })
 
   afterEach(() => {
+    onLineGetterSpy.mockRestore()
     vi.useRealTimers()
   })
 
@@ -128,5 +138,103 @@ describe('useSync', () => {
     expect(result.current.errorMessage).toBeNull()
     expect(result.current.lastSyncedAt).not.toBeNull()
   })
-})
 
+  it('离线状态切换时应更新 isOffline', async () => {
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata: vi.fn(async () => ({
+          syncedAt: '2026-02-08T14:00:00.000Z',
+        })),
+      }),
+    )
+
+    expect(result.current.isOffline).toBe(false)
+
+    setNavigatorOnline(false)
+    await act(async () => {
+      window.dispatchEvent(new Event('offline'))
+    })
+    expect(result.current.isOffline).toBe(true)
+
+    setNavigatorOnline(true)
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+      await Promise.resolve()
+    })
+    expect(result.current.isOffline).toBe(false)
+  })
+
+  it('离线后恢复在线应自动重试最近一次 payload', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
+      syncedAt: '2026-02-08T15:00:00.000Z',
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    setNavigatorOnline(false)
+    await act(async () => {
+      window.dispatchEvent(new Event('offline'))
+    })
+
+    await act(async () => {
+      await result.current.saveNow({ content: 'offline-draft' })
+    })
+
+    expect(uploadMetadata).not.toHaveBeenCalled()
+    expect(result.current.isOffline).toBe(true)
+    expect(result.current.hasPendingRetry).toBe(true)
+    expect(result.current.errorMessage).toBe('当前处于离线状态，网络恢复后将自动重试')
+
+    setNavigatorOnline(true)
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+      await Promise.resolve()
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(uploadMetadata).toHaveBeenCalledWith({
+      metadata: { content: 'offline-draft' },
+      reason: 'manual',
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.lastSyncedAt).toBe('2026-02-08T15:00:00.000Z')
+  })
+
+  it('自动重试成功后应清空 pending 状态并且不重复重试', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
+      syncedAt: '2026-02-08T16:00:00.000Z',
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    setNavigatorOnline(false)
+    await act(async () => {
+      window.dispatchEvent(new Event('offline'))
+      await result.current.saveNow({ content: 'needs-retry' })
+    })
+    expect(result.current.hasPendingRetry).toBe(true)
+
+    setNavigatorOnline(true)
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+      await Promise.resolve()
+    })
+
+    expect(result.current.hasPendingRetry).toBe(false)
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+      await Promise.resolve()
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+  })
+})

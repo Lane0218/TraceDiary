@@ -19,6 +19,8 @@ export interface UseSyncResult<TMetadata = unknown> {
   status: SyncStatus
   lastSyncedAt: string | null
   errorMessage: string | null
+  isOffline: boolean
+  hasPendingRetry: boolean
   onInputChange: (metadata: TMetadata) => void
   saveNow: (metadata: TMetadata) => Promise<void>
 }
@@ -34,10 +36,36 @@ function toErrorMessage(error: unknown): string {
   return '同步失败，请稍后重试'
 }
 
+function getIsOffline(): boolean {
+  if (typeof window === 'undefined' || typeof window.navigator === 'undefined') {
+    return false
+  }
+  return window.navigator.onLine === false
+}
+
+function isNetworkOfflineError(error: unknown): boolean {
+  if (getIsOffline()) {
+    return true
+  }
+
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const errorMessage = error.message.toLowerCase()
+  return (
+    errorMessage.includes('failed to fetch') ||
+    errorMessage.includes('networkerror') ||
+    errorMessage.includes('network request failed')
+  )
+}
+
 export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> = {}): UseSyncResult<TMetadata> {
   const [status, setStatus] = useState<SyncStatus>('idle')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isOffline, setIsOffline] = useState(() => getIsOffline())
+  const [hasPendingRetry, setHasPendingRetry] = useState(false)
 
   const now = options.now ?? nowIsoString
   const debounceMs = Math.max(0, options.debounceMs ?? DEFAULT_DEBOUNCE_MS)
@@ -51,6 +79,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestMetadataRef = useRef<TMetadata | null>(null)
+  const pendingRetryPayloadRef = useRef<UploadMetadataPayload<TMetadata> | null>(null)
   const mountedRef = useRef(true)
   const taskIdRef = useRef(0)
 
@@ -69,8 +98,32 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     }
   }, [clearPendingTimer])
 
+  const markPendingRetry = useCallback((payload: UploadMetadataPayload<TMetadata>) => {
+    pendingRetryPayloadRef.current = payload
+    if (mountedRef.current) {
+      setHasPendingRetry(true)
+    }
+  }, [])
+
+  const clearPendingRetry = useCallback(() => {
+    pendingRetryPayloadRef.current = null
+    if (mountedRef.current) {
+      setHasPendingRetry(false)
+    }
+  }, [])
+
   const runUpload = useCallback(
     async (payload: UploadMetadataPayload<TMetadata>) => {
+      if (getIsOffline()) {
+        markPendingRetry(payload)
+        if (mountedRef.current) {
+          setIsOffline(true)
+          setStatus('error')
+          setErrorMessage('当前处于离线状态，网络恢复后将自动重试')
+        }
+        return
+      }
+
       const taskId = taskIdRef.current + 1
       taskIdRef.current = taskId
       if (mountedRef.current) {
@@ -92,12 +145,49 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           return
         }
 
+        if (isNetworkOfflineError(error)) {
+          markPendingRetry(payload)
+          setIsOffline(true)
+          setStatus('error')
+          setErrorMessage('当前处于离线状态，网络恢复后将自动重试')
+          return
+        }
+
         setStatus('error')
         setErrorMessage(toErrorMessage(error))
       }
     },
-    [now, uploadMetadata],
+    [markPendingRetry, now, uploadMetadata],
   )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const handleOffline = () => {
+      setIsOffline(true)
+    }
+
+    const handleOnline = () => {
+      setIsOffline(false)
+      const pendingPayload = pendingRetryPayloadRef.current
+      if (!pendingPayload) {
+        return
+      }
+
+      clearPendingRetry()
+      void runUpload(pendingPayload)
+    }
+
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [clearPendingRetry, runUpload])
 
   const onInputChange = useCallback(
     (metadata: TMetadata) => {
@@ -133,8 +223,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     status,
     lastSyncedAt,
     errorMessage,
+    isOffline,
+    hasPendingRetry,
     onInputChange,
     saveNow,
   }
 }
-
