@@ -7,7 +7,7 @@
 - **项目名称**：TraceDiary
 - **版本**：Web 版 v1.0
 - **架构类型**：纯前端 Web 应用 + Gitee 私有仓库存储
-- **更新日期**：2026-02-08
+- **更新日期**：2026-02-09
 
 ---
 
@@ -16,9 +16,9 @@
 1. [项目概述](#1-项目概述)：定义产品定位、目标用户、MVP 范围与核心成功指标，明确本项目的业务边界。
 2. [技术栈](#2-技术栈)：说明前端框架、编辑器、数据层、PWA 与部署平台的选型及其职责。
 3. [架构设计](#3-架构设计)：描述浏览器端加密架构、读写数据流、远端仓库结构与状态管理策略。
-4. [核心功能](#4-核心功能)：细化认证初始化、日记编辑、年度总结、日历导航、往年今日与冲突处理行为。
+4. [核心功能](#4-核心功能)：细化认证初始化、日记编辑、年度总结、日历导航、往年今日、导入与冲突处理行为。
 5. [数据结构](#5-数据结构)：给出类型定义、IndexedDB 设计和同步接口约定，作为实现时的数据契约。
-6. [用户流程](#6-用户流程)：用流程图串联首次使用、日常使用与跨设备同步，强调关键状态转换节点。
+6. [用户流程](#6-用户流程)：用流程图串联首次使用、日常使用、跨设备同步与批量导入，强调关键状态转换节点。
 7. [安全与隐私](#7-安全与隐私)：规范加密方案、凭证存储、密码策略与公网访问控制要求。
 8. [部署方案](#8-部署方案)：定义构建参数、Vercel 配置、安全响应头和 PWA 发布相关配置。
 9. [开发规范](#9-开发规范)：约束代码风格、目录结构、提交规范与测试覆盖要求。
@@ -68,10 +68,10 @@
 - ✅ 移动端适配（响应式设计）
 - ✅ PWA 支持（可安装）
 
-**后续版本可选：**
+**v1.1 近期迭代（已确定）：**
 
+- 数据导入（md/txt 批量导入）
 - 全文搜索
-- 数据导入（txt/md 批量导入）
 - 数据导出（打包下载）
 - 统计面板（字数、连续记录天数）
 
@@ -355,6 +355,44 @@ diary-data/                    # 用户的私有仓库名称
 4. 使用 `expectedSha` 重新提交更新（CAS）
 5. 若再次 `sha mismatch`，提示用户刷新远端版本后重新决策
 
+### 4.7 数据导入（v1.1）
+
+#### 4.7.1 导入入口与流程
+
+1. 用户在工作台选择“导入日记”，支持一次选择多个文件
+2. 文件类型仅允许 `.md` 与 `.txt`
+3. 系统按文件名规则识别条目类型并预检
+4. 将文件分为：可导入、命名无效、与本地冲突三类
+5. 对冲突项逐条确认（覆盖或跳过）
+6. 将可导入条目写入 IndexedDB，并更新本地 metadata 缓存
+7. 导入结束后展示汇总结果（成功/跳过/失败）
+
+#### 4.7.2 文件名识别规则
+
+- 日常日记：`YYYY-MM-DD.md` 或 `YYYY-MM-DD.txt`，映射为 `type = "daily"`
+- 年度总结：`YYYY-summary.md` 或 `YYYY-summary.txt`，映射为 `type = "yearly_summary"`
+- 非法命名：不参与导入，记入失败清单
+
+导入完成后由系统自动生成同步文件名：
+
+- 日常日记：`YYYY-MM-DD.md.enc`
+- 年度总结：`YYYY-summary.md.enc`
+
+#### 4.7.3 冲突与时间策略
+
+- 冲突定义：导入条目与本地已存在条目键相同（`daily:YYYY-MM-DD` 或 `summary:YYYY`）
+- 处理策略：逐条确认，用户可选“覆盖”或“跳过”
+- 时间戳策略：优先使用文件 `lastModified`，不可用时回退为导入时刻
+
+#### 4.7.4 失败与反馈
+
+- 命名不合法、读取失败、空内容均不影响同批次其它可导入文件
+- 导入结果需包含：
+  - 成功条目数与列表
+  - 冲突处理结果（覆盖/跳过）
+  - 失败条目列表与失败原因
+- 系统负责自动生成并维护 metadata，用户无需手工编写 JSON 文件
+
 ---
 
 ## 5. 数据结构
@@ -476,6 +514,61 @@ interface UploadResult {
 }
 ```
 
+### 5.4 导入接口约定（v1.1）
+
+```typescript
+interface ImportSourceFile {
+  name: string;               // 原始文件名（如 2026-02-08.md）
+  mimeType: string;           // text/markdown 或 text/plain
+  size: number;               // 字节数
+  lastModified?: string;      // ISO 8601（由 File.lastModified 转换）
+  content: string;            // UTF-8 文本内容
+}
+
+type ImportParsedEntry =
+  | {
+      type: 'daily';
+      id: `daily:${string}`;
+      date: string;           // YYYY-MM-DD
+      filename: `${string}.md.enc`;
+      content: string;
+      wordCount: number;
+      createdAt: string;
+      modifiedAt: string;
+    }
+  | {
+      type: 'yearly_summary';
+      id: `summary:${number}`;
+      year: number;
+      date: string;           // YYYY-12-31
+      filename: `${number}-summary.md.enc`;
+      content: string;
+      wordCount: number;
+      createdAt: string;
+      modifiedAt: string;
+    };
+
+interface ImportConflictItem {
+  entryId: string;
+  localModifiedAt?: string;
+  incomingModifiedAt: string;
+  strategy?: 'overwrite' | 'skip';
+}
+
+interface ImportResult {
+  success: string[];          // 成功导入的 entryId
+  overwritten: string[];      // 冲突后覆盖的 entryId
+  skipped: string[];          // 冲突后跳过的 entryId
+  invalid: Array<{ name: string; reason: string }>;
+  failed: Array<{ name: string; reason: string }>;
+}
+```
+
+说明：
+
+- 导入流程复用现有 `DiaryEntry` / `MetadataEntry` 存储结构，不新增持久化 schema
+- metadata 由系统自动创建与更新，不对用户暴露编辑入口
+
 ---
 
 ## 6. 用户流程
@@ -546,6 +639,24 @@ interface UploadResult {
 更新 IndexedDB 缓存
     ↓
 显示最新内容
+```
+
+### 6.4 批量导入流程图（v1.1）
+
+```
+用户选择多个 .md/.txt 文件
+    ↓
+系统按文件名识别类型（daily/yearly_summary）
+    ↓
+分类结果：可导入 / 冲突 / 无效命名
+    ↓
+对冲突条目逐条确认（覆盖或跳过）
+    ↓
+将可导入与“覆盖”条目写入 IndexedDB
+    ↓
+系统自动更新 metadata（用户无需 JSON 清单）
+    ↓
+展示导入汇总（成功/覆盖/跳过/失败）
 ```
 
 ---
@@ -846,12 +957,21 @@ src/
 - [ ] 图标和启动画面显示正常
 - [ ] 应用壳正确缓存（离线时能看到界面）
 
+#### 数据导入（v1.1）
+
+- [ ] 支持批量选择 `.md/.txt` 文件导入
+- [ ] 文件名规则识别准确（`YYYY-MM-DD` 与 `YYYY-summary`）
+- [ ] 同键冲突支持逐条确认（覆盖/跳过）
+- [ ] 无效命名文件被跳过并在结果中给出原因
+- [ ] metadata 自动更新，无需用户提供或编辑 JSON 清单
+
 ### 10.2 性能验收
 
 - [ ] 首次加载时间 ≤ 3 秒（4G 网络）
 - [ ] 切换日期响应 ≤ 200ms
 - [ ] 往年今日查询 ≤ 1 秒（5 年数据）
 - [ ] 编辑器输入延迟 ≤ 50ms
+- [ ] 批量导入 100 个文件耗时 ≤ 3 秒（不含远端同步）
 - [ ] Lighthouse 评分 ≥ 90（Performance、Accessibility）
 
 ### 10.3 安全验收
