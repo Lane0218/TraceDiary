@@ -67,10 +67,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     [summary.content, summary.entry?.modifiedAt, summary.entryId, year],
   )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
+  const dataEncryptionKey = auth.state.dataEncryptionKey
 
   const canSyncToRemote =
     auth.state.stage === 'ready' &&
     Boolean(auth.state.tokenInMemory) &&
+    Boolean(dataEncryptionKey) &&
     Boolean(auth.state.config?.giteeOwner) &&
     Boolean(auth.state.config?.giteeRepoName)
   const uploadMetadata = canSyncToRemote
@@ -79,6 +81,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         owner: auth.state.config?.giteeOwner as string,
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
+        dataEncryptionKey: dataEncryptionKey as CryptoKey,
       })
     : undefined
   const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
@@ -92,8 +95,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     if (!auth.state.tokenInMemory) {
       return '云端同步未就绪：当前会话缺少可用 Token，请重新解锁/配置。'
     }
+    if (!dataEncryptionKey) {
+      return '云端同步未就绪：当前会话缺少数据加密密钥，请重新解锁。'
+    }
     return '云端同步未就绪。'
-  }, [auth.state.config?.giteeOwner, auth.state.config?.giteeRepoName, auth.state.stage, auth.state.tokenInMemory])
+  }, [auth.state.config?.giteeOwner, auth.state.config?.giteeRepoName, auth.state.stage, auth.state.tokenInMemory, dataEncryptionKey])
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen

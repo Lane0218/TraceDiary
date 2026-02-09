@@ -145,7 +145,10 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestMetadataRef = useRef<TMetadata | null>(null)
   const pendingRetryPayloadRef = useRef<UploadMetadataPayload<TMetadata> | null>(null)
+  const pendingRetryPayloadVersionRef = useRef(0)
   const queuedUploadPayloadRef = useRef<UploadMetadataPayload<TMetadata> | null>(null)
+  const queuedUploadPayloadVersionRef = useRef(0)
+  const payloadVersionRef = useRef(0)
   const inFlightRef = useRef(false)
   const resolvingConflictRef = useRef(false)
   const mountedRef = useRef(true)
@@ -166,8 +169,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     }
   }, [clearPendingTimer])
 
-  const markPendingRetry = useCallback((payload: UploadMetadataPayload<TMetadata>) => {
+  const markPendingRetry = useCallback((payload: UploadMetadataPayload<TMetadata>, payloadVersion: number) => {
     pendingRetryPayloadRef.current = payload
+    pendingRetryPayloadVersionRef.current = payloadVersion
     if (mountedRef.current) {
       setHasPendingRetry(true)
     }
@@ -175,13 +179,32 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
   const clearPendingRetry = useCallback(() => {
     pendingRetryPayloadRef.current = null
+    pendingRetryPayloadVersionRef.current = 0
     if (mountedRef.current) {
       setHasPendingRetry(false)
     }
   }, [])
 
+  const clearQueuedUploadPayload = useCallback(() => {
+    queuedUploadPayloadRef.current = null
+    queuedUploadPayloadVersionRef.current = 0
+  }, [])
+
+  const queueLatestUploadPayload = useCallback((payload: UploadMetadataPayload<TMetadata>, payloadVersion: number) => {
+    if (payloadVersion < queuedUploadPayloadVersionRef.current) {
+      return
+    }
+    queuedUploadPayloadRef.current = payload
+    queuedUploadPayloadVersionRef.current = payloadVersion
+  }, [])
+
+  const nextPayloadVersion = useCallback(() => {
+    payloadVersionRef.current += 1
+    return payloadVersionRef.current
+  }, [])
+
   const runUpload = useCallback(
-    async (payload: UploadMetadataPayload<TMetadata>): Promise<SaveNowResult> => {
+    async (payload: UploadMetadataPayload<TMetadata>, payloadVersion = nextPayloadVersion()): Promise<SaveNowResult> => {
       let shouldDrainQueuedPayload = false
 
       if (inFlightRef.current) {
@@ -194,7 +217,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
 
         // 自动上传在进行中时仅保留最新请求，避免并发请求造成竞态覆盖。
-        queuedUploadPayloadRef.current = payload
+        queueLatestUploadPayload(payload, payloadVersion)
         return {
           ok: false,
           code: 'stale',
@@ -202,9 +225,22 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
       }
 
+      let activePayload = payload
+      let activePayloadVersion = payloadVersion
+      const queuedPayload = queuedUploadPayloadRef.current
+      const queuedPayloadVersion = queuedUploadPayloadVersionRef.current
+      if (queuedPayload && queuedPayloadVersion >= activePayloadVersion) {
+        activePayload = queuedPayload
+        activePayloadVersion = queuedPayloadVersion
+        clearQueuedUploadPayload()
+      } else if (queuedPayload && queuedPayloadVersion < activePayloadVersion) {
+        clearQueuedUploadPayload()
+      }
+
       if (getIsOffline()) {
         const message = '当前处于离线状态，网络恢复后将自动重试'
-        markPendingRetry(payload)
+        queueLatestUploadPayload(activePayload, activePayloadVersion)
+        markPendingRetry(activePayload, activePayloadVersion)
         if (mountedRef.current) {
           setIsOffline(true)
           setStatus('error')
@@ -227,7 +263,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
       try {
         const result = await withTimeout(
-          uploadMetadata(payload),
+          uploadMetadata(activePayload),
           uploadTimeoutMs,
           '同步超时，请检查网络后重试',
         )
@@ -246,7 +282,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
               : '检测到同步冲突，请选择保留本地、远端或合并版本'
             setStatus('error')
             setConflictState({
-              local: result.conflictPayload?.local ?? payload.metadata,
+              local: result.conflictPayload?.local ?? activePayload.metadata,
               remote: result.conflictPayload?.remote ?? null,
             })
             setErrorMessage(message)
@@ -260,7 +296,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
           if (result.reason === 'network') {
             const message = '网络异常，已保留本次修改并将在恢复后自动重试'
-            markPendingRetry(payload)
+            queueLatestUploadPayload(activePayload, activePayloadVersion)
+            markPendingRetry(activePayload, activePayloadVersion)
             setStatus('error')
             setErrorMessage(message)
             return {
@@ -272,6 +309,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
           if (result.reason === 'auth') {
             const message = '鉴权失败，请重新解锁或更新 Token 配置'
+            queueLatestUploadPayload(activePayload, activePayloadVersion)
             setStatus('error')
             setErrorMessage(message)
             return {
@@ -282,6 +320,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           }
 
           const message = '同步失败，请稍后重试'
+          queueLatestUploadPayload(activePayload, activePayloadVersion)
           setStatus('error')
           setErrorMessage(message)
           return {
@@ -295,6 +334,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setErrorMessage(null)
         setConflictState(null)
         resolvingConflictRef.current = false
+        clearPendingRetry()
         setLastSyncedAt(result?.syncedAt ?? now())
         shouldDrainQueuedPayload = true
         return {
@@ -312,7 +352,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
         if (isNetworkOfflineError(error)) {
           const message = '当前处于离线状态，网络恢复后将自动重试'
-          markPendingRetry(payload)
+          queueLatestUploadPayload(activePayload, activePayloadVersion)
+          markPendingRetry(activePayload, activePayloadVersion)
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
@@ -324,6 +365,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
 
         const message = toErrorMessage(error)
+        queueLatestUploadPayload(activePayload, activePayloadVersion)
         setStatus('error')
         setErrorMessage(message)
         return {
@@ -334,20 +376,28 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       } finally {
         inFlightRef.current = false
         if (!mountedRef.current) {
-          queuedUploadPayloadRef.current = null
-        } else {
+          clearQueuedUploadPayload()
+        } else if (shouldDrainQueuedPayload) {
           const queuedPayload = queuedUploadPayloadRef.current
+          const queuedPayloadVersion = queuedUploadPayloadVersionRef.current
           if (queuedPayload) {
-            queuedUploadPayloadRef.current = null
+            clearQueuedUploadPayload()
             // 仅在当前上传成功后继续消化队列，避免失败/超时时被排队任务持续重入。
-            if (shouldDrainQueuedPayload) {
-              void runUpload(queuedPayload)
-            }
+            void runUpload(queuedPayload, queuedPayloadVersion)
           }
         }
       }
     },
-    [markPendingRetry, now, uploadMetadata, uploadTimeoutMs],
+    [
+      clearPendingRetry,
+      clearQueuedUploadPayload,
+      markPendingRetry,
+      nextPayloadVersion,
+      now,
+      queueLatestUploadPayload,
+      uploadMetadata,
+      uploadTimeoutMs,
+    ],
   )
 
   useEffect(() => {
@@ -362,12 +412,25 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     const handleOnline = () => {
       setIsOffline(false)
       const pendingPayload = pendingRetryPayloadRef.current
-      if (!pendingPayload) {
+      const pendingPayloadVersion = pendingRetryPayloadVersionRef.current
+      const queuedPayload = queuedUploadPayloadRef.current
+      const queuedPayloadVersion = queuedUploadPayloadVersionRef.current
+      if (!pendingPayload && !queuedPayload) {
         return
       }
 
-      clearPendingRetry()
-      void runUpload(pendingPayload)
+      if (pendingPayload) {
+        clearPendingRetry()
+      }
+
+      if (queuedPayload && queuedPayloadVersion >= pendingPayloadVersion) {
+        void runUpload(queuedPayload, queuedPayloadVersion)
+        return
+      }
+
+      if (pendingPayload) {
+        void runUpload(pendingPayload, pendingPayloadVersion)
+      }
     }
 
     window.addEventListener('offline', handleOffline)
@@ -388,25 +451,33 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         if (latestMetadata === null) {
           return
         }
-        void runUpload({
-          metadata: latestMetadata,
-          reason: 'debounced',
-        })
+        const payloadVersion = nextPayloadVersion()
+        void runUpload(
+          {
+            metadata: latestMetadata,
+            reason: 'debounced',
+          },
+          payloadVersion,
+        )
       }, debounceMs)
     },
-    [clearPendingTimer, debounceMs, runUpload],
+    [clearPendingTimer, debounceMs, nextPayloadVersion, runUpload],
   )
 
   const saveNow = useCallback(
     async (metadata: TMetadata) => {
       latestMetadataRef.current = metadata
       clearPendingTimer()
-      return runUpload({
-        metadata,
-        reason: 'manual',
-      })
+      const payloadVersion = nextPayloadVersion()
+      return runUpload(
+        {
+          metadata,
+          reason: 'manual',
+        },
+        payloadVersion,
+      )
     },
-    [clearPendingTimer, runUpload],
+    [clearPendingTimer, nextPayloadVersion, runUpload],
   )
 
   const dismissConflict = useCallback(() => {

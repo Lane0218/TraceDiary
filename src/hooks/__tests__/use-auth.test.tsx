@@ -16,6 +16,7 @@ const sampleKdf: KdfParams = {
   iterations: 300_000,
   salt: 'salt-base64',
 }
+const sampleDataEncryptionKey = { type: 'secret' } as CryptoKey
 
 function buildConfig(overrides?: Partial<AppConfig>): AppConfig {
   return {
@@ -41,6 +42,7 @@ function buildDependencies(overrides?: Partial<AuthDependencies>): AuthDependenc
     hashMasterPassword: vi.fn(async ({ masterPassword }) => `hash:${masterPassword}`),
     encryptToken: vi.fn(async ({ token }) => `cipher:${token}`),
     decryptToken: vi.fn(async () => 'token-from-cipher'),
+    deriveDataEncryptionKey: vi.fn(async () => sampleDataEncryptionKey),
     restoreUnlockedToken: vi.fn(async () => null),
     now: vi.fn(() => fixedNow),
     ...overrides,
@@ -77,6 +79,7 @@ describe('useAuth', () => {
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
     expect(result.current.state.config?.encryptedToken).toBe('cipher:token-plain')
     expect(result.current.state.tokenInMemory).toBe('token-plain')
+    expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
     expect(localStorage.getItem(AUTH_LOCK_STATE_KEY)).toBe('unlocked')
     expect(Number(localStorage.getItem(AUTH_PASSWORD_EXPIRY_KEY))).toBeGreaterThan(fixedNow)
 
@@ -112,6 +115,7 @@ describe('useAuth', () => {
     })
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
     expect(saveConfig).toHaveBeenCalledTimes(1)
     const savedConfig = saveConfig.mock.calls[0]?.[0] as AppConfig | undefined
     expect(savedConfig?.giteeBranch).toBe('main')
@@ -131,6 +135,7 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
     expect(result.current.state.tokenInMemory).toBe('restored-token')
+    expect(result.current.state.dataEncryptionKey).toBeNull()
     expect(result.current.state.isLocked).toBe(false)
     expect(result.current.state.passwordExpired).toBe(false)
   })
@@ -176,6 +181,7 @@ describe('useAuth', () => {
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
     expect(result.current.state.config?.encryptedToken).toBe('cipher:token-new')
     expect(result.current.state.tokenInMemory).toBe('token-new')
+    expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
     expect(saveConfig).toHaveBeenCalled()
   })
 
@@ -204,5 +210,30 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(result.current.state.stage).toBe('needs-token-refresh'))
     expect(result.current.state.tokenRefreshReason).toBe('token-invalid')
+    expect(result.current.state.dataEncryptionKey).toBeNull()
+  })
+
+  it('手动锁定后应清空 dataEncryptionKey', async () => {
+    const dependencies = buildDependencies()
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
+
+    act(() => {
+      result.current.lockNow()
+    })
+
+    expect(result.current.state.stage).toBe('needs-unlock')
+    expect(result.current.state.dataEncryptionKey).toBeNull()
   })
 })

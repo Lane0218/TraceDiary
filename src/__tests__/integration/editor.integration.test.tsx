@@ -87,6 +87,7 @@ function buildAuthResult(overrides?: Partial<UseAuthResult['state']>): UseAuthRe
       stage: 'ready',
       config,
       tokenInMemory: 'mock-token',
+      dataEncryptionKey: { type: 'secret' } as CryptoKey,
       isLocked: false,
       passwordExpired: false,
       needsMasterPasswordForTokenRefresh: false,

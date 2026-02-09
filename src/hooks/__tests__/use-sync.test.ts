@@ -376,6 +376,69 @@ describe('useSync', () => {
     expect(uploadMetadata).toHaveBeenCalledTimes(1)
   })
 
+  it('上传失败后应保留队列最新 payload，并在在线恢复时优先回放', async () => {
+    let rejectFirstUpload!: (error: Error) => void
+    const firstUploadPromise = new Promise<{ syncedAt: string }>((_resolve, reject) => {
+      rejectFirstUpload = reject
+    })
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi
+      .fn()
+      .mockReturnValueOnce(firstUploadPromise)
+      .mockResolvedValueOnce({
+        syncedAt: '2026-02-08T16:30:00.000Z',
+      })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        debounceMs: 0,
+      }),
+    )
+
+    let firstSavePromise: Promise<SaveNowResult> | null = null
+    act(() => {
+      firstSavePromise = result.current.saveNow({ content: 'first-payload' })
+      result.current.onInputChange({ content: 'latest-queued' })
+    })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      rejectFirstUpload(new Error('Failed to fetch'))
+      await Promise.resolve()
+    })
+
+    let firstSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      firstSaveResult = await firstSavePromise!
+    })
+
+    expect(firstSaveResult).toEqual({
+      ok: false,
+      code: 'offline',
+      errorMessage: '当前处于离线状态，网络恢复后将自动重试',
+    })
+    expect(result.current.hasPendingRetry).toBe(true)
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+
+    setNavigatorOnline(true)
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+      await Promise.resolve()
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(2)
+    expect(uploadMetadata).toHaveBeenNthCalledWith(2, {
+      metadata: { content: 'latest-queued' },
+      reason: 'debounced',
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.hasPendingRetry).toBe(false)
+  })
+
   it('上传返回冲突时应设置 conflictState 并提示用户处理', async () => {
     const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async ({ metadata }) => ({
       ok: false,

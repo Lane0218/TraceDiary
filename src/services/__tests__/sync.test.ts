@@ -11,12 +11,22 @@ import {
   createUploadMetadataExecutor,
   pullAndCacheMetadata,
   readRemoteMetadataFromGitee,
+  uploadMetadataToGitee,
 } from '../sync'
+import { encryptWithAesGcm } from '../crypto'
 import { decodeBase64Utf8 } from '../gitee'
 
 interface TestMetadata {
   version: string
   entries: Array<{ date: string }>
+}
+
+async function createDataEncryptionKey(seed = 'sync-test-data-key'): Promise<CryptoKey> {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(seed))
+  return globalThis.crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, [
+    'encrypt',
+    'decrypt',
+  ])
 }
 
 function createMockMetadataStore(
@@ -360,6 +370,7 @@ describe('readRemoteMetadataFromGitee', () => {
 
 describe('createDiaryUploadExecutor', () => {
   it('默认应使用 master 分支并在更新场景发送 PUT 请求', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-update')
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -386,6 +397,7 @@ describe('createDiaryUploadExecutor', () => {
       token: 'test-token',
       owner: 'owner',
       repo: 'repo',
+      dataEncryptionKey,
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T10:00:00.000Z',
     })
@@ -424,6 +436,7 @@ describe('createDiaryUploadExecutor', () => {
   })
 
   it('指定 branch 时应覆盖默认分支', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-branch')
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
@@ -441,6 +454,7 @@ describe('createDiaryUploadExecutor', () => {
       token: 'test-token',
       owner: 'owner',
       repo: 'repo',
+      dataEncryptionKey,
       branch: 'main',
       fetchImpl: fetchMock as unknown as typeof fetch,
     })
@@ -465,6 +479,7 @@ describe('createDiaryUploadExecutor', () => {
   })
 
   it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-fallback')
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
@@ -491,6 +506,7 @@ describe('createDiaryUploadExecutor', () => {
       token: 'test-token',
       owner: 'owner',
       repo: 'repo',
+      dataEncryptionKey,
       branch: 'master',
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T12:00:00.000Z',
@@ -518,5 +534,139 @@ describe('createDiaryUploadExecutor', () => {
     expect(fetchMock.mock.calls[1]?.[0]).toContain('2026-02-11.md.enc?branch=master')
     expect(fetchMock.mock.calls[2]?.[0]).toContain('2026-02-11.md.enc?ref=main')
     expect(fetchMock.mock.calls[3]?.[0]).toContain('2026-02-11.md.enc?branch=main')
+  })
+
+  it('sha mismatch 冲突分支应解密远端内容后写入 conflictPayload.remote', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-conflict')
+    const encryptedRemoteContent = await encryptWithAesGcm('# 远端版本', dataEncryptionKey)
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: btoa('old-remote-encrypted'),
+            encoding: 'base64',
+            sha: 'sha-old',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            message: 'sha does not match',
+          }),
+          { status: 409, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: btoa(encryptedRemoteContent),
+            encoding: 'base64',
+            sha: 'sha-remote-latest',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      dataEncryptionKey,
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T13:00:00.000Z',
+    })
+
+    const localMetadata = {
+      type: 'daily' as const,
+      entryId: 'daily:2026-02-12',
+      date: '2026-02-12',
+      content: '# 本地版本',
+      modifiedAt: '2026-02-12T09:00:00.000Z',
+    }
+    const result = await uploadDiary({
+      metadata: localMetadata,
+      reason: 'manual',
+    })
+
+    expect(result).toBeDefined()
+    expect(result?.ok).toBe(false)
+    expect(result?.conflict).toBe(true)
+    expect(result?.reason).toBe('sha_mismatch')
+    expect(result?.conflictPayload?.local).toEqual(localMetadata)
+    expect(result?.conflictPayload?.remote).toEqual({
+      ...localMetadata,
+      content: '# 远端版本',
+      modifiedAt: '2026-02-09T13:00:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'GET' })
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: 'PUT' })
+    expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: 'GET' })
+  })
+})
+
+describe('uploadMetadataToGitee', () => {
+  it('expectedSha 存在时应使用 PUT', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ content: { sha: 'sha-new' } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await uploadMetadataToGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      request: {
+        path: 'metadata.json.enc',
+        encryptedContent: 'encrypted-content',
+        message: 'sync metadata',
+        branch: 'master',
+        expectedSha: 'sha-old',
+      },
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-new',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'PUT' })
+  })
+
+  it('expectedSha 不存在时应使用 POST', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ content: { sha: 'sha-created' } }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await uploadMetadataToGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      request: {
+        path: 'metadata.json.enc',
+        encryptedContent: 'encrypted-content',
+        message: 'create metadata',
+        branch: 'master',
+      },
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-created',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
   })
 })

@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`59`
-- 状态统计：`DONE=45` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`—`
+- 总任务：`61`
+- 状态统计：`DONE=47` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -74,6 +74,7 @@
 | `TD-SYNC-012` | `DONE` | 修复失败后排队任务持续重入导致同步长时间不退出的问题 | 上传失败/超时后不应立刻重启下一轮上传；busy 提示在退出 syncing 后自动清理；状态可恢复到可重试 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 07de517` |
 | `TD-SYNC-013` | `DONE` | 修复同步中手动上传按钮无响应（移除 disabled 并保留忙碌反馈） | 同步中按钮可点击；点击后立刻提示“当前正在上传，请稍候重试”；不再出现无响应体感 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 87ed64f` |
 | `TD-SYNC-014` | `DONE` | 增强手动上传点击反馈可见性（点击即显示已触发状态） | 每次点击手动上传都应立即出现可见反馈，且 busy/失败信息不被自动隐藏 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 6c7962f` |
+| `TD-SYNC-015` | `DONE` | 修复同步可靠性与加密模型一致性问题（队列保留/冲突解密/CAS方法/主密码派生密钥） | 失败后保留并可重放最新排队 payload；冲突展示远端明文且不双重加密；metadata CAS 更新使用 PUT；日记数据密钥改为主密码派生并贯通上传链路 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `src/hooks/use-auth.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（7/7）；`npm run lint` 通过 | `2026-02-09 / 待回填` |
 
 ### 6.6 PWA、部署与安全头
 

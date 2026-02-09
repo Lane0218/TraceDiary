@@ -135,6 +135,7 @@ export interface CreateDiaryUploadExecutorParams {
   token: string
   owner: string
   repo: string
+  dataEncryptionKey: CryptoKey
   branch?: string
   apiBase?: string
   fetchImpl?: typeof fetch
@@ -200,17 +201,18 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-async function deriveUploadKeyFromToken(token: string): Promise<CryptoKey> {
-  const trimmedToken = token.trim()
-  if (!trimmedToken) {
-    throw new Error('上传鉴权信息缺失，无法执行内容加密')
+function base64ToBytes(base64: string): Uint8Array {
+  if (typeof atob !== 'function') {
+    throw new Error('当前环境缺少 Base64 解码能力')
   }
 
-  const cryptoApi = assertCryptoAvailable()
-  const tokenBytes = new TextEncoder().encode(trimmedToken)
-  const digest = await cryptoApi.subtle.digest('SHA-256', tokenBytes)
-
-  return cryptoApi.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, ['encrypt'])
+  const normalizedBase64 = base64.replace(/\s+/g, '')
+  const binary = atob(normalizedBase64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
 }
 
 async function encryptDiaryContent(content: string, key: CryptoKey): Promise<string> {
@@ -227,6 +229,23 @@ async function encryptDiaryContent(content: string, key: CryptoKey): Promise<str
   payload.set(iv, 0)
   payload.set(encryptedBytes, iv.length)
   return bytesToBase64(payload)
+}
+
+async function decryptDiaryContent(encryptedContent: string, key: CryptoKey): Promise<string> {
+  const cryptoApi = assertCryptoAvailable()
+  const payload = base64ToBytes(encryptedContent)
+  if (payload.byteLength <= 12) {
+    throw new Error('远端日记密文格式无效')
+  }
+
+  const iv = payload.subarray(0, 12)
+  const encryptedBytes = payload.subarray(12)
+  const decrypted = await cryptoApi.subtle.decrypt(
+    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
+    key,
+    toArrayBuffer(encryptedBytes),
+  )
+  return new TextDecoder().decode(decrypted)
 }
 
 async function readRemoteErrorMessage(response: Response): Promise<string | undefined> {
@@ -508,14 +527,6 @@ export function createDiaryUploadExecutor(
   let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
   const now = params.now ?? nowIsoString
   const useAccessTokenQuery = params.useAccessTokenQuery ?? true
-  let uploadKeyPromise: Promise<CryptoKey> | null = null
-
-  const getUploadKey = async (): Promise<CryptoKey> => {
-    if (!uploadKeyPromise) {
-      uploadKeyPromise = deriveUploadKeyFromToken(params.token)
-    }
-    return uploadKeyPromise
-  }
 
   const attemptUpload = async (
     payload: UploadMetadataPayload<DiarySyncMetadata>,
@@ -535,7 +546,7 @@ export function createDiaryUploadExecutor(
     })
 
     const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
-    const encryptedContent = await encryptDiaryContent(metadata.content, await getUploadKey())
+    const encryptedContent = await encryptDiaryContent(metadata.content, params.dataEncryptionKey)
     const upsertResult = await upsertGiteeFile({
       token: params.token,
       owner: params.owner,
@@ -580,7 +591,11 @@ export function createDiaryUploadExecutor(
           useAccessTokenQuery,
         })
         if (latestRemote.exists && typeof latestRemote.content === 'string') {
-          remoteMetadata = toRemoteDiaryMetadata(metadata, latestRemote.content, now)
+          const decryptedRemoteContent = await decryptDiaryContent(
+            latestRemote.content,
+            params.dataEncryptionKey,
+          )
+          remoteMetadata = toRemoteDiaryMetadata(metadata, decryptedRemoteContent, now)
         }
       } catch {
         remoteMetadata = undefined
@@ -758,6 +773,7 @@ export async function uploadMetadataToGitee(
   const fetcher = params.fetchImpl ?? fetch
 
   try {
+    const method = expectedSha ? 'PUT' : 'POST'
     const body: {
       content: string
       message: string
@@ -774,7 +790,7 @@ export async function uploadMetadataToGitee(
     }
 
     const response = await fetcher(requestUrl, {
-      method: 'POST',
+      method,
       headers: {
         Authorization: `token ${token}`,
         Accept: 'application/json',

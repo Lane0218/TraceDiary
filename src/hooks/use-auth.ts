@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   calibrateKdfParams,
   decryptToken as decryptTokenWithPassword,
+  deriveAesKeyFromPassword,
   encryptToken as encryptTokenWithPassword,
   hashMasterPassword as hashMasterPasswordWithKdf,
 } from '../services/crypto'
@@ -34,6 +35,10 @@ export interface AuthDependencies {
   hashMasterPassword: (payload: { masterPassword: string; kdfParams: KdfParams }) => Promise<string>
   encryptToken: (payload: { token: string; masterPassword: string; kdfParams: KdfParams }) => Promise<string>
   decryptToken: (payload: { encryptedToken: string; masterPassword: string; kdfParams: KdfParams }) => Promise<string>
+  deriveDataEncryptionKey: (payload: {
+    masterPassword: string
+    kdfParams: KdfParams
+  }) => Promise<CryptoKey>
   restoreUnlockedToken?: (config: AppConfig) => Promise<string | null>
   now: () => number
 }
@@ -58,6 +63,7 @@ export interface AuthState {
   stage: 'checking' | 'needs-setup' | 'needs-unlock' | 'needs-token-refresh' | 'ready'
   config: AppConfig | null
   tokenInMemory: string | null
+  dataEncryptionKey: CryptoKey | null
   isLocked: boolean
   passwordExpired: boolean
   needsMasterPasswordForTokenRefresh: boolean
@@ -287,6 +293,9 @@ function createDefaultDependencies(): AuthDependencies {
     decryptToken: async ({ encryptedToken, masterPassword, kdfParams }) => {
       return decryptTokenWithPassword(encryptedToken, masterPassword, kdfParams)
     },
+    deriveDataEncryptionKey: async ({ masterPassword, kdfParams }) => {
+      return deriveAesKeyFromPassword(masterPassword, kdfParams)
+    },
     restoreUnlockedToken: async () => {
       return restoreUnlockedTokenFromCache()
     },
@@ -299,6 +308,7 @@ function createInitialState(): AuthState {
     stage: 'checking',
     config: null,
     tokenInMemory: null,
+    dataEncryptionKey: null,
     isLocked: true,
     passwordExpired: true,
     needsMasterPasswordForTokenRefresh: true,
@@ -352,6 +362,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         stage: 'needs-setup',
         config: null,
         tokenInMemory: null,
+        dataEncryptionKey: null,
         isLocked: true,
         passwordExpired: true,
         needsMasterPasswordForTokenRefresh: true,
@@ -383,6 +394,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         stage: 'needs-unlock',
         config,
         tokenInMemory: null,
+        dataEncryptionKey: null,
         isLocked: true,
         passwordExpired,
         needsMasterPasswordForTokenRefresh: true,
@@ -398,6 +410,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         stage: 'needs-token-refresh',
         config,
         tokenInMemory: null,
+        dataEncryptionKey: null,
         isLocked: false,
         passwordExpired: false,
         needsMasterPasswordForTokenRefresh: masterPasswordRef.current === null,
@@ -429,10 +442,18 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       })
       await cacheUnlockedToken(restoredToken)
 
+      const dataEncryptionKey = masterPasswordRef.current
+        ? await dependencies.deriveDataEncryptionKey({
+            masterPassword: masterPasswordRef.current,
+            kdfParams: config.kdfParams,
+          })
+        : null
+
       setState({
         stage: 'ready',
         config,
         tokenInMemory: restoredToken,
+        dataEncryptionKey,
         isLocked: false,
         passwordExpired: false,
         needsMasterPasswordForTokenRefresh: false,
@@ -445,6 +466,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         stage: 'needs-token-refresh',
         config,
         tokenInMemory: null,
+        dataEncryptionKey: null,
         isLocked: false,
         passwordExpired: false,
         needsMasterPasswordForTokenRefresh: masterPasswordRef.current === null,
@@ -496,6 +518,10 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
         const now = dependencies.now()
         const expiry = markUnlockedWithFreshExpiry(now)
+        const dataEncryptionKey = await dependencies.deriveDataEncryptionKey({
+          masterPassword: payload.masterPassword,
+          kdfParams,
+        })
         const config: AppConfig = {
           giteeRepo: `https://gitee.com/${repoRef.canonicalRepo}`,
           giteeOwner: repoRef.owner,
@@ -515,6 +541,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           stage: 'ready',
           config,
           tokenInMemory: payload.token.trim(),
+          dataEncryptionKey,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -574,6 +601,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             stage: 'needs-token-refresh',
             config: nextConfig,
             tokenInMemory: null,
+            dataEncryptionKey: null,
             isLocked: false,
             passwordExpired: false,
             needsMasterPasswordForTokenRefresh: false,
@@ -601,6 +629,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             stage: 'needs-token-refresh',
             config: nextConfig,
             tokenInMemory: null,
+            dataEncryptionKey: null,
             isLocked: false,
             passwordExpired: false,
             needsMasterPasswordForTokenRefresh: false,
@@ -627,6 +656,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             stage: 'needs-token-refresh',
             config: nextConfig,
             tokenInMemory: null,
+            dataEncryptionKey: null,
             isLocked: false,
             passwordExpired: false,
             needsMasterPasswordForTokenRefresh: false,
@@ -636,6 +666,10 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           return
         }
 
+        const dataEncryptionKey = await dependencies.deriveDataEncryptionKey({
+          masterPassword: payload.masterPassword,
+          kdfParams: state.config.kdfParams,
+        })
         nextConfig = {
           ...state.config,
           passwordExpiry: expiry.iso,
@@ -647,6 +681,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           stage: 'ready',
           config: nextConfig,
           tokenInMemory: token,
+          dataEncryptionKey,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -710,6 +745,10 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
         const now = dependencies.now()
         const expiry = markUnlockedWithFreshExpiry(now)
+        const dataEncryptionKey = await dependencies.deriveDataEncryptionKey({
+          masterPassword,
+          kdfParams: state.config.kdfParams,
+        })
         const nextConfig: AppConfig = {
           ...state.config,
           passwordExpiry: expiry.iso,
@@ -725,6 +764,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           stage: 'ready',
           config: nextConfig,
           tokenInMemory: token,
+          dataEncryptionKey,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -751,6 +791,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       ...prev,
       stage: prev.config ? 'needs-unlock' : 'needs-setup',
       tokenInMemory: null,
+      dataEncryptionKey: null,
       isLocked: true,
       passwordExpired: true,
       needsMasterPasswordForTokenRefresh: true,
