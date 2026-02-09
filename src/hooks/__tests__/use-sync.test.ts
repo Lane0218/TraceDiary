@@ -184,6 +184,63 @@ describe('useSync', () => {
     expect(result.current.lastSyncedAt).toBe('2026-02-08T13:00:00.000Z')
   })
 
+  it('上传请求超时后应退出 syncing 并返回可重试错误', async () => {
+    const uploadMetadata = vi.fn<UploadMetadataFn<TestMetadata>>(
+      () =>
+        new Promise(() => {
+          // 模拟请求悬挂
+        }),
+    )
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        uploadTimeoutMs: 1_000,
+      }),
+    )
+
+    let firstSavePromise: Promise<SaveNowResult> | null = null
+    act(() => {
+      firstSavePromise = result.current.saveNow({ content: 'timeout-first' })
+    })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+    })
+
+    let firstSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      firstSaveResult = await firstSavePromise!
+    })
+
+    expect(firstSaveResult).toEqual({
+      ok: false,
+      code: 'unknown',
+      errorMessage: '同步超时，请检查网络后重试',
+    })
+    expect(result.current.status).toBe('error')
+    expect(result.current.errorMessage).toBe('同步超时，请检查网络后重试')
+
+    let secondSavePromise: Promise<SaveNowResult> | null = null
+    act(() => {
+      secondSavePromise = result.current.saveNow({ content: 'timeout-second' })
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+    })
+
+    let secondSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      secondSaveResult = await secondSavePromise!
+    })
+    expect(secondSaveResult).toEqual({
+      ok: false,
+      code: 'unknown',
+      errorMessage: '同步超时，请检查网络后重试',
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(2)
+  })
+
   it('未注入上传实现时应使用默认占位上传并成功返回同步时间', async () => {
     const { result } = renderHook(() =>
       useSync<TestMetadata>({

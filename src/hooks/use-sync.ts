@@ -6,11 +6,13 @@ import {
 } from '../services/sync'
 
 const DEFAULT_DEBOUNCE_MS = 30_000
+const DEFAULT_UPLOAD_TIMEOUT_MS = 25_000
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
 export interface UseSyncOptions<TMetadata = unknown> {
   debounceMs?: number
+  uploadTimeoutMs?: number
   uploadMetadata?: UploadMetadataFn<TMetadata>
   now?: () => string
 }
@@ -82,6 +84,42 @@ function isNetworkOfflineError(error: unknown): boolean {
   )
 }
 
+function withTimeout<T>(task: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  if (timeoutMs <= 0) {
+    return task
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (settled) {
+        return
+      }
+      settled = true
+      reject(new Error(timeoutMessage))
+    }, timeoutMs)
+
+    task.then(
+      (value) => {
+        if (settled) {
+          return
+        }
+        settled = true
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        if (settled) {
+          return
+        }
+        settled = true
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
+}
+
 export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> = {}): UseSyncResult<TMetadata> {
   const [status, setStatus] = useState<SyncStatus>('idle')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
@@ -95,6 +133,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
   const now = options.now ?? nowIsoString
   const debounceMs = Math.max(0, options.debounceMs ?? DEFAULT_DEBOUNCE_MS)
+  const uploadTimeoutMs = Math.max(1_000, options.uploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS)
   const uploadMetadata = useMemo(
     () =>
       createUploadMetadataExecutor<TMetadata>({
@@ -185,7 +224,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       try {
-        const result = await uploadMetadata(payload)
+        const result = await withTimeout(
+          uploadMetadata(payload),
+          uploadTimeoutMs,
+          '同步超时，请检查网络后重试',
+        )
         if (!mountedRef.current || taskIdRef.current !== taskId) {
           return {
             ok: false,
@@ -298,7 +341,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
       }
     },
-    [markPendingRetry, now, uploadMetadata],
+    [markPendingRetry, now, uploadMetadata, uploadTimeoutMs],
   )
 
   useEffect(() => {

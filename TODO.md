@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-09`
-- 总任务：`55`
-- 状态统计：`DONE=41` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`—`
+- 总任务：`56`
+- 状态统计：`DONE=41` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-SYNC-011`
 
 ## 1. 任务清单（按模块）
 
@@ -70,6 +70,7 @@
 | `TD-SYNC-008` | `DONE` | 手动上传失败原因改为按钮旁内联提示，并返回可消费的手动上传结果 | 手动点击失败时在按钮旁显示具体原因；自动上传失败不占用该提示位；日记与年度总结页行为一致 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/*` | `npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（30/30）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 932ab2c` |
 | `TD-SYNC-009` | `DONE` | 修复手动上传在并发场景下静默失败（禁止并发并提供明确反馈） | 上传进行中点击手动按钮会给出“请稍候”提示且不静默；按钮在同步中禁用；失败分支均有可消费错误信息 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（32/32）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / c5cbdf2` |
 | `TD-SYNC-010` | `DONE` | 修复上传分支不匹配导致的持续失败并增强失败可观测性 | 配置分支不存在时可自动回退到可用分支并上传成功；手动与自动失败原因可见且不被静默覆盖 | `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/__tests__/sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（32/32）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 996b21d` |
+| `TD-SYNC-011` | `DOING` | 修复上传请求卡死导致长期处于 syncing 的问题（增加超时保护） | 上传请求超时后应自动结束 syncing 并给出明确错误；后续手动上传可继续触发；不再长期显示“正在上传” | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` | — | — |
 
 ### 6.6 PWA、部署与安全头
 
