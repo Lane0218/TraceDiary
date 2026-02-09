@@ -58,7 +58,7 @@ function decodeBase64(content: string): string {
 async function fetchWithRetry(
   input: string,
   init: RequestInit,
-  maxAttempts = 3,
+  maxAttempts = 5,
 ): Promise<Response> {
   let lastError: unknown
 

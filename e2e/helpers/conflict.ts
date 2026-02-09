@@ -8,6 +8,9 @@ export interface ArmShaMismatchRaceParams {
   token: string
   path: string
   apiBase?: string
+  conflictContent?: string
+  conflictMessage?: string
+  triggerTimeoutMs?: number
 }
 
 export interface ArmedShaMismatchRace {
@@ -79,8 +82,8 @@ export async function armShaMismatchRace(
         apiBase: params.apiBase,
         path: params.path,
         expectedSha: body.sha.trim(),
-        content: `race-conflict-${Date.now()}`,
-        message: `test: 构造冲突 ${params.path}`,
+        content: params.conflictContent ?? `race-conflict-${Date.now()}`,
+        message: params.conflictMessage ?? `test: 构造冲突 ${params.path}`,
       })
 
       resolveTriggered()
@@ -102,7 +105,7 @@ export async function armShaMismatchRace(
         new Promise<void>((_resolve, reject) => {
           setTimeout(() => {
             reject(new Error('未能在预期时间内触发 sha mismatch 冲突构造'))
-          }, 15_000)
+          }, params.triggerTimeoutMs ?? 15_000)
         }),
       ])
     },
