@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-08`
 - 总任务：`43`
-- 状态统计：`DONE=27` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-005`
+- 状态统计：`DONE=28` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -94,4 +94,4 @@
 | `TD-UI-002` | `DONE` | 调整原型为“欢迎弹层 + 单页工作台（日历与日记/年度总结同屏）” | 欢迎流程以弹层演示，主页面仅保留一个工作台并可切换日记/年度总结 | `docs/ui-layout-prototype.html` `src/hooks/use-diary.ts` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过 | `2026-02-08 / 4a4ff1c` |
 | `TD-UI-003` | `DONE` | 落地 blog 同源风格并重构为单页工作台（欢迎弹层 + 日历/日记/年度总结同屏） | 默认进入工作台；认证以弹层呈现；视觉风格与 blog 一致；旧路由可兼容跳转 | `src/App.tsx` `src/index.css` `tailwind.config.js` `src/pages/workspace.tsx` `src/components/auth/*` `src/components/calendar/*` `src/components/history/*` `src/components/editor/*` `src/__tests__/integration/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-08 / 661051b` |
 | `TD-UI-004` | `DONE` | 精修工作台视觉层级、工具条编排、状态反馈与弹层细节 | 主次区域更清晰；工具条分层；状态可感知；弹层模式切换和错误区更稳定；移动端布局更稳 | `src/pages/workspace.tsx` `src/components/auth/auth-modal.tsx` `src/components/calendar/month-calendar.tsx` `src/components/history/on-this-day-list.tsx` `src/index.css` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / b426bbd` |
-| `TD-UI-005` | `DOING` | 收敛日期入口：移除双日期输入框并新增“月标题点击年月选择” | 删除指定文案；无“当前日期/查询日期”输入框；可通过月标题弹层选择年月并联动编辑与往年今日 | `src/pages/workspace.tsx` `src/components/calendar/month-calendar.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/app.integration.test.tsx` | — | — |
+| `TD-UI-005` | `DONE` | 收敛日期入口：移除双日期输入框并新增“月标题点击年月选择” | 删除指定文案；无“当前日期/查询日期”输入框；可通过月标题弹层选择年月并联动编辑与往年今日 | `src/pages/workspace.tsx` `src/components/calendar/month-calendar.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/app.integration.test.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 9ae8d0e` |
