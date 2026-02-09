@@ -201,6 +201,7 @@ describe('年度总结页面', () => {
     fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
 
     await waitFor(() => {
+      expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()
       const uploadingButton = screen.getByRole('button', { name: '上传中...' }) as HTMLButtonElement
       expect(uploadingButton.disabled).toBe(false)
     })

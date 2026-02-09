@@ -14,6 +14,7 @@ import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 
 const BUSY_SYNC_MESSAGE = '当前正在上传，请稍候重试'
+const MANUAL_SYNC_PENDING_MESSAGE = '手动上传已触发，正在等待结果...'
 
 interface WorkspacePageProps {
   auth: UseAuthResult
@@ -310,6 +311,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       content: diary.content,
       modifiedAt,
     }
+    setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     const result = await sync.saveNow(payload)
     if (!result.ok) {
       const message = result.code === 'stale' ? BUSY_SYNC_MESSAGE : result.errorMessage || '上传未完成，请重试'
@@ -388,8 +390,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
   const displayedSyncMessage = sync.errorMessage
   const isManualSyncing = sync.status === 'syncing'
-  const visibleManualSyncError =
-    manualSyncError === BUSY_SYNC_MESSAGE && !isManualSyncing ? null : manualSyncError
 
   return (
     <>
@@ -490,12 +490,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
-                  {visibleManualSyncError ? (
+                  {manualSyncError ? (
                     <span
                       role="alert"
                       className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
                     >
-                      {visibleManualSyncError}
+                      {manualSyncError}
                     </span>
                   ) : null}
                 </div>
