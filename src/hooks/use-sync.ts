@@ -182,6 +182,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
   const runUpload = useCallback(
     async (payload: UploadMetadataPayload<TMetadata>): Promise<SaveNowResult> => {
+      let shouldDrainQueuedPayload = false
+
       if (inFlightRef.current) {
         if (payload.reason === 'manual') {
           return {
@@ -294,6 +296,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setConflictState(null)
         resolvingConflictRef.current = false
         setLastSyncedAt(result?.syncedAt ?? now())
+        shouldDrainQueuedPayload = true
         return {
           ok: true,
           errorMessage: null,
@@ -336,7 +339,10 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           const queuedPayload = queuedUploadPayloadRef.current
           if (queuedPayload) {
             queuedUploadPayloadRef.current = null
-            void runUpload(queuedPayload)
+            // 仅在当前上传成功后继续消化队列，避免失败/超时时被排队任务持续重入。
+            if (shouldDrainQueuedPayload) {
+              void runUpload(queuedPayload)
+            }
           }
         }
       }

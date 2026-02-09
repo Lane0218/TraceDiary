@@ -8,6 +8,8 @@ import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 
+const BUSY_SYNC_MESSAGE = '当前正在上传，请稍候重试'
+
 interface YearlySummaryPageProps {
   auth: UseAuthResult
 }
@@ -171,6 +173,8 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }
   const displayedSyncMessage = sync.errorMessage
   const isManualSyncing = sync.status === 'syncing'
+  const visibleManualSyncError =
+    manualSyncError === BUSY_SYNC_MESSAGE && !isManualSyncing ? null : manualSyncError
 
   const resolveMergeConflict = (mergedContent: string) => {
     const local = sync.conflictState?.local
@@ -284,7 +288,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                         const result = await sync.saveNow(syncPayload)
                         if (!result.ok) {
                           const message =
-                            result.code === 'stale' ? '当前正在上传，请稍候重试' : result.errorMessage || '上传未完成，请重试'
+                            result.code === 'stale' ? BUSY_SYNC_MESSAGE : result.errorMessage || '上传未完成，请重试'
                           setManualSyncError(message)
                           return
                         }
@@ -296,12 +300,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
-                  {manualSyncError ? (
+                  {visibleManualSyncError ? (
                     <span
                       role="alert"
                       className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
                     >
-                      {manualSyncError}
+                      {visibleManualSyncError}
                     </span>
                   ) : null}
                 </div>

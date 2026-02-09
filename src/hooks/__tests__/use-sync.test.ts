@@ -196,13 +196,21 @@ describe('useSync', () => {
       useSync<TestMetadata>({
         uploadMetadata,
         uploadTimeoutMs: 1_000,
+        debounceMs: 0,
       }),
     )
 
     let firstSavePromise: Promise<SaveNowResult> | null = null
     act(() => {
       firstSavePromise = result.current.saveNow({ content: 'timeout-first' })
+      result.current.onInputChange({ content: 'queued-while-timeout' })
     })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000)
@@ -220,6 +228,12 @@ describe('useSync', () => {
     })
     expect(result.current.status).toBe('error')
     expect(result.current.errorMessage).toBe('同步超时，请检查网络后重试')
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000)
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
 
     let secondSavePromise: Promise<SaveNowResult> | null = null
     act(() => {
