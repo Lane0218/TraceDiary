@@ -29,7 +29,7 @@ export function MonthCalendar({
 
   return (
     <section className="space-y-3" aria-label="month-calendar">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2 border-b border-td-line pb-3">
         <button
           type="button"
           onClick={onPreviousMonth}
@@ -63,10 +63,10 @@ export function MonthCalendar({
           const baseStyle =
             'relative flex h-10 w-full items-center justify-center rounded-[10px] border text-sm transition sm:h-12'
           const monthStyle = cell.inCurrentMonth
-            ? 'border-td-line bg-td-surface text-td-text hover:border-[#cccccc]'
-            : 'border-[#f0f0f0] bg-[#fafafa] text-[#b1b1b1] hover:border-td-line'
+            ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
+            : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
           const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
-          const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600' : ''
+          const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin' : ''
 
           return (
             <button

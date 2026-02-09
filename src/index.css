@@ -61,6 +61,21 @@
   .td-card {
     @apply rounded-[10px] border bg-td-surface;
     border-color: var(--td-line);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+  }
+
+  .td-card:hover {
+    border-color: #d2d2d2;
+  }
+
+  .td-card-primary {
+    @apply td-card shadow-card;
+    border-color: #d9d9d9;
+  }
+
+  .td-card-muted {
+    @apply td-card;
+    background-color: var(--td-surface-soft);
   }
 
   .td-panel {
@@ -72,11 +87,21 @@
     border-color: var(--td-line);
     background-color: var(--td-surface);
     color: var(--td-text);
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease,
+      transform 0.12s ease,
+      background-color 0.12s ease;
   }
 
   .td-btn:hover {
     @apply shadow-thin;
     border-color: #cccccc;
+    transform: translateY(-1px);
+  }
+
+  .td-btn:active {
+    transform: translateY(0);
   }
 
   .td-btn-primary {
@@ -121,5 +146,43 @@
 
   .td-status-muted {
     color: var(--td-muted);
+  }
+
+  .td-status-pill {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs;
+    border-color: var(--td-line);
+    background-color: var(--td-surface);
+    color: var(--td-muted);
+  }
+
+  .td-status-pill::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background-color: currentColor;
+    opacity: 0.9;
+  }
+
+  .td-toolbar {
+    @apply rounded-[10px] border p-3 sm:p-4;
+    border-color: var(--td-line);
+    background-color: var(--td-surface-soft);
+  }
+
+  .td-fade-in {
+    animation: td-fade-in 0.18s ease;
+  }
+}
+
+@keyframes td-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

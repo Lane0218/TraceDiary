@@ -76,18 +76,18 @@ function StatusHint({
   error: string | null
 }) {
   if (isLoading) {
-    return <span className="td-status td-status-muted">加载中...</span>
+    return <span className="td-status-pill td-status-muted">加载中</span>
   }
 
   if (error) {
-    return <span className="td-status td-status-danger">{error}</span>
+    return <span className="td-status-pill td-status-danger">本地保存异常</span>
   }
 
   if (isSaving) {
-    return <span className="td-status td-status-warning">保存中...</span>
+    return <span className="td-status-pill td-status-warning">保存中</span>
   }
 
-  return <span className="td-status td-status-success">已保存到本地</span>
+  return <span className="td-status-pill td-status-success">本地已保存</span>
 }
 
 export default function WorkspacePage({ auth }: WorkspacePageProps) {
@@ -290,11 +290,40 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     return '会话：待认证'
   }, [auth.state.stage])
 
+  const syncLabel = useMemo(() => {
+    if (sync.status === 'syncing') {
+      return '云端同步中'
+    }
+    if (sync.status === 'success') {
+      return '云端已同步'
+    }
+    if (sync.status === 'error') {
+      return '云端同步失败'
+    }
+    return '云端待同步'
+  }, [sync.status])
+
+  const syncToneClass = useMemo(() => {
+    if (sync.status === 'syncing') {
+      return 'td-status-warning'
+    }
+    if (sync.status === 'success') {
+      return 'td-status-success'
+    }
+    if (sync.status === 'error') {
+      return 'td-status-danger'
+    }
+    return 'td-status-muted'
+  }, [sync.status])
+
   return (
     <>
-      <main className="mx-auto min-h-screen w-full max-w-6xl px-4 pb-8 sm:px-6">
+      <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
         <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
-          <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
+          <div>
+            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
+            <p className="text-xs text-td-muted">Private Writing Workspace</p>
+          </div>
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
             <button
@@ -320,15 +349,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           </div>
         </header>
 
-        <section className="py-5">
-          <h2 className="font-display text-3xl text-td-text">日记工作台</h2>
-          <p className="mt-2 max-w-3xl text-sm text-td-muted">
-            风格与 blog 保持同源：米白底、细线边框与克制动效。左侧管理日期与历史，右侧同屏切换“日记/年度总结”。
-          </p>
+        <section className="py-5 td-fade-in">
+          <h2 className="font-display text-[2rem] leading-tight text-td-text">日记工作台</h2>
+          <p className="mt-1 max-w-2xl text-sm text-td-muted">选日期、切模式、立即写。年度总结与日记同屏切换，避免跳转打断。</p>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[minmax(280px,1fr)_minmax(0,1.8fr)]" aria-label="workspace-layout">
-          <aside className="td-card td-panel space-y-3">
+        <section className="grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
+          <aside className="td-card-muted td-panel space-y-3">
             <MonthCalendar
               month={month}
               activeDateKey={date}
@@ -338,7 +365,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               onSelectDate={handleSelectDate}
             />
 
-            <div className="space-y-2 rounded-[10px] border border-td-line bg-td-surface-soft p-3">
+            <div className="space-y-2 rounded-[10px] border border-td-line bg-td-surface p-3">
               <label htmlFor="history-date" className="text-sm text-td-muted">
                 查询日期
               </label>
@@ -364,73 +391,82 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           </aside>
 
           <section className="space-y-3">
-            <div className="td-card td-panel flex flex-wrap items-center gap-2">
-              <label htmlFor="workspace-date" className="text-xs text-td-muted">
-                当前日期
-              </label>
-              <input
-                id="workspace-date"
-                type="date"
-                value={date}
-                onChange={(event) => {
-                  if (isValidDateString(event.target.value)) {
-                    handleDateChange(event.target.value)
-                  }
-                }}
-                className="td-input w-auto min-w-[180px]"
-              />
+            <div className="td-toolbar space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <label htmlFor="workspace-date" className="text-xs text-td-muted">
+                  当前日期
+                </label>
+                <input
+                  id="workspace-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => {
+                    if (isValidDateString(event.target.value)) {
+                      handleDateChange(event.target.value)
+                    }
+                  }}
+                  className="td-input w-auto min-w-[176px]"
+                />
 
-              <div className="inline-flex overflow-hidden rounded-[10px] border border-td-line">
-                <button
-                  type="button"
-                  className={`px-3 py-2 text-sm transition ${mode === 'daily' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
-                  onClick={() => handleModeSwitch('daily')}
-                >
-                  日记
-                </button>
-                <button
-                  type="button"
-                  className={`px-3 py-2 text-sm transition ${mode === 'yearly' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
-                  onClick={() => handleModeSwitch('yearly')}
-                >
-                  年度总结
-                </button>
+                <div className="inline-flex overflow-hidden rounded-[10px] border border-td-line">
+                  <button
+                    type="button"
+                    className={`px-3 py-2 text-sm transition ${mode === 'daily' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
+                    onClick={() => handleModeSwitch('daily')}
+                  >
+                    日记
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-2 text-sm transition ${mode === 'yearly' ? 'bg-td-text text-white' : 'bg-td-surface text-td-muted hover:bg-td-soft'}`}
+                    onClick={() => handleModeSwitch('yearly')}
+                  >
+                    年度总结
+                  </button>
+                </div>
+
+                {mode === 'yearly' ? (
+                  <>
+                    <label htmlFor="workspace-year" className="text-xs text-td-muted">
+                      年份
+                    </label>
+                    <input
+                      id="workspace-year"
+                      type="number"
+                      min={1970}
+                      max={9999}
+                      value={year}
+                      onChange={(event) => {
+                        const parsed = Number.parseInt(event.target.value, 10)
+                        if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+                          handleYearChange(parsed)
+                        }
+                      }}
+                      className="td-input w-24"
+                    />
+                  </>
+                ) : null}
               </div>
 
-              {mode === 'yearly' ? (
-                <>
-                  <label htmlFor="workspace-year" className="text-xs text-td-muted">
-                    年份
-                  </label>
-                  <input
-                    id="workspace-year"
-                    type="number"
-                    min={1970}
-                    max={9999}
-                    value={year}
-                    onChange={(event) => {
-                      const parsed = Number.parseInt(event.target.value, 10)
-                      if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
-                        handleYearChange(parsed)
-                      }
-                    }}
-                    className="td-input w-24"
-                  />
-                </>
-              ) : null}
-
-              <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
-              <button type="button" className="td-btn ml-auto" onClick={saveNow}>
-                手动保存并立即上传
-              </button>
-              <span className="text-xs text-td-muted">同步：{sync.status}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
+                <span className={`td-status-pill ${syncToneClass}`}>{syncLabel}</span>
+                {sync.lastSyncedAt ? (
+                  <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
+                    最近同步：{sync.lastSyncedAt}
+                  </span>
+                ) : null}
+                <button type="button" className="td-btn ml-auto" onClick={saveNow}>
+                  手动保存并立即上传
+                </button>
+              </div>
             </div>
 
-            <article className="td-card td-panel">
+            <article className="td-card-primary td-panel">
               <h3 className="font-display text-xl text-td-text">
                 {mode === 'daily' ? `${date} 日记` : `${year} 年度总结`}
               </h3>
-              <p className="mt-1 text-xs text-td-muted">条目 ID：{diary.entryId}</p>
+              <p className="mt-1 text-xs text-[#7a7a7a]">条目 ID：{diary.entryId}</p>
               <div className="mt-3">
                 {!diary.isLoading ? (
                   <MarkdownEditor

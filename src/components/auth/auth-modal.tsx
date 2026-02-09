@@ -55,32 +55,37 @@ function AuthField({
   )
 }
 
-function getStageTitle(stage: string): { title: string; subtitle: string } {
+function getStageTitle(stage: string): { title: string; subtitle: string; badge: string } {
   switch (stage) {
     case 'needs-setup':
       return {
         title: '首次配置',
         subtitle: '首次使用请配置 Gitee 仓库、Token 与主密码。',
+        badge: 'SETUP',
       }
     case 'needs-unlock':
       return {
         title: '解锁会话',
         subtitle: '输入主密码后进入日记工作台。',
+        badge: 'UNLOCK',
       }
     case 'needs-token-refresh':
       return {
         title: '更新 Token',
         subtitle: '当前 Token 不可用，请输入新 Token 覆盖本地密文。',
+        badge: 'TOKEN',
       }
     case 'checking':
       return {
         title: '处理中',
         subtitle: '正在执行认证流程，请稍候。',
+        badge: 'CHECKING',
       }
     default:
       return {
         title: '认证与安全',
         subtitle: '你可以在这里重新锁定或更新凭据。',
+        badge: 'READY',
       }
   }
 }
@@ -125,11 +130,14 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm td-fade-in">
       <article className="td-card w-full max-w-xl bg-td-bg shadow-card" aria-label="auth-modal">
         <header className="border-b border-td-line px-4 py-3 sm:px-5">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
+              <div className="mb-1 inline-flex items-center rounded-full border border-td-line bg-td-soft px-2 py-0.5 text-[11px] font-medium tracking-[0.04em] text-td-muted">
+                {stageCopy.badge}
+              </div>
               <h2 className="text-xl text-td-text">{stageCopy.title}</h2>
               <p className="mt-1 text-sm text-td-muted">{stageCopy.subtitle}</p>
             </div>
@@ -147,11 +155,13 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
             {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
           </div>
 
-          {state.errorMessage ? (
-            <p role="alert" className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {state.errorMessage}
-            </p>
-          ) : null}
+          <div className="min-h-[44px]">
+            {state.errorMessage ? (
+              <p role="alert" className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {state.errorMessage}
+              </p>
+            ) : null}
+          </div>
 
           {state.stage === 'checking' ? <p className="td-status td-status-muted">认证处理中，请稍候...</p> : null}
 
@@ -181,7 +191,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 autoComplete="new-password"
               />
               {form.masterPassword ? <p className="text-xs text-td-muted">{passwordHint ?? '主密码强度满足要求'}</p> : null}
-              <button type="submit" className="td-btn td-btn-primary">
+              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
                 初始化并保存配置
               </button>
             </form>
@@ -197,7 +207,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="current-password"
               />
-              <button type="submit" className="td-btn td-btn-primary">
+              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
                 解锁
               </button>
             </form>
@@ -221,7 +231,7 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="current-password"
               />
-              <button type="submit" className="td-btn td-btn-primary">
+              <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto">
                 覆盖本地 Token 密文
               </button>
             </form>

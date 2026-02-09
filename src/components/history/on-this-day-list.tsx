@@ -24,12 +24,16 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
       <button
         type="button"
         onClick={() => onSelectDate(entry.date)}
-        className="h-full w-full rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc]"
+        className="h-full w-full rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc] hover:bg-[#fcfcfc]"
         aria-label={`打开 ${entry.date}`}
         data-testid="history-card"
       >
-        <p className="font-display text-sm text-td-text">{entry.year} 年</p>
-        <p className="text-xs text-td-muted">{entry.date}</p>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-td-line bg-td-soft px-2 py-0.5 text-[11px] text-td-muted">
+            {entry.year}
+          </span>
+          <p className="text-xs text-td-muted">{entry.date}</p>
+        </div>
         <p
           className="mt-2 whitespace-pre-line text-sm leading-6 text-td-text"
           style={{
