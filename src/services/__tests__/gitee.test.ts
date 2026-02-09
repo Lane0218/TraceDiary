@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { parseGiteeRepoUrl, validateGiteeRepoAccess } from '../gitee'
+import {
+  decodeBase64Utf8,
+  encodeBase64Utf8,
+  parseGiteeRepoUrl,
+  readGiteeFileContents,
+  upsertGiteeFile,
+  validateGiteeRepoAccess,
+} from '../gitee'
 
 describe('parseGiteeRepoUrl', () => {
   it('应正确解析标准仓库地址', () => {
@@ -129,5 +136,268 @@ describe('validateGiteeRepoAccess', () => {
     if (!result.ok) {
       expect(result.error).toContain('格式无效')
     }
+  })
+})
+
+describe('Base64 UTF-8 编解码', () => {
+  it('应支持中文与 emoji 的 UTF-8 编解码', () => {
+    const raw = '你好，TraceDiary🚀'
+    const encoded = encodeBase64Utf8(raw)
+    expect(decodeBase64Utf8(encoded)).toBe(raw)
+  })
+})
+
+describe('readGiteeFileContents', () => {
+  it('读取成功时应返回 exists/content/sha 并自动解码 base64', async () => {
+    const rawContent = '测试内容-中文'
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: encodeBase64Utf8(rawContent),
+          encoding: 'base64',
+          sha: 'sha-read-1',
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    )
+
+    const result = await readGiteeFileContents({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'metadata.json.enc',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({
+      exists: true,
+      content: rawContent,
+      sha: 'sha-read-1',
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?ref=main',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: 'token test-token',
+          Accept: 'application/json',
+        },
+      },
+    )
+  })
+
+  it('404 应返回不存在', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Not Found' }), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await readGiteeFileContents({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'metadata.json.enc',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({ exists: false })
+  })
+
+  it('应支持 access_token query 兼容模式且保留 Authorization 头', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: encodeBase64Utf8('ok'),
+          encoding: 'base64',
+          sha: 'sha-read-2',
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    )
+
+    await readGiteeFileContents({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'dir/file.txt',
+      ref: 'dev',
+      useAccessTokenQuery: true,
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://gitee.com/api/v5/repos/owner/repo/contents/dir/file.txt?ref=dev&access_token=test-token',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: 'token test-token',
+          Accept: 'application/json',
+        },
+      },
+    )
+  })
+
+  it('401 应抛出 auth 分类错误并给出中文可读信息', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    await expect(
+      readGiteeFileContents({
+        token: 'bad-token',
+        owner: 'owner',
+        repo: 'repo',
+        path: 'metadata.json.enc',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+      }),
+    ).rejects.toMatchObject({
+      name: 'GiteeApiError',
+      type: 'auth',
+      status: 401,
+      message: expect.stringContaining('鉴权失败'),
+    })
+  })
+
+  it('网络异常应抛出 network 分类错误', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('network down'))
+
+    await expect(
+      readGiteeFileContents({
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        path: 'metadata.json.enc',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+      }),
+    ).rejects.toMatchObject({
+      name: 'GiteeApiError',
+      type: 'network',
+      message: expect.stringContaining('无法连接 Gitee API'),
+    })
+  })
+})
+
+describe('upsertGiteeFile', () => {
+  it('应写入 Base64 内容并支持 expectedSha 映射到 body.sha', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: { sha: 'sha-file-new' },
+          commit: { sha: 'sha-commit-new' },
+        }),
+        {
+          status: 201,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    )
+
+    const result = await upsertGiteeFile({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'metadata.json.enc',
+      branch: 'main',
+      content: '新的内容',
+      message: '更新 metadata',
+      expectedSha: 'sha-old',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({
+      sha: 'sha-file-new',
+      commitSha: 'sha-commit-new',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(requestUrl).toBe(
+      'https://gitee.com/api/v5/repos/owner/repo/contents/metadata.json.enc?branch=main',
+    )
+    expect(requestInit.method).toBe('POST')
+    expect(requestInit.headers).toEqual({
+      Authorization: 'token test-token',
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    })
+    expect(JSON.parse(String(requestInit.body))).toEqual({
+      message: '更新 metadata',
+      content: encodeBase64Utf8('新的内容'),
+      branch: 'main',
+      sha: 'sha-old',
+    })
+  })
+
+  it('创建文件时 expectedSha 为空不应发送 body.sha', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: { sha: 'sha-created' },
+          commit: { sha: 'sha-commit-created' },
+        }),
+        {
+          status: 201,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    )
+
+    await upsertGiteeFile({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'new-file.txt',
+      content: 'v1',
+      message: 'create file',
+      expectedSha: '   ',
+      useAccessTokenQuery: true,
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(requestUrl).toBe(
+      'https://gitee.com/api/v5/repos/owner/repo/contents/new-file.txt?branch=main&access_token=test-token',
+    )
+    expect(JSON.parse(String(requestInit.body))).toEqual({
+      message: 'create file',
+      content: encodeBase64Utf8('v1'),
+      branch: 'main',
+    })
+  })
+
+  it('服务端错误应抛出 api 分类错误并给出中文可读信息', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Internal Server Error' }), {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    await expect(
+      upsertGiteeFile({
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        path: 'metadata.json.enc',
+        content: 'v2',
+        message: 'update',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+      }),
+    ).rejects.toMatchObject({
+      name: 'GiteeApiError',
+      type: 'api',
+      status: 500,
+      message: expect.stringContaining('写入文件失败'),
+    })
   })
 })
