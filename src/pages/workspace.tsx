@@ -9,11 +9,18 @@ import OnThisDayList from '../components/history/on-this-day-list'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
-import { DIARY_INDEX_TYPE, listDiariesByIndex, type DiaryRecord } from '../services/indexeddb'
+import {
+  DIARY_INDEX_TYPE,
+  getSyncBaseline,
+  listDiariesByIndex,
+  saveSyncBaseline,
+  type DiaryRecord,
+} from '../services/indexeddb'
 import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 import { getSyncAvailability } from '../utils/sync-availability'
+import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import {
   MANUAL_SYNC_PENDING_MESSAGE,
   getDisplayedManualSyncError,
@@ -140,6 +147,16 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
 
   const diary = useDiary({ type: 'daily', date })
+  const activeSyncMetadata = useMemo<DiarySyncMetadata>(
+    () => ({
+      type: 'daily',
+      entryId: diary.entryId,
+      date,
+      content: diary.content,
+      modifiedAt: diary.entry?.modifiedAt ?? '',
+    }),
+    [date, diary.content, diary.entry?.modifiedAt, diary.entryId],
+  )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
   const syncAvailability = useMemo(
@@ -173,7 +190,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     : undefined
   const sync = useSync<DiarySyncMetadata>({
     uploadMetadata,
+    getEntryId: getDiarySyncEntryId,
+    getFingerprint: getDiarySyncFingerprint,
+    loadBaseline: async (entryId) => getSyncBaseline(entryId),
+    saveBaseline: async (baseline) => saveSyncBaseline(baseline),
   })
+  const setActiveSyncMetadata = sync.setActiveMetadata
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
 
@@ -183,6 +205,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
+
+  useEffect(() => {
+    if (!canSyncToRemote) {
+      return
+    }
+    setActiveSyncMetadata(activeSyncMetadata)
+  }, [activeSyncMetadata, canSyncToRemote, setActiveSyncMetadata])
 
   useEffect(() => {
     let mounted = true

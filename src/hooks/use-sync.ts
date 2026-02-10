@@ -17,7 +17,18 @@ export interface UseSyncOptions<TMetadata = unknown> {
   autoUploadTimeoutMs?: number
   uploadMetadata?: UploadMetadataFn<TMetadata>
   isMetadataEqual?: (prev: TMetadata, next: TMetadata) => boolean
+  getEntryId?: (metadata: TMetadata) => string
+  getFingerprint?: (metadata: TMetadata) => string
+  loadBaseline?: (entryId: string) => Promise<SyncBaselineRecord | null>
+  saveBaseline?: (baseline: SyncBaselineRecord) => Promise<void>
   now?: () => string
+}
+
+export interface SyncBaselineRecord {
+  entryId: string
+  fingerprint: string
+  syncedAt: string
+  remoteSha?: string
 }
 
 export interface UseSyncResult<TMetadata = unknown> {
@@ -31,6 +42,7 @@ export interface UseSyncResult<TMetadata = unknown> {
     local: TMetadata
     remote: TMetadata | null
   } | null
+  setActiveMetadata: (metadata: TMetadata) => void
   onInputChange: (metadata: TMetadata) => void
   saveNow: (metadata: TMetadata) => Promise<SaveNowResult>
   resolveConflict: (
@@ -73,6 +85,23 @@ function defaultIsMetadataEqual<TMetadata>(prev: TMetadata, next: TMetadata): bo
     return JSON.stringify(prev) === JSON.stringify(next)
   } catch {
     return false
+  }
+}
+
+function defaultGetEntryId<TMetadata>(metadata: TMetadata): string {
+  try {
+    const serialized = JSON.stringify(metadata)
+    return serialized ? `default:${serialized}` : 'default:empty'
+  } catch {
+    return 'default:fallback'
+  }
+}
+
+function defaultGetFingerprint<TMetadata>(metadata: TMetadata): string {
+  try {
+    return JSON.stringify(metadata)
+  } catch {
+    return String(metadata)
   }
 }
 
@@ -136,6 +165,11 @@ function withTimeout<T>(task: Promise<T>, timeoutMs: number, timeoutMessage: str
   })
 }
 
+interface MetadataKeyState {
+  entryId: string
+  fingerprint: string
+}
+
 export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> = {}): UseSyncResult<TMetadata> {
   const [status, setStatus] = useState<SyncStatus>('idle')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
@@ -153,6 +187,10 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const uploadTimeoutMs = Math.max(1_000, options.uploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS)
   const autoUploadTimeoutMs = Math.max(1_000, options.autoUploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS)
   const isMetadataEqual = options.isMetadataEqual ?? defaultIsMetadataEqual<TMetadata>
+  const getEntryId = options.getEntryId ?? defaultGetEntryId<TMetadata>
+  const getFingerprint = options.getFingerprint ?? defaultGetFingerprint<TMetadata>
+  const loadBaseline = options.loadBaseline
+  const saveBaseline = options.saveBaseline
   const uploadMetadata = useMemo(
     () =>
       createUploadMetadataExecutor<TMetadata>({
@@ -172,6 +210,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const resolvingConflictRef = useRef(false)
   const mountedRef = useRef(true)
   const taskIdRef = useRef(0)
+  const activeEntryIdRef = useRef<string | null>(null)
+  const activeFingerprintRef = useRef<string | null>(null)
+  const baselineByEntryRef = useRef<Map<string, SyncBaselineRecord>>(new Map())
+  const loadedBaselineEntriesRef = useRef<Set<string>>(new Set())
+  const dirtyByEntryRef = useRef<Map<string, boolean>>(new Map())
 
   const clearPendingTimer = useCallback(() => {
     if (!timeoutRef.current) {
@@ -222,14 +265,85 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     return payloadVersionRef.current
   }, [])
 
+  const toMetadataKeyState = useCallback(
+    (metadata: TMetadata): MetadataKeyState => ({
+      entryId: getEntryId(metadata).trim() || 'default:fallback',
+      fingerprint: getFingerprint(metadata),
+    }),
+    [getEntryId, getFingerprint],
+  )
+
+  const setEntryDirtyState = useCallback((entryId: string, dirty: boolean) => {
+    dirtyByEntryRef.current.set(entryId, dirty)
+    if (mountedRef.current && activeEntryIdRef.current === entryId) {
+      setHasUnsyncedChanges(dirty)
+    }
+  }, [])
+
+  const resolveDirtyState = useCallback(
+    (
+      keyState: MetadataKeyState,
+      options: {
+        fallbackWhenBaselineMissing: boolean
+      },
+    ): boolean => {
+      const baseline = baselineByEntryRef.current.get(keyState.entryId)
+      if (!baseline) {
+        return options.fallbackWhenBaselineMissing
+      }
+      return baseline.fingerprint !== keyState.fingerprint
+    },
+    [],
+  )
+
+  const ensureBaselineLoaded = useCallback(
+    async (entryId: string): Promise<SyncBaselineRecord | null> => {
+      if (!loadBaseline) {
+        return baselineByEntryRef.current.get(entryId) ?? null
+      }
+      if (loadedBaselineEntriesRef.current.has(entryId)) {
+        return baselineByEntryRef.current.get(entryId) ?? null
+      }
+
+      loadedBaselineEntriesRef.current.add(entryId)
+      try {
+        const baseline = await loadBaseline(entryId)
+        if (baseline) {
+          baselineByEntryRef.current.set(entryId, baseline)
+          return baseline
+        }
+      } catch {
+        // baseline 读取失败时保持内存态，避免影响主流程。
+      }
+      return baselineByEntryRef.current.get(entryId) ?? null
+    },
+    [loadBaseline],
+  )
+
+  const refreshActiveEntryDirtyState = useCallback(() => {
+    const activeEntryId = activeEntryIdRef.current
+    const activeFingerprint = activeFingerprintRef.current
+    if (!activeEntryId || activeFingerprint === null) {
+      return
+    }
+
+    const dirty = resolveDirtyState(
+      {
+        entryId: activeEntryId,
+        fingerprint: activeFingerprint,
+      },
+      {
+        fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(activeEntryId) ?? false,
+      },
+    )
+    setEntryDirtyState(activeEntryId, dirty)
+  }, [resolveDirtyState, setEntryDirtyState])
+
   const runUpload = useCallback(
     async (payload: UploadMetadataPayload<TMetadata>, payloadVersion = nextPayloadVersion()): Promise<SaveNowResult> => {
       let shouldDrainQueuedPayload = false
 
       if (inFlightRef.current) {
-        if (mountedRef.current) {
-          setHasUnsyncedChanges(true)
-        }
         if (payload.reason === 'manual') {
           return {
             ok: false,
@@ -258,13 +372,20 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       } else if (queuedPayload && queuedPayloadVersion < activePayloadVersion) {
         clearQueuedUploadPayload()
       }
+      const activePayloadKeyState = toMetadataKeyState(activePayload.metadata)
 
       if (getIsOffline()) {
         const message = '当前处于离线状态，网络恢复后将自动重试'
         queueLatestUploadPayload(activePayload, activePayloadVersion)
         markPendingRetry(activePayload, activePayloadVersion)
         if (mountedRef.current) {
-          setHasUnsyncedChanges(true)
+          setEntryDirtyState(
+            activePayloadKeyState.entryId,
+            resolveDirtyState(activePayloadKeyState, {
+              fallbackWhenBaselineMissing:
+                dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+            }),
+          )
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
@@ -305,7 +426,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             const message = resolvingConflictRef.current
               ? '冲突仍未解决，请刷新远端版本后重新决策'
               : '检测到同步冲突，请选择保留本地、远端或合并版本'
-            setHasUnsyncedChanges(true)
+            setEntryDirtyState(activePayloadKeyState.entryId, true)
             setStatus('error')
             setConflictState({
               local: result.conflictPayload?.local ?? activePayload.metadata,
@@ -324,7 +445,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             const message = '网络异常，已保留本次修改并将在恢复后自动重试'
             queueLatestUploadPayload(activePayload, activePayloadVersion)
             markPendingRetry(activePayload, activePayloadVersion)
-            setHasUnsyncedChanges(true)
+            setEntryDirtyState(
+              activePayloadKeyState.entryId,
+              resolveDirtyState(activePayloadKeyState, {
+                fallbackWhenBaselineMissing:
+                  dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+              }),
+            )
             setStatus('error')
             setErrorMessage(message)
             resolvingConflictRef.current = false
@@ -338,7 +465,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           if (result.reason === 'auth') {
             const message = '鉴权失败，请重新解锁或更新 Token 配置'
             queueLatestUploadPayload(activePayload, activePayloadVersion)
-            setHasUnsyncedChanges(true)
+            setEntryDirtyState(
+              activePayloadKeyState.entryId,
+              resolveDirtyState(activePayloadKeyState, {
+                fallbackWhenBaselineMissing:
+                  dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+              }),
+            )
             setStatus('error')
             setErrorMessage(message)
             resolvingConflictRef.current = false
@@ -351,7 +484,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
           const message = '同步失败，请稍后重试'
           queueLatestUploadPayload(activePayload, activePayloadVersion)
-          setHasUnsyncedChanges(true)
+          setEntryDirtyState(
+            activePayloadKeyState.entryId,
+            resolveDirtyState(activePayloadKeyState, {
+              fallbackWhenBaselineMissing:
+                dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+            }),
+          )
           setStatus('error')
           setErrorMessage(message)
           resolvingConflictRef.current = false
@@ -367,8 +506,29 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setConflictState(null)
         resolvingConflictRef.current = false
         clearPendingRetry()
-        setLastSyncedAt(result?.syncedAt ?? now())
-        setHasUnsyncedChanges(Boolean(queuedUploadPayloadRef.current))
+        const syncedAt = result?.syncedAt ?? now()
+        const nextBaseline: SyncBaselineRecord = {
+          entryId: activePayloadKeyState.entryId,
+          fingerprint: activePayloadKeyState.fingerprint,
+          syncedAt,
+          remoteSha: result?.remoteSha,
+        }
+        baselineByEntryRef.current.set(activePayloadKeyState.entryId, nextBaseline)
+        loadedBaselineEntriesRef.current.add(activePayloadKeyState.entryId)
+        if (saveBaseline) {
+          try {
+            await saveBaseline(nextBaseline)
+          } catch {
+            // baseline 持久化失败不应阻断主上传成功路径。
+          }
+        }
+        setEntryDirtyState(activePayloadKeyState.entryId, false)
+        setLastSyncedAt(syncedAt)
+        if (queuedUploadPayloadRef.current) {
+          const queuedKeyState = toMetadataKeyState(queuedUploadPayloadRef.current.metadata)
+          setEntryDirtyState(queuedKeyState.entryId, true)
+        }
+        refreshActiveEntryDirtyState()
         shouldDrainQueuedPayload = true
         return {
           ok: true,
@@ -387,7 +547,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           const message = '当前处于离线状态，网络恢复后将自动重试'
           queueLatestUploadPayload(activePayload, activePayloadVersion)
           markPendingRetry(activePayload, activePayloadVersion)
-          setHasUnsyncedChanges(true)
+          setEntryDirtyState(
+            activePayloadKeyState.entryId,
+            resolveDirtyState(activePayloadKeyState, {
+              fallbackWhenBaselineMissing:
+                dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+            }),
+          )
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
@@ -401,7 +567,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
         const message = toErrorMessage(error)
         queueLatestUploadPayload(activePayload, activePayloadVersion)
-        setHasUnsyncedChanges(true)
+        setEntryDirtyState(
+          activePayloadKeyState.entryId,
+          resolveDirtyState(activePayloadKeyState, {
+            fallbackWhenBaselineMissing:
+              dirtyByEntryRef.current.get(activePayloadKeyState.entryId) ?? false,
+          }),
+        )
         setStatus('error')
         setErrorMessage(message)
         resolvingConflictRef.current = false
@@ -433,6 +605,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       now,
       autoUploadTimeoutMs,
       queueLatestUploadPayload,
+      refreshActiveEntryDirtyState,
+      resolveDirtyState,
+      saveBaseline,
+      setEntryDirtyState,
+      toMetadataKeyState,
       uploadMetadata,
       uploadTimeoutMs,
     ],
@@ -480,6 +657,42 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     }
   }, [clearPendingRetry, runUpload])
 
+  const setActiveMetadata = useCallback(
+    (metadata: TMetadata) => {
+      latestMetadataRef.current = metadata
+      const keyState = toMetadataKeyState(metadata)
+      activeEntryIdRef.current = keyState.entryId
+      activeFingerprintRef.current = keyState.fingerprint
+
+      setEntryDirtyState(
+        keyState.entryId,
+        resolveDirtyState(keyState, {
+          fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+        }),
+      )
+
+      void ensureBaselineLoaded(keyState.entryId).then(() => {
+        if (!mountedRef.current) {
+          return
+        }
+        if (
+          activeEntryIdRef.current !== keyState.entryId ||
+          activeFingerprintRef.current !== keyState.fingerprint
+        ) {
+          return
+        }
+        refreshActiveEntryDirtyState()
+      })
+    },
+    [
+      ensureBaselineLoaded,
+      refreshActiveEntryDirtyState,
+      resolveDirtyState,
+      setEntryDirtyState,
+      toMetadataKeyState,
+    ],
+  )
+
   const onInputChange = useCallback(
     (metadata: TMetadata) => {
       if (resolvingConflictRef.current) {
@@ -489,8 +702,28 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       if (latestMetadata !== null && isMetadataEqual(latestMetadata, metadata)) {
         return
       }
+      const keyState = toMetadataKeyState(metadata)
       latestMetadataRef.current = metadata
-      setHasUnsyncedChanges(true)
+      activeEntryIdRef.current = keyState.entryId
+      activeFingerprintRef.current = keyState.fingerprint
+      setEntryDirtyState(
+        keyState.entryId,
+        resolveDirtyState(keyState, {
+          fallbackWhenBaselineMissing: true,
+        }),
+      )
+      void ensureBaselineLoaded(keyState.entryId).then(() => {
+        if (!mountedRef.current) {
+          return
+        }
+        if (
+          activeEntryIdRef.current !== keyState.entryId ||
+          activeFingerprintRef.current !== keyState.fingerprint
+        ) {
+          return
+        }
+        refreshActiveEntryDirtyState()
+      })
       clearPendingTimer()
       timeoutRef.current = setTimeout(() => {
         const latestMetadata = latestMetadataRef.current
@@ -507,13 +740,44 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         )
       }, debounceMs)
     },
-    [clearPendingTimer, debounceMs, isMetadataEqual, nextPayloadVersion, runUpload],
+    [
+      clearPendingTimer,
+      debounceMs,
+      ensureBaselineLoaded,
+      isMetadataEqual,
+      nextPayloadVersion,
+      refreshActiveEntryDirtyState,
+      resolveDirtyState,
+      runUpload,
+      setEntryDirtyState,
+      toMetadataKeyState,
+    ],
   )
 
   const saveNow = useCallback(
     async (metadata: TMetadata) => {
+      const keyState = toMetadataKeyState(metadata)
       latestMetadataRef.current = metadata
-      setHasUnsyncedChanges(true)
+      activeEntryIdRef.current = keyState.entryId
+      activeFingerprintRef.current = keyState.fingerprint
+      setEntryDirtyState(
+        keyState.entryId,
+        resolveDirtyState(keyState, {
+          fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+        }),
+      )
+      void ensureBaselineLoaded(keyState.entryId).then(() => {
+        if (!mountedRef.current) {
+          return
+        }
+        if (
+          activeEntryIdRef.current !== keyState.entryId ||
+          activeFingerprintRef.current !== keyState.fingerprint
+        ) {
+          return
+        }
+        refreshActiveEntryDirtyState()
+      })
       clearPendingTimer()
       const payloadVersion = nextPayloadVersion()
       return runUpload(
@@ -524,7 +788,16 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         payloadVersion,
       )
     },
-    [clearPendingTimer, nextPayloadVersion, runUpload],
+    [
+      clearPendingTimer,
+      ensureBaselineLoaded,
+      nextPayloadVersion,
+      refreshActiveEntryDirtyState,
+      resolveDirtyState,
+      runUpload,
+      setEntryDirtyState,
+      toMetadataKeyState,
+    ],
   )
 
   const dismissConflict = useCallback(() => {
@@ -568,6 +841,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     hasPendingRetry,
     hasUnsyncedChanges,
     conflictState,
+    setActiveMetadata,
     onInputChange,
     saveNow,
     resolveConflict,

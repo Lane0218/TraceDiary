@@ -8,6 +8,7 @@ export const STORE_METADATA = 'metadata'
 export const STORE_CONFIG = 'config'
 export const METADATA_RECORD_KEY = 'metadata'
 export const CONFIG_RECORD_KEY = 'config'
+export const SYNC_BASELINE_KEY_PREFIX = 'sync-baseline:'
 
 export type TraceDiaryStoreName =
   | typeof STORE_DIARIES
@@ -42,6 +43,13 @@ export interface DiaryRecord {
 interface StoredValue<T = unknown> {
   key: string
   value: T
+}
+
+export interface SyncBaselineRecord {
+  entryId: string
+  fingerprint: string
+  syncedAt: string
+  remoteSha?: string
 }
 
 function assertIndexedDbAvailable(): IDBFactory {
@@ -236,6 +244,22 @@ export async function saveMetadata<T>(
 export async function getMetadata<T>(key = METADATA_RECORD_KEY): Promise<T | null> {
   const stored = await get<StoredValue<T>>(STORE_METADATA, key)
   return stored?.value ?? null
+}
+
+function toSyncBaselineKey(entryId: string): string {
+  const normalizedEntryId = entryId.trim()
+  if (!normalizedEntryId) {
+    throw new Error('entryId 不能为空')
+  }
+  return `${SYNC_BASELINE_KEY_PREFIX}${normalizedEntryId}`
+}
+
+export async function saveSyncBaseline(record: SyncBaselineRecord): Promise<void> {
+  await saveMetadata<SyncBaselineRecord>(record, toSyncBaselineKey(record.entryId))
+}
+
+export async function getSyncBaseline(entryId: string): Promise<SyncBaselineRecord | null> {
+  return getMetadata<SyncBaselineRecord>(toSyncBaselineKey(entryId))
 }
 
 export async function saveConfig<T>(config: T, key = CONFIG_RECORD_KEY): Promise<void> {

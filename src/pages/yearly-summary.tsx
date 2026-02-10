@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import ConflictDialog from '../components/common/conflict-dialog'
@@ -7,8 +7,10 @@ import MarkdownEditor from '../components/editor/markdown-editor'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
+import { getSyncBaseline, saveSyncBaseline } from '../services/indexeddb'
 import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 import { getSyncAvailability } from '../utils/sync-availability'
+import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import {
   MANUAL_SYNC_PENDING_MESSAGE,
   getDisplayedManualSyncError,
@@ -45,7 +47,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       entryId: summary.entryId,
       year,
       content: summary.content,
-      modifiedAt: summary.entry?.modifiedAt ?? new Date().toISOString(),
+      modifiedAt: summary.entry?.modifiedAt ?? '',
     }),
     [summary.content, summary.entry?.modifiedAt, summary.entryId, year],
   )
@@ -81,10 +83,24 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         syncMetadata: true,
       })
     : undefined
-  const sync = useSync<DiarySyncMetadata>({ uploadMetadata })
+  const sync = useSync<DiarySyncMetadata>({
+    uploadMetadata,
+    getEntryId: getDiarySyncEntryId,
+    getFingerprint: getDiarySyncFingerprint,
+    loadBaseline: async (entryId) => getSyncBaseline(entryId),
+    saveBaseline: async (baseline) => saveSyncBaseline(baseline),
+  })
+  const setActiveSyncMetadata = sync.setActiveMetadata
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
+
+  useEffect(() => {
+    if (!canSyncToRemote) {
+      return
+    }
+    setActiveSyncMetadata(syncPayload)
+  }, [canSyncToRemote, setActiveSyncMetadata, syncPayload])
 
   const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
   const syncPresentationState = useMemo(

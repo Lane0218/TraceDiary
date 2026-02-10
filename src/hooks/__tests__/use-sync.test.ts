@@ -109,12 +109,89 @@ describe('useSync', () => {
       }),
     )
 
+    act(() => {
+      result.current.onInputChange({ content: 'failed-payload' })
+    })
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+
     await act(async () => {
       await result.current.saveNow({ content: 'failed-payload' })
     })
 
     expect(result.current.status).toBe('error')
     expect(result.current.hasUnsyncedChanges).toBe(true)
+  })
+
+  it('手动保存在内容未变化时不应把未提交改动从无置为有', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
+      syncedAt: '2026-02-08T11:00:00.000Z',
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+
+    await act(async () => {
+      await result.current.saveNow({ content: 'unchanged' })
+    })
+
+    expect(result.current.status).toBe('success')
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+  })
+
+  it('切换 entry 时未提交改动状态应按 entry 隔离', async () => {
+    const uploadMetadata: UploadMetadataFn<{ entryId: string; content: string }> = vi.fn(async () => ({
+      syncedAt: '2026-02-08T11:30:00.000Z',
+    }))
+    const loadBaseline = vi
+      .fn<(entryId: string) => Promise<{ entryId: string; fingerprint: string; syncedAt: string } | null>>()
+      .mockImplementation(async (entryId) => {
+        if (entryId === 'entry:a') {
+          return {
+            entryId: 'entry:a',
+            fingerprint: 'A',
+            syncedAt: '2026-02-08T11:00:00.000Z',
+          }
+        }
+        if (entryId === 'entry:b') {
+          return {
+            entryId: 'entry:b',
+            fingerprint: 'B',
+            syncedAt: '2026-02-08T11:00:00.000Z',
+          }
+        }
+        return null
+      })
+
+    const { result } = renderHook(() =>
+      useSync<{ entryId: string; content: string }>({
+        uploadMetadata,
+        getEntryId: (metadata) => metadata.entryId,
+        getFingerprint: (metadata) => metadata.content,
+        loadBaseline,
+      }),
+    )
+
+    await act(async () => {
+      result.current.setActiveMetadata({ entryId: 'entry:a', content: 'A' })
+      await Promise.resolve()
+    })
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+
+    act(() => {
+      result.current.onInputChange({ entryId: 'entry:a', content: 'A-updated' })
+    })
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+
+    await act(async () => {
+      result.current.setActiveMetadata({ entryId: 'entry:b', content: 'B' })
+      await Promise.resolve()
+    })
+    expect(result.current.hasUnsyncedChanges).toBe(false)
   })
 
   it('手动保存应立即上传并取消已有防抖任务', async () => {
