@@ -20,7 +20,7 @@ function extractSyncedAt(labelText: string): string {
   return matched[1].trim()
 }
 
-test('自动同步请求超过手动超时阈值后仍应更新最近同步时间', async ({ page }) => {
+test('自动同步请求超时后应退出 syncing 并保留最近一次成功同步时间', async ({ page }) => {
   test.setTimeout(180_000)
   const env = getE2EEnv()
   const firstMarker = buildRunMarker('auto-sync-base')
@@ -51,7 +51,9 @@ test('自动同步请求超过手动超时阈值后仍应更新最近同步时�
         delayedUploadMessage = body.message
       }
       delayed = true
-      await page.waitForTimeout(26_000)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 26_000)
+      })
       await route.continue()
       return
     }
@@ -70,27 +72,13 @@ test('自动同步请求超过手动超时阈值后仍应更新最近同步时�
       })
       .toBe(true)
     expect(delayedUploadMessage).toContain('自动同步日记')
-    await expect(page.getByText('未提交改动：无')).toBeVisible({ timeout: 90_000 })
-    await expect(page.getByText('同步超时，请检查网络后重试')).toHaveCount(0)
-
-    await expect
-      .poll(
-        async () => {
-          const text = (await lastSyncedLabel.textContent())?.trim() ?? ''
-          if (!text) {
-            return ''
-          }
-          return extractSyncedAt(text)
-        },
-        {
-          timeout: 30_000,
-        },
-      )
-      .not.toBe(baselineSyncedAt)
+    await expect(page.getByTestId('sync-status-pill')).toContainText('云端同步失败', { timeout: 90_000 })
+    await expect(page.getByText('同步超时，请检查网络后重试')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText('未提交改动：有')).toBeVisible()
 
     const refreshedLabelText = (await lastSyncedLabel.textContent())?.trim() ?? ''
     const refreshedSyncedAt = extractSyncedAt(refreshedLabelText)
-    expect(Date.parse(refreshedSyncedAt)).toBeGreaterThan(Date.parse(baselineSyncedAt))
+    expect(refreshedSyncedAt).toBe(baselineSyncedAt)
   } finally {
     if (!page.isClosed()) {
       await page.unroute('**/api/v5/repos/**/contents/**', handler)

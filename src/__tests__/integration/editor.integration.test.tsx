@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import YearlySummaryPage from '../../pages/yearly-summary'
@@ -241,5 +241,45 @@ describe('年度总结页面', () => {
       expect(screen.getByRole('button', { name: '手动保存并立即上传' })).toBeTruthy()
       expect(screen.queryByText('当前正在上传，请稍候重试')).toBeNull()
     })
+  })
+
+  it('自动上传超时后应退出同步中并展示可重试错误', async () => {
+    vi.useFakeTimers()
+    try {
+      const uploadExecutor = vi.fn(
+        () =>
+          new Promise(() => {
+            // 模拟自动上传请求悬挂
+          }),
+      )
+      createDiaryUploadExecutorMock.mockImplementation(() => uploadExecutor)
+      useDiaryMock.mockReturnValue(
+        buildUseDiaryResult({
+          entryId: 'summary:2026',
+          content: '初始内容',
+        }),
+      )
+
+      renderYearlyPage('/yearly/2026')
+
+      fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
+        target: { value: '自动上传超时场景' },
+      })
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000)
+      })
+      expect(uploadExecutor).toHaveBeenCalledTimes(1)
+      expect(screen.getByText('云端同步中')).toBeTruthy()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(25_000)
+      })
+
+      expect(screen.getByText('云端同步失败')).toBeTruthy()
+      expect(screen.getByText('同步超时，请检查网络后重试')).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

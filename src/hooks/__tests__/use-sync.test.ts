@@ -231,6 +231,60 @@ describe('useSync', () => {
     expect(result.current.lastSyncedAt).toBe('2026-02-08T13:00:00.000Z')
   })
 
+  it('手动上传进行中收到同内容输入时不应排队自动上传', async () => {
+    let resolveFirstUpload!: (value: { syncedAt: string }) => void
+    const firstUploadPromise = new Promise<{ syncedAt: string }>((resolve) => {
+      resolveFirstUpload = resolve
+    })
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi
+      .fn()
+      .mockReturnValueOnce(firstUploadPromise)
+      .mockResolvedValueOnce({
+        syncedAt: '2026-02-08T13:40:00.000Z',
+      })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        debounceMs: 0,
+      }),
+    )
+
+    let firstSavePromise: Promise<SaveNowResult> | null = null
+    act(() => {
+      firstSavePromise = result.current.saveNow({ content: 'same-payload' })
+    })
+
+    act(() => {
+      result.current.onInputChange({ content: 'same-payload' })
+    })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(uploadMetadata).toHaveBeenNthCalledWith(1, {
+      metadata: { content: 'same-payload' },
+      reason: 'manual',
+    })
+
+    resolveFirstUpload({ syncedAt: '2026-02-08T13:00:00.000Z' })
+    let firstSaveResult: SaveNowResult | null = null
+    await act(async () => {
+      firstSaveResult = await firstSavePromise!
+      await Promise.resolve()
+    })
+
+    expect(firstSaveResult).toEqual({
+      ok: true,
+      errorMessage: null,
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(result.current.status).toBe('success')
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+  })
+
   it('上传请求超时后应退出 syncing 并返回可重试错误', async () => {
     const uploadMetadata = vi.fn<UploadMetadataFn<TestMetadata>>(
       () =>
@@ -348,6 +402,63 @@ describe('useSync', () => {
     expect(result.current.status).toBe('success')
     expect(result.current.errorMessage).toBeNull()
     expect(result.current.lastSyncedAt).toBe('2026-02-08T12:10:00.000Z')
+  })
+
+  it('自动上传请求超时后应退出 syncing 并允许后续手动恢复', async () => {
+    const uploadMetadata = vi
+      .fn<UploadMetadataFn<TestMetadata>>()
+      .mockImplementationOnce(
+        () =>
+          new Promise(() => {
+            // 模拟自动上传请求悬挂
+          }),
+      )
+      .mockResolvedValueOnce({
+        syncedAt: '2026-02-08T12:20:00.000Z',
+      })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        debounceMs: 0,
+        autoUploadTimeoutMs: 1_000,
+      }),
+    )
+
+    act(() => {
+      result.current.onInputChange({ content: 'auto-timeout' })
+    })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(result.current.status).toBe('syncing')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+    })
+
+    expect(result.current.status).toBe('error')
+    expect(result.current.errorMessage).toBe('同步超时，请检查网络后重试')
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+
+    let recoverResult: SaveNowResult | null = null
+    await act(async () => {
+      recoverResult = await result.current.saveNow({ content: 'manual-recover' })
+    })
+
+    expect(recoverResult).toEqual({
+      ok: true,
+      errorMessage: null,
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(2)
+    expect(uploadMetadata).toHaveBeenNthCalledWith(2, {
+      metadata: { content: 'manual-recover' },
+      reason: 'manual',
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.errorMessage).toBeNull()
   })
 
   it('未注入上传实现时应使用默认占位上传并成功返回同步时间', async () => {

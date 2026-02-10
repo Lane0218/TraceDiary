@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-10`
-- 总任务：`68`
-- 状态统计：`DONE=54` / `DOING=0` / `TODO=14` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`69`
+- 状态统计：`DONE=54` / `DOING=1` / `TODO=14` / `BLOCKED=0`
+- 当前进行中：`TD-SYNC-019`
 
 ## 1. 任务清单（按模块）
 
@@ -78,6 +78,7 @@
 | `TD-SYNC-016` | `DONE` | 修复自动解锁后缺少数据加密密钥导致手动上传异常，并增强同步状态可观测性 | 自动解锁后可直接手动上传；并发触发“请稍候重试”不会在非上传中状态残留；状态区可区分是否存在未提交改动 | `src/hooks/use-auth.ts` `src/services/crypto.ts` `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-auth.test.tsx` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（39/39）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/manual-sync-success.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/daily-edit.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（9/9）；`npm run build` 通过；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`） | `2026-02-10 / 4578a86` |
 | `TD-SYNC-017` | `DONE` | 修复自动同步成功后“最近同步时间”未更新并补齐端到端回归用例 | 自动同步成功后“最近同步”应刷新为最新时间；同页连续两次成功同步时后一次时间严格晚于前一次；新增 E2E 用例稳定通过 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `e2e/specs/auto-sync-last-synced.spec.ts` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（40/40）；`npm run test:e2e` 通过（17 passed，1 flaky 重试通过）；`npx playwright test e2e/specs/auto-sync-last-synced.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（3/3） | `2026-02-10 / ff12550` |
 | `TD-SYNC-018` | `DONE` | 新增“手动上传成功后状态应收敛”端到端回归用例（覆盖 pending 提示消失后仍待同步风险） | 点击“手动保存并立即上传”后应先出现“手动上传已触发，正在等待结果...”，随后提示消失；远端上传成功后页面状态应为“云端已同步”且“未提交改动：无” | `e2e/specs/manual-sync-state-consistency.spec.ts` `TODO.md` | `npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（3/3）；`npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（40/40）；`npm run test:e2e` 通过（19/19） | `2026-02-10 / 382f07b` |
+| `TD-SYNC-019` | `DOING` | 修复手动上传后状态不收敛（自动上传悬挂导致长期 syncing）并补齐去重与超时回归测试 | 手动上传成功后若触发同内容自动上传不应重复请求；自动上传悬挂时应在超时后退出 syncing 并给出可重试错误；状态可恢复并与远端结果一致 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-hang-guard.spec.ts` `TODO.md` | — | — |
 
 ### 6.6 PWA、部署与安全头
 

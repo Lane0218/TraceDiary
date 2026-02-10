@@ -14,7 +14,9 @@ export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 export interface UseSyncOptions<TMetadata = unknown> {
   debounceMs?: number
   uploadTimeoutMs?: number
+  autoUploadTimeoutMs?: number
   uploadMetadata?: UploadMetadataFn<TMetadata>
+  isMetadataEqual?: (prev: TMetadata, next: TMetadata) => boolean
   now?: () => string
 }
 
@@ -60,6 +62,18 @@ function toErrorMessage(error: unknown): string {
     return error.message
   }
   return '同步失败，请稍后重试'
+}
+
+function defaultIsMetadataEqual<TMetadata>(prev: TMetadata, next: TMetadata): boolean {
+  if (Object.is(prev, next)) {
+    return true
+  }
+
+  try {
+    return JSON.stringify(prev) === JSON.stringify(next)
+  } catch {
+    return false
+  }
 }
 
 function getIsOffline(): boolean {
@@ -137,6 +151,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const now = options.now ?? nowIsoString
   const debounceMs = Math.max(0, options.debounceMs ?? DEFAULT_DEBOUNCE_MS)
   const uploadTimeoutMs = Math.max(1_000, options.uploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS)
+  const autoUploadTimeoutMs = Math.max(1_000, options.autoUploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS)
+  const isMetadataEqual = options.isMetadataEqual ?? defaultIsMetadataEqual<TMetadata>
   const uploadMetadata = useMemo(
     () =>
       createUploadMetadataExecutor<TMetadata>({
@@ -269,7 +285,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       try {
-        const effectiveUploadTimeoutMs = activePayload.reason === 'manual' ? uploadTimeoutMs : 0
+        const effectiveUploadTimeoutMs =
+          activePayload.reason === 'manual' ? uploadTimeoutMs : autoUploadTimeoutMs
         const result = await withTimeout(
           uploadMetadata(activePayload),
           effectiveUploadTimeoutMs,
@@ -414,6 +431,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       markPendingRetry,
       nextPayloadVersion,
       now,
+      autoUploadTimeoutMs,
       queueLatestUploadPayload,
       uploadMetadata,
       uploadTimeoutMs,
@@ -467,6 +485,10 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       if (resolvingConflictRef.current) {
         return
       }
+      const latestMetadata = latestMetadataRef.current
+      if (latestMetadata !== null && isMetadataEqual(latestMetadata, metadata)) {
+        return
+      }
       latestMetadataRef.current = metadata
       setHasUnsyncedChanges(true)
       clearPendingTimer()
@@ -485,7 +507,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         )
       }, debounceMs)
     },
-    [clearPendingTimer, debounceMs, nextPayloadVersion, runUpload],
+    [clearPendingTimer, debounceMs, isMetadataEqual, nextPayloadVersion, runUpload],
   )
 
   const saveNow = useCallback(
