@@ -121,7 +121,7 @@ describe('useAuth', () => {
     expect(savedConfig?.giteeBranch).toBe('main')
   })
 
-  it('7天内未锁定时应可免输主密码恢复', async () => {
+  it('7天内未锁定但缺少数据密钥时应回退到重新解锁', async () => {
     const config = buildConfig()
     localStorage.setItem(AUTH_LOCK_STATE_KEY, 'unlocked')
     localStorage.setItem(AUTH_PASSWORD_EXPIRY_KEY, String(fixedNow + 2 * 24 * 60 * 60 * 1000))
@@ -133,11 +133,12 @@ describe('useAuth', () => {
 
     const { result } = renderHook(() => useAuth(dependencies))
 
-    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
-    expect(result.current.state.tokenInMemory).toBe('restored-token')
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-unlock'))
+    expect(result.current.state.tokenInMemory).toBeNull()
     expect(result.current.state.dataEncryptionKey).toBeNull()
-    expect(result.current.state.isLocked).toBe(false)
+    expect(result.current.state.isLocked).toBe(true)
     expect(result.current.state.passwordExpired).toBe(false)
+    expect(result.current.state.errorMessage).toBe('当前会话缺少数据加密密钥，请重新解锁。')
   })
 
   it('解密失败后应允许补输 token 并覆盖本地密文', async () => {

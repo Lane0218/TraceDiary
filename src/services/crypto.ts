@@ -218,7 +218,7 @@ export async function deriveAesKeyFromPassword(
     },
     baseKey,
     { name: AES_GCM_NAME, length: AES_KEY_LENGTH },
-    false,
+    true,
     ['encrypt', 'decrypt'],
   )
 }

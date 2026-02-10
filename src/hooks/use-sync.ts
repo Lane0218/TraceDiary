@@ -23,6 +23,7 @@ export interface UseSyncResult<TMetadata = unknown> {
   errorMessage: string | null
   isOffline: boolean
   hasPendingRetry: boolean
+  hasUnsyncedChanges: boolean
   conflictState: {
     local: TMetadata
     remote: TMetadata | null
@@ -126,6 +127,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isOffline, setIsOffline] = useState(() => getIsOffline())
   const [hasPendingRetry, setHasPendingRetry] = useState(false)
+  const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(false)
   const [conflictState, setConflictState] = useState<{
     local: TMetadata
     remote: TMetadata | null
@@ -208,6 +210,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       let shouldDrainQueuedPayload = false
 
       if (inFlightRef.current) {
+        if (mountedRef.current) {
+          setHasUnsyncedChanges(true)
+        }
         if (payload.reason === 'manual') {
           return {
             ok: false,
@@ -242,6 +247,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         queueLatestUploadPayload(activePayload, activePayloadVersion)
         markPendingRetry(activePayload, activePayloadVersion)
         if (mountedRef.current) {
+          setHasUnsyncedChanges(true)
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
@@ -280,6 +286,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             const message = resolvingConflictRef.current
               ? '冲突仍未解决，请刷新远端版本后重新决策'
               : '检测到同步冲突，请选择保留本地、远端或合并版本'
+            setHasUnsyncedChanges(true)
             setStatus('error')
             setConflictState({
               local: result.conflictPayload?.local ?? activePayload.metadata,
@@ -298,6 +305,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             const message = '网络异常，已保留本次修改并将在恢复后自动重试'
             queueLatestUploadPayload(activePayload, activePayloadVersion)
             markPendingRetry(activePayload, activePayloadVersion)
+            setHasUnsyncedChanges(true)
             setStatus('error')
             setErrorMessage(message)
             resolvingConflictRef.current = false
@@ -311,6 +319,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           if (result.reason === 'auth') {
             const message = '鉴权失败，请重新解锁或更新 Token 配置'
             queueLatestUploadPayload(activePayload, activePayloadVersion)
+            setHasUnsyncedChanges(true)
             setStatus('error')
             setErrorMessage(message)
             resolvingConflictRef.current = false
@@ -323,6 +332,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
           const message = '同步失败，请稍后重试'
           queueLatestUploadPayload(activePayload, activePayloadVersion)
+          setHasUnsyncedChanges(true)
           setStatus('error')
           setErrorMessage(message)
           resolvingConflictRef.current = false
@@ -339,6 +349,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         resolvingConflictRef.current = false
         clearPendingRetry()
         setLastSyncedAt(result?.syncedAt ?? now())
+        setHasUnsyncedChanges(Boolean(queuedUploadPayloadRef.current))
         shouldDrainQueuedPayload = true
         return {
           ok: true,
@@ -357,6 +368,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           const message = '当前处于离线状态，网络恢复后将自动重试'
           queueLatestUploadPayload(activePayload, activePayloadVersion)
           markPendingRetry(activePayload, activePayloadVersion)
+          setHasUnsyncedChanges(true)
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
@@ -370,6 +382,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
         const message = toErrorMessage(error)
         queueLatestUploadPayload(activePayload, activePayloadVersion)
+        setHasUnsyncedChanges(true)
         setStatus('error')
         setErrorMessage(message)
         resolvingConflictRef.current = false
@@ -453,6 +466,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         return
       }
       latestMetadataRef.current = metadata
+      setHasUnsyncedChanges(true)
       clearPendingTimer()
       timeoutRef.current = setTimeout(() => {
         const latestMetadata = latestMetadataRef.current
@@ -475,6 +489,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const saveNow = useCallback(
     async (metadata: TMetadata) => {
       latestMetadataRef.current = metadata
+      setHasUnsyncedChanges(true)
       clearPendingTimer()
       const payloadVersion = nextPayloadVersion()
       return runUpload(
@@ -527,6 +542,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     errorMessage,
     isOffline,
     hasPendingRetry,
+    hasUnsyncedChanges,
     conflictState,
     onInputChange,
     saveNow,

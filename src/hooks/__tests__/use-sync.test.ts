@@ -70,6 +70,53 @@ describe('useSync', () => {
     expect(result.current.errorMessage).toBeNull()
   })
 
+  it('应在本地编辑后标记未提交改动，并在上传成功后清空', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
+      syncedAt: '2026-02-08T10:00:00.000Z',
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        debounceMs: 10,
+      }),
+    )
+
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+
+    act(() => {
+      result.current.onInputChange({ content: 'draft' })
+    })
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10)
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(result.current.status).toBe('success')
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+  })
+
+  it('上传失败后应保留未提交改动标记', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => {
+      throw new Error('mock network error')
+    })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.saveNow({ content: 'failed-payload' })
+    })
+
+    expect(result.current.status).toBe('error')
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+  })
+
   it('手动保存应立即上传并取消已有防抖任务', async () => {
     const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
       syncedAt: '2026-02-08T12:00:00.000Z',

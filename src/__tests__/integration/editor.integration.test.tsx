@@ -151,6 +151,25 @@ describe('年度总结页面', () => {
     expect(screen.getByText('本地保存异常')).toBeTruthy()
   })
 
+  it('编辑后应展示未提交改动状态', async () => {
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    expect(screen.getByText('未提交改动：无')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
+      target: { value: '新的年度总结内容' },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('未提交改动：有')).toBeTruthy()
+    })
+  })
+
   it('云端未就绪时点击手动上传应展示明确提示', () => {
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({

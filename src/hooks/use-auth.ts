@@ -19,6 +19,7 @@ export const AUTH_LOCK_STATE_KEY = 'trace-diary:auth:lock-state'
 export const AUTH_PASSWORD_EXPIRY_KEY = 'trace-diary:auth:password-expiry'
 const AUTH_UNLOCK_SECRET_KEY = 'trace-diary:auth:unlock-secret'
 const AUTH_UNLOCKED_TOKEN_KEY = 'trace-diary:auth:unlocked-token'
+const AUTH_UNLOCKED_DATA_KEY = 'trace-diary:auth:unlocked-data-key'
 const UNLOCK_KEY_LENGTH = 32
 
 export interface RepoRef {
@@ -218,28 +219,26 @@ function getOrCreateUnlockSecret(): string {
   return secret
 }
 
-async function cacheUnlockedToken(token: string): Promise<void> {
+async function encryptWithUnlockSecret(plaintext: Uint8Array): Promise<string> {
   const secret = getOrCreateUnlockSecret()
   const key = await importUnlockStateKey(secret)
   const iv = crypto.getRandomValues(new Uint8Array(12))
-  const plaintext = new TextEncoder().encode(token)
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: toArrayBuffer(iv) }, key, toArrayBuffer(plaintext))
 
   const cipher = new Uint8Array(encrypted)
   const payload = new Uint8Array(iv.length + cipher.length)
   payload.set(iv, 0)
   payload.set(cipher, iv.length)
-  localStorage.setItem(AUTH_UNLOCKED_TOKEN_KEY, bytesToBase64(payload))
+  return bytesToBase64(payload)
 }
 
-async function restoreUnlockedTokenFromCache(): Promise<string | null> {
+async function decryptWithUnlockSecret(payloadBase64: string): Promise<Uint8Array | null> {
   const secret = localStorage.getItem(AUTH_UNLOCK_SECRET_KEY)
-  const cached = localStorage.getItem(AUTH_UNLOCKED_TOKEN_KEY)
-  if (!secret || !cached) {
+  if (!secret) {
     return null
   }
 
-  const payload = base64ToBytes(cached)
+  const payload = base64ToBytes(payloadBase64)
   if (payload.byteLength <= 12) {
     return null
   }
@@ -247,12 +246,56 @@ async function restoreUnlockedTokenFromCache(): Promise<string | null> {
   const iv = payload.subarray(0, 12)
   const cipher = payload.subarray(12)
   const key = await importUnlockStateKey(secret)
-  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: toArrayBuffer(iv) }, key, toArrayBuffer(cipher))
+  try {
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: toArrayBuffer(iv) }, key, toArrayBuffer(cipher))
+    return new Uint8Array(decrypted)
+  } catch {
+    return null
+  }
+}
+
+async function cacheUnlockedToken(token: string): Promise<void> {
+  const plaintext = new TextEncoder().encode(token)
+  const encryptedPayload = await encryptWithUnlockSecret(plaintext)
+  localStorage.setItem(AUTH_UNLOCKED_TOKEN_KEY, encryptedPayload)
+}
+
+async function restoreUnlockedTokenFromCache(): Promise<string | null> {
+  const cached = localStorage.getItem(AUTH_UNLOCKED_TOKEN_KEY)
+  if (!cached) {
+    return null
+  }
+
+  const decrypted = await decryptWithUnlockSecret(cached)
+  if (!decrypted) {
+    return null
+  }
   return new TextDecoder().decode(decrypted)
+}
+
+async function cacheUnlockedDataEncryptionKey(dataEncryptionKey: CryptoKey): Promise<void> {
+  const rawKey = await crypto.subtle.exportKey('raw', dataEncryptionKey)
+  const encryptedPayload = await encryptWithUnlockSecret(new Uint8Array(rawKey))
+  localStorage.setItem(AUTH_UNLOCKED_DATA_KEY, encryptedPayload)
+}
+
+async function restoreUnlockedDataEncryptionKeyFromCache(): Promise<CryptoKey | null> {
+  const cached = localStorage.getItem(AUTH_UNLOCKED_DATA_KEY)
+  if (!cached) {
+    return null
+  }
+
+  const rawKey = await decryptWithUnlockSecret(cached)
+  if (!rawKey || rawKey.byteLength === 0) {
+    return null
+  }
+
+  return crypto.subtle.importKey('raw', toArrayBuffer(rawKey), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
 }
 
 function clearUnlockStateCache(): void {
   localStorage.removeItem(AUTH_UNLOCKED_TOKEN_KEY)
+  localStorage.removeItem(AUTH_UNLOCKED_DATA_KEY)
   localStorage.removeItem(AUTH_UNLOCK_SECRET_KEY)
 }
 
@@ -440,14 +483,37 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         repoName: config.giteeRepoName,
         token: restoredToken,
       })
-      await cacheUnlockedToken(restoredToken)
 
       const dataEncryptionKey = masterPasswordRef.current
         ? await dependencies.deriveDataEncryptionKey({
             masterPassword: masterPasswordRef.current,
             kdfParams: config.kdfParams,
           })
-        : null
+        : await restoreUnlockedDataEncryptionKeyFromCache()
+
+      if (!dataEncryptionKey) {
+        writeLockState(true)
+        localStorage.removeItem(AUTH_UNLOCKED_DATA_KEY)
+        setState({
+          stage: 'needs-unlock',
+          config,
+          tokenInMemory: null,
+          dataEncryptionKey: null,
+          isLocked: true,
+          passwordExpired: false,
+          needsMasterPasswordForTokenRefresh: true,
+          tokenRefreshReason: null,
+          errorMessage: '当前会话缺少数据加密密钥，请重新解锁。',
+        })
+        return
+      }
+
+      try {
+        await cacheUnlockedToken(restoredToken)
+        await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
+      } catch {
+        // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
+      }
 
       setState({
         stage: 'ready',
@@ -535,7 +601,12 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(config)
-        await cacheUnlockedToken(payload.token.trim())
+        try {
+          await cacheUnlockedToken(payload.token.trim())
+          await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
+        } catch {
+          // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
+        }
         masterPasswordRef.current = payload.masterPassword
         setState({
           stage: 'ready',
@@ -675,7 +746,12 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           passwordExpiry: expiry.iso,
         }
         await dependencies.saveConfig(nextConfig)
-        await cacheUnlockedToken(token)
+        try {
+          await cacheUnlockedToken(token)
+          await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
+        } catch {
+          // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
+        }
 
         setState({
           stage: 'ready',
@@ -757,7 +833,12 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(nextConfig)
-        await cacheUnlockedToken(token)
+        try {
+          await cacheUnlockedToken(token)
+          await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
+        } catch {
+          // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
+        }
         masterPasswordRef.current = masterPassword
 
         setState({

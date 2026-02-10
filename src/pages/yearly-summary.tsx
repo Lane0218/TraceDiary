@@ -134,8 +134,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     if (sync.status === 'error') {
       return '云端同步失败'
     }
+    if (!sync.hasUnsyncedChanges && sync.lastSyncedAt) {
+      return '云端已同步'
+    }
     return '云端待同步'
-  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.hasUnsyncedChanges, sync.isOffline, sync.lastSyncedAt, sync.status])
 
   const syncToneClass = useMemo(() => {
     if (!canSyncToRemote) {
@@ -156,8 +159,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     if (sync.status === 'error') {
       return 'td-status-danger'
     }
+    if (sync.hasUnsyncedChanges) {
+      return 'td-status-warning'
+    }
     return 'td-status-muted'
-  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.isOffline, sync.status])
+  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.hasUnsyncedChanges, sync.isOffline, sync.status])
 
   const handleYearChange = (nextYear: number) => {
     if (!Number.isFinite(nextYear) || nextYear < 1970 || nextYear > 9999) {
@@ -181,7 +187,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }
   const displayedSyncMessage = sync.errorMessage
   const displayedManualSyncError =
-    sync.status === 'success' && manualSyncError === BUSY_SYNC_MESSAGE ? null : manualSyncError
+    sync.status !== 'syncing' && manualSyncError === BUSY_SYNC_MESSAGE ? null : manualSyncError
   const isManualSyncing = sync.status === 'syncing'
 
   const resolveMergeConflict = (mergedContent: string) => {
@@ -281,6 +287,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     最近同步：{sync.lastSyncedAt}
                   </span>
                 ) : null}
+                <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
+                  未提交改动：{sync.hasUnsyncedChanges ? '有' : '无'}
+                </span>
                 <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
                   分支：{giteeBranch}
                 </span>
