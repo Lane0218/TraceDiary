@@ -224,6 +224,7 @@ export async function armShaMismatchRace(
 
     triggered = true
 
+    let unrouteError: unknown = null
     try {
       await route.fulfill({
         status: 409,
@@ -244,9 +245,13 @@ export async function armShaMismatchRace(
         await page.unroute(routePattern, handler)
       } catch (error) {
         if (!isPageClosedError(error)) {
-          throw error
+          unrouteError = error
         }
       }
+    }
+
+    if (unrouteError) {
+      throw unrouteError
     }
   }
 
