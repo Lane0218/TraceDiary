@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-10`
-- 总任务：`70`
-- 状态统计：`DONE=56` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 总任务：`71`
+- 状态统计：`DONE=57` / `DOING=0` / `TODO=14` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -80,6 +80,7 @@
 | `TD-SYNC-018` | `DONE` | 新增“手动上传成功后状态应收敛”端到端回归用例（覆盖 pending 提示消失后仍待同步风险） | 点击“手动保存并立即上传”后应先出现“手动上传已触发，正在等待结果...”，随后提示消失；远端上传成功后页面状态应为“云端已同步”且“未提交改动：无” | `e2e/specs/manual-sync-state-consistency.spec.ts` `TODO.md` | `npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（3/3）；`npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（40/40）；`npm run test:e2e` 通过（19/19） | `2026-02-10 / 382f07b` |
 | `TD-SYNC-019` | `DONE` | 修复手动上传后状态不收敛（自动上传悬挂导致长期 syncing）并补齐去重与超时回归测试 | 手动上传成功后若触发同内容自动上传不应重复请求；自动上传悬挂时应在超时后退出 syncing 并给出可重试错误；状态可恢复并与远端结果一致 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-hang-guard.spec.ts` `e2e/specs/auto-sync-last-synced.spec.ts` `TODO.md` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/manual-sync-hang-guard.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/auto-sync-last-synced.spec.ts --project=chromium --retries=0` 通过（1/1）；`npm run test:e2e` 通过（20/20） | `2026-02-10 / 4a20958` |
 | `TD-SYNC-020` | `DONE` | 落地服务层最小重构（收敛 Base64/UTF-8、统一 metadata 走 Gitee 网关、固化 sync/gitee 职责边界，并统一测试入口） | `sync.ts` 不再维护重复文本 Base64 实现且 metadata 读写不直接发起 contents API；`gitee.ts` 作为唯一 Gitee 网关；测试入口统一为 `src/__tests__/` 且单元/集成/E2E 全部通过 | `src/services/sync.ts` `src/services/gitee.ts` `src/services/__tests__/sync.test.ts` `src/test/setup.ts` `src/__tests__/setup.ts` `vitest.config.ts` `TODO.md` | `npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npm run test:e2e` 通过（19 passed，1 flaky 重试通过，网络超时后重试成功）；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`）；`npm run build` 通过 | `2026-02-10 / 9733c4e` |
+| `TD-SYNC-021` | `DONE` | 清理跨层重复实现（同步状态/手动上传文案、认证表单结构、crypto/sync 基础工具）并收敛公共模块 | `workspace/yearly-summary` 共享同步状态与手动上传文案逻辑；`welcome/auth-modal` 共享认证表单配置；`sync.ts` 不再重复实现可复用的 crypto 基础工具；单元/集成/E2E 全部通过 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/components/common/*` `src/pages/welcome.tsx` `src/components/auth/auth-modal.tsx` `src/services/sync.ts` `src/services/crypto.ts` `src/services/crypto-utils.ts` `src/services/__tests__/*` `src/__tests__/integration/*` `TODO.md` | `npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npm run test:e2e` 通过（19 passed，1 flaky 重试通过） | `2026-02-10 / 938e1cf` |
 
 ### 6.6 PWA、部署与安全头
 
