@@ -1,86 +1,28 @@
 import { useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
 import { useAuth } from '../hooks/use-auth'
-
-type AuthFormState = {
-  repoInput: string
-  repoBranch: string
-  token: string
-  masterPassword: string
-  refreshToken: string
-  refreshMasterPassword: string
-}
-
-const initialFormState: AuthFormState = {
-  repoInput: '',
-  repoBranch: 'master',
-  token: '',
-  masterPassword: '',
-  refreshToken: '',
-  refreshMasterPassword: '',
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  autoComplete,
-}: {
-  label: string
-  value: string
-  onChange: (next: string) => void
-  placeholder: string
-  type?: 'text' | 'password'
-  autoComplete?: string
-}) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm text-slate-700">
-      <span className="font-medium text-slate-800">{label}</span>
-      <input
-        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-      />
-    </label>
-  )
-}
+import {
+  INITIAL_AUTH_FORM_STATE,
+  createAuthSubmitModel,
+  type AuthFormState,
+} from '../components/auth/auth-form-model'
+import {
+  AuthFormField,
+} from '../components/auth/auth-form-shared'
 
 export default function WelcomePage() {
   const { state, getMasterPasswordError, initializeFirstTime, unlockWithMasterPassword, updateTokenCiphertext, lockNow } =
     useAuth()
-  const [form, setForm] = useState<AuthFormState>(initialFormState)
+  const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
+  const submitModel = createAuthSubmitModel(
+    {
+      initializeFirstTime,
+      unlockWithMasterPassword,
+      updateTokenCiphertext,
+    },
+    form,
+  )
 
   const passwordHint = useMemo(() => getMasterPasswordError(form.masterPassword), [form.masterPassword, getMasterPasswordError])
-
-  const onSetupSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await initializeFirstTime({
-      repoInput: form.repoInput,
-      giteeBranch: form.repoBranch,
-      token: form.token,
-      masterPassword: form.masterPassword,
-    })
-  }
-
-  const onUnlockSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await unlockWithMasterPassword({
-      masterPassword: form.masterPassword,
-    })
-  }
-
-  const onRefreshTokenSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await updateTokenCiphertext({
-      token: form.refreshToken,
-      masterPassword: form.refreshMasterPassword || undefined,
-    })
-  }
 
   return (
     <article className="space-y-4" aria-label="welcome-page">
@@ -107,36 +49,48 @@ export default function WelcomePage() {
       ) : null}
 
       {state.stage === 'needs-setup' ? (
-        <form className="space-y-3" onSubmit={(event) => void onSetupSubmit(event)}>
-          <Field
+        <form className="space-y-3" onSubmit={(event) => void submitModel.onSetupSubmit(event)}>
+          <AuthFormField
             label="Gitee 仓库"
             value={form.repoInput}
             onChange={(next) => setForm((prev) => ({ ...prev, repoInput: next }))}
             placeholder="例如 owner/repo 或 https://gitee.com/owner/repo"
             autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
-          <Field
+          <AuthFormField
             label="仓库分支"
             value={form.repoBranch}
             onChange={(next) => setForm((prev) => ({ ...prev, repoBranch: next }))}
             placeholder="默认 master，可填写 main/dev 等"
             autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
-          <Field
+          <AuthFormField
             label="Gitee Token"
             value={form.token}
             onChange={(next) => setForm((prev) => ({ ...prev, token: next }))}
             placeholder="请输入可访问私有仓库的 Token"
             type="password"
             autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
-          <Field
+          <AuthFormField
             label="主密码"
             value={form.masterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, masterPassword: next }))}
             placeholder="至少 8 位，且包含字母和数字"
             type="password"
             autoComplete="new-password"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
           {form.masterPassword ? <p className="text-xs text-slate-500">{passwordHint ?? '主密码强度满足要求'}</p> : null}
           <button
@@ -149,14 +103,17 @@ export default function WelcomePage() {
       ) : null}
 
       {state.stage === 'needs-unlock' ? (
-        <form className="space-y-3" onSubmit={(event) => void onUnlockSubmit(event)}>
-          <Field
+        <form className="space-y-3" onSubmit={(event) => void submitModel.onUnlockSubmit(event)}>
+          <AuthFormField
             label="主密码"
             value={form.masterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, masterPassword: next }))}
             placeholder="请输入主密码解锁"
             type="password"
             autoComplete="current-password"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
           <button
             type="submit"
@@ -168,22 +125,28 @@ export default function WelcomePage() {
       ) : null}
 
       {state.stage === 'needs-token-refresh' ? (
-        <form className="space-y-3" onSubmit={(event) => void onRefreshTokenSubmit(event)}>
-          <Field
+        <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
+          <AuthFormField
             label="新的 Gitee Token"
             value={form.refreshToken}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshToken: next }))}
             placeholder="请输入新的 Token（将覆盖本地密文）"
             type="password"
             autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
-          <Field
+          <AuthFormField
             label="主密码（可选）"
             value={form.refreshMasterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshMasterPassword: next }))}
             placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
             type="password"
             autoComplete="current-password"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
           />
           <button
             type="submit"

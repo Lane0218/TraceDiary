@@ -1,63 +1,19 @@
 import { useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
 import type { UseAuthResult } from '../../hooks/use-auth'
+import {
+  INITIAL_AUTH_FORM_STATE,
+  createAuthSubmitModel,
+  type AuthFormState,
+} from './auth-form-model'
+import {
+  AuthFormField,
+} from './auth-form-shared'
 
 interface AuthModalProps {
   auth: UseAuthResult
   open: boolean
   canClose: boolean
   onClose: () => void
-}
-
-interface AuthFormState {
-  repoInput: string
-  repoBranch: string
-  token: string
-  masterPassword: string
-  refreshToken: string
-  refreshMasterPassword: string
-}
-
-const initialFormState: AuthFormState = {
-  repoInput: '',
-  repoBranch: 'master',
-  token: '',
-  masterPassword: '',
-  refreshToken: '',
-  refreshMasterPassword: '',
-}
-
-function AuthField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  testId,
-  type = 'text',
-  autoComplete,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder: string
-  testId?: string
-  type?: 'text' | 'password'
-  autoComplete?: string
-}) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm text-td-muted">
-      <span>{label}</span>
-      <input
-        className="td-input"
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        data-testid={testId}
-      />
-    </label>
-  )
 }
 
 function getStageTitle(stage: string): { title: string; subtitle: string; badge: string } {
@@ -96,9 +52,17 @@ function getStageTitle(stage: string): { title: string; subtitle: string; badge:
 }
 
 export default function AuthModal({ auth, open, canClose, onClose }: AuthModalProps) {
-  const [form, setForm] = useState<AuthFormState>(initialFormState)
+  const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
   const { state, getMasterPasswordError, initializeFirstTime, unlockWithMasterPassword, updateTokenCiphertext, lockNow } =
     auth
+  const submitModel = createAuthSubmitModel(
+    {
+      initializeFirstTime,
+      unlockWithMasterPassword,
+      updateTokenCiphertext,
+    },
+    form,
+  )
 
   const stageCopy = useMemo(() => getStageTitle(state.stage), [state.stage])
   const passwordHint = useMemo(
@@ -108,31 +72,6 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
 
   if (!open) {
     return null
-  }
-
-  const onSetupSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await initializeFirstTime({
-      repoInput: form.repoInput,
-      giteeBranch: form.repoBranch,
-      token: form.token,
-      masterPassword: form.masterPassword,
-    })
-  }
-
-  const onUnlockSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await unlockWithMasterPassword({
-      masterPassword: form.masterPassword,
-    })
-  }
-
-  const onRefreshTokenSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await updateTokenCiphertext({
-      token: form.refreshToken,
-      masterPassword: form.refreshMasterPassword || undefined,
-    })
   }
 
   return (
@@ -173,24 +112,28 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
           {state.stage === 'checking' ? <p className="td-status td-status-muted">认证处理中，请稍候...</p> : null}
 
           {state.stage === 'needs-setup' ? (
-            <form className="space-y-3" onSubmit={(event) => void onSetupSubmit(event)}>
-              <AuthField
+            <form className="space-y-3" onSubmit={(event) => void submitModel.onSetupSubmit(event)}>
+              <AuthFormField
                 label="Gitee 仓库"
                 value={form.repoInput}
                 onChange={(next) => setForm((prev) => ({ ...prev, repoInput: next }))}
                 placeholder="owner/repo 或 https://gitee.com/owner/repo"
                 autoComplete="off"
                 testId="auth-setup-repo-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
-              <AuthField
+              <AuthFormField
                 label="仓库分支"
                 value={form.repoBranch}
                 onChange={(next) => setForm((prev) => ({ ...prev, repoBranch: next }))}
                 placeholder="默认 master，可填写 main/dev 等"
                 autoComplete="off"
                 testId="auth-setup-branch-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
-              <AuthField
+              <AuthFormField
                 label="Gitee Token"
                 value={form.token}
                 onChange={(next) => setForm((prev) => ({ ...prev, token: next }))}
@@ -198,8 +141,10 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="off"
                 testId="auth-setup-token-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
-              <AuthField
+              <AuthFormField
                 label="主密码"
                 value={form.masterPassword}
                 onChange={(next) => setForm((prev) => ({ ...prev, masterPassword: next }))}
@@ -207,6 +152,8 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="new-password"
                 testId="auth-setup-password-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
               {form.masterPassword ? <p className="text-xs text-td-muted">{passwordHint ?? '主密码强度满足要求'}</p> : null}
               <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-setup-submit">
@@ -216,8 +163,8 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
           ) : null}
 
           {state.stage === 'needs-unlock' ? (
-            <form className="space-y-3" onSubmit={(event) => void onUnlockSubmit(event)}>
-              <AuthField
+            <form className="space-y-3" onSubmit={(event) => void submitModel.onUnlockSubmit(event)}>
+              <AuthFormField
                 label="主密码"
                 value={form.masterPassword}
                 onChange={(next) => setForm((prev) => ({ ...prev, masterPassword: next }))}
@@ -225,6 +172,8 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="current-password"
                 testId="auth-unlock-password-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
               <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-unlock-submit">
                 解锁
@@ -233,8 +182,8 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
           ) : null}
 
           {state.stage === 'needs-token-refresh' ? (
-            <form className="space-y-3" onSubmit={(event) => void onRefreshTokenSubmit(event)}>
-              <AuthField
+            <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
+              <AuthFormField
                 label="新的 Gitee Token"
                 value={form.refreshToken}
                 onChange={(next) => setForm((prev) => ({ ...prev, refreshToken: next }))}
@@ -242,8 +191,10 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="off"
                 testId="auth-refresh-token-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
-              <AuthField
+              <AuthFormField
                 label="主密码（可选）"
                 value={form.refreshMasterPassword}
                 onChange={(next) => setForm((prev) => ({ ...prev, refreshMasterPassword: next }))}
@@ -251,6 +202,8 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
                 type="password"
                 autoComplete="current-password"
                 testId="auth-refresh-password-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
               />
               <button
                 type="submit"

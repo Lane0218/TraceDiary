@@ -649,6 +649,7 @@ describe('createDiaryUploadExecutor', () => {
   it('sha mismatch 冲突分支应解密远端内容后写入 conflictPayload.remote', async () => {
     const dataEncryptionKey = await createDataEncryptionKey('daily-conflict')
     const encryptedRemoteContent = await encryptWithAesGcm('# 远端版本', dataEncryptionKey)
+    const encryptedRemoteContentWithWhitespace = `${encryptedRemoteContent.slice(0, 20)}\n${encryptedRemoteContent.slice(20)}  `
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -672,7 +673,7 @@ describe('createDiaryUploadExecutor', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            content: btoa(encryptedRemoteContent),
+            content: btoa(encryptedRemoteContentWithWhitespace),
             encoding: 'base64',
             sha: 'sha-remote-latest',
           }),

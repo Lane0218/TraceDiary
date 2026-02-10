@@ -1,5 +1,6 @@
 import { getMetadata, saveMetadata } from './indexeddb'
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
+import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
 
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
@@ -143,79 +144,6 @@ export interface CreateDiaryUploadExecutorParams {
   now?: () => string
 }
 
-function assertCryptoAvailable(): Crypto {
-  if (typeof globalThis.crypto?.subtle === 'undefined') {
-    throw new Error('当前环境缺少 Web Crypto 能力')
-  }
-  return globalThis.crypto
-}
-
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const copy = new Uint8Array(bytes.byteLength)
-  copy.set(bytes)
-  return copy.buffer
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  if (typeof btoa !== 'function') {
-    throw new Error('当前环境缺少 Base64 编码能力')
-  }
-
-  let binary = ''
-  const chunkSize = 0x8000
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-  }
-  return btoa(binary)
-}
-
-function base64ToBytes(base64: string): Uint8Array {
-  if (typeof atob !== 'function') {
-    throw new Error('当前环境缺少 Base64 解码能力')
-  }
-
-  const normalizedBase64 = base64.replace(/\s+/g, '')
-  const binary = atob(normalizedBase64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes
-}
-
-async function encryptDiaryContent(content: string, key: CryptoKey): Promise<string> {
-  const cryptoApi = assertCryptoAvailable()
-  const iv = cryptoApi.getRandomValues(new Uint8Array(12))
-  const plaintextBytes = new TextEncoder().encode(content)
-  const encrypted = await cryptoApi.subtle.encrypt(
-    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-    key,
-    plaintextBytes,
-  )
-  const encryptedBytes = new Uint8Array(encrypted)
-  const payload = new Uint8Array(iv.length + encryptedBytes.length)
-  payload.set(iv, 0)
-  payload.set(encryptedBytes, iv.length)
-  return bytesToBase64(payload)
-}
-
-async function decryptDiaryContent(encryptedContent: string, key: CryptoKey): Promise<string> {
-  const cryptoApi = assertCryptoAvailable()
-  const payload = base64ToBytes(encryptedContent)
-  if (payload.byteLength <= 12) {
-    throw new Error('远端日记密文格式无效')
-  }
-
-  const iv = payload.subarray(0, 12)
-  const encryptedBytes = payload.subarray(12)
-  const decrypted = await cryptoApi.subtle.decrypt(
-    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-    key,
-    toArrayBuffer(encryptedBytes),
-  )
-  return new TextDecoder().decode(decrypted)
-}
-
 function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
   if (payload.reason === 'manual') {
     return 'chore: 手动同步 metadata'
@@ -300,6 +228,10 @@ function defaultParseMetadata<TMetadata>(decryptedContent: string): TMetadata {
 
 function nowIsoString(): string {
   return new Date().toISOString()
+}
+
+function normalizeEncryptedContent(encryptedContent: string): string {
+  return encryptedContent.replace(/\s+/g, '')
 }
 
 export async function placeholderUploadMetadata<TMetadata = unknown>(
@@ -614,7 +546,10 @@ export function createDiaryUploadExecutor(
       let baseMetadata = createEmptyMetadata(nowIso)
       if (remoteMetadata.exists && typeof remoteMetadata.content === 'string' && remoteMetadata.content.trim()) {
         try {
-          const decrypted = await decryptDiaryContent(remoteMetadata.content, params.dataEncryptionKey)
+          const decrypted = await decryptWithAesGcm(
+            normalizeEncryptedContent(remoteMetadata.content),
+            params.dataEncryptionKey,
+          )
           const parsed = defaultParseMetadata<unknown>(decrypted)
           baseMetadata = normalizeMetadata(parsed, nowIso)
         } catch {
@@ -623,7 +558,10 @@ export function createDiaryUploadExecutor(
       }
 
       const mergedMetadata = upsertMetadataEntryFromDiary(baseMetadata, payload.metadata, nowIso)
-      const encryptedMetadata = await encryptDiaryContent(JSON.stringify(mergedMetadata), params.dataEncryptionKey)
+      const encryptedMetadata = await encryptWithAesGcm(
+        JSON.stringify(mergedMetadata),
+        params.dataEncryptionKey,
+      )
       try {
         await upsertGiteeFile({
           token: params.token,
@@ -665,7 +603,7 @@ export function createDiaryUploadExecutor(
     })
 
     const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
-    const encryptedContent = await encryptDiaryContent(metadata.content, params.dataEncryptionKey)
+    const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
     const upsertResult = await upsertGiteeFile({
       token: params.token,
       owner: params.owner,
@@ -718,8 +656,8 @@ export function createDiaryUploadExecutor(
           useAccessTokenQuery,
         })
         if (latestRemote.exists && typeof latestRemote.content === 'string') {
-          const decryptedRemoteContent = await decryptDiaryContent(
-            latestRemote.content,
+          const decryptedRemoteContent = await decryptWithAesGcm(
+            normalizeEncryptedContent(latestRemote.content),
             params.dataEncryptionKey,
           )
           remoteMetadata = toRemoteDiaryMetadata(metadata, decryptedRemoteContent, now)
