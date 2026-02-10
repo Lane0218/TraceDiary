@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
 import ConflictDialog from '../components/common/conflict-dialog'
+import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
 import OnThisDayList from '../components/history/on-this-day-list'
 import type { UseAuthResult } from '../hooks/use-auth'
@@ -12,9 +13,15 @@ import { DIARY_INDEX_TYPE, listDiariesByIndex, type DiaryRecord } from '../servi
 import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
-
-const BUSY_SYNC_MESSAGE = '当前正在上传，请稍候重试'
-const MANUAL_SYNC_PENDING_MESSAGE = '手动上传已触发，正在等待结果...'
+import { getSyncAvailability } from '../utils/sync-availability'
+import {
+  MANUAL_SYNC_PENDING_MESSAGE,
+  getDisplayedManualSyncError,
+  getManualSyncFailureMessage,
+  getSessionLabel,
+  getSyncLabel,
+  getSyncToneClass,
+} from '../utils/sync-presentation'
 
 interface WorkspacePageProps {
   auth: UseAuthResult
@@ -113,30 +120,6 @@ function getYearlyReminder(now: Date): YearlyReminder {
   }
 }
 
-function StatusHint({
-  isLoading,
-  isSaving,
-  error,
-}: {
-  isLoading: boolean
-  isSaving: boolean
-  error: string | null
-}) {
-  if (isLoading) {
-    return <span className="td-status-pill td-status-muted">加载中</span>
-  }
-
-  if (error) {
-    return <span className="td-status-pill td-status-danger">本地保存异常</span>
-  }
-
-  if (isSaving) {
-    return <span className="td-status-pill td-status-warning">保存中</span>
-  }
-
-  return <span className="td-status-pill td-status-success">本地已保存</span>
-}
-
 export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -159,12 +142,25 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const diary = useDiary({ type: 'daily', date })
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
-  const canSyncToRemote =
-    auth.state.stage === 'ready' &&
-    Boolean(auth.state.tokenInMemory) &&
-    Boolean(dataEncryptionKey) &&
-    Boolean(auth.state.config?.giteeOwner) &&
-    Boolean(auth.state.config?.giteeRepoName)
+  const syncAvailability = useMemo(
+    () =>
+      getSyncAvailability({
+        stage: auth.state.stage,
+        giteeOwner: auth.state.config?.giteeOwner,
+        giteeRepoName: auth.state.config?.giteeRepoName,
+        tokenInMemory: auth.state.tokenInMemory,
+        dataEncryptionKey,
+      }),
+    [
+      auth.state.config?.giteeOwner,
+      auth.state.config?.giteeRepoName,
+      auth.state.stage,
+      auth.state.tokenInMemory,
+      dataEncryptionKey,
+    ],
+  )
+  const canSyncToRemote = syncAvailability.canSyncToRemote
+  const syncDisabledMessage = syncAvailability.disabledMessage
   const uploadMetadata = canSyncToRemote
     ? createDiaryUploadExecutor({
         token: auth.state.tokenInMemory as string,
@@ -178,21 +174,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const sync = useSync<DiarySyncMetadata>({
     uploadMetadata,
   })
-  const syncDisabledMessage = useMemo(() => {
-    if (auth.state.stage !== 'ready') {
-      return '云端同步未就绪：请先完成解锁。'
-    }
-    if (!auth.state.config?.giteeOwner || !auth.state.config?.giteeRepoName) {
-      return '云端同步未就绪：请先配置 Gitee 仓库。'
-    }
-    if (!auth.state.tokenInMemory) {
-      return '云端同步未就绪：当前会话缺少可用 Token，请重新解锁/配置。'
-    }
-    if (!dataEncryptionKey) {
-      return '云端同步未就绪：当前会话缺少数据加密密钥，请重新解锁。'
-    }
-    return '云端同步未就绪。'
-  }, [auth.state.config?.giteeOwner, auth.state.config?.giteeRepoName, auth.state.stage, auth.state.tokenInMemory, dataEncryptionKey])
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
 
@@ -323,8 +304,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     const result = await sync.saveNow(payload)
     if (!result.ok) {
-      const message = result.code === 'stale' ? BUSY_SYNC_MESSAGE : result.errorMessage || '上传未完成，请重试'
-      setManualSyncError(message)
+      setManualSyncError(getManualSyncFailureMessage(result))
       return
     }
     setManualSyncError(null)
@@ -344,69 +324,32 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     void sync.resolveConflict('merged', mergedPayload)
   }
 
-  const sessionLabel = useMemo(() => {
-    if (auth.state.stage === 'ready') {
-      return '会话：已解锁'
-    }
-    if (auth.state.stage === 'checking') {
-      return '会话：认证处理中'
-    }
-    return '会话：待认证'
-  }, [auth.state.stage])
-
-  const syncLabel = useMemo(() => {
-    if (!canSyncToRemote) {
-      return '云端未就绪'
-    }
-    if (sync.conflictState) {
-      return '检测到冲突'
-    }
-    if (sync.isOffline || sync.hasPendingRetry) {
-      return '离线待重试'
-    }
-    if (sync.status === 'syncing') {
-      return '云端同步中'
-    }
-    if (sync.status === 'success') {
-      return '云端已同步'
-    }
-    if (sync.status === 'error') {
-      return '云端同步失败'
-    }
-    if (!sync.hasUnsyncedChanges && sync.lastSyncedAt) {
-      return '云端已同步'
-    }
-    return '云端待同步'
-  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.hasUnsyncedChanges, sync.isOffline, sync.lastSyncedAt, sync.status])
-
-  const syncToneClass = useMemo(() => {
-    if (!canSyncToRemote) {
-      return 'td-status-warning'
-    }
-    if (sync.conflictState) {
-      return 'td-status-danger'
-    }
-    if (sync.isOffline || sync.hasPendingRetry) {
-      return 'td-status-warning'
-    }
-    if (sync.status === 'syncing') {
-      return 'td-status-warning'
-    }
-    if (sync.status === 'success') {
-      return 'td-status-success'
-    }
-    if (sync.status === 'error') {
-      return 'td-status-danger'
-    }
-    if (sync.hasUnsyncedChanges) {
-      return 'td-status-warning'
-    }
-    return 'td-status-muted'
-  }, [canSyncToRemote, sync.conflictState, sync.hasPendingRetry, sync.hasUnsyncedChanges, sync.isOffline, sync.status])
+  const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
+  const syncPresentationState = useMemo(
+    () => ({
+      canSyncToRemote,
+      hasConflict: Boolean(sync.conflictState),
+      isOffline: sync.isOffline,
+      hasPendingRetry: sync.hasPendingRetry,
+      status: sync.status,
+      hasUnsyncedChanges: sync.hasUnsyncedChanges,
+      lastSyncedAt: sync.lastSyncedAt,
+    }),
+    [
+      canSyncToRemote,
+      sync.conflictState,
+      sync.hasPendingRetry,
+      sync.hasUnsyncedChanges,
+      sync.isOffline,
+      sync.lastSyncedAt,
+      sync.status,
+    ],
+  )
+  const syncLabel = useMemo(() => getSyncLabel(syncPresentationState), [syncPresentationState])
+  const syncToneClass = useMemo(() => getSyncToneClass(syncPresentationState), [syncPresentationState])
 
   const displayedSyncMessage = sync.errorMessage
-  const displayedManualSyncError =
-    sync.status !== 'syncing' && manualSyncError === BUSY_SYNC_MESSAGE ? null : manualSyncError
+  const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
   const isManualSyncing = sync.status === 'syncing'
 
   return (
