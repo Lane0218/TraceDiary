@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-10`
-- 总任务：`65`
-- 状态统计：`DONE=51` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 总任务：`66`
+- 状态统计：`DONE=52` / `DOING=0` / `TODO=14` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -75,6 +75,7 @@
 | `TD-SYNC-013` | `DONE` | 修复同步中手动上传按钮无响应（移除 disabled 并保留忙碌反馈） | 同步中按钮可点击；点击后立刻提示“当前正在上传，请稍候重试”；不再出现无响应体感 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 87ed64f` |
 | `TD-SYNC-014` | `DONE` | 增强手动上传点击反馈可见性（点击即显示已触发状态） | 每次点击手动上传都应立即出现可见反馈，且 busy/失败信息不被自动隐藏 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` | `npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-09 / 6c7962f` |
 | `TD-SYNC-015` | `DONE` | 修复同步可靠性与加密模型一致性问题（队列保留/冲突解密/CAS方法/主密码派生密钥） | 失败后保留并可重放最新排队 payload；冲突展示远端明文且不双重加密；metadata CAS 更新使用 PUT；日记数据密钥改为主密码派生并贯通上传链路 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `src/hooks/use-auth.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（7/7）；`npm run lint` 通过 | `2026-02-09 / 1fcf734` |
+| `TD-SYNC-016` | `DONE` | 修复自动解锁后缺少数据加密密钥导致手动上传异常，并增强同步状态可观测性 | 自动解锁后可直接手动上传；并发触发“请稍候重试”不会在非上传中状态残留；状态区可区分是否存在未提交改动 | `src/hooks/use-auth.ts` `src/services/crypto.ts` `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-auth.test.tsx` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（39/39）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/manual-sync-success.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/daily-edit.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（9/9）；`npm run build` 通过；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`） | `2026-02-10 / 4578a86` |
 
 ### 6.6 PWA、部署与安全头
 
