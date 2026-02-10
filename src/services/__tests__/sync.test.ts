@@ -14,7 +14,7 @@ import {
   uploadMetadataToGitee,
 } from '../sync'
 import { encryptWithAesGcm } from '../crypto'
-import { decodeBase64Utf8 } from '../gitee'
+import { decodeBase64Utf8, encodeBase64Utf8 } from '../gitee'
 
 interface TestMetadata {
   version: string
@@ -326,12 +326,13 @@ describe('createUploadMetadataExecutor', () => {
 })
 
 describe('readRemoteMetadataFromGitee', () => {
-  it('应通过 Gitee contents API 读取并解码 metadata.json.enc', async () => {
+  it('应通过 Gitee contents API 读取并解码 metadata.json.enc（含 UTF-8 文本）', async () => {
+    const rawContent = 'encrypted-中文🚀\n'
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           encoding: 'base64',
-          content: btoa('encrypted-base64-payload\n'),
+          content: encodeBase64Utf8(rawContent),
           sha: 'sha-file-1',
         }),
         {
@@ -352,7 +353,7 @@ describe('readRemoteMetadataFromGitee', () => {
 
     expect(result).toEqual({
       missing: false,
-      encryptedContent: 'encrypted-base64-payload',
+      encryptedContent: 'encrypted-中文🚀',
       sha: 'sha-file-1',
     })
     expect(fetchMock).toHaveBeenCalledWith(
@@ -365,6 +366,52 @@ describe('readRemoteMetadataFromGitee', () => {
         },
       },
     )
+  })
+
+  it('404 时应返回 missing=true', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Not Found' }), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await readRemoteMetadataFromGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({ missing: true })
+  })
+
+  it('鉴权失败时应透传 auth 错误信息与状态码', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: '401 Unauthorized',
+        }),
+        {
+          status: 401,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    )
+
+    await expect(
+      readRemoteMetadataFromGitee({
+        token: 'bad-token',
+        owner: 'owner',
+        repo: 'repo',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+      }),
+    ).rejects.toMatchObject({
+      status: 401,
+      message: expect.stringContaining('鉴权失败'),
+    })
   })
 })
 
@@ -673,7 +720,8 @@ describe('createDiaryUploadExecutor', () => {
 })
 
 describe('uploadMetadataToGitee', () => {
-  it('expectedSha 存在时应使用 PUT', async () => {
+  it('expectedSha 存在时应使用 PUT 且保持 UTF-8 编码上传', async () => {
+    const encryptedContent = '加密内容-中文🚀'
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ content: { sha: 'sha-new' } }), {
         status: 200,
@@ -688,7 +736,7 @@ describe('uploadMetadataToGitee', () => {
       fetchImpl: fetchMock as unknown as typeof fetch,
       request: {
         path: 'metadata.json.enc',
-        encryptedContent: 'encrypted-content',
+        encryptedContent,
         message: 'sync metadata',
         branch: 'master',
         expectedSha: 'sha-old',
@@ -702,6 +750,10 @@ describe('uploadMetadataToGitee', () => {
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'PUT' })
+    const requestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}')) as {
+      content?: string
+    }
+    expect(decodeBase64Utf8(requestBody.content ?? '')).toBe(encryptedContent)
   })
 
   it('expectedSha 不存在时应使用 POST', async () => {
@@ -732,5 +784,90 @@ describe('uploadMetadataToGitee', () => {
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
+  })
+
+  it('鉴权失败时应返回 auth reason', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: '401 Unauthorized' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await uploadMetadataToGitee({
+      token: 'bad-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      request: {
+        path: 'metadata.json.enc',
+        encryptedContent: 'encrypted-content',
+        message: 'sync metadata',
+        branch: 'master',
+        expectedSha: 'sha-old',
+      },
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      conflict: false,
+      reason: 'auth',
+    })
+  })
+
+  it('sha mismatch 时应返回 conflict 与 sha_mismatch', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'sha does not match' }), {
+        status: 409,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await uploadMetadataToGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      request: {
+        path: 'metadata.json.enc',
+        encryptedContent: 'encrypted-content',
+        message: 'sync metadata',
+        branch: 'master',
+        expectedSha: 'sha-old',
+      },
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      conflict: true,
+      reason: 'sha_mismatch',
+    })
+  })
+
+  it('非鉴权类 API 错误时应保持兼容返回 ok=false 且 conflict=false', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Not Found' }), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    const result = await uploadMetadataToGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      request: {
+        path: 'metadata.json.enc',
+        encryptedContent: 'encrypted-content',
+        message: 'sync metadata',
+        branch: 'master',
+      },
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      conflict: false,
+    })
   })
 })

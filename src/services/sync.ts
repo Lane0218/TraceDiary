@@ -2,7 +2,6 @@ import { getMetadata, saveMetadata } from './indexeddb'
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import type { Metadata } from '../types/metadata'
 
-const DEFAULT_GITEE_API_BASE = 'https://gitee.com/api/v5'
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
 const DEFAULT_BRANCH = 'master'
 
@@ -144,38 +143,6 @@ export interface CreateDiaryUploadExecutorParams {
   now?: () => string
 }
 
-function normalizeApiBase(apiBase?: string): string {
-  const envApiBase =
-    typeof import.meta !== 'undefined' && import.meta.env?.VITE_GITEE_API_BASE
-      ? String(import.meta.env.VITE_GITEE_API_BASE)
-      : undefined
-
-  return (apiBase ?? envApiBase ?? DEFAULT_GITEE_API_BASE).trim().replace(/\/+$/, '')
-}
-
-function toUtf8FromBase64(base64: string): string {
-  const normalizedBase64 = base64.replace(/\s+/g, '')
-
-  if (typeof atob !== 'function') {
-    throw new Error('当前环境缺少 Base64 解码能力')
-  }
-
-  const binary = atob(normalizedBase64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return new TextDecoder().decode(bytes)
-}
-
-function encodePath(path: string): string {
-  return path
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => encodeURIComponent(segment))
-    .join('/')
-}
-
 function assertCryptoAvailable(): Crypto {
   if (typeof globalThis.crypto?.subtle === 'undefined') {
     throw new Error('当前环境缺少 Web Crypto 能力')
@@ -200,11 +167,6 @@ function bytesToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
   }
   return btoa(binary)
-}
-
-function utf8ToBase64(content: string): string {
-  const bytes = new TextEncoder().encode(content)
-  return bytesToBase64(bytes)
 }
 
 function base64ToBytes(base64: string): Uint8Array {
@@ -252,28 +214,6 @@ async function decryptDiaryContent(encryptedContent: string, key: CryptoKey): Pr
     toArrayBuffer(encryptedBytes),
   )
   return new TextDecoder().decode(decrypted)
-}
-
-async function readRemoteErrorMessage(response: Response): Promise<string | undefined> {
-  const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
-
-  try {
-    if (contentType.includes('application/json')) {
-      const body = (await response.json()) as { message?: unknown; error?: unknown }
-      if (typeof body.message === 'string' && body.message.trim()) {
-        return body.message.trim()
-      }
-      if (typeof body.error === 'string' && body.error.trim()) {
-        return body.error.trim()
-      }
-      return undefined
-    }
-
-    const text = (await response.text()).trim()
-    return text || undefined
-  } catch {
-    return undefined
-  }
 }
 
 function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
@@ -878,50 +818,29 @@ export async function readRemoteMetadataFromGitee(
     throw new Error('owner 与 repo 不能为空')
   }
 
-  const fetcher = params.fetchImpl ?? fetch
-  const requestUrl = `${normalizeApiBase(params.apiBase)}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePath(metadataPath)}?ref=${encodeURIComponent(branch)}`
-
-  const response = await fetcher(requestUrl, {
-    method: 'GET',
-    headers: {
-      Authorization: `token ${token}`,
-      Accept: 'application/json',
-    },
+  const remoteFile = await readGiteeFileContents({
+    token,
+    owner,
+    repo,
+    path: metadataPath,
+    ref: branch,
+    apiBase: params.apiBase,
+    fetchImpl: params.fetchImpl,
   })
 
-  if (response.status === 404) {
+  if (!remoteFile.exists) {
     return { missing: true }
   }
 
-  if (!response.ok) {
-    const remoteMessage = await readRemoteErrorMessage(response)
-    if (remoteMessage) {
-      throw new Error(`读取远端 metadata 失败（${response.status}）：${remoteMessage}`)
-    }
-    throw new Error(`读取远端 metadata 失败（${response.status}）`)
-  }
-
-  const body = (await response.json()) as {
-    content?: unknown
-    encoding?: unknown
-    sha?: unknown
-  }
-
-  if (typeof body.content !== 'string' || !body.content.trim()) {
-    throw new Error('远端 metadata 文件内容为空')
-  }
-
-  const encryptedContent =
-    body.encoding === 'base64' ? toUtf8FromBase64(body.content) : body.content
-
+  const encryptedContent = remoteFile.content?.trim() ?? ''
   if (!encryptedContent.trim()) {
     throw new Error('远端 metadata 文件内容为空')
   }
 
   return {
     missing: false,
-    encryptedContent: encryptedContent.trim(),
-    sha: typeof body.sha === 'string' ? body.sha : undefined,
+    encryptedContent,
+    sha: remoteFile.sha,
   }
 }
 
@@ -956,84 +875,54 @@ export async function uploadMetadataToGitee(
     throw new Error('提交说明不能为空')
   }
 
-  const requestUrl = `${normalizeApiBase(params.apiBase)}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePath(requestPath)}`
-  const fetcher = params.fetchImpl ?? fetch
-
   try {
-    const method = expectedSha ? 'PUT' : 'POST'
-    const body: {
-      content: string
-      message: string
-      branch: string
-      sha?: string
-    } = {
-      content: utf8ToBase64(encryptedContent),
+    const upsertResult = await upsertGiteeFile({
+      token,
+      owner,
+      repo,
+      path: requestPath,
+      content: encryptedContent,
       message,
       branch,
-    }
-
-    if (expectedSha) {
-      body.sha = expectedSha
-    }
-
-    const response = await fetcher(requestUrl, {
-      method,
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
+      expectedSha,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
     })
 
-    if (response.ok) {
-      let remoteSha: string | undefined
-      try {
-        const responseBody = (await response.json()) as {
-          sha?: unknown
-          content?: { sha?: unknown }
-          commit?: { sha?: unknown }
-        }
-        if (typeof responseBody.content?.sha === 'string') {
-          remoteSha = responseBody.content.sha
-        } else if (typeof responseBody.sha === 'string') {
-          remoteSha = responseBody.sha
-        } else if (typeof responseBody.commit?.sha === 'string') {
-          remoteSha = responseBody.commit.sha
-        }
-      } catch {
-        remoteSha = undefined
-      }
-
-      return {
-        ok: true,
-        conflict: false,
-        remoteSha,
-      }
-    }
-
-    const remoteMessage = await readRemoteErrorMessage(response)
-    if (response.status === 401 || response.status === 403) {
-      return {
-        ok: false,
-        conflict: false,
-        reason: 'auth',
-      }
-    }
-
-    if (looksLikeShaMismatch(response.status, remoteMessage)) {
-      return {
-        ok: false,
-        conflict: true,
-        reason: 'sha_mismatch',
-      }
-    }
-
     return {
-      ok: false,
+      ok: true,
       conflict: false,
+      remoteSha: upsertResult.sha,
     }
   } catch (error) {
+    if (error instanceof GiteeApiError) {
+      if (error.type === 'auth') {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'auth',
+        }
+      }
+      if (error.type === 'network') {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'network',
+        }
+      }
+      if (looksLikeShaMismatch(error.status, error.message)) {
+        return {
+          ok: false,
+          conflict: true,
+          reason: 'sha_mismatch',
+        }
+      }
+      return {
+        ok: false,
+        conflict: false,
+      }
+    }
+
     const reason = inferUploadFailureReason(error)
     if (reason === 'auth') {
       return {
@@ -1049,6 +938,15 @@ export async function uploadMetadataToGitee(
         reason: 'network',
       }
     }
+
+    if (looksLikeShaMismatch(pickStatusFromError(error), error instanceof Error ? error.message : undefined)) {
+      return {
+        ok: false,
+        conflict: true,
+        reason: 'sha_mismatch',
+      }
+    }
+
     throw error
   }
 }
