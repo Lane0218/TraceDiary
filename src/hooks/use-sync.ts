@@ -300,6 +300,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             markPendingRetry(activePayload, activePayloadVersion)
             setStatus('error')
             setErrorMessage(message)
+            resolvingConflictRef.current = false
             return {
               ok: false,
               code: 'network',
@@ -312,6 +313,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             queueLatestUploadPayload(activePayload, activePayloadVersion)
             setStatus('error')
             setErrorMessage(message)
+            resolvingConflictRef.current = false
             return {
               ok: false,
               code: 'auth',
@@ -323,6 +325,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           queueLatestUploadPayload(activePayload, activePayloadVersion)
           setStatus('error')
           setErrorMessage(message)
+          resolvingConflictRef.current = false
           return {
             ok: false,
             code: 'unknown',
@@ -357,6 +360,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           setIsOffline(true)
           setStatus('error')
           setErrorMessage(message)
+          resolvingConflictRef.current = false
           return {
             ok: false,
             code: 'offline',
@@ -368,6 +372,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         queueLatestUploadPayload(activePayload, activePayloadVersion)
         setStatus('error')
         setErrorMessage(message)
+        resolvingConflictRef.current = false
         return {
           ok: false,
           code: 'unknown',
@@ -444,6 +449,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
   const onInputChange = useCallback(
     (metadata: TMetadata) => {
+      if (resolvingConflictRef.current) {
+        return
+      }
       latestMetadataRef.current = metadata
       clearPendingTimer()
       timeoutRef.current = setTimeout(() => {
@@ -505,10 +513,12 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       resolvingConflictRef.current = true
+      clearPendingTimer()
+      clearQueuedUploadPayload()
       setConflictState(null)
       await saveNow(resolvedMetadata)
     },
-    [conflictState, saveNow],
+    [clearPendingTimer, clearQueuedUploadPayload, conflictState, saveNow],
   )
 
   return {

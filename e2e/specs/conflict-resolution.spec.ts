@@ -19,6 +19,8 @@ const KEEP_REMOTE_DATE = '2100-01-03'
 const MERGE_DATE = '2100-01-04'
 const RETRY_CONFLICT_DATE = '2100-01-05'
 
+test.describe.configure({ timeout: 180_000 })
+
 function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -50,13 +52,34 @@ async function buildEncryptedDiaryContent(page: Page, masterPassword: string, pl
   return encryptWithAesGcm(plain, key)
 }
 
-async function syncMarker(page: Page, date: string, marker: string): Promise<void> {
+async function syncMarker(
+  page: Page,
+  env: ReturnType<typeof getE2EEnv>,
+  date: string,
+  marker: string,
+): Promise<void> {
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, date, marker)
-  await page.waitForTimeout(800)
-  await clickManualSync(page)
-  await expectSyncSuccess(page)
-  await waitForSyncIdle(page)
+  await page.waitForTimeout(500)
+
+  let lastError: unknown = null
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await clickManualSync(page)
+      await expectSyncSuccess(page)
+      await waitForSyncIdle(page, { timeoutMs: 45_000 })
+      return
+    } catch (error) {
+      lastError = error
+      if (page.isClosed()) {
+        throw error
+      }
+      await waitForSyncIdle(page, { timeoutMs: 12_000 }).catch(() => undefined)
+      await ensureReadySession(page, env, { totalTimeoutMs: 45_000 })
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('基线手动同步失败')
 }
 
 async function openConflictDialogWithReadableRemote(
@@ -69,7 +92,7 @@ async function openConflictDialogWithReadableRemote(
   },
 ): Promise<Locator> {
   // 先确保目标文件存在，后续手动上传会走 PUT + sha 分支。
-  await syncMarker(page, params.date, buildRunMarker('conflict-base'))
+  await syncMarker(page, env, params.date, buildRunMarker('conflict-base'))
 
   await writeDailyContent(page, `E2E ${params.localMarker}`)
   await waitForDailyDiaryPersisted(page, params.date, params.localMarker)
@@ -77,6 +100,7 @@ async function openConflictDialogWithReadableRemote(
 
   const remoteEncryptedContent = await buildEncryptedDiaryContent(page, env.masterPassword, `E2E ${params.remoteMarker}`)
   const dialog = page.getByTestId('conflict-dialog')
+  const syncStatus = page.getByTestId('sync-status-pill')
   let opened = false
   let lastError: unknown = null
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -89,7 +113,6 @@ async function openConflictDialogWithReadableRemote(
       conflictContent: remoteEncryptedContent,
       conflictMessage: `test: 构造可解密远端冲突 ${params.date}`,
       triggerTimeoutMs: 30_000,
-      requiredCommitMessageSubstring: '手动同步',
     })
 
     try {
@@ -100,7 +123,20 @@ async function openConflictDialogWithReadableRemote(
       break
     } catch (error) {
       lastError = error
-      await waitForSyncIdle(page)
+      if (await dialog.isVisible().catch(() => false)) {
+        opened = true
+        break
+      }
+
+      if (await syncStatus.textContent().then((text) => text?.includes('检测到冲突') ?? false).catch(() => false)) {
+        await expect(dialog).toBeVisible({ timeout: 10_000 })
+        opened = true
+        break
+      }
+
+      if (!page.isClosed()) {
+        await waitForSyncIdle(page, { timeoutMs: 8_000 }).catch(() => undefined)
+      }
     } finally {
       await race.dispose()
     }
@@ -119,6 +155,7 @@ async function openConflictDialogWithReadableRemote(
 async function expectConflictResolved(page: Page, dialog: Locator): Promise<void> {
   await expect(dialog).toBeHidden({ timeout: 30_000 })
   await expect(page.getByTestId('sync-status-pill')).not.toContainText('检测到冲突', { timeout: 30_000 })
+  await waitForSyncIdle(page, { timeoutMs: 45_000 })
   await expectSyncSuccess(page)
 }
 

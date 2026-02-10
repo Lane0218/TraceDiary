@@ -3,6 +3,15 @@ import type { E2EEnv } from './env'
 
 export type AuthStage = 'checking' | 'needs-setup' | 'needs-unlock' | 'needs-token-refresh' | 'ready'
 
+export interface EnsureReadySessionOptions {
+  totalTimeoutMs?: number
+  retryIntervalMs?: number
+}
+
+export interface WaitForSyncIdleOptions {
+  timeoutMs?: number
+}
+
 export const CONFIG_STORAGE_KEY = 'trace-diary:app-config'
 export const AUTH_LOCK_STATE_KEY = 'trace-diary:auth:lock-state'
 export const AUTH_PASSWORD_EXPIRY_KEY = 'trace-diary:auth:password-expiry'
@@ -68,27 +77,53 @@ export async function expectSessionReady(page: Page): Promise<void> {
   await expect(page.getByLabel('auth-modal')).toHaveCount(0)
 }
 
-export async function ensureReadySession(page: Page, env: E2EEnv): Promise<void> {
+export async function ensureReadySession(
+  page: Page,
+  env: E2EEnv,
+  options: EnsureReadySessionOptions = {},
+): Promise<void> {
+  const totalTimeoutMs = Math.max(30_000, options.totalTimeoutMs ?? 90_000)
+  const retryIntervalMs = Math.max(250, options.retryIntervalMs ?? 300)
   const authModal = page.getByLabel('auth-modal')
   const sessionReady = page.getByText('会话：已解锁')
+  const deadline = Date.now() + totalTimeoutMs
+  let lastStage = 'unknown'
+  let lastAuthError: string | null = null
 
-  for (let attempt = 0; attempt < 6; attempt += 1) {
+  while (Date.now() < deadline) {
     if (await sessionReady.isVisible()) {
-      break
+      await expect(authModal).toBeHidden({ timeout: 15_000 })
+      return
     }
 
     if (!(await authModal.isVisible())) {
-      await page.waitForTimeout(300)
+      await page.waitForTimeout(retryIntervalMs)
       continue
+    }
+
+    const stageLine = authModal.locator('p').filter({ hasText: /^状态：/u }).first()
+    const rawStage = await stageLine.textContent().catch(() => null)
+    if (rawStage) {
+      lastStage = rawStage.replace(/^状态：/u, '').trim() || 'unknown'
+    }
+
+    const modalAlert = authModal.getByRole('alert').first()
+    if (await modalAlert.isVisible().catch(() => false)) {
+      const text = (await modalAlert.textContent().catch(() => null))?.trim()
+      if (text) {
+        lastAuthError = text
+      }
     }
 
     if (await page.getByTestId('auth-setup-submit').isVisible()) {
       await fillSetupForm(page, env)
+      await page.waitForTimeout(retryIntervalMs)
       continue
     }
 
     if (await page.getByTestId('auth-unlock-submit').isVisible()) {
       await submitUnlock(page, env.masterPassword)
+      await page.waitForTimeout(retryIntervalMs)
       continue
     }
 
@@ -97,14 +132,34 @@ export async function ensureReadySession(page: Page, env: E2EEnv): Promise<void>
         token: env.token,
         masterPassword: env.masterPassword,
       })
+      await page.waitForTimeout(retryIntervalMs)
       continue
     }
 
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(retryIntervalMs)
   }
 
-  await expect(sessionReady).toBeVisible({ timeout: 30_000 })
-  await expect(authModal).toBeHidden()
+  if (await sessionReady.isVisible().catch(() => false)) {
+    await expect(authModal).toBeHidden({ timeout: 15_000 })
+    return
+  }
+
+  const finalStage = await authModal
+    .locator('p')
+    .filter({ hasText: /^状态：/u })
+    .first()
+    .textContent()
+    .then((text) => text?.replace(/^状态：/u, '').trim() || lastStage)
+    .catch(() => lastStage)
+
+  const finalError = await authModal
+    .getByRole('alert')
+    .first()
+    .textContent()
+    .then((text) => text?.trim() || lastAuthError || '无')
+    .catch(() => lastAuthError || '无')
+
+  throw new Error(`会话未就绪（${totalTimeoutMs}ms）：stage=${finalStage}，authError=${finalError}`)
 }
 
 function dailyEditorLocator(page: Page): Locator {
@@ -208,6 +263,8 @@ export async function expectManualSyncError(page: Page, patterns: RegExp[]): Pro
   expect(matched).toBeTruthy()
 }
 
-export async function waitForSyncIdle(page: Page): Promise<void> {
-  await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', { timeout: 30_000 })
+export async function waitForSyncIdle(page: Page, options: WaitForSyncIdleOptions = {}): Promise<void> {
+  await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', {
+    timeout: options.timeoutMs ?? 30_000,
+  })
 }
