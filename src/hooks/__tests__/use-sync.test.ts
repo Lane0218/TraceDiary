@@ -302,6 +302,54 @@ describe('useSync', () => {
     expect(uploadMetadata).toHaveBeenCalledTimes(2)
   })
 
+  it('防抖自动上传不应受手动超时阈值影响', async () => {
+    const uploadMetadata = vi.fn<UploadMetadataFn<TestMetadata>>(async () => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 1_500)
+      })
+      return {
+        syncedAt: '2026-02-08T12:10:00.000Z',
+      }
+    })
+
+    const { result } = renderHook(() =>
+      useSync<TestMetadata>({
+        uploadMetadata,
+        debounceMs: 0,
+        uploadTimeoutMs: 1_000,
+      }),
+    )
+
+    act(() => {
+      result.current.onInputChange({ content: 'slow-auto-upload' })
+    })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+    })
+    expect(result.current.status).toBe('syncing')
+    expect(result.current.errorMessage).toBeNull()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500)
+      await Promise.resolve()
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(uploadMetadata).toHaveBeenNthCalledWith(1, {
+      metadata: { content: 'slow-auto-upload' },
+      reason: 'debounced',
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.errorMessage).toBeNull()
+    expect(result.current.lastSyncedAt).toBe('2026-02-08T12:10:00.000Z')
+  })
+
   it('未注入上传实现时应使用默认占位上传并成功返回同步时间', async () => {
     const { result } = renderHook(() =>
       useSync<TestMetadata>({

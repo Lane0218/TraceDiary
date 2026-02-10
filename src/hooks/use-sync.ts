@@ -7,6 +7,7 @@ import {
 
 const DEFAULT_DEBOUNCE_MS = 30_000
 const DEFAULT_UPLOAD_TIMEOUT_MS = 25_000
+const SYNC_TIMEOUT_MESSAGE = '同步超时，请检查网络后重试'
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
@@ -268,10 +269,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       try {
+        const effectiveUploadTimeoutMs = activePayload.reason === 'manual' ? uploadTimeoutMs : 0
         const result = await withTimeout(
           uploadMetadata(activePayload),
-          uploadTimeoutMs,
-          '同步超时，请检查网络后重试',
+          effectiveUploadTimeoutMs,
+          SYNC_TIMEOUT_MESSAGE,
         )
         if (!mountedRef.current || taskIdRef.current !== taskId) {
           return {
