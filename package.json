@@ -10,7 +10,6 @@
     "preview": "vite preview",
     "test:unit": "vitest run src/__tests__/unit src/services/__tests__",
     "test:integration": "vitest run --environment jsdom src/__tests__/integration src/hooks/__tests__",
-    "test:e2e:smoke": "bash ./scripts/e2e-smoke.sh",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:headed": "playwright test --project=chromium --headed",
     "test:e2e:ui": "playwright test --project=chromium --ui",
