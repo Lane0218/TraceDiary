@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-10`
 - 总任务：`74`
-- 状态统计：`DONE=59` / `DOING=1` / `TODO=14` / `BLOCKED=0`
-- 当前进行中：`TD-TEST-011`
+- 状态统计：`DONE=60` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -105,7 +105,7 @@
 | `TD-TEST-008` | `DONE` | 修复 E2E 假阳性与冲突时序风险（metadata 应用链路断言 + 手动上传使用持久化快照） | metadata 加密断言基于应用真实上传链路；手动上传与冲突流程在快速输入场景下保持一致性并通过完整测试 | `src/services/sync.ts` `src/hooks/use-diary.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/*` `src/__tests__/integration/*` `e2e/specs/*` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium` 通过（4/4） | `2026-02-09 / 165cd5f` |
 | `TD-TEST-009` | `DONE` | 修复冲突 E2E 长跑不稳定（认证重试 + 同步状态收敛 + 冲突注入可观测性） | `conflict-resolution` 在高重复执行下不再因认证抖动或同步状态长期卡住导致失败；日志可区分预写失败与目标请求未触发 | `e2e/fixtures/app.ts` `e2e/specs/conflict-resolution.spec.ts` `e2e/helpers/conflict.ts` `src/hooks/use-sync.ts` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（12/12）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=10 --retries=0` 通过（40/40） | `2026-02-10 / 769aa47` |
 | `TD-TEST-010` | `DONE` | 修复 lint 报错 `e2e/helpers/conflict.ts` 中 `no-unsafe-finally` 违规并恢复 lint 全绿 | `npm run lint` 不再报 `no-unsafe-finally`；并通过必要回归（单元/集成 + 冲突相关 E2E） | `e2e/helpers/conflict.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --retries=0` 通过（4/4） | `2026-02-10 / 8c9ec50` |
-| `TD-TEST-011` | `DOING` | 移除冗余 E2E 冒烟脚本与 npm 入口 | 仓库不再保留 `test:e2e:smoke` 与 `scripts/e2e-smoke.sh`；无遗留引用 | `package.json` `scripts/e2e-smoke.sh` `TODO.md` | — | — |
+| `TD-TEST-011` | `DONE` | 移除冗余 E2E 冒烟脚本与 npm 入口 | 仓库不再保留 `test:e2e:smoke` 与 `scripts/e2e-smoke.sh`；无遗留运行入口 | `package.json` `scripts/e2e-smoke.sh` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；按用户授权采用必要测试策略，未执行全量 E2E | `2026-02-10 / 6e7d886` |
 
 ### 6.8 UI 体验优化
 
