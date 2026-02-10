@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-10`
-- 总任务：`72`
-- 状态统计：`DONE=58` / `DOING=0` / `TODO=14` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`73`
+- 状态统计：`DONE=58` / `DOING=1` / `TODO=14` / `BLOCKED=0`
+- 当前进行中：`TD-DOC-003`
 
 ## 1. 任务清单（按模块）
 
@@ -134,3 +134,4 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `TD-DOC-001` | `DONE` | 补充导入功能规格与 TODO 拆解（md/txt 文件名识别 + 系统自动生成 metadata） | `SPEC.md` 明确导入输入格式、识别规则、冲突策略、验收标准；`TODO.md` 新增导入任务组 | `SPEC.md` `TODO.md` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过（冒烟） | `2026-02-09 / 05c0fb7` |
 | `TD-DOC-002` | `DONE` | 在 AGENTS 增加“大工作量任务默认并行多 agents 执行”规范 | `AGENTS.md` 明确要求 AI 对重任务主动采用并行多 agents，不依赖用户显式指定 | `AGENTS.md` `TODO.md` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（14 passed，3 flaky 重试通过） | `2026-02-09 / 6c99c2c` |
+| `TD-DOC-003` | `DOING` | 在 AGENTS 增加“用户明确授权时可采用必要测试策略”的执行规范 | AGENTS 明确必要测试策略的触发条件、最小测试集合、结果披露要求；不影响默认完整测试红线 | `AGENTS.md` `TODO.md` | — | — |
