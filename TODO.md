@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-11`
 - 总任务：`89`
-- 状态统计：`DONE=73` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-013`
+- 状态统计：`DONE=74` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -131,7 +131,7 @@
 | `TD-UI-010` | `DONE` | 新增编辑器右下角字数角标、修复往年今日渐隐截断并清理历史日历冗余组件 | 日记与年度总结编辑器右下角显示字数（非空白字符）；往年今日长内容不溢出且底部渐隐自然；移除不再使用的 `calendar` 页面与路由 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `src/components/history/on-this-day-list.tsx` `src/App.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/calendar.integration.test.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”） | `2026-02-11 / 3f9e8d4` |
 | `TD-UI-011` | `DONE` | 优化月历年份输入交互与年月弹层视觉统一（支持年份直输即生效、去蓝色、缩窄月份格） | 年份可自然输入中间态并在合法值时即时切换；弹层与主页面风格统一且不使用蓝色强调；12 个月按钮视觉更紧凑 | `src/components/calendar/month-calendar.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 3b77020` |
 | `TD-UI-012` | `DONE` | 修复年月弹层定位跳动并收窄月份与年份输入控件 | 不再出现先右后中跳动；月份格和年份输入框更紧凑 | `src/components/calendar/month-calendar.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 2ed232e` |
-| `TD-UI-013` | `DOING` | 新增写作统计视图（侧栏“往年今日/统计”分段切换 + 统计详情页）并提供累计字数/篇数/连续天数等指标 | 工作台左侧支持“往年今日/统计”切换且默认不影响往年今日首屏可见；统计口径正确（总日记、总年度总结、累计字数、当前连续、最长连续、本年字数）；新增 `/insights` 页面可查看年度汇总与近12月趋势 | `src/App.tsx` `src/pages/workspace.tsx` `src/pages/insights.tsx` `src/components/stats/*` `src/hooks/use-stats.ts` `src/utils/stats.ts` `src/types/stats.ts` `src/__tests__/unit/stats.unit.test.ts` `src/__tests__/integration/app.integration.test.tsx` `src/__tests__/integration/workspace.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | — | — |
+| `TD-UI-013` | `DONE` | 新增写作统计视图（侧栏“往年今日/统计”分段切换 + 统计详情页）并提供累计字数/篇数/连续天数等指标 | 工作台左侧支持“往年今日/统计”切换且默认不影响往年今日首屏可见；统计口径正确（总日记、总年度总结、累计字数、当前连续、最长连续、本年字数）；新增 `/insights` 页面可查看年度汇总与近12月趋势 | `src/App.tsx` `src/pages/workspace.tsx` `src/pages/insights.tsx` `src/components/stats/stats-overview-card.tsx` `src/hooks/use-stats.ts` `src/utils/stats.ts` `src/types/stats.ts` `src/__tests__/unit/stats.unit.test.ts` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（55/55）；`npm run test:integration` 通过（44/44）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 1c6f8e3` |
 
 ### 6.9 数据导入（v1.1）
 
