@@ -569,15 +569,17 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       latestMetadataRef.current = metadata
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      const dirty = resolveDirtyState(keyState, {
+        fallbackWhenBaselineMissing: true,
+      })
       setEntryDirtyState(
         keyState.entryId,
-        resolveDirtyState(keyState, {
-          fallbackWhenBaselineMissing: true,
-        }),
+        dirty,
       )
       if (mountedRef.current) {
-        setStatus('idle')
-        setErrorMessage(null)
+        // 输入期间仅在状态边沿变化时触发更新，避免每次击键都重绘状态栏。
+        setStatus((prev) => (prev === 'idle' ? prev : 'idle'))
+        setErrorMessage((prev) => (prev === null ? prev : null))
       }
       void ensureBaselineLoaded(keyState.entryId).then(() => {
         if (!mountedRef.current) {

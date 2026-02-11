@@ -10,20 +10,20 @@ function yearlyEditorLocator(page: Page): Locator {
   return page.locator('section[aria-label="yearly-summary-page"] .ProseMirror').first()
 }
 
-async function writeYearlySummary(page: Page, content: string): Promise<void> {
+async function writeYearlySummary(page: Page, year: number, content: string): Promise<void> {
   const editor = yearlyEditorLocator(page)
   await expect(editor).toBeVisible()
 
   await editor.fill(content)
-  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+  await waitForYearlySummaryPersisted(page, year, content)
 }
 
-async function writeYearlySummaryInSourceMode(page: Page, content: string): Promise<void> {
+async function writeYearlySummaryInSourceMode(page: Page, year: number, content: string): Promise<void> {
   await page.getByRole('button', { name: '源码' }).click()
   const sourceEditor = page.locator('section[aria-label="yearly-summary-page"] textarea').first()
   await expect(sourceEditor).toBeVisible()
   await sourceEditor.fill(content)
-  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+  await waitForYearlySummaryPersisted(page, year, content)
 
   await page.getByRole('button', { name: '源码' }).click()
   await expect(yearlyEditorLocator(page)).toBeVisible()
@@ -78,7 +78,7 @@ test('年度总结编辑后应写入 IndexedDB，并在切换年份后保持可�
   await page.goto(`/yearly/${PERSIST_YEAR}`)
   await ensureReadySession(page, env)
 
-  await writeYearlySummaryInSourceMode(page, markdown)
+  await writeYearlySummaryInSourceMode(page, PERSIST_YEAR, markdown)
   await expect(page.locator('section[aria-label="yearly-summary-page"] .ProseMirror h1').first()).toContainText(
     `年度标题 ${marker}`,
   )
@@ -107,8 +107,7 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
   await page.goto(`/yearly/${SYNC_YEAR}`)
   await ensureReadySession(page, env)
 
-  await writeYearlySummary(page, `E2E 年度上传 ${marker}`)
-  await waitForYearlySummaryPersisted(page, SYNC_YEAR, marker)
+  await writeYearlySummary(page, SYNC_YEAR, `E2E 年度上传 ${marker}`)
 
   await page.getByRole('button', { name: '手动保存并立即上传' }).click()
 

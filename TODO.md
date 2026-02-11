@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`87`
-- 状态统计：`DONE=72` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`88`
+- 状态统计：`DONE=72` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-UI-012`
 
 ## 1. 任务清单（按模块）
 
@@ -130,6 +130,7 @@
 | `TD-UI-009` | `DONE` | 收敛同步信息展示（移除编辑页分支显示，仅保留云端状态胶囊） | `workspace/yearly` 不展示“分支”与“未提交改动”；欢迎页与设置仍展示分支；云端状态胶囊保留并可反映同步状态 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-state-consistency.spec.ts` `e2e/specs/manual-sync-failure.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-failure.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3） | `2026-02-11 / 43b9ae5` |
 | `TD-UI-010` | `DONE` | 新增编辑器右下角字数角标、修复往年今日渐隐截断并清理历史日历冗余组件 | 日记与年度总结编辑器右下角显示字数（非空白字符）；往年今日长内容不溢出且底部渐隐自然；移除不再使用的 `calendar` 页面与路由 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `src/components/history/on-this-day-list.tsx` `src/App.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/calendar.integration.test.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”） | `2026-02-11 / 3f9e8d4` |
 | `TD-UI-011` | `DONE` | 优化月历年份输入交互与年月弹层视觉统一（支持年份直输即生效、去蓝色、缩窄月份格） | 年份可自然输入中间态并在合法值时即时切换；弹层与主页面风格统一且不使用蓝色强调；12 个月按钮视觉更紧凑 | `src/components/calendar/month-calendar.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 3b77020` |
+| `TD-UI-012` | `DOING` | 消除编辑输入时“本地已保存/云端待同步”状态闪烁，收敛为仅异常/慢保存提示与稳定云端状态切换 | 连续输入时状态栏不频闪；本地仅在慢保存/失败时提示；云端状态仅在关键边沿切换 | `src/components/common/status-hint.tsx` `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `e2e/fixtures/app.ts` `TODO.md` | — | — |
 
 ### 6.9 数据导入（v1.1）
 

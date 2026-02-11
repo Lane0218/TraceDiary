@@ -118,25 +118,35 @@ describe('年度总结页面', () => {
     )
   })
 
-  it('年度总结页应展示保存中状态并响应年份切换', () => {
-    useDiaryMock.mockImplementation((target) => {
-      if (target.type === 'yearly_summary') {
-        return buildUseDiaryResult({
-          entryId: `summary:${target.year}`,
-          isSaving: true,
-        })
-      }
-      return buildUseDiaryResult()
-    })
+  it('年度总结页应在慢保存时展示保存中状态并响应年份切换', async () => {
+    vi.useFakeTimers()
+    try {
+      useDiaryMock.mockImplementation((target) => {
+        if (target.type === 'yearly_summary') {
+          return buildUseDiaryResult({
+            entryId: `summary:${target.year}`,
+            isSaving: true,
+          })
+        }
+        return buildUseDiaryResult()
+      })
 
-    renderYearlyPage('/yearly/2026')
+      renderYearlyPage('/yearly/2026')
 
-    expect(screen.getByRole('heading', { name: '2026 年度总结' })).toBeTruthy()
-    expect(screen.getByText('保存中')).toBeTruthy()
+      expect(screen.getByRole('heading', { name: '2026 年度总结' })).toBeTruthy()
+      expect(screen.queryByText('保存中')).toBeNull()
 
-    fireEvent.change(screen.getByLabelText('跳转年份'), { target: { value: '2025' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400)
+      })
+      expect(screen.getByText('保存中')).toBeTruthy()
 
-    expect(useDiaryMock).toHaveBeenLastCalledWith({ type: 'yearly_summary', year: 2025 })
+      fireEvent.change(screen.getByLabelText('跳转年份'), { target: { value: '2025' } })
+
+      expect(useDiaryMock).toHaveBeenLastCalledWith({ type: 'yearly_summary', year: 2025 })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('年度总结页错误时应展示错误提示', () => {
