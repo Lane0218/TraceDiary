@@ -29,22 +29,22 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
   const entry = entries[index]
 
   return (
-    <div style={style} className="px-0.5 py-1.5">
+    <div style={style} className="px-1 py-1.5">
       <button
         type="button"
         onClick={() => onSelectDate(entry.date)}
-        className="group flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[12px] border border-[#ddd4bf] bg-[linear-gradient(180deg,#fffef8_0%,#fbf7ee_100%)] p-3.5 text-left shadow-[0_1px_0_rgba(255,255,255,0.88),0_6px_14px_rgba(42,32,14,0.06)] transition duration-200 hover:-translate-y-[1px] hover:border-[#ccbfa1] hover:shadow-[0_1px_0_rgba(255,255,255,0.94),0_10px_18px_rgba(42,32,14,0.11)]"
+        className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc] hover:bg-[#fcfcfc]"
         aria-label={`打开 ${entry.date}`}
         data-testid="history-card"
       >
-        <div className="flex shrink-0 items-center gap-2.5">
-          <span className="rounded-full border border-[#dccfb1] bg-[#f4ecd8] px-2 py-0.5 text-[11px] font-medium text-[#6f6347]">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full border border-td-line bg-td-soft px-2 py-0.5 text-[11px] text-td-muted">
             {entry.year}
           </span>
-          <p className="text-xs font-medium tracking-[0.01em] text-[#736c5e]">{entry.date}</p>
+          <p className="text-xs text-td-muted">{entry.date}</p>
         </div>
         <p
-          className="mt-2.5 min-h-0 flex-1 overflow-hidden whitespace-pre-line break-words text-sm leading-6 text-[#2d2a24]"
+          className="mt-2 min-h-0 flex-1 overflow-hidden whitespace-pre-line break-words text-sm leading-6 text-td-text"
           style={previewFadeMaskStyle}
         >
           {entry.preview}
@@ -65,7 +65,7 @@ export function OnThisDayList({
 
   if (loadError) {
     return (
-      <div className="rounded-[12px] border border-red-200 bg-red-50/90 p-4 text-sm text-red-700">
+      <div className="rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         往年今日读取失败：{loadError}
       </div>
     )
@@ -73,7 +73,7 @@ export function OnThisDayList({
 
   if (isLoading) {
     return (
-      <div className="rounded-[12px] border border-[#ddd4bf] bg-[#f5f0e4] p-4 text-sm text-[#6f6859]">
+      <div className="rounded-[10px] border border-td-line bg-td-soft p-4 text-sm text-td-muted">
         正在加载往年今日...
       </div>
     )
@@ -81,7 +81,7 @@ export function OnThisDayList({
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-[12px] border border-dashed border-[#d9cfba] bg-[#f7f2e8] p-4 text-sm text-[#6f6859]">
+      <div className="rounded-[10px] border border-dashed border-td-line bg-td-soft p-4 text-sm text-td-muted">
         当前日期暂无往年记录。
       </div>
     )
@@ -90,13 +90,13 @@ export function OnThisDayList({
   return (
     <List
       rowCount={entries.length}
-      rowHeight={146}
+      rowHeight={138}
       rowComponent={OnThisDayRow}
       rowProps={{ entries, onSelectDate }}
-      defaultHeight={364}
+      defaultHeight={360}
       overscanCount={4}
-      className="rounded-[12px] bg-transparent"
-      style={{ height: 364, width: '100%' }}
+      className="rounded-[10px] bg-transparent"
+      style={{ height: 360, width: '100%' }}
       aria-label="往年今日列表"
       data-testid="on-this-day-virtual-list"
     />
