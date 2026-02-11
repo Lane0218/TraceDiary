@@ -141,9 +141,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         content: nextContent,
         modifiedAt: new Date().toISOString(),
       })
-      if (manualSyncError) {
-        setManualSyncError(null)
-      }
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
     }
   }
   const displayedSyncMessage = sync.errorMessage

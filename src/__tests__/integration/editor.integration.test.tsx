@@ -244,13 +244,13 @@ describe('年度总结页面', () => {
     })
   })
 
-  it('自动上传超时后应退出同步中并展示可重试错误', async () => {
+  it('手动上传超时后应退出同步中并展示可重试错误', async () => {
     vi.useFakeTimers()
     try {
       const uploadExecutor = vi.fn(
         () =>
           new Promise(() => {
-            // 模拟自动上传请求悬挂
+            // 模拟手动上传请求悬挂
           }),
       )
       createDiaryUploadExecutorMock.mockImplementation(() => uploadExecutor)
@@ -264,21 +264,23 @@ describe('年度总结页面', () => {
       renderYearlyPage('/yearly/2026')
 
       fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
-        target: { value: '自动上传超时场景' },
+        target: { value: '手动上传超时场景' },
       })
+      expect(uploadExecutor).toHaveBeenCalledTimes(0)
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(30_000)
+        fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+        await Promise.resolve()
       })
+      expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()
       expect(uploadExecutor).toHaveBeenCalledTimes(1)
-      expect(screen.getByText('云端同步中')).toBeTruthy()
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(25_000)
+        await vi.advanceTimersByTimeAsync(26_000)
       })
 
       expect(screen.getByText('云端同步失败')).toBeTruthy()
-      expect(screen.getByText('同步超时，请检查网络后重试')).toBeTruthy()
+      expect(screen.getAllByText('同步超时，请检查网络后重试').length).toBeGreaterThan(0)
     } finally {
       vi.useRealTimers()
     }

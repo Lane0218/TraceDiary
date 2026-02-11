@@ -319,19 +319,18 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const handleEditorChange = (nextContent: string) => {
     diary.setContent(nextContent)
 
-    const modifiedAt = new Date().toISOString()
     const payload: DiarySyncMetadata = {
       type: 'daily',
       entryId: diary.entryId,
       date,
       content: nextContent,
-      modifiedAt,
+      modifiedAt: new Date().toISOString(),
     }
     if (canSyncToRemote) {
       sync.onInputChange(payload)
-      if (manualSyncError) {
-        setManualSyncError(null)
-      }
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
     }
     setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }

@@ -7,8 +7,8 @@ import {
 
 const DEFAULT_UPLOAD_TIMEOUT_MS = 25_000
 const SYNC_TIMEOUT_MESSAGE = '同步超时，请检查网络后重试'
-const OFFLINE_MANUAL_RETRY_MESSAGE = '当前处于离线状态，请恢复网络后手动重试'
-const NETWORK_MANUAL_RETRY_MESSAGE = '网络异常，请恢复网络后手动重试'
+const OFFLINE_MANUAL_RETRY_MESSAGE = '当前处于离线状态，请恢复网络后再次手动上传'
+const NETWORK_MANUAL_RETRY_MESSAGE = '网络异常，请检查后再次手动上传'
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
@@ -174,7 +174,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isOffline, setIsOffline] = useState(() => getIsOffline())
-  const [hasPendingRetry, setHasPendingRetry] = useState(false)
+  const [hasPendingRetry] = useState(false)
   const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(false)
   const [conflictState, setConflictState] = useState<{
     local: TMetadata
@@ -302,12 +302,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setEntryDirtyState(
           keyState.entryId,
           resolveDirtyState(keyState, {
-            fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+            fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
           }),
         )
         if (mountedRef.current) {
           setIsOffline(true)
-          setHasPendingRetry(true)
           setStatus('error')
           setErrorMessage(OFFLINE_MANUAL_RETRY_MESSAGE)
         }
@@ -327,7 +326,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       try {
-        const result = await withTimeout(uploadMetadata(payload), uploadTimeoutMs, SYNC_TIMEOUT_MESSAGE)
+        const result = await withTimeout(
+          uploadMetadata(payload),
+          uploadTimeoutMs,
+          SYNC_TIMEOUT_MESSAGE,
+        )
         if (!mountedRef.current || taskIdRef.current !== taskId) {
           return {
             ok: false,
@@ -348,7 +351,6 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
               remote: result.conflictPayload?.remote ?? null,
             })
             setErrorMessage(message)
-            setHasPendingRetry(false)
             resolvingConflictRef.current = false
             return {
               ok: false,
@@ -361,10 +363,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             setEntryDirtyState(
               keyState.entryId,
               resolveDirtyState(keyState, {
-                fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+                fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
               }),
             )
-            setHasPendingRetry(true)
             setStatus('error')
             setErrorMessage(NETWORK_MANUAL_RETRY_MESSAGE)
             resolvingConflictRef.current = false
@@ -380,10 +381,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             setEntryDirtyState(
               keyState.entryId,
               resolveDirtyState(keyState, {
-                fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+                fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
               }),
             )
-            setHasPendingRetry(false)
             setStatus('error')
             setErrorMessage(message)
             resolvingConflictRef.current = false
@@ -398,10 +398,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           setEntryDirtyState(
             keyState.entryId,
             resolveDirtyState(keyState, {
-              fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+              fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
             }),
           )
-          setHasPendingRetry(false)
           setStatus('error')
           setErrorMessage(message)
           resolvingConflictRef.current = false
@@ -415,7 +414,6 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setStatus('success')
         setErrorMessage(null)
         setConflictState(null)
-        setHasPendingRetry(false)
         resolvingConflictRef.current = false
         const syncedAt = result?.syncedAt ?? now()
         const nextBaseline: SyncBaselineRecord = {
@@ -450,22 +448,21 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         }
 
         if (isNetworkOfflineError(error)) {
-          const currentlyOffline = getIsOffline()
-          const message = currentlyOffline ? OFFLINE_MANUAL_RETRY_MESSAGE : NETWORK_MANUAL_RETRY_MESSAGE
+          const offline = getIsOffline()
+          const message = offline ? OFFLINE_MANUAL_RETRY_MESSAGE : NETWORK_MANUAL_RETRY_MESSAGE
           setEntryDirtyState(
             keyState.entryId,
             resolveDirtyState(keyState, {
-              fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+              fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
             }),
           )
-          setIsOffline(currentlyOffline)
-          setHasPendingRetry(true)
+          setIsOffline(offline)
           setStatus('error')
           setErrorMessage(message)
           resolvingConflictRef.current = false
           return {
             ok: false,
-            code: currentlyOffline ? 'offline' : 'network',
+            code: offline ? 'offline' : 'network',
             errorMessage: message,
           }
         }
@@ -474,10 +471,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         setEntryDirtyState(
           keyState.entryId,
           resolveDirtyState(keyState, {
-            fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? false,
+            fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(keyState.entryId) ?? true,
           }),
         )
-        setHasPendingRetry(false)
         setStatus('error')
         setErrorMessage(message)
         resolvingConflictRef.current = false
@@ -579,6 +575,10 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           fallbackWhenBaselineMissing: true,
         }),
       )
+      if (mountedRef.current) {
+        setStatus('idle')
+        setErrorMessage(null)
+      }
       void ensureBaselineLoaded(keyState.entryId).then(() => {
         if (!mountedRef.current) {
           return

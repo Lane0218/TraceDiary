@@ -187,7 +187,7 @@ describe('useSync', () => {
     expect(result.current.hasUnsyncedChanges).toBe(true)
   })
 
-  it('离线时手动保存应返回 offline，并提示恢复网络后手动重试', async () => {
+  it('离线时手动保存应返回 offline，并提示恢复网络后再次手动上传', async () => {
     const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
       syncedAt: '2026-02-08T15:00:00.000Z',
     }))
@@ -210,12 +210,12 @@ describe('useSync', () => {
 
     expect(uploadMetadata).not.toHaveBeenCalled()
     expect(result.current.isOffline).toBe(true)
-    expect(result.current.hasPendingRetry).toBe(true)
-    expect(result.current.errorMessage).toBe('当前处于离线状态，请恢复网络后手动重试')
+    expect(result.current.hasPendingRetry).toBe(false)
+    expect(result.current.errorMessage).toBe('当前处于离线状态，请恢复网络后再次手动上传')
     expect(saveResult).toEqual({
       ok: false,
       code: 'offline',
-      errorMessage: '当前处于离线状态，请恢复网络后手动重试',
+      errorMessage: '当前处于离线状态，请恢复网络后再次手动上传',
     })
   })
 
@@ -236,7 +236,7 @@ describe('useSync', () => {
       await result.current.saveNow({ content: 'offline-draft' })
     })
     expect(uploadMetadata).toHaveBeenCalledTimes(0)
-    expect(result.current.hasPendingRetry).toBe(true)
+    expect(result.current.hasPendingRetry).toBe(false)
 
     setNavigatorOnline(true)
     await act(async () => {
@@ -246,7 +246,7 @@ describe('useSync', () => {
 
     expect(result.current.isOffline).toBe(false)
     expect(uploadMetadata).toHaveBeenCalledTimes(0)
-    expect(result.current.hasPendingRetry).toBe(true)
+    expect(result.current.hasPendingRetry).toBe(false)
 
     let retryResult: SaveNowResult | null = null
     await act(async () => {
@@ -293,9 +293,9 @@ describe('useSync', () => {
     expect(firstSaveResult).toEqual({
       ok: false,
       code: 'network',
-      errorMessage: '网络异常，请恢复网络后手动重试',
+      errorMessage: '网络异常，请检查后再次手动上传',
     })
-    expect(result.current.hasPendingRetry).toBe(true)
+    expect(result.current.hasPendingRetry).toBe(false)
     expect(uploadMetadata).toHaveBeenCalledTimes(1)
 
     setNavigatorOnline(true)

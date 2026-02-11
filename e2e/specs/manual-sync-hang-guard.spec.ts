@@ -22,7 +22,7 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
-test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing @slow @remote', async ({ page }) => {
+test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote', async ({ page }) => {
   test.setTimeout(210_000)
   const env = getE2EEnv()
   const marker = `hang-guard-${Date.now()}`
@@ -33,7 +33,7 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
   let interceptedManual = false
-  let interceptedAuto = false
+  let manualCommitMessage = ''
   const handler = async (route: Route): Promise<void> => {
     const request = route.request()
     const isTargetDiaryUpload =
@@ -48,19 +48,10 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
 
     if (!interceptedManual && message.includes('手动同步日记')) {
       interceptedManual = true
-      // 让手动上传覆盖自动防抖触发时间窗，稳定复现“手动后衔接自动上传”链路。
+      manualCommitMessage = message
+      // 模拟单次手动上传请求卡住，验证超时保护可以收敛状态。
       await new Promise((resolve) => {
         setTimeout(resolve, 31_000)
-      })
-      await route.continue()
-      return
-    }
-
-    if (!interceptedAuto && message.includes('自动同步日记')) {
-      interceptedAuto = true
-      // 远端迟迟不返回：验证自动上传超时保护能否让 UI 退出 syncing。
-      await new Promise((resolve) => {
-        setTimeout(resolve, 90_000)
       })
       await route.continue()
       return
@@ -79,16 +70,12 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
         timeout: 90_000,
       })
       .toBe(true)
-    await expect
-      .poll(() => interceptedAuto, {
-        timeout: 90_000,
-      })
-      .toBe(true)
+    expect(manualCommitMessage).toContain('手动同步日记')
 
-    await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', {
+    await expect(page.getByTestId('sync-status-pill')).toContainText('云端同步失败', {
       timeout: 90_000,
     })
-    await expect(page.getByTestId('sync-status-pill')).toContainText('云端同步失败', {
+    await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', {
       timeout: 20_000,
     })
     await expect(page.getByTestId('manual-sync-error')).toContainText('同步超时，请检查网络后重试', {
