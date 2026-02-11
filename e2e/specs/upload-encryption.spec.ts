@@ -1,5 +1,5 @@
 import { expect, test, type Route } from '@playwright/test'
-import { decryptWithAesGcm, deriveAesKeyFromPassword } from '../../src/services/crypto'
+import { decryptWithAesGcm, deriveDataEncryptionKeyFromMasterPassword } from '../../src/services/crypto'
 import {
   AUTH_UNLOCKED_TOKEN_KEY,
   CONFIG_STORAGE_KEY,
@@ -13,13 +13,6 @@ import {
 } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 import { readGiteeFile } from '../helpers/gitee-api'
-
-interface StoredKdfParams {
-  algorithm: 'PBKDF2'
-  hash: 'SHA-256'
-  iterations: number
-  salt: string
-}
 
 function buildUniqueTestDate(): string {
   const stamp = Date.now().toString()
@@ -85,13 +78,7 @@ test('手动上传后的远端日记内容应为非明文密文', async ({ page 
   expect(remoteContent).not.toContain(marker)
   expect(remoteContent).toMatch(/^[A-Za-z0-9+/=]+$/)
 
-  const config = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as { kdfParams: StoredKdfParams }) : null
-  }, CONFIG_STORAGE_KEY)
-  expect(config).toBeTruthy()
-
-  const metadataKey = await deriveAesKeyFromPassword(env.masterPassword, config!.kdfParams)
+  const metadataKey = await deriveDataEncryptionKeyFromMasterPassword(env.masterPassword)
   const encryptedMetadataPayload = decodeBase64Utf8(metadataRequestBodyContent as string)
   expect(encryptedMetadataPayload).toMatch(/^[A-Za-z0-9+/=]+$/)
   expect(encryptedMetadataPayload).not.toContain(marker)

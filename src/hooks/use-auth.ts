@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   calibrateKdfParams,
   decryptToken as decryptTokenWithPassword,
-  deriveAesKeyFromPassword,
   deriveDataEncryptionKeyFromMasterPassword,
   encryptToken as encryptTokenWithPassword,
   hashMasterPassword as hashMasterPasswordWithKdf,
@@ -23,7 +22,6 @@ export const AUTH_PASSWORD_EXPIRY_KEY = 'trace-diary:auth:password-expiry'
 const AUTH_UNLOCK_SECRET_KEY = 'trace-diary:auth:unlock-secret'
 const AUTH_UNLOCKED_TOKEN_KEY = 'trace-diary:auth:unlocked-token'
 const AUTH_UNLOCKED_DATA_KEY = 'trace-diary:auth:unlocked-data-key'
-const AUTH_UNLOCKED_FALLBACK_DATA_KEYS = 'trace-diary:auth:unlocked-fallback-data-keys'
 const UNLOCK_KEY_LENGTH = 32
 
 export interface RepoRef {
@@ -38,7 +36,6 @@ export interface PullRemoteDiariesPayload {
   repoName: string
   branch: string
   dataEncryptionKey: CryptoKey
-  fallbackDataEncryptionKeys?: CryptoKey[]
 }
 
 export interface AuthDependencies {
@@ -50,10 +47,6 @@ export interface AuthDependencies {
   encryptToken: (payload: { token: string; masterPassword: string; kdfParams: KdfParams }) => Promise<string>
   decryptToken: (payload: { encryptedToken: string; masterPassword: string; kdfParams: KdfParams }) => Promise<string>
   deriveDataEncryptionKey: (masterPassword: string) => Promise<CryptoKey>
-  deriveLegacyDataEncryptionKey: (payload: {
-    masterPassword: string
-    kdfParams: KdfParams
-  }) => Promise<CryptoKey>
   pullRemoteDiariesToLocal: (payload: PullRemoteDiariesPayload) => Promise<void>
   restoreUnlockedToken?: (config: AppConfig) => Promise<string | null>
   now: () => number
@@ -80,7 +73,6 @@ export interface AuthState {
   config: AppConfig | null
   tokenInMemory: string | null
   dataEncryptionKey: CryptoKey | null
-  fallbackDataEncryptionKeys?: CryptoKey[]
   isLocked: boolean
   passwordExpired: boolean
   needsMasterPasswordForTokenRefresh: boolean
@@ -297,17 +289,6 @@ async function cacheUnlockedDataEncryptionKey(dataEncryptionKey: CryptoKey): Pro
   localStorage.setItem(AUTH_UNLOCKED_DATA_KEY, encryptedPayload)
 }
 
-function buildFallbackDataEncryptionKeys(keys: Array<CryptoKey | null | undefined>): CryptoKey[] {
-  const uniqueKeys = new Set<CryptoKey>()
-  keys.forEach((key) => {
-    if (!key || uniqueKeys.has(key)) {
-      return
-    }
-    uniqueKeys.add(key)
-  })
-  return Array.from(uniqueKeys)
-}
-
 async function restoreUnlockedDataEncryptionKeyFromCache(): Promise<CryptoKey | null> {
   const cached = localStorage.getItem(AUTH_UNLOCKED_DATA_KEY)
   if (!cached) {
@@ -322,66 +303,9 @@ async function restoreUnlockedDataEncryptionKeyFromCache(): Promise<CryptoKey | 
   return crypto.subtle.importKey('raw', toArrayBuffer(rawKey), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
 }
 
-async function cacheUnlockedFallbackDataEncryptionKeys(dataEncryptionKeys: CryptoKey[]): Promise<void> {
-  if (dataEncryptionKeys.length === 0) {
-    localStorage.removeItem(AUTH_UNLOCKED_FALLBACK_DATA_KEYS)
-    return
-  }
-
-  const rawKeyList = await Promise.all(
-    dataEncryptionKeys.map(async (dataEncryptionKey) => {
-      const rawKey = await crypto.subtle.exportKey('raw', dataEncryptionKey)
-      return bytesToBase64(new Uint8Array(rawKey))
-    }),
-  )
-  const plaintext = new TextEncoder().encode(JSON.stringify(rawKeyList))
-  const encryptedPayload = await encryptWithUnlockSecret(plaintext)
-  localStorage.setItem(AUTH_UNLOCKED_FALLBACK_DATA_KEYS, encryptedPayload)
-}
-
-async function restoreUnlockedFallbackDataEncryptionKeysFromCache(): Promise<CryptoKey[]> {
-  const cached = localStorage.getItem(AUTH_UNLOCKED_FALLBACK_DATA_KEYS)
-  if (!cached) {
-    return []
-  }
-
-  const decrypted = await decryptWithUnlockSecret(cached)
-  if (!decrypted || decrypted.byteLength === 0) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(new TextDecoder().decode(decrypted)) as unknown
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    const keyCandidates = await Promise.all(
-      parsed.map(async (item) => {
-        if (typeof item !== 'string' || !item.trim()) {
-          return null
-        }
-        const rawKey = base64ToBytes(item)
-        if (rawKey.byteLength === 0) {
-          return null
-        }
-
-        return crypto.subtle.importKey('raw', toArrayBuffer(rawKey), { name: 'AES-GCM' }, false, [
-          'encrypt',
-          'decrypt',
-        ])
-      }),
-    )
-    return buildFallbackDataEncryptionKeys(keyCandidates)
-  } catch {
-    return []
-  }
-}
-
 function clearUnlockStateCache(): void {
   localStorage.removeItem(AUTH_UNLOCKED_TOKEN_KEY)
   localStorage.removeItem(AUTH_UNLOCKED_DATA_KEY)
-  localStorage.removeItem(AUTH_UNLOCKED_FALLBACK_DATA_KEYS)
   localStorage.removeItem(AUTH_UNLOCK_SECRET_KEY)
 }
 
@@ -425,9 +349,6 @@ function createDefaultDependencies(): AuthDependencies {
     deriveDataEncryptionKey: async (masterPassword) => {
       return deriveDataEncryptionKeyFromMasterPassword(masterPassword)
     },
-    deriveLegacyDataEncryptionKey: async ({ masterPassword, kdfParams }) => {
-      return deriveAesKeyFromPassword(masterPassword, kdfParams)
-    },
     pullRemoteDiariesToLocal: async (payload) => {
       await pullRemoteDiariesToIndexedDb({
         token: payload.token,
@@ -435,7 +356,6 @@ function createDefaultDependencies(): AuthDependencies {
         repo: payload.repoName,
         branch: payload.branch,
         dataEncryptionKey: payload.dataEncryptionKey,
-        fallbackDataEncryptionKeys: payload.fallbackDataEncryptionKeys,
       })
     },
     restoreUnlockedToken: async () => {
@@ -451,7 +371,6 @@ function createInitialState(): AuthState {
     config: null,
     tokenInMemory: null,
     dataEncryptionKey: null,
-    fallbackDataEncryptionKeys: [],
     isLocked: true,
     passwordExpired: true,
     needsMasterPasswordForTokenRefresh: true,
@@ -590,21 +509,10 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       const dataEncryptionKey = masterPasswordRef.current
         ? await dependencies.deriveDataEncryptionKey(masterPasswordRef.current)
         : await restoreUnlockedDataEncryptionKeyFromCache()
-      const fallbackDataEncryptionKeys = masterPasswordRef.current
-        ? buildFallbackDataEncryptionKeys([
-            await dependencies
-              .deriveLegacyDataEncryptionKey({
-                masterPassword: masterPasswordRef.current,
-                kdfParams: config.kdfParams,
-              })
-              .catch(() => null),
-          ])
-        : await restoreUnlockedFallbackDataEncryptionKeysFromCache()
 
       if (!dataEncryptionKey) {
         writeLockState(true)
         localStorage.removeItem(AUTH_UNLOCKED_DATA_KEY)
-        localStorage.removeItem(AUTH_UNLOCKED_FALLBACK_DATA_KEYS)
         setState({
           stage: 'needs-unlock',
           config,
@@ -622,7 +530,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       try {
         await cacheUnlockedToken(restoredToken)
         await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
-        await cacheUnlockedFallbackDataEncryptionKeys(fallbackDataEncryptionKeys)
       } catch {
         // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
       }
@@ -632,7 +539,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         config,
         tokenInMemory: restoredToken,
         dataEncryptionKey,
-        fallbackDataEncryptionKeys,
         isLocked: false,
         passwordExpired: false,
         needsMasterPasswordForTokenRefresh: false,
@@ -668,7 +574,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     const config = state.config
     const token = state.tokenInMemory
     const dataEncryptionKey = state.dataEncryptionKey
-    const fallbackDataEncryptionKeys = state.fallbackDataEncryptionKeys ?? []
     if (!config || !token || !dataEncryptionKey) {
       return
     }
@@ -694,7 +599,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         repoName: config.giteeRepoName,
         branch,
         dataEncryptionKey,
-        fallbackDataEncryptionKeys,
       })
       .then(() => {
         if (cancelled) {
@@ -739,7 +643,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     dependencies,
     state.config,
     state.dataEncryptionKey,
-    state.fallbackDataEncryptionKeys,
     state.stage,
     state.tokenInMemory,
   ])
@@ -783,14 +686,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         const now = dependencies.now()
         const expiry = markUnlockedWithFreshExpiry(now)
         const dataEncryptionKey = await dependencies.deriveDataEncryptionKey(payload.masterPassword)
-        const fallbackDataEncryptionKeys = buildFallbackDataEncryptionKeys([
-          await dependencies
-            .deriveLegacyDataEncryptionKey({
-              masterPassword: payload.masterPassword,
-              kdfParams,
-            })
-            .catch(() => null),
-        ])
         const config: AppConfig = {
           giteeRepo: `https://gitee.com/${repoRef.canonicalRepo}`,
           giteeOwner: repoRef.owner,
@@ -807,7 +702,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         try {
           await cacheUnlockedToken(payload.token.trim())
           await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
-          await cacheUnlockedFallbackDataEncryptionKeys(fallbackDataEncryptionKeys)
         } catch {
           // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
         }
@@ -817,7 +711,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           config,
           tokenInMemory: payload.token.trim(),
           dataEncryptionKey,
-          fallbackDataEncryptionKeys,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -943,14 +836,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         const dataEncryptionKey = await dependencies.deriveDataEncryptionKey(payload.masterPassword)
-        const fallbackDataEncryptionKeys = buildFallbackDataEncryptionKeys([
-          await dependencies
-            .deriveLegacyDataEncryptionKey({
-              masterPassword: payload.masterPassword,
-              kdfParams: state.config.kdfParams,
-            })
-            .catch(() => null),
-        ])
         nextConfig = {
           ...state.config,
           passwordExpiry: expiry.iso,
@@ -959,7 +844,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         try {
           await cacheUnlockedToken(token)
           await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
-          await cacheUnlockedFallbackDataEncryptionKeys(fallbackDataEncryptionKeys)
         } catch {
           // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
         }
@@ -969,7 +853,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           config: nextConfig,
           tokenInMemory: token,
           dataEncryptionKey,
-          fallbackDataEncryptionKeys,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -1034,14 +917,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         const now = dependencies.now()
         const expiry = markUnlockedWithFreshExpiry(now)
         const dataEncryptionKey = await dependencies.deriveDataEncryptionKey(masterPassword)
-        const fallbackDataEncryptionKeys = buildFallbackDataEncryptionKeys([
-          await dependencies
-            .deriveLegacyDataEncryptionKey({
-              masterPassword,
-              kdfParams: state.config.kdfParams,
-            })
-            .catch(() => null),
-        ])
         const nextConfig: AppConfig = {
           ...state.config,
           passwordExpiry: expiry.iso,
@@ -1053,7 +928,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         try {
           await cacheUnlockedToken(token)
           await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
-          await cacheUnlockedFallbackDataEncryptionKeys(fallbackDataEncryptionKeys)
         } catch {
           // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
         }
@@ -1064,7 +938,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           config: nextConfig,
           tokenInMemory: token,
           dataEncryptionKey,
-          fallbackDataEncryptionKeys,
           isLocked: false,
           passwordExpired: false,
           needsMasterPasswordForTokenRefresh: false,
@@ -1092,7 +965,6 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       stage: prev.config ? 'needs-unlock' : 'needs-setup',
       tokenInMemory: null,
       dataEncryptionKey: null,
-      fallbackDataEncryptionKeys: [],
       isLocked: true,
       passwordExpired: true,
       needsMasterPasswordForTokenRefresh: true,

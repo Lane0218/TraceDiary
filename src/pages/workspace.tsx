@@ -167,7 +167,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
-  const fallbackDataEncryptionKeys = auth.state.fallbackDataEncryptionKeys ?? []
   const syncAvailability = useMemo(
     () =>
       getSyncAvailability({
@@ -194,7 +193,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
-        fallbackDataEncryptionKeys,
         syncMetadata: true,
       })
     : undefined

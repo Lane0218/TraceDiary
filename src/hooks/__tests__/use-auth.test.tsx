@@ -17,7 +17,6 @@ const sampleKdf: KdfParams = {
   salt: 'salt-base64',
 }
 const sampleDataEncryptionKey = { type: 'secret' } as CryptoKey
-const sampleLegacyDataEncryptionKey = { type: 'legacy-secret' } as CryptoKey
 
 function buildConfig(overrides?: Partial<AppConfig>): AppConfig {
   return {
@@ -47,7 +46,6 @@ function buildDependencies(overrides?: Partial<AuthDependencies>): AuthDependenc
       void masterPassword
       return sampleDataEncryptionKey
     }),
-    deriveLegacyDataEncryptionKey: vi.fn(async () => sampleLegacyDataEncryptionKey),
     pullRemoteDiariesToLocal: vi.fn(async () => undefined),
     restoreUnlockedToken: vi.fn(async () => null),
     now: vi.fn(() => fixedNow),
@@ -100,7 +98,6 @@ describe('useAuth', () => {
     expect(savedPayload.giteeBranch).toBe('master')
     expect(dependencies.deriveDataEncryptionKey).toHaveBeenCalledTimes(1)
     expect(dependencies.deriveDataEncryptionKey).toHaveBeenCalledWith('master1234')
-    expect(dependencies.deriveLegacyDataEncryptionKey).toHaveBeenCalledTimes(1)
   })
 
   it('首次初始化应支持自定义仓库分支', async () => {
@@ -195,7 +192,6 @@ describe('useAuth', () => {
     expect(saveConfig).toHaveBeenCalled()
     expect(dependencies.deriveDataEncryptionKey).toHaveBeenCalledTimes(1)
     expect(dependencies.deriveDataEncryptionKey).toHaveBeenCalledWith('master1234')
-    expect(dependencies.deriveLegacyDataEncryptionKey).toHaveBeenCalledTimes(1)
   })
 
   it('token 校验失效后应进入补输流程', async () => {
@@ -275,7 +271,6 @@ describe('useAuth', () => {
       repoName: 'trace-diary',
       branch: 'master',
       dataEncryptionKey: sampleDataEncryptionKey,
-      fallbackDataEncryptionKeys: [sampleLegacyDataEncryptionKey],
     })
   })
 })

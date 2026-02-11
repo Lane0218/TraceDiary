@@ -1,7 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { deriveAesKeyFromPassword, encryptWithAesGcm } from '../../src/services/crypto'
+import { deriveDataEncryptionKeyFromMasterPassword, encryptWithAesGcm } from '../../src/services/crypto'
 import {
-  CONFIG_STORAGE_KEY,
   buildRunMarker,
   clickManualSync,
   ensureReadySession,
@@ -25,30 +24,9 @@ function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-interface StoredKdfParams {
-  algorithm: 'PBKDF2'
-  hash: 'SHA-256'
-  iterations: number
-  salt: string
-}
-
 async function buildEncryptedDiaryContent(page: Page, masterPassword: string, plain: string): Promise<string> {
-  const kdfParams = await page.evaluate((storageKey) => {
-    const raw = localStorage.getItem(storageKey)
-    if (!raw) {
-      return null
-    }
-    const config = JSON.parse(raw) as {
-      kdfParams?: StoredKdfParams
-    }
-    return config.kdfParams ?? null
-  }, CONFIG_STORAGE_KEY)
-
-  if (!kdfParams) {
-    throw new Error('缺少 kdfParams，无法构造冲突远端密文')
-  }
-
-  const key = await deriveAesKeyFromPassword(masterPassword, kdfParams)
+  void page
+  const key = await deriveDataEncryptionKeyFromMasterPassword(masterPassword)
   return encryptWithAesGcm(plain, key)
 }
 

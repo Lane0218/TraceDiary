@@ -53,7 +53,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
-  const fallbackDataEncryptionKeys = auth.state.fallbackDataEncryptionKeys ?? []
 
   const syncAvailability = useMemo(
     () =>
@@ -81,7 +80,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
-        fallbackDataEncryptionKeys,
         syncMetadata: true,
       })
     : undefined
