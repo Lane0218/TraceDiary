@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`82`
-- 状态统计：`DONE=67` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`84`
+- 状态统计：`DONE=68` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-DOC-004`
 
 ## 1. 任务清单（按模块）
 
@@ -126,6 +126,7 @@
 | `TD-UI-005` | `DONE` | 收敛日期入口：移除双日期输入框并新增“月标题点击年月选择” | 删除指定文案；无“当前日期/查询日期”输入框；可通过月标题弹层选择年月并联动编辑与往年今日 | `src/pages/workspace.tsx` `src/components/calendar/month-calendar.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/app.integration.test.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 9ae8d0e` |
 | `TD-UI-006` | `DONE` | 优化工作台信息简化与左侧结构（移除条目ID/冗余描述，分离往年今日卡片，缩小日历日期格） | 不显示条目ID；“往年今日”无附加解释文案；往年今日独立于日历卡片；日期格尺寸更紧凑 | `src/pages/workspace.tsx` `src/components/calendar/month-calendar.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 6f2fe9a` |
 | `TD-UI-007` | `DONE` | 重构“日记主页面 + 年度总结独立页”信息架构（移除同级 Tab，新增 `/yearly/:year` 长时写作页与年终提示） | 工作台仅保留日记编辑；可从按钮和年终提示进入年度总结独立页；年度总结支持按自然年切换与保存；返回日记不丢失上下文 | `src/App.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 8d66a0b` |
+| `TD-UI-008` | `DONE` | 编辑器模式切换收敛为单“源码”按钮并对齐既有按钮样式 | 默认未点击“源码”时展示可视化编辑；点击“源码”后进入源码编辑；按钮样式与站内 `td-btn` 体系一致 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --config=playwright.local-spa.config.ts --grep "日记编辑后应持久化到 IndexedDB 并保留可见内容|年度总结编辑后应写入 IndexedDB，并在切换年份后保持可读取"` 通过（2/2）；未执行全量 E2E（未命中 5.4 全量门禁） | `2026-02-11 / c64df05` |
 
 ### 6.9 数据导入（v1.1）
 
@@ -144,3 +145,4 @@
 | `TD-DOC-001` | `DONE` | 补充导入功能规格与 TODO 拆解（md/txt 文件名识别 + 系统自动生成 metadata） | `SPEC.md` 明确导入输入格式、识别规则、冲突策略、验收标准；`TODO.md` 新增导入任务组 | `SPEC.md` `TODO.md` | `npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过（冒烟） | `2026-02-09 / 05c0fb7` |
 | `TD-DOC-002` | `DONE` | 在 AGENTS 增加“大工作量任务默认并行多 agents 执行”规范 | `AGENTS.md` 明确要求 AI 对重任务主动采用并行多 agents，不依赖用户显式指定 | `AGENTS.md` `TODO.md` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（14 passed，3 flaky 重试通过） | `2026-02-09 / 6c99c2c` |
 | `TD-DOC-003` | `DONE` | 在 AGENTS 增加“用户明确授权时可采用必要测试策略”的执行规范 | AGENTS 明确必要测试策略的触发条件、最小测试集合、结果披露要求；不影响默认完整测试红线 | `AGENTS.md` `TODO.md` | 仅文档改动，无功能行为变化；未执行单元/集成/E2E | `2026-02-10 / a72056b` |
+| `TD-DOC-004` | `DOING` | 更新 SPEC 同步策略为“仅手动 pull/push”，并移除自动上传相关 E2E 用例 | `SPEC.md` 明确不再自动上传；仅保留手动 push 与手动/解锁触发 pull 的描述；自动上传专属 E2E 用例已移除 | `SPEC.md` `e2e/specs/auto-sync-last-synced.spec.ts` `TODO.md` | — | — |
