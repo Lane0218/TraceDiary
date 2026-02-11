@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../App'
 
@@ -30,5 +30,28 @@ describe('App 路由与工作台入口', () => {
 
     expect(await screen.findByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '返回日记工作台' })).toBeTruthy()
+  })
+
+  it('统计页路由应可访问并展示统计标题', async () => {
+    window.history.replaceState({}, '', '/insights')
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: '写作统计' })).toBeTruthy()
+    expect(screen.getByLabelText('insights-page')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '返回日记工作台' })).toBeTruthy()
+  })
+
+  it('工作台左侧应支持往年今日与统计分段切换', async () => {
+    window.history.replaceState({}, '', '/workspace')
+    render(<App />)
+
+    expect(await screen.findByTestId('workspace-left-tab-history')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('workspace-left-tab-stats'))
+
+    expect(screen.getByText('写作统计')).toBeTruthy()
+    expect(screen.getByTestId('workspace-left-tab-stats')).toBeTruthy()
+    expect(
+      await screen.findByText(/正在汇总统计数据|还没有记录，今天写下第一篇吧|统计读取失败/u),
+    ).toBeTruthy()
   })
 })

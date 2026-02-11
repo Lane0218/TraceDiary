@@ -6,6 +6,7 @@ import ConflictDialog from '../components/common/conflict-dialog'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
 import OnThisDayList from '../components/history/on-this-day-list'
+import StatsOverviewCard from '../components/stats/stats-overview-card'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
@@ -19,6 +20,7 @@ import {
 import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
+import { buildStatsSummary } from '../utils/stats'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import {
@@ -39,6 +41,18 @@ interface YearlyReminder {
   show: boolean
   targetYear: number
   message: string
+}
+
+type WorkspaceLeftPanelTab = 'history' | 'stats'
+
+const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
+
+function getInitialLeftPanelTab(): WorkspaceLeftPanelTab {
+  if (typeof window === 'undefined') {
+    return 'history'
+  }
+  const persisted = window.localStorage.getItem(WORKSPACE_LEFT_PANEL_STORAGE_KEY)
+  return persisted === 'stats' ? 'stats' : 'history'
 }
 
 function isValidDateString(value: string | null): value is DateString {
@@ -132,9 +146,11 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
+  const [leftPanelTab, setLeftPanelTab] = useState<WorkspaceLeftPanelTab>(() => getInitialLeftPanelTab())
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
+  const [yearlySummaries, setYearlySummaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
@@ -206,6 +222,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const setActiveSyncMetadata = sync.setActiveMetadata
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
+  const statsSummary = useMemo(() => buildStatsSummary([...diaries, ...yearlySummaries]), [diaries, yearlySummaries])
 
   const diaryDateSet = useMemo(() => {
     return new Set(diaries.filter((record) => record.type === 'daily').map((record) => record.date))
@@ -239,16 +256,20 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   useEffect(() => {
     let mounted = true
 
-    async function loadDailyDiaries(): Promise<void> {
+    async function loadDiaries(): Promise<void> {
       setIsLoadingDiaries(true)
       setDiaryLoadError(null)
 
       try {
-        const records = await listDiariesByIndex(DIARY_INDEX_TYPE, 'daily')
+        const [dailyRecords, yearlySummaryRecords] = await Promise.all([
+          listDiariesByIndex(DIARY_INDEX_TYPE, 'daily'),
+          listDiariesByIndex(DIARY_INDEX_TYPE, 'yearly_summary'),
+        ])
         if (!mounted) {
           return
         }
-        setDiaries(records.filter((record) => record.type === 'daily'))
+        setDiaries(dailyRecords.filter((record) => record.type === 'daily'))
+        setYearlySummaries(yearlySummaryRecords.filter((record) => record.type === 'yearly_summary'))
       } catch (error) {
         if (!mounted) {
           return
@@ -261,12 +282,19 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       }
     }
 
-    void loadDailyDiaries()
+    void loadDiaries()
 
     return () => {
       mounted = false
     }
   }, [remotePullSignal])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    window.localStorage.setItem(WORKSPACE_LEFT_PANEL_STORAGE_KEY, leftPanelTab)
+  }, [leftPanelTab])
 
   const patchSearch = useCallback(
     (patcher: (next: URLSearchParams) => void) => {
@@ -315,6 +343,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     },
     [date, navigate],
   )
+  const handleOpenInsights = useCallback(() => {
+    navigate('/insights')
+  }, [navigate])
 
   const handleEditorChange = (nextContent: string) => {
     diary.setContent(nextContent)
@@ -415,6 +446,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             <button type="button" className="td-btn" onClick={() => handleOpenYearly()}>
               年度总结
             </button>
+            <button type="button" className="td-btn" onClick={handleOpenInsights}>
+              统计详情
+            </button>
             <button
               type="button"
               className="td-btn"
@@ -468,14 +502,52 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
 
             <section className="td-card-muted td-panel space-y-2">
-              <p className="text-sm text-td-muted">往年今日</p>
-              <OnThisDayList
-                targetDate={date}
-                diaries={diaries}
-                isLoading={isLoadingDiaries}
-                loadError={diaryLoadError}
-                onSelectDate={handleSelectDate}
-              />
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-td-muted">{leftPanelTab === 'history' ? '往年今日' : '写作统计'}</p>
+                <div className="inline-flex rounded-[10px] border border-td-line bg-td-surface p-1">
+                  <button
+                    type="button"
+                    className={`rounded-[8px] px-2.5 py-1 text-xs transition ${
+                      leftPanelTab === 'history' ? 'bg-td-accent text-white' : 'text-td-muted hover:bg-td-soft'
+                    }`}
+                    onClick={() => {
+                      setLeftPanelTab('history')
+                    }}
+                    data-testid="workspace-left-tab-history"
+                  >
+                    往年今日
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-[8px] px-2.5 py-1 text-xs transition ${
+                      leftPanelTab === 'stats' ? 'bg-td-accent text-white' : 'text-td-muted hover:bg-td-soft'
+                    }`}
+                    onClick={() => {
+                      setLeftPanelTab('stats')
+                    }}
+                    data-testid="workspace-left-tab-stats"
+                  >
+                    统计
+                  </button>
+                </div>
+              </div>
+
+              {leftPanelTab === 'history' ? (
+                <OnThisDayList
+                  targetDate={date}
+                  diaries={diaries}
+                  isLoading={isLoadingDiaries}
+                  loadError={diaryLoadError}
+                  onSelectDate={handleSelectDate}
+                />
+              ) : (
+                <StatsOverviewCard
+                  summary={statsSummary}
+                  isLoading={isLoadingDiaries}
+                  error={diaryLoadError}
+                  onOpenInsights={handleOpenInsights}
+                />
+              )}
             </section>
           </aside>
 

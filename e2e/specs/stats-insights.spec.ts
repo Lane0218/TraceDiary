@@ -1,0 +1,119 @@
+import { expect, test } from '@playwright/test'
+import { ensureReadySession, gotoWorkspace } from '../fixtures/app'
+import { getE2EEnv } from '../fixtures/env'
+
+function formatDateKey(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function shiftDate(base: Date, offsetDays: number): Date {
+  const next = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 12)
+  next.setDate(next.getDate() + offsetDays)
+  return next
+}
+
+test('工作台统计分段与统计详情页应展示核心指标', async ({ page }) => {
+  const env = getE2EEnv()
+  const today = new Date()
+  const todayKey = formatDateKey(today)
+  const yesterdayKey = formatDateKey(shiftDate(today, -1))
+  const threeDaysAgoKey = formatDateKey(shiftDate(today, -3))
+  const currentYear = today.getFullYear()
+
+  await gotoWorkspace(page, todayKey)
+  await ensureReadySession(page, env)
+
+  await page.evaluate(
+    async ({ targetToday, targetYesterday, targetThreeDaysAgo, year }) => {
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('TraceDiary', 1)
+
+        request.onerror = () => {
+          reject(request.error ?? new Error('open indexeddb failed'))
+        }
+
+        request.onsuccess = () => {
+          const db = request.result
+          const tx = db.transaction('diaries', 'readwrite')
+          const store = tx.objectStore('diaries')
+          const now = new Date().toISOString()
+
+          store.put({
+            id: `daily:${targetToday}`,
+            type: 'daily',
+            date: targetToday,
+            filename: `${targetToday}.md.enc`,
+            content: 'today-entry',
+            wordCount: 7,
+            createdAt: now,
+            modifiedAt: now,
+          })
+          store.put({
+            id: `daily:${targetYesterday}`,
+            type: 'daily',
+            date: targetYesterday,
+            filename: `${targetYesterday}.md.enc`,
+            content: 'yesterday-entry',
+            wordCount: 8,
+            createdAt: now,
+            modifiedAt: now,
+          })
+          store.put({
+            id: `daily:${targetThreeDaysAgo}`,
+            type: 'daily',
+            date: targetThreeDaysAgo,
+            filename: `${targetThreeDaysAgo}.md.enc`,
+            content: 'three-days-ago-entry',
+            wordCount: 9,
+            createdAt: now,
+            modifiedAt: now,
+          })
+          store.put({
+            id: `summary:${year}`,
+            type: 'yearly_summary',
+            year,
+            date: `${year}-12-31`,
+            filename: `${year}-summary.md.enc`,
+            content: 'yearly-summary-entry',
+            wordCount: 12,
+            createdAt: now,
+            modifiedAt: now,
+          })
+
+          tx.oncomplete = () => resolve()
+          tx.onerror = () => reject(tx.error ?? new Error('indexeddb transaction failed'))
+          tx.onabort = () => reject(tx.error ?? new Error('indexeddb transaction aborted'))
+        }
+      })
+    },
+    {
+      targetToday: todayKey,
+      targetYesterday: yesterdayKey,
+      targetThreeDaysAgo: threeDaysAgoKey,
+      year: currentYear,
+    },
+  )
+
+  await page.reload()
+  await ensureReadySession(page, env)
+
+  await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
+  await page.getByTestId('workspace-left-tab-stats').click()
+
+  await expect(page.getByTestId('stats-total-daily-count')).toContainText('3')
+  await expect(page.getByTestId('stats-total-yearly-count')).toContainText('1')
+  await expect(page.getByTestId('stats-total-word-count')).toContainText('36')
+  await expect(page.getByTestId('stats-current-streak-days')).toContainText('2')
+  await expect(page.getByTestId('stats-longest-streak-days')).toContainText('2')
+
+  await page.getByRole('button', { name: '查看统计详情' }).click()
+
+  await expect(page).toHaveURL(/\/insights$/)
+  await expect(page.getByLabel('insights-page')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '写作统计' })).toBeVisible()
+  await expect(page.getByText('年度汇总')).toBeVisible()
+  await expect(page.getByText(String(currentYear)).first()).toBeVisible()
+})
