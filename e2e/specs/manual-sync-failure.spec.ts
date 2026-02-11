@@ -27,7 +27,8 @@ test('离线失败恢复在线后，可再次手动上传成功', async ({ page,
   await expect(page.getByTestId('sync-status-pill')).toContainText('离线', { timeout: 30_000 })
   await clickManualSync(page)
   await expectManualSyncError(page, [/离线/u, /手动上传/u])
-  await expect(page.getByText('未提交改动：有')).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(/未提交改动：/u)).toHaveCount(0)
+  await expect(page.getByText(/分支：/u)).toHaveCount(0)
 
   await context.setOffline(false)
   await expect(page.getByTestId('sync-status-pill')).not.toContainText('离线', { timeout: 30_000 })

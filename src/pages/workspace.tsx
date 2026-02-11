@@ -491,12 +491,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     最近同步：{sync.lastSyncedAt}
                   </span>
                 ) : null}
-                <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
-                  未提交改动：{sync.hasUnsyncedChanges ? '有' : '无'}
-                </span>
-                <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
-                  分支：{giteeBranch}
-                </span>
                 <div className="ml-auto flex max-w-full items-center gap-2">
                   <button
                     type="button"

@@ -23,7 +23,7 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
-test('手动上传成功后应收敛为已同步且无未提交改动', async ({ page }) => {
+test('手动上传成功后应收敛为已同步，且不展示未提交改动与分支徽标', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-state')
 
@@ -70,8 +70,8 @@ test('手动上传成功后应收敛为已同步且无未提交改动', async ({
     expect(latestTargetDiaryMessage).toContain('手动同步日记')
 
     await expect(page.getByTestId('sync-status-pill')).toContainText('云端已同步', { timeout: 30_000 })
-    await expect(page.getByText('未提交改动：无')).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByText('未提交改动：有')).toHaveCount(0)
+    await expect(page.getByText(/未提交改动：/u)).toHaveCount(0)
+    await expect(page.getByText(/分支：/u)).toHaveCount(0)
     await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端待同步')
   } finally {
     if (!page.isClosed()) {

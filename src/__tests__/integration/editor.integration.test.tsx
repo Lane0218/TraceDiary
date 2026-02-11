@@ -152,7 +152,7 @@ describe('年度总结页面', () => {
     expect(screen.getByText('本地保存异常')).toBeTruthy()
   })
 
-  it('编辑后应展示未提交改动状态', async () => {
+  it('应仅展示云端状态胶囊，不展示未提交改动与分支标签', async () => {
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({
         entryId: 'summary:2026',
@@ -160,14 +160,18 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
-    expect(screen.getByText('未提交改动：无')).toBeTruthy()
+    expect(screen.getByText('云端待同步')).toBeTruthy()
+    expect(screen.queryByText(/未提交改动：/)).toBeNull()
+    expect(screen.queryByText(/分支：/)).toBeNull()
 
     fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
       target: { value: '新的年度总结内容' },
     })
 
     await waitFor(() => {
-      expect(screen.getByText('未提交改动：有')).toBeTruthy()
+      expect(screen.getByText('云端待同步')).toBeTruthy()
+      expect(screen.queryByText(/未提交改动：/)).toBeNull()
+      expect(screen.queryByText(/分支：/)).toBeNull()
     })
   })
 
