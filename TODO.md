@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`79`
-- 状态统计：`DONE=65` / `DOING=0` / `TODO=14` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`81`
+- 状态统计：`DONE=65` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-SYNC-027`
 
 ## 1. 任务清单（按模块）
 
@@ -86,6 +86,7 @@
 | `TD-SYNC-024` | `DONE` | 将数据密钥改为仅由主密码导出并补齐“内容可解密可读”的端到端校验 | 数据加密主密钥不再依赖 `kdfParams` 随机盐；仅凭主密码可导出同一数据密钥；相关 E2E 必须断言拉取后内容可读且非空 | `src/services/crypto.ts` `src/hooks/use-auth.ts` `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/components/editor/markdown-editor.tsx` `src/hooks/use-diary.ts` `src/services/__tests__/crypto.test.ts` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/hooks/__tests__/use-diary.test.ts` `e2e/specs/remote-pull-sync.spec.ts` `TODO.md` | 用户明确授权采用必要测试策略；已执行：`npm run lint`（通过）、`npm run test:unit`（53/53 通过）、`npm run test:integration`（47/47 通过）、`npx playwright test e2e/specs/remote-pull-sync.spec.ts --project=chromium --retries=0`（1/1 通过）；未执行全量 `npm run test:e2e`（已按授权仅执行与改动直接相关用例） | `2026-02-11 / 1965ec9` |
 | `TD-SYNC-025` | `DONE` | 移除 fallback 密钥逻辑并强制仅使用主密码派生密钥进行加解密 | 代码中不再保留 fallback 密钥参数、状态与解密分支；上传与下载仅使用主密码派生数据密钥；相关单元/集成/E2E 回归通过 | `src/hooks/use-auth.ts` `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-auth.test.tsx` `src/services/__tests__/sync.test.ts` `e2e/specs/upload-encryption.spec.ts` `e2e/specs/conflict-resolution.spec.ts` `TODO.md` | 用户明确授权“可不跑全量 E2E”；已执行：`npm run lint`（通过）、`npm run test:unit`（51/51 通过）、`npm run test:integration`（47/47 通过）、`npx playwright test e2e/specs/remote-pull-sync.spec.ts e2e/specs/upload-encryption.spec.ts --project=chromium --retries=0`（2/2 通过）；未执行全量 `npm run test:e2e`（按授权仅执行最相关用例） | `2026-02-11 / 38f812d` |
 | `TD-SYNC-026` | `DONE` | 清空 `.env.e2e` 指向测试仓库并按主密码密钥重建测试密文数据 | 远端旧密文被清空；重建后的 `metadata.json.enc` 与示例日记文件可被主密码成功解密且内容可读 | `TODO.md` | 已执行远端清空与重建脚本并校验通过：清理后文件数 `0`，重建后文件数 `4`（`2100-01-01.md.enc`、`2100-06-06.md.enc`、`2100-summary.md.enc`、`metadata.json.enc`）；回读后使用 `E2E_MASTER_PASSWORD` 可成功解密 `metadata.json.enc` 与 `2100-01-01.md.enc`，内容可读 | `2026-02-11 / 1be61cb` |
+| `TD-SYNC-027` | `DOING` | 永久移除自动上传并收敛为“仅手动同步”链路 | 编辑过程不再触发任何自动上传请求；手动上传作为唯一远端写入入口；状态显示与测试用例不再依赖自动上传/自动重试语义 | `src/hooks/use-sync.ts` `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/utils/sync-presentation.ts` `src/hooks/__tests__/use-sync.test.ts` `src/services/__tests__/sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/auto-sync-last-synced.spec.ts` `e2e/specs/manual-sync-hang-guard.spec.ts` `e2e/specs/manual-sync-failure.spec.ts` `TODO.md` | — | — |
 
 ### 6.6 PWA、部署与安全头
 
@@ -111,6 +112,7 @@
 | `TD-TEST-009` | `DONE` | 修复冲突 E2E 长跑不稳定（认证重试 + 同步状态收敛 + 冲突注入可观测性） | `conflict-resolution` 在高重复执行下不再因认证抖动或同步状态长期卡住导致失败；日志可区分预写失败与目标请求未触发 | `e2e/fixtures/app.ts` `e2e/specs/conflict-resolution.spec.ts` `e2e/helpers/conflict.ts` `src/hooks/use-sync.ts` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（12/12）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=10 --retries=0` 通过（40/40） | `2026-02-10 / 769aa47` |
 | `TD-TEST-010` | `DONE` | 修复 lint 报错 `e2e/helpers/conflict.ts` 中 `no-unsafe-finally` 违规并恢复 lint 全绿 | `npm run lint` 不再报 `no-unsafe-finally`；并通过必要回归（单元/集成 + 冲突相关 E2E） | `e2e/helpers/conflict.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --retries=0` 通过（4/4） | `2026-02-10 / 8c9ec50` |
 | `TD-TEST-011` | `DONE` | 移除冗余 E2E 冒烟脚本与 npm 入口 | 仓库不再保留 `test:e2e:smoke` 与 `scripts/e2e-smoke.sh`；无遗留运行入口 | `package.json` `scripts/e2e-smoke.sh` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；按用户授权采用必要测试策略，未执行全量 E2E | `2026-02-10 / 6e7d886` |
+| `TD-TEST-012` | `TODO` | 落地本地高效测试分层策略（Playwright 并发/分片脚本、用例标签、AGENTS 默认执行规范） | 新增 `test:e2e:fast/changed/last-failed/full/slow/remote/local-shard:*` 脚本；关键 E2E 完成 `@smoke/@slow/@remote` 标签；`AGENTS.md` 明确“默认分层 + 全量门禁”；新增测试策略文档可直接执行 | `playwright.config.ts` `package.json` `e2e/specs/*.spec.ts` `AGENTS.md` `docs/testing-strategy.md` `TODO.md` | — | — |
 
 ### 6.8 UI 体验优化
 

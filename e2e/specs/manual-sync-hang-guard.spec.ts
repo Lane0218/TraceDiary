@@ -22,7 +22,7 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
-test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing', async ({ page }) => {
+test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing @slow @remote', async ({ page }) => {
   test.setTimeout(210_000)
   const env = getE2EEnv()
   const marker = `hang-guard-${Date.now()}`

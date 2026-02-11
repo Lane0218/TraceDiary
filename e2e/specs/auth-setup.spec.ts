@@ -6,7 +6,7 @@ const CONFIG_STORAGE_KEY = 'trace-diary:app-config'
 const LOCK_STATE_KEY = 'trace-diary:auth:lock-state'
 const TEST_DATE = '2099-12-28'
 
-test('首次配置后应进入已解锁状态，且本地仅保存 encryptedToken', async ({ page }) => {
+test('首次配置后应进入已解锁状态，且本地仅保存 encryptedToken @smoke', async ({ page }) => {
   const env = getE2EEnv()
 
   await gotoWorkspace(page, TEST_DATE)

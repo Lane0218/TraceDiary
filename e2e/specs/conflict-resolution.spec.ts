@@ -137,7 +137,7 @@ async function expectConflictResolved(page: Page, dialog: Locator): Promise<void
   await expectSyncSuccess(page)
 }
 
-test('发生 sha mismatch 时可选择保留本地版本并完成同步', async ({ page }) => {
+test('发生 sha mismatch 时可选择保留本地版本并完成同步 @slow @remote', async ({ page }) => {
   const env = getE2EEnv()
   const localMarker = buildRunMarker('conflict-local-choice')
   const remoteMarker = buildRunMarker('conflict-remote-shadow')
@@ -155,7 +155,7 @@ test('发生 sha mismatch 时可选择保留本地版本并完成同步', async 
   await expectConflictResolved(page, dialog)
 })
 
-test('发生 sha mismatch 时可选择保留远端版本并完成同步', async ({ page }) => {
+test('发生 sha mismatch 时可选择保留远端版本并完成同步 @slow @remote', async ({ page }) => {
   const env = getE2EEnv()
   const localMarker = buildRunMarker('conflict-local-shadow')
   const remoteMarker = buildRunMarker('conflict-remote-choice')
@@ -173,7 +173,7 @@ test('发生 sha mismatch 时可选择保留远端版本并完成同步', async 
   await expectConflictResolved(page, dialog)
 })
 
-test('发生 sha mismatch 时可编辑合并内容并提交成功', async ({ page }) => {
+test('发生 sha mismatch 时可编辑合并内容并提交成功 @slow @remote', async ({ page }) => {
   const env = getE2EEnv()
   const localMarker = buildRunMarker('conflict-local-merge')
   const remoteMarker = buildRunMarker('conflict-remote-merge')
@@ -197,7 +197,7 @@ test('发生 sha mismatch 时可编辑合并内容并提交成功', async ({ pag
   await expectConflictResolved(page, dialog)
 })
 
-test('冲突处理完成后再次发生冲突仍可再次处理并成功同步', async ({ page }) => {
+test('冲突处理完成后再次发生冲突仍可再次处理并成功同步 @slow @remote', async ({ page }) => {
   const env = getE2EEnv()
   const firstLocalMarker = buildRunMarker('conflict-local-first')
   const firstRemoteMarker = buildRunMarker('conflict-remote-first')

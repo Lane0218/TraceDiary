@@ -13,7 +13,7 @@ import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2100-06-06'
 
-test('新本地设备解锁后应自动拉取远端已有日记到本地', async ({ browser }) => {
+test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote', async ({ browser }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('remote-pull')
 

@@ -10,7 +10,7 @@ import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2099-12-29'
 
-test('日记编辑后应持久化到 IndexedDB 并保留可见内容', async ({ page }) => {
+test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('daily-edit')
 

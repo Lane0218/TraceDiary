@@ -20,7 +20,7 @@ function extractSyncedAt(labelText: string): string {
   return matched[1].trim()
 }
 
-test('自动同步请求超时后应退出 syncing 并保留最近一次成功同步时间', async ({ page }) => {
+test('自动同步请求超时后应退出 syncing 并保留最近一次成功同步时间 @slow @remote', async ({ page }) => {
   test.setTimeout(180_000)
   const env = getE2EEnv()
   const firstMarker = buildRunMarker('auto-sync-base')

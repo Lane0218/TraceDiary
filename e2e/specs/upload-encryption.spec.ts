@@ -29,7 +29,7 @@ function decodeBase64Utf8(content: string): string {
   return Buffer.from(content, 'base64').toString('utf8')
 }
 
-test('手动上传后的远端日记内容应为非明文密文', async ({ page }) => {
+test('手动上传后的远端日记内容应为非明文密文 @remote', async ({ page }) => {
   const env = getE2EEnv()
   const testDate = buildUniqueTestDate()
   const marker = buildRunMarker('upload-encryption')

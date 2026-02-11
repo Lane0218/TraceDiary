@@ -13,7 +13,7 @@ import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2099-12-30'
 
-test('手动保存并立即上传成功时应显示同步成功状态', async ({ page }) => {
+test('手动保存并立即上传成功时应显示同步成功状态 @smoke', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-ok')
 
