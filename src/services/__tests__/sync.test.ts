@@ -349,6 +349,8 @@ describe('pullRemoteDiariesToIndexedDb', () => {
     expect(localStore.get('daily:2100-01-01')?.content).toBe('remote-new-1')
     expect(localStore.get('daily:2100-01-02')?.content).toBe('remote-new-2')
     expect(localStore.get('daily:2100-01-03')?.content).toBe('local-newer-3')
+    expect(localStore.get('daily:2100-01-01')?.wordCount).toBe(12)
+    expect(localStore.get('daily:2100-01-02')?.wordCount).toBe(12)
   })
 
 })
