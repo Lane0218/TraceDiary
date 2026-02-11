@@ -109,7 +109,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('stats-current-streak-days')).toContainText('2')
   await expect(page.getByTestId('stats-longest-streak-days')).toContainText('2')
 
-  await page.getByRole('button', { name: '查看统计详情' }).click()
+  await page.getByTestId('workspace-open-insights').click()
 
   await expect(page).toHaveURL(/\/insights$/)
   await expect(page.getByLabel('insights-page')).toBeVisible()

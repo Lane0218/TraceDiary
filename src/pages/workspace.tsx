@@ -646,13 +646,14 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
 
             <section className="td-card-muted td-panel space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-td-muted">{leftPanelTab === 'history' ? '往年今日' : '写作统计'}</p>
-                <div className="inline-flex rounded-[10px] border border-td-line bg-td-surface p-1">
+              <div className="flex items-center gap-2">
+                <div className="grid flex-1 grid-cols-2 rounded-[10px] border border-td-line bg-td-surface p-1">
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1 text-xs transition ${
-                      leftPanelTab === 'history' ? 'bg-td-accent text-white' : 'text-td-muted hover:bg-td-soft'
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-medium transition ${
+                      leftPanelTab === 'history'
+                        ? 'bg-td-accent text-white shadow-thin'
+                        : 'text-td-muted hover:bg-td-soft hover:text-td-text'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('history')
@@ -663,8 +664,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1 text-xs transition ${
-                      leftPanelTab === 'stats' ? 'bg-td-accent text-white' : 'text-td-muted hover:bg-td-soft'
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-medium transition ${
+                      leftPanelTab === 'stats'
+                        ? 'bg-td-accent text-white shadow-thin'
+                        : 'text-td-muted hover:bg-td-soft hover:text-td-text'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('stats')
@@ -674,6 +677,16 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     统计
                   </button>
                 </div>
+                {leftPanelTab === 'stats' ? (
+                  <button
+                    type="button"
+                    className="td-btn whitespace-nowrap px-2.5 py-1.5 text-xs"
+                    onClick={handleOpenInsights}
+                    data-testid="workspace-open-insights"
+                  >
+                    统计详情
+                  </button>
+                ) : null}
               </div>
 
               {leftPanelTab === 'history' ? (
@@ -689,7 +702,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   summary={statsSummary}
                   isLoading={isLoadingDiaries}
                   error={diaryLoadError}
-                  onOpenInsights={handleOpenInsights}
                 />
               )}
             </section>

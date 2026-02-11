@@ -4,7 +4,6 @@ export interface StatsOverviewCardProps {
   summary: StatsSummary
   isLoading?: boolean
   error?: string | null
-  onOpenInsights?: () => void
 }
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
@@ -13,22 +12,10 @@ function formatNumber(value: number): string {
   return numberFormatter.format(value)
 }
 
-function getStreakText(summary: StatsSummary): string {
-  if (summary.streakStatus === 'none') {
-    return '暂无连续记录'
-  }
-  if (summary.streakStatus === 'active') {
-    return `已连续 ${summary.currentStreakDays} 天`
-  }
-  const gapText = summary.streakGapDays ?? 1
-  return `最近连续 ${summary.currentStreakDays} 天（已中断 ${gapText} 天）`
-}
-
 export default function StatsOverviewCard({
   summary,
   isLoading = false,
   error = null,
-  onOpenInsights,
 }: StatsOverviewCardProps) {
   if (error) {
     return (
@@ -45,8 +32,6 @@ export default function StatsOverviewCard({
       </div>
     )
   }
-
-  const hasAnyRecord = summary.totalDailyCount > 0 || summary.totalYearlySummaryCount > 0
 
   return (
     <div className="space-y-3" aria-label="stats-overview-card">
@@ -93,22 +78,6 @@ export default function StatsOverviewCard({
           </p>
         </article>
       </div>
-
-      <div className="rounded-[10px] border border-td-line bg-td-surface p-3 text-sm text-td-muted">
-        {getStreakText(summary)}
-      </div>
-
-      {!hasAnyRecord ? (
-        <p className="rounded-[10px] border border-dashed border-td-line bg-td-surface p-3 text-sm text-td-muted">
-          还没有记录，今天写下第一篇吧。
-        </p>
-      ) : null}
-
-      {onOpenInsights ? (
-        <button type="button" className="td-btn w-full" onClick={onOpenInsights}>
-          查看统计详情
-        </button>
-      ) : null}
     </div>
   )
 }
