@@ -29,7 +29,7 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
   const entry = entries[index]
 
   return (
-    <div style={style} className="px-2 py-1.5">
+    <div style={style} className="px-1 py-1.5">
       <button
         type="button"
         onClick={() => onSelectDate(entry.date)}
@@ -95,7 +95,7 @@ export function OnThisDayList({
       rowProps={{ entries, onSelectDate }}
       defaultHeight={360}
       overscanCount={4}
-      className="rounded-[10px] border border-td-line bg-td-soft"
+      className="rounded-[10px] bg-transparent"
       style={{ height: 360, width: '100%' }}
       aria-label="往年今日列表"
       data-testid="on-this-day-virtual-list"

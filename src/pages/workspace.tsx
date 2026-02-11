@@ -645,15 +645,15 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               />
             </section>
 
-            <section className="td-card-muted td-panel space-y-2">
+            <section className="td-card-muted td-panel space-y-2.5">
               <div className="flex items-center gap-2">
-                <div className="grid flex-1 grid-cols-2 rounded-[10px] border border-td-line bg-td-surface p-1">
+                <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d7d7d7] bg-[#f0f0f0] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-medium transition ${
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
                       leftPanelTab === 'history'
                         ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-td-muted hover:bg-td-soft hover:text-td-text'
+                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('history')
@@ -664,10 +664,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-medium transition ${
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
                       leftPanelTab === 'stats'
                         ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-td-muted hover:bg-td-soft hover:text-td-text'
+                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('stats')
@@ -677,16 +677,20 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     统计
                   </button>
                 </div>
-                {leftPanelTab === 'stats' ? (
-                  <button
-                    type="button"
-                    className="td-btn whitespace-nowrap px-2.5 py-1.5 text-xs"
-                    onClick={handleOpenInsights}
-                    data-testid="workspace-open-insights"
-                  >
-                    统计详情
-                  </button>
-                ) : null}
+                <div className="w-[88px] shrink-0">
+                  {leftPanelTab === 'stats' ? (
+                    <button
+                      type="button"
+                      className="td-btn w-full whitespace-nowrap px-2.5 py-1.5 text-xs"
+                      onClick={handleOpenInsights}
+                      data-testid="workspace-open-insights"
+                    >
+                      统计详情
+                    </button>
+                  ) : (
+                    <span aria-hidden="true" className="block h-[34px]" />
+                  )}
+                </div>
               </div>
 
               {leftPanelTab === 'history' ? (
