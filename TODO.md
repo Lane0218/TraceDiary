@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-11`
 - 总任务：`76`
-- 状态统计：`DONE=61` / `DOING=1` / `TODO=14` / `BLOCKED=0`
-- 当前进行中：`TD-SYNC-023`
+- 状态统计：`DONE=62` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -82,7 +82,7 @@
 | `TD-SYNC-020` | `DONE` | 落地服务层最小重构（收敛 Base64/UTF-8、统一 metadata 走 Gitee 网关、固化 sync/gitee 职责边界，并统一测试入口） | `sync.ts` 不再维护重复文本 Base64 实现且 metadata 读写不直接发起 contents API；`gitee.ts` 作为唯一 Gitee 网关；测试入口统一为 `src/__tests__/` 且单元/集成/E2E 全部通过 | `src/services/sync.ts` `src/services/gitee.ts` `src/services/__tests__/sync.test.ts` `src/test/setup.ts` `src/__tests__/setup.ts` `vitest.config.ts` `TODO.md` | `npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npm run test:e2e` 通过（19 passed，1 flaky 重试通过，网络超时后重试成功）；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`）；`npm run build` 通过 | `2026-02-10 / 9733c4e` |
 | `TD-SYNC-021` | `DONE` | 清理跨层重复实现（同步状态/手动上传文案、认证表单结构、crypto/sync 基础工具）并收敛公共模块 | `workspace/yearly-summary` 共享同步状态与手动上传文案逻辑；`welcome/auth-modal` 共享认证表单配置；`sync.ts` 不再重复实现可复用的 crypto 基础工具；单元/集成/E2E 全部通过 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/components/common/status-hint.tsx` `src/utils/sync-availability.ts` `src/utils/sync-presentation.ts` `src/pages/welcome.tsx` `src/components/auth/auth-modal.tsx` `src/components/auth/auth-form-model.ts` `src/components/auth/auth-form-shared.tsx` `src/services/sync.ts` `src/services/crypto.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | `npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npm run test:e2e` 通过（20/20）；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`）；`npm run build` 通过 | `2026-02-10 / da84ae1` |
 | `TD-SYNC-022` | `DONE` | 重构未提交改动判定为“按 entry 基线 + 内容指纹”，修复手动上传点击即从“无”变“有”与跨日期脏状态污染 | 未提交改动仅在“从未提交”或“提交后内容变化”时显示“有”；手动上传点击不应无条件变脏；切换其他日期不应继承脏状态 | `src/hooks/use-sync.ts` `src/services/indexeddb.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/utils/sync-dirty.ts` `src/hooks/__tests__/use-sync.test.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（45/45）；`npm run test:e2e` 通过（20/20）；`npm run build` 通过 | `2026-02-10 / 70ad5b8` |
-| `TD-SYNC-023` | `DOING` | 修复下载同步缺失导致云端日记无法落本地（解锁后自动拉取并按 `modifiedAt` 决策覆盖） | 解锁后自动从远端拉取 metadata 与对应日记并写入 IndexedDB；云端已有 `2100-01-01` 时页面可见；同条目仅在远端 `modifiedAt` 更新时覆盖本地 | `src/services/sync.ts` `src/hooks/use-auth.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/__tests__/integration/*` `e2e/specs/*` `TODO.md` | — | — |
+| `TD-SYNC-023` | `DONE` | 修复下载同步缺失导致云端日记无法落本地（解锁后自动拉取并按 `modifiedAt` 决策覆盖） | 解锁后自动从远端拉取 metadata 与对应日记并写入 IndexedDB；云端已有 `2100-01-01` 时页面可见；同条目仅在远端 `modifiedAt` 更新时覆盖本地 | `src/services/sync.ts` `src/hooks/use-auth.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/__tests__/integration/*` `e2e/specs/*` `TODO.md` | `npm run test:unit` 通过（50/50）；`npm run test:integration` 通过（46/46）；`npm run test:e2e` 通过（21/21） | `2026-02-11 / 42008cc` |
 
 ### 6.6 PWA、部署与安全头
 
