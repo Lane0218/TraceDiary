@@ -198,7 +198,7 @@ describe('年度总结页面', () => {
         config: null,
       }),
     )
-    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+    fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
     expect(screen.getByText('云端同步未就绪：请先配置 Gitee 仓库。')).toBeTruthy()
   })
@@ -214,7 +214,7 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
-    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+    fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
     await waitFor(() =>
       expect(screen.getAllByText('鉴权失败，请重新解锁或更新 Token 配置').length).toBeGreaterThan(0),
@@ -237,15 +237,15 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
-    fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+    fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
     await waitFor(() => {
       expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()
-      const uploadingButton = screen.getByRole('button', { name: '上传中...' }) as HTMLButtonElement
+      const uploadingButton = screen.getByRole('button', { name: 'pushing...' }) as HTMLButtonElement
       expect(uploadingButton.disabled).toBe(false)
     })
 
-    fireEvent.click(screen.getByRole('button', { name: '上传中...' }))
+    fireEvent.click(screen.getByRole('button', { name: 'pushing...' }))
     await waitFor(() =>
       expect(screen.getByText('当前正在上传，请稍候重试')).toBeTruthy(),
     )
@@ -253,7 +253,7 @@ describe('年度总结页面', () => {
     resolveUpload({ ok: true, conflict: false, syncedAt: '2026-02-09T01:00:00.000Z' })
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '手动保存并立即上传' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'push' })).toBeTruthy()
       expect(screen.queryByText('当前正在上传，请稍候重试')).toBeNull()
     })
   })
@@ -283,7 +283,7 @@ describe('年度总结页面', () => {
       expect(uploadExecutor).toHaveBeenCalledTimes(0)
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: '手动保存并立即上传' }))
+        fireEvent.click(screen.getByRole('button', { name: 'push' }))
         await Promise.resolve()
       })
       expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()

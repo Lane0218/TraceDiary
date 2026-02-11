@@ -109,7 +109,7 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
 
   await writeYearlySummary(page, SYNC_YEAR, `E2E 年度上传 ${marker}`)
 
-  await page.getByRole('button', { name: '手动保存并立即上传' }).click()
+  await page.getByRole('button', { name: 'push' }).click()
 
   const syncStatus = page
     .locator('section[aria-label="yearly-summary-page"] .td-status-pill')

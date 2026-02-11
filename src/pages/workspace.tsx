@@ -719,7 +719,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     }}
                     data-testid="manual-pull-button"
                   >
-                    {isManualPulling ? '拉取中...' : '手动拉取远端'}
+                    {isManualPulling ? 'pulling...' : 'pull'}
                   </button>
                   <button
                     type="button"
@@ -729,7 +729,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     }}
                     data-testid="manual-sync-button"
                   >
-                    {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
+                    {isManualSyncing ? 'pushing...' : 'push'}
                   </button>
                   {manualPullError ? (
                     <span

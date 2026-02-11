@@ -425,7 +425,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     className="td-btn"
                     data-testid="manual-pull-button"
                   >
-                    {isManualPulling ? '拉取中...' : '手动拉取远端'}
+                    {isManualPulling ? 'pulling...' : 'pull'}
                   </button>
                   <button
                     type="button"
@@ -434,7 +434,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     }}
                     className="td-btn"
                   >
-                    {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
+                    {isManualSyncing ? 'pushing...' : 'push'}
                   </button>
                   {manualPullError ? (
                     <span

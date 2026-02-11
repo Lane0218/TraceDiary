@@ -46,7 +46,7 @@ test('手动上传并发触发忙碌提示后，上传成功应自动清空提�
 
   try {
     await clickManualSync(page)
-    await expect(page.getByRole('button', { name: '上传中...' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'pushing...' })).toBeVisible()
 
     await clickManualSync(page)
     await expect(page.getByTestId('manual-sync-error')).toContainText('当前正在上传，请稍候重试')
