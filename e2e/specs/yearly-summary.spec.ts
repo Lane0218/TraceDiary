@@ -18,6 +18,17 @@ async function writeYearlySummary(page: Page, content: string): Promise<void> {
   await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
 }
 
+async function writeYearlySummaryInSourceMode(page: Page, content: string): Promise<void> {
+  await page.getByRole('button', { name: '源码' }).click()
+  const sourceEditor = page.locator('section[aria-label="yearly-summary-page"] textarea').first()
+  await expect(sourceEditor).toBeVisible()
+  await sourceEditor.fill(content)
+  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+
+  await page.getByRole('button', { name: '可视化' }).click()
+  await expect(yearlyEditorLocator(page)).toBeVisible()
+}
+
 async function waitForYearlySummaryPersisted(page: Page, year: number, expectedContentFragment: string): Promise<void> {
   const entryId = `summary:${year}`
 
@@ -62,11 +73,21 @@ async function waitForYearlySummaryPersisted(page: Page, year: number, expectedC
 test('年度总结编辑后应写入 IndexedDB，并在切换年份后保持可读取', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('yearly-persist')
+  const markdown = `# 年度标题 ${marker}\n\n正文段落 ${marker}\n\n- 年度要点 ${marker}\n1. 年度清单 ${marker}`
 
   await page.goto(`/yearly/${PERSIST_YEAR}`)
   await ensureReadySession(page, env)
 
-  await writeYearlySummary(page, `E2E 年度总结 ${marker}`)
+  await writeYearlySummaryInSourceMode(page, markdown)
+  await expect(page.locator('section[aria-label="yearly-summary-page"] .ProseMirror h1').first()).toContainText(
+    `年度标题 ${marker}`,
+  )
+  await expect(page.locator('section[aria-label="yearly-summary-page"] .ProseMirror ul li').first()).toContainText(
+    `年度要点 ${marker}`,
+  )
+  await expect(page.locator('section[aria-label="yearly-summary-page"] .ProseMirror ol li').first()).toContainText(
+    `年度清单 ${marker}`,
+  )
   await waitForYearlySummaryPersisted(page, PERSIST_YEAR, marker)
 
   await page.getByRole('button', { name: '下一年' }).click()

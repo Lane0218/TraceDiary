@@ -4,7 +4,7 @@ import { commonmark } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
 import { nord } from '@milkdown/theme-nord'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './markdown-editor.css'
 
 interface MarkdownEditorProps {
@@ -14,6 +14,8 @@ interface MarkdownEditorProps {
   disabled?: boolean
   docKey?: string
   testId?: string
+  enableSourceMode?: boolean
+  defaultMode?: 'wysiwyg' | 'source'
 }
 
 function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
@@ -75,30 +77,106 @@ export default function MarkdownEditor({
   disabled = false,
   docKey = 'default',
   testId,
+  enableSourceMode = true,
+  defaultMode = 'wysiwyg',
 }: MarkdownEditorProps) {
+  const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
+  const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
+  const [wysiwygRevision, setWysiwygRevision] = useState(0)
+
+  const applyDraftChange = (nextValue: string) => {
+    setDraftMarkdown(nextValue)
+    onChange(nextValue)
+  }
+
+  const showSourceMode = enableSourceMode && mode === 'source'
+
+  const modeToggle = enableSourceMode ? (
+    <div className="mb-2 flex items-center justify-end gap-2">
+      <button
+        type="button"
+        className={`td-btn px-2.5 py-1 text-xs ${mode === 'wysiwyg' ? 'td-btn-primary' : ''}`}
+        aria-pressed={mode === 'wysiwyg'}
+        onClick={() => {
+          if (mode === 'wysiwyg') {
+            return
+          }
+          setMode('wysiwyg')
+          setWysiwygRevision((prev) => prev + 1)
+        }}
+        disabled={disabled}
+        data-testid={testId ? `${testId}-mode-wysiwyg` : undefined}
+      >
+        可视化
+      </button>
+      <button
+        type="button"
+        className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}
+        aria-pressed={mode === 'source'}
+        onClick={() => {
+          if (mode === 'source') {
+            return
+          }
+          setMode('source')
+        }}
+        disabled={disabled}
+        data-testid={testId ? `${testId}-mode-source` : undefined}
+      >
+        源码
+      </button>
+    </div>
+  ) : null
+
   if (import.meta.env.MODE === 'test') {
     return (
-      <textarea
-        key={docKey}
-        aria-label={placeholder}
-        data-testid={testId}
-        defaultValue={initialValue}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500"
-      />
+      <div>
+        {modeToggle}
+        <textarea
+          key={docKey}
+          aria-label={placeholder}
+          data-testid={testId}
+          value={draftMarkdown}
+          onChange={(event) => applyDraftChange(event.target.value)}
+          disabled={disabled}
+          className={`min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
+            showSourceMode ? 'font-mono text-sm leading-7' : ''
+          }`}
+        />
+      </div>
+    )
+  }
+
+  if (showSourceMode) {
+    return (
+      <div>
+        {modeToggle}
+        <textarea
+          key={docKey}
+          aria-label={placeholder}
+          data-testid={testId}
+          value={draftMarkdown}
+          onChange={(event) => applyDraftChange(event.target.value)}
+          disabled={disabled}
+          spellCheck={false}
+          className="trace-editor-source min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500"
+        />
+      </div>
     )
   }
 
   return (
-    <MilkdownProvider>
-      <MilkdownRuntimeEditor
-        initialValue={initialValue}
-        onChange={onChange}
-        disabled={disabled}
-        docKey={docKey}
-        testId={testId}
-      />
-    </MilkdownProvider>
+    <div>
+      {modeToggle}
+      <MilkdownProvider>
+        <MilkdownRuntimeEditor
+          key={`${docKey}:${wysiwygRevision}`}
+          initialValue={draftMarkdown}
+          onChange={applyDraftChange}
+          disabled={disabled}
+          docKey={`${docKey}:${wysiwygRevision}`}
+          testId={testId}
+        />
+      </MilkdownProvider>
+    </div>
   )
 }

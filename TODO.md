@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`81`
-- 状态统计：`DONE=66` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 总任务：`82`
+- 状态统计：`DONE=67` / `DOING=0` / `TODO=15` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -55,6 +55,7 @@
 | `TD-FUNC-006` | `DONE` | 实现年度总结创建/编辑（`YYYY-summary.md.enc`） | 可按年份管理总结 | `src/pages/yearly-summary.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
 | `TD-FUNC-007` | `DONE` | 实现“往年今日”查询与预览 | 显示同月同日历史记录 | `src/components/history/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
 | `TD-FUNC-008` | `DONE` | 实现“往年今日”虚拟滚动（react-window） | 历史数据较多时滚动流畅 | `src/components/history/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过 | `2026-02-08 / a71bf95` |
+| `TD-FUNC-009` | `DONE` | 修复基础 Markdown 标题/列表视觉差异并新增可编辑源码模式 | 标题（`#`）在可视化模式具备明显层级样式；无序/有序列表样式可见；支持“可视化/源码”双模式切换且内容双向同步、不丢失 | `src/components/editor/markdown-editor.tsx` `src/components/editor/markdown-editor.css` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `e2e/specs/calendar-history.spec.ts` `e2e/specs/manual-sync-hang-guard.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（50/50）；`npm run test:e2e` 通过（21/21） | `2026-02-11 / e465517` |
 
 ### 6.5 同步与冲突解决
 
