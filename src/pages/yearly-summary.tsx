@@ -8,11 +8,14 @@ import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { getSyncBaseline, saveSyncBaseline } from '../services/indexeddb'
-import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
+import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import {
+  MANUAL_PULL_BUSY_MESSAGE,
+  MANUAL_PULL_PENDING_MESSAGE,
   MANUAL_SYNC_PENDING_MESSAGE,
+  getManualPullFailureMessage,
   getDisplayedManualSyncError,
   getManualSyncFailureMessage,
   getSessionLabel,
@@ -37,6 +40,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const params = useParams<{ year?: string }>()
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
+  const [manualPullError, setManualPullError] = useState<string | null>(null)
+  const [isManualPulling, setIsManualPulling] = useState(false)
+  const [pullConflictState, setPullConflictState] = useState<{
+    local: DiarySyncMetadata
+    remote: DiarySyncMetadata | null
+    remoteSha?: string
+  } | null>(null)
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
@@ -106,7 +116,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const syncPresentationState = useMemo(
     () => ({
       canSyncToRemote,
-      hasConflict: Boolean(sync.conflictState),
+      hasConflict: Boolean(pullConflictState || sync.conflictState),
       isOffline: sync.isOffline,
       hasPendingRetry: sync.hasPendingRetry,
       status: sync.status,
@@ -115,6 +125,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }),
     [
       canSyncToRemote,
+      pullConflictState,
       sync.conflictState,
       sync.hasPendingRetry,
       sync.hasUnsyncedChanges,
@@ -145,12 +156,135 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     if (manualSyncError) {
       setManualSyncError(null)
     }
+    if (manualPullError) {
+      setManualPullError(null)
+    }
   }
-  const displayedSyncMessage = sync.errorMessage
-  const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
-  const isManualSyncing = sync.status === 'syncing'
+  const saveNow = async () => {
+    if (!canSyncToRemote) {
+      setManualSyncError(syncDisabledMessage)
+      return
+    }
+    if (manualPullError) {
+      setManualPullError(null)
+    }
+
+    const persistedEntry = await summary.waitForPersisted()
+    const latestSummaryEntry =
+      persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
+    const manualPayload: DiarySyncMetadata = {
+      type: 'yearly_summary',
+      entryId: summary.entryId,
+      year,
+      content: latestSummaryEntry?.content ?? summary.content,
+      modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
+    }
+    setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
+    const result = await sync.saveNow(manualPayload)
+    if (!result.ok) {
+      setManualSyncError(getManualSyncFailureMessage(result))
+      return
+    }
+    setManualSyncError(null)
+  }
+
+  const applyRemotePullPayload = async (remote: DiarySyncMetadata, remoteSha?: string) => {
+    if (remote.type !== 'yearly_summary') {
+      return
+    }
+    summary.setContent(remote.content)
+    await sync.markSynced(
+      {
+        ...remote,
+        entryId: summary.entryId,
+        year,
+      },
+      {
+        remoteSha,
+      },
+    )
+    setManualSyncError(null)
+  }
+
+  const pullNow = async () => {
+    if (isManualPulling) {
+      setManualPullError(MANUAL_PULL_BUSY_MESSAGE)
+      return
+    }
+    if (!canSyncToRemote) {
+      setManualPullError(syncDisabledMessage)
+      return
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
+    }
+
+    const persistedEntry = await summary.waitForPersisted()
+    const latestSummaryEntry =
+      persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
+    const localPayload: DiarySyncMetadata = {
+      type: 'yearly_summary',
+      entryId: summary.entryId,
+      year,
+      content: latestSummaryEntry?.content ?? summary.content,
+      modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
+    }
+
+    setIsManualPulling(true)
+    setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
+    try {
+      const result = await pullDiaryFromGitee({
+        token: auth.state.tokenInMemory as string,
+        owner: auth.state.config?.giteeOwner as string,
+        repo: auth.state.config?.giteeRepoName as string,
+        branch: giteeBranch,
+        dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        metadata: localPayload,
+      })
+
+      if (result.conflict) {
+        setPullConflictState({
+          local: result.conflictPayload?.local ?? localPayload,
+          remote: result.conflictPayload?.remote ?? null,
+          remoteSha: result.remoteSha,
+        })
+        setManualPullError('检测到拉取冲突，请选择保留本地、远端或合并版本')
+        return
+      }
+
+      if (!result.ok || !result.pulledMetadata) {
+        setManualPullError(getManualPullFailureMessage(result.reason))
+        return
+      }
+
+      await applyRemotePullPayload(result.pulledMetadata, result.remoteSha)
+      setManualPullError(null)
+    } catch (error) {
+      setManualPullError(error instanceof Error ? error.message : '拉取失败，请稍后重试')
+    } finally {
+      setIsManualPulling(false)
+    }
+  }
 
   const resolveMergeConflict = (mergedContent: string) => {
+    if (pullConflictState) {
+      const local = pullConflictState.local
+      if (local.type !== 'yearly_summary') {
+        return
+      }
+
+      const mergedPayload: DiarySyncMetadata = {
+        ...local,
+        content: mergedContent,
+        modifiedAt: new Date().toISOString(),
+      }
+      summary.setContent(mergedContent)
+      sync.onInputChange(mergedPayload)
+      setPullConflictState(null)
+      setManualPullError('已应用合并内容，请确认后手动上传')
+      return
+    }
+
     const local = sync.conflictState?.local
     if (!local || local.type !== 'yearly_summary') {
       return
@@ -162,6 +296,41 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       modifiedAt: new Date().toISOString(),
     }
     void sync.resolveConflict('merged', mergedPayload)
+  }
+  const displayedSyncMessage = sync.errorMessage
+  const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
+  const isManualSyncing = sync.status === 'syncing'
+  const activeConflictState = pullConflictState ?? sync.conflictState
+  const activeConflictMode = pullConflictState ? 'pull' : 'push'
+  const handleKeepLocalConflict = () => {
+    if (pullConflictState) {
+      setPullConflictState(null)
+      setManualPullError(null)
+      return
+    }
+    void sync.resolveConflict('local')
+  }
+  const handleKeepRemoteConflict = () => {
+    if (pullConflictState) {
+      const remote = pullConflictState.remote
+      const remoteSha = pullConflictState.remoteSha
+      setPullConflictState(null)
+      if (remote && remote.type === 'yearly_summary') {
+        void applyRemotePullPayload(remote, remoteSha)
+        setManualPullError(null)
+        return
+      }
+      setManualPullError('远端版本不可用，请稍后重试拉取')
+      return
+    }
+    void sync.resolveConflict('remote')
+  }
+  const handleCloseConflict = () => {
+    if (pullConflictState) {
+      setPullConflictState(null)
+      return
+    }
+    sync.dismissConflict()
   }
 
   return (
@@ -251,34 +420,31 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!canSyncToRemote) {
-                        setManualSyncError(syncDisabledMessage)
-                        return
-                      }
-                      void (async () => {
-                        const persistedEntry = await summary.waitForPersisted()
-                        const latestSummaryEntry =
-                          persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
-                        const manualPayload: DiarySyncMetadata = {
-                          type: 'yearly_summary',
-                          entryId: summary.entryId,
-                          year,
-                          content: latestSummaryEntry?.content ?? summary.content,
-                          modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
-                        }
-                        setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
-                        const result = await sync.saveNow(manualPayload)
-                        if (!result.ok) {
-                          setManualSyncError(getManualSyncFailureMessage(result))
-                          return
-                        }
-                        setManualSyncError(null)
-                      })()
+                      void pullNow()
+                    }}
+                    className="td-btn"
+                    data-testid="manual-pull-button"
+                  >
+                    {isManualPulling ? '拉取中...' : '手动拉取远端'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void saveNow()
                     }}
                     className="td-btn"
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
+                  {manualPullError ? (
+                    <span
+                      role="alert"
+                      data-testid="manual-pull-error"
+                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
+                    >
+                      {manualPullError}
+                    </span>
+                  ) : null}
                   {displayedManualSyncError ? (
                     <span
                       role="alert"
@@ -320,33 +486,30 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       />
 
       <ConflictDialog
-        open={Boolean(sync.conflictState && sync.conflictState.local.type === 'yearly_summary')}
+        open={Boolean(activeConflictState && activeConflictState.local.type === 'yearly_summary')}
+        mode={activeConflictMode}
         local={{
           content:
-            sync.conflictState && sync.conflictState.local.type === 'yearly_summary'
-              ? sync.conflictState.local.content
+            activeConflictState && activeConflictState.local.type === 'yearly_summary'
+              ? activeConflictState.local.content
               : '',
           modifiedAt:
-            sync.conflictState && sync.conflictState.local.type === 'yearly_summary'
-              ? sync.conflictState.local.modifiedAt
+            activeConflictState && activeConflictState.local.type === 'yearly_summary'
+              ? activeConflictState.local.modifiedAt
               : undefined,
         }}
         remote={
-          sync.conflictState?.remote && sync.conflictState.remote.type === 'yearly_summary'
+          activeConflictState?.remote && activeConflictState.remote.type === 'yearly_summary'
             ? {
-                content: sync.conflictState.remote.content,
-                modifiedAt: sync.conflictState.remote.modifiedAt,
+                content: activeConflictState.remote.content,
+                modifiedAt: activeConflictState.remote.modifiedAt,
               }
             : null
         }
-        onKeepLocal={() => {
-          void sync.resolveConflict('local')
-        }}
-        onKeepRemote={() => {
-          void sync.resolveConflict('remote')
-        }}
+        onKeepLocal={handleKeepLocalConflict}
+        onKeepRemote={handleKeepRemoteConflict}
         onMerge={resolveMergeConflict}
-        onClose={sync.dismissConflict}
+        onClose={handleCloseConflict}
       />
     </>
   )

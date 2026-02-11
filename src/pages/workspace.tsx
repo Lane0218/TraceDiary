@@ -17,15 +17,17 @@ import {
   saveSyncBaseline,
   type DiaryRecord,
 } from '../services/indexeddb'
-import { createDiaryUploadExecutor, type DiarySyncMetadata } from '../services/sync'
+import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 import { buildStatsSummary } from '../utils/stats'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
-import { countVisibleChars } from '../utils/word-count'
 import {
+  MANUAL_PULL_BUSY_MESSAGE,
+  MANUAL_PULL_PENDING_MESSAGE,
   MANUAL_SYNC_PENDING_MESSAGE,
+  getManualPullFailureMessage,
   getDisplayedManualSyncError,
   getManualSyncFailureMessage,
   getSessionLabel,
@@ -79,6 +81,10 @@ function shiftMonth(month: Date, offset: number): Date {
   return new Date(month.getFullYear(), month.getMonth() + offset, 1)
 }
 
+function countWords(content: string): number {
+  return content.trim().length === 0 ? 0 : content.trim().split(/\s+/u).length
+}
+
 function isDailySyncMetadata(value: DiarySyncMetadata): value is Extract<DiarySyncMetadata, { type: 'daily' }> {
   return value.type === 'daily'
 }
@@ -91,7 +97,7 @@ function upsertDailyRecord(records: DiaryRecord[], date: DateString, content: st
     type: 'daily',
     date,
     content,
-    wordCount: countVisibleChars(content),
+    wordCount: countWords(content),
     createdAt: now,
     modifiedAt: now,
   }
@@ -146,11 +152,18 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [leftPanelTab, setLeftPanelTab] = useState<WorkspaceLeftPanelTab>(() => getInitialLeftPanelTab())
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
+  const [manualPullError, setManualPullError] = useState<string | null>(null)
+  const [isManualPulling, setIsManualPulling] = useState(false)
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [yearlySummaries, setYearlySummaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
+  const [pullConflictState, setPullConflictState] = useState<{
+    local: DiarySyncMetadata
+    remote: DiarySyncMetadata | null
+    remoteSha?: string
+  } | null>(null)
 
   const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
@@ -360,6 +373,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     if (manualSyncError) {
       setManualSyncError(null)
     }
+    if (manualPullError) {
+      setManualPullError(null)
+    }
     setDiaries((prev) => upsertDailyRecord(prev, date, nextContent))
   }
 
@@ -367,6 +383,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     if (!canSyncToRemote) {
       setManualSyncError(syncDisabledMessage)
       return
+    }
+    if (manualPullError) {
+      setManualPullError(null)
     }
 
     const persistedEntry = await diary.waitForPersisted()
@@ -389,7 +408,105 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     setManualSyncError(null)
   }
 
+  const applyRemotePullPayload = async (remote: DiarySyncMetadata, remoteSha?: string) => {
+    if (!isDailySyncMetadata(remote)) {
+      return
+    }
+    diary.setContent(remote.content)
+    setDiaries((prev) => upsertDailyRecord(prev, date, remote.content))
+    await sync.markSynced(
+      {
+        ...remote,
+        entryId: diary.entryId,
+        date,
+      },
+      {
+        remoteSha,
+      },
+    )
+    setManualSyncError(null)
+  }
+
+  const pullNow = async () => {
+    if (isManualPulling) {
+      setManualPullError(MANUAL_PULL_BUSY_MESSAGE)
+      return
+    }
+    if (!canSyncToRemote) {
+      setManualPullError(syncDisabledMessage)
+      return
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
+    }
+
+    const persistedEntry = await diary.waitForPersisted()
+    const latestDailyEntry =
+      persistedEntry && persistedEntry.type === 'daily' ? persistedEntry : diary.entry
+    const localPayload: DiarySyncMetadata = {
+      type: 'daily',
+      entryId: diary.entryId,
+      date,
+      content: latestDailyEntry?.content ?? diary.content,
+      modifiedAt: latestDailyEntry?.modifiedAt ?? new Date().toISOString(),
+    }
+
+    setIsManualPulling(true)
+    setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
+    try {
+      const result = await pullDiaryFromGitee({
+        token: auth.state.tokenInMemory as string,
+        owner: auth.state.config?.giteeOwner as string,
+        repo: auth.state.config?.giteeRepoName as string,
+        branch: giteeBranch,
+        dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        metadata: localPayload,
+      })
+
+      if (result.conflict) {
+        setPullConflictState({
+          local: result.conflictPayload?.local ?? localPayload,
+          remote: result.conflictPayload?.remote ?? null,
+          remoteSha: result.remoteSha,
+        })
+        setManualPullError('检测到拉取冲突，请选择保留本地、远端或合并版本')
+        return
+      }
+
+      if (!result.ok || !result.pulledMetadata) {
+        setManualPullError(getManualPullFailureMessage(result.reason))
+        return
+      }
+
+      await applyRemotePullPayload(result.pulledMetadata, result.remoteSha)
+      setManualPullError(null)
+    } catch (error) {
+      setManualPullError(error instanceof Error ? error.message : '拉取失败，请稍后重试')
+    } finally {
+      setIsManualPulling(false)
+    }
+  }
+
   const resolveMergeConflict = (mergedContent: string) => {
+    if (pullConflictState) {
+      const local = pullConflictState.local
+      if (!isDailySyncMetadata(local)) {
+        return
+      }
+
+      const mergedPayload: DiarySyncMetadata = {
+        ...local,
+        content: mergedContent,
+        modifiedAt: new Date().toISOString(),
+      }
+      diary.setContent(mergedContent)
+      setDiaries((prev) => upsertDailyRecord(prev, date, mergedContent))
+      sync.onInputChange(mergedPayload)
+      setPullConflictState(null)
+      setManualPullError('已应用合并内容，请确认后手动上传')
+      return
+    }
+
     const local = sync.conflictState?.local
     if (!local || !isDailySyncMetadata(local)) {
       return
@@ -407,7 +524,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const syncPresentationState = useMemo(
     () => ({
       canSyncToRemote,
-      hasConflict: Boolean(sync.conflictState),
+      hasConflict: Boolean(pullConflictState || sync.conflictState),
       isOffline: sync.isOffline,
       hasPendingRetry: sync.hasPendingRetry,
       status: sync.status,
@@ -416,6 +533,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }),
     [
       canSyncToRemote,
+      pullConflictState,
       sync.conflictState,
       sync.hasPendingRetry,
       sync.hasUnsyncedChanges,
@@ -430,6 +548,38 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const displayedSyncMessage = sync.errorMessage
   const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
   const isManualSyncing = sync.status === 'syncing'
+  const activeConflictState = pullConflictState ?? sync.conflictState
+  const activeConflictMode = pullConflictState ? 'pull' : 'push'
+  const handleKeepLocalConflict = () => {
+    if (pullConflictState) {
+      setPullConflictState(null)
+      setManualPullError(null)
+      return
+    }
+    void sync.resolveConflict('local')
+  }
+  const handleKeepRemoteConflict = () => {
+    if (pullConflictState) {
+      const remote = pullConflictState.remote
+      const remoteSha = pullConflictState.remoteSha
+      setPullConflictState(null)
+      if (remote && isDailySyncMetadata(remote)) {
+        void applyRemotePullPayload(remote, remoteSha)
+        setManualPullError(null)
+        return
+      }
+      setManualPullError('远端版本不可用，请稍后重试拉取')
+      return
+    }
+    void sync.resolveConflict('remote')
+  }
+  const handleCloseConflict = () => {
+    if (pullConflictState) {
+      setPullConflictState(null)
+      return
+    }
+    sync.dismissConflict()
+  }
 
   return (
     <>
@@ -565,12 +715,31 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     type="button"
                     className="td-btn"
                     onClick={() => {
+                      void pullNow()
+                    }}
+                    data-testid="manual-pull-button"
+                  >
+                    {isManualPulling ? '拉取中...' : '手动拉取远端'}
+                  </button>
+                  <button
+                    type="button"
+                    className="td-btn"
+                    onClick={() => {
                       void saveNow()
                     }}
                     data-testid="manual-sync-button"
                   >
                     {isManualSyncing ? '上传中...' : '手动保存并立即上传'}
                   </button>
+                  {manualPullError ? (
+                    <span
+                      role="alert"
+                      data-testid="manual-pull-error"
+                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
+                    >
+                      {manualPullError}
+                    </span>
+                  ) : null}
                   {displayedManualSyncError ? (
                     <span
                       role="alert"
@@ -615,33 +784,30 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       />
 
       <ConflictDialog
-        open={Boolean(sync.conflictState && isDailySyncMetadata(sync.conflictState.local))}
+        open={Boolean(activeConflictState && isDailySyncMetadata(activeConflictState.local))}
+        mode={activeConflictMode}
         local={{
           content:
-            sync.conflictState && isDailySyncMetadata(sync.conflictState.local)
-              ? sync.conflictState.local.content
+            activeConflictState && isDailySyncMetadata(activeConflictState.local)
+              ? activeConflictState.local.content
               : '',
           modifiedAt:
-            sync.conflictState && isDailySyncMetadata(sync.conflictState.local)
-              ? sync.conflictState.local.modifiedAt
+            activeConflictState && isDailySyncMetadata(activeConflictState.local)
+              ? activeConflictState.local.modifiedAt
               : undefined,
         }}
         remote={
-          sync.conflictState?.remote && isDailySyncMetadata(sync.conflictState.remote)
+          activeConflictState?.remote && isDailySyncMetadata(activeConflictState.remote)
             ? {
-                content: sync.conflictState.remote.content,
-                modifiedAt: sync.conflictState.remote.modifiedAt,
+                content: activeConflictState.remote.content,
+                modifiedAt: activeConflictState.remote.modifiedAt,
               }
             : null
         }
-        onKeepLocal={() => {
-          void sync.resolveConflict('local')
-        }}
-        onKeepRemote={() => {
-          void sync.resolveConflict('remote')
-        }}
+        onKeepLocal={handleKeepLocalConflict}
+        onKeepRemote={handleKeepRemoteConflict}
         onMerge={resolveMergeConflict}
-        onClose={sync.dismissConflict}
+        onClose={handleCloseConflict}
       />
     </>
   )

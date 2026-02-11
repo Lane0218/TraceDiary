@@ -446,6 +446,7 @@ describe('useSync', () => {
         ok: false,
         conflict: true,
         reason: 'sha_mismatch' as const,
+        remoteSha: 'sha-latest',
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -472,6 +473,7 @@ describe('useSync', () => {
     expect(uploadMetadata).toHaveBeenLastCalledWith({
       metadata: { content: 'retry-local' },
       reason: 'manual',
+      expectedSha: 'sha-latest',
     })
     expect(result.current.conflictState).toBeNull()
     expect(result.current.status).toBe('success')
@@ -525,6 +527,54 @@ describe('useSync', () => {
       result.current.setActiveMetadata({ entryId: 'entry:b', content: 'B' })
       await Promise.resolve()
     })
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+  })
+
+  it('baseline 异步回写晚于上传成功时不应覆盖最新同步状态', async () => {
+    let resolveBaseline!: (value: { entryId: string; fingerprint: string; syncedAt: string }) => void
+    const loadBaseline = vi.fn(
+      () =>
+        new Promise<{ entryId: string; fingerprint: string; syncedAt: string }>((resolve) => {
+          resolveBaseline = resolve
+        }),
+    )
+    const uploadMetadata: UploadMetadataFn<{ entryId: string; content: string }> = vi.fn(async () => ({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-new',
+      syncedAt: '2026-02-08T20:00:00.000Z',
+    }))
+
+    const { result } = renderHook(() =>
+      useSync<{ entryId: string; content: string }>({
+        uploadMetadata,
+        getEntryId: (metadata) => metadata.entryId,
+        getFingerprint: (metadata) => metadata.content,
+        loadBaseline,
+      }),
+    )
+
+    await act(async () => {
+      result.current.setActiveMetadata({ entryId: 'entry:late', content: 'v2' })
+      await Promise.resolve()
+    })
+
+    await act(async () => {
+      await result.current.saveNow({ entryId: 'entry:late', content: 'v2' })
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+
+    await act(async () => {
+      resolveBaseline({
+        entryId: 'entry:late',
+        fingerprint: 'v1',
+        syncedAt: '2026-02-08T10:00:00.000Z',
+      })
+      await Promise.resolve()
+    })
+
+    expect(result.current.status).toBe('success')
     expect(result.current.hasUnsyncedChanges).toBe(false)
   })
 

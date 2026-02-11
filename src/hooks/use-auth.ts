@@ -7,6 +7,7 @@ import {
   hashMasterPassword as hashMasterPasswordWithKdf,
 } from '../services/crypto'
 import { validateGiteeRepoAccess as validateGiteeRepoAccessService } from '../services/gitee'
+import { saveSyncBaseline } from '../services/indexeddb'
 import { pullRemoteDiariesToIndexedDb } from '../services/sync'
 import type { AppConfig, KdfParams } from '../types/config'
 import { emitRemotePullCompletedEvent } from '../utils/remote-sync-events'
@@ -350,13 +351,20 @@ function createDefaultDependencies(): AuthDependencies {
       return deriveDataEncryptionKeyFromMasterPassword(masterPassword)
     },
     pullRemoteDiariesToLocal: async (payload) => {
-      await pullRemoteDiariesToIndexedDb({
-        token: payload.token,
-        owner: payload.owner,
-        repo: payload.repoName,
-        branch: payload.branch,
-        dataEncryptionKey: payload.dataEncryptionKey,
-      })
+      await pullRemoteDiariesToIndexedDb(
+        {
+          token: payload.token,
+          owner: payload.owner,
+          repo: payload.repoName,
+          branch: payload.branch,
+          dataEncryptionKey: payload.dataEncryptionKey,
+        },
+        {
+          saveBaseline: async (record) => {
+            await saveSyncBaseline(record)
+          },
+        },
+      )
     },
     restoreUnlockedToken: async () => {
       return restoreUnlockedTokenFromCache()

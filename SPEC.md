@@ -336,7 +336,7 @@ diary-data/                    # 用户的私有仓库名称
 - **实时保存**：编辑器内容实时保存到 IndexedDB
 - **手动 Push**：仅在用户点击“手动保存并立即上传”时触发远端上传
 - **手动 Pull**：仅在用户显式触发拉取时从远端读取最新数据并更新本地
-- **SHA 预检**：上传前获取远端文件 SHA，作为 `expectedSha` 参与更新（CAS）
+- **Push 直传**：Push 不在提交前做远端预检读取；若远端状态冲突，再进入冲突处理
 
 #### 4.6.2 冲突场景
 
@@ -345,7 +345,7 @@ diary-data/                    # 用户的私有仓库名称
 1. 设备 A 修改并上传到 Gitee（版本 1）
 2. 设备 B（离线）也修改了同一篇日记
 3. 设备 B 联网后尝试上传
-4. 提交更新时出现 `sha mismatch`，判定为冲突
+4. Push 直传后出现远端版本冲突（如 `sha mismatch` / 文件已存在），判定为冲突
 
 #### 4.6.3 冲突解决流程
 
@@ -356,9 +356,9 @@ diary-data/                    # 用户的私有仓库名称
    - 保留本地版本（覆盖远程）
    - 保留远程版本（放弃本地修改）
    - 合并两个版本（手动编辑）
-3. 根据用户选择生成新内容，并再次读取远端 SHA
-4. 使用 `expectedSha` 重新提交更新（CAS）
-5. 若再次 `sha mismatch`，提示用户刷新远端版本后重新决策
+3. **Push 冲突**：根据用户选择生成新内容并再次手动 Push（使用冲突时拿到的远端版本信息重试）
+4. **Pull 冲突**：根据用户选择将“保留远端”或“合并内容”应用到本地，之后由用户决定是否再手动 Push
+5. 若重试仍冲突，继续弹窗并让用户重新决策
 
 ### 4.7 数据导入（v1.1）
 
@@ -508,12 +508,12 @@ interface UploadRequest {
   encryptedContent: string;  // Base64(IV + Ciphertext)
   message: string;
   branch: string;            // 默认 main
-  expectedSha?: string;      // CAS：更新场景必填
+  expectedSha?: string;      // 可选：本地已知远端版本时携带
 }
 
 interface UploadResult {
   ok: boolean;
-  conflict: boolean;         // true 表示 sha mismatch
+  conflict: boolean;         // true 表示远端版本冲突（如 sha mismatch / 远端已存在）
   remoteSha?: string;        // 更新成功后的最新 SHA
   reason?: 'sha_mismatch' | 'network' | 'auth';
 }
@@ -1032,7 +1032,7 @@ POST /api/v5/repos/{owner}/{repo}/contents/{path}
   - content: string（Base64 编码，必填）
   - message: string（提交信息，必填）
   - branch: string（分支名，默认 main）
-  - sha: string（更新时必填，使用上传前读取的 expectedSha 做 CAS）
+  - sha: string（可选；已知远端版本时用于更新重试）
 兼容参数（可选）：
   - access_token: string（仅兼容模式）
 ```

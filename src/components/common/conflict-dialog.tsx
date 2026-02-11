@@ -7,6 +7,7 @@ export interface ConflictVersion {
 
 interface ConflictDialogProps {
   open: boolean
+  mode?: 'push' | 'pull'
   local: ConflictVersion
   remote: ConflictVersion | null
   onKeepLocal: () => void
@@ -32,6 +33,7 @@ function formatModifiedAt(value?: string): string {
 
 export default function ConflictDialog({
   open,
+  mode = 'push',
   local,
   remote,
   onKeepLocal,
@@ -46,6 +48,13 @@ export default function ConflictDialog({
     return null
   }
 
+  const title = mode === 'pull' ? '检测到拉取冲突' : '检测到同步冲突'
+  const description =
+    mode === 'pull'
+      ? '请选择保留本地、保留远端，或手动合并后应用到本地。'
+      : '请选择保留本地、保留远端，或手动合并后再提交。'
+  const mergeButtonLabel = mode === 'pull' ? '合并后应用到本地' : '合并后提交'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm td-fade-in">
       <article
@@ -55,12 +64,12 @@ export default function ConflictDialog({
       >
         <header className="border-b border-td-line px-4 py-3 sm:px-5">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xl text-td-text">检测到同步冲突</h2>
+            <h2 className="text-xl text-td-text">{title}</h2>
             <button type="button" className="td-btn px-2 py-1 text-xs" onClick={onClose}>
               关闭
             </button>
           </div>
-          <p className="mt-1 text-sm text-td-muted">请选择保留本地、保留远端，或手动合并后再提交。</p>
+          <p className="mt-1 text-sm text-td-muted">{description}</p>
         </header>
 
         <section className="grid gap-3 border-b border-td-line px-4 py-4 sm:grid-cols-2 sm:px-5">
@@ -113,7 +122,7 @@ export default function ConflictDialog({
               onClick={() => onMerge(mergeInputRef.current?.value ?? mergeInitialValue)}
               data-testid="conflict-merge-submit"
             >
-              合并后提交
+              {mergeButtonLabel}
             </button>
           </div>
         </section>

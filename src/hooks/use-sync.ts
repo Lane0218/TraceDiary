@@ -43,6 +43,13 @@ export interface UseSyncResult<TMetadata = unknown> {
   } | null
   setActiveMetadata: (metadata: TMetadata) => void
   onInputChange: (metadata: TMetadata) => void
+  markSynced: (
+    metadata: TMetadata,
+    options?: {
+      syncedAt?: string
+      remoteSha?: string
+    },
+  ) => Promise<void>
   saveNow: (metadata: TMetadata) => Promise<SaveNowResult>
   resolveConflict: (
     choice: 'local' | 'remote' | 'merged',
@@ -204,6 +211,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const activeEntryIdRef = useRef<string | null>(null)
   const activeFingerprintRef = useRef<string | null>(null)
   const baselineByEntryRef = useRef<Map<string, SyncBaselineRecord>>(new Map())
+  const preferredExpectedShaByEntryRef = useRef<Map<string, string>>(new Map())
   const loadedBaselineEntriesRef = useRef<Set<string>>(new Set())
   const dirtyByEntryRef = useRef<Map<string, boolean>>(new Map())
 
@@ -256,7 +264,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       loadedBaselineEntriesRef.current.add(entryId)
       try {
         const baseline = await loadBaseline(entryId)
-        if (baseline) {
+        const existing = baselineByEntryRef.current.get(entryId)
+        if (baseline && !existing) {
           baselineByEntryRef.current.set(entryId, baseline)
           return baseline
         }
@@ -286,6 +295,50 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     )
     setEntryDirtyState(activeEntryId, dirty)
   }, [resolveDirtyState, setEntryDirtyState])
+
+  const markSynced = useCallback(
+    async (
+      metadata: TMetadata,
+      options?: {
+        syncedAt?: string
+        remoteSha?: string
+      },
+    ) => {
+      const keyState = toMetadataKeyState(metadata)
+      latestMetadataRef.current = metadata
+      activeEntryIdRef.current = keyState.entryId
+      activeFingerprintRef.current = keyState.fingerprint
+
+      const syncedAt = options?.syncedAt ?? now()
+      const nextBaseline: SyncBaselineRecord = {
+        entryId: keyState.entryId,
+        fingerprint: keyState.fingerprint,
+        syncedAt,
+        remoteSha: options?.remoteSha?.trim() || undefined,
+      }
+      baselineByEntryRef.current.set(keyState.entryId, nextBaseline)
+      loadedBaselineEntriesRef.current.add(keyState.entryId)
+      preferredExpectedShaByEntryRef.current.delete(keyState.entryId)
+
+      if (saveBaseline) {
+        try {
+          await saveBaseline(nextBaseline)
+        } catch {
+          // baseline 持久化失败不应阻断主流程。
+        }
+      }
+
+      if (!mountedRef.current) {
+        return
+      }
+      setEntryDirtyState(keyState.entryId, false)
+      setStatus('success')
+      setErrorMessage(null)
+      setConflictState(null)
+      setLastSyncedAt(syncedAt)
+    },
+    [now, saveBaseline, setEntryDirtyState, toMetadataKeyState],
+  )
 
   const runUpload = useCallback(
     async (payload: UploadMetadataPayload<TMetadata>): Promise<SaveNowResult> => {
@@ -326,8 +379,20 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
 
       try {
+        if (loadBaseline && !loadedBaselineEntriesRef.current.has(keyState.entryId)) {
+          await ensureBaselineLoaded(keyState.entryId)
+        }
+        const baseline = baselineByEntryRef.current.get(keyState.entryId)
+        const expectedSha =
+          preferredExpectedShaByEntryRef.current.get(keyState.entryId) ?? baseline?.remoteSha
+        const uploadPayload = expectedSha
+          ? {
+              ...payload,
+              expectedSha,
+            }
+          : payload
         const result = await withTimeout(
-          uploadMetadata(payload),
+          uploadMetadata(uploadPayload),
           uploadTimeoutMs,
           SYNC_TIMEOUT_MESSAGE,
         )
@@ -344,6 +409,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
             const message = resolvingConflictRef.current
               ? '冲突仍未解决，请刷新远端版本后重新决策'
               : '检测到同步冲突，请选择保留本地、远端或合并版本'
+            if (result.remoteSha?.trim()) {
+              preferredExpectedShaByEntryRef.current.set(keyState.entryId, result.remoteSha.trim())
+            }
             setEntryDirtyState(keyState.entryId, true)
             setStatus('error')
             setConflictState({
@@ -411,28 +479,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
           }
         }
 
-        setStatus('success')
-        setErrorMessage(null)
-        setConflictState(null)
         resolvingConflictRef.current = false
-        const syncedAt = result?.syncedAt ?? now()
-        const nextBaseline: SyncBaselineRecord = {
-          entryId: keyState.entryId,
-          fingerprint: keyState.fingerprint,
-          syncedAt,
+        await markSynced(payload.metadata, {
+          syncedAt: result?.syncedAt ?? now(),
           remoteSha: result?.remoteSha,
-        }
-        baselineByEntryRef.current.set(keyState.entryId, nextBaseline)
-        loadedBaselineEntriesRef.current.add(keyState.entryId)
-        if (saveBaseline) {
-          try {
-            await saveBaseline(nextBaseline)
-          } catch {
-            // baseline 持久化失败不应阻断主上传成功路径。
-          }
-        }
-        setEntryDirtyState(keyState.entryId, false)
-        setLastSyncedAt(syncedAt)
+        })
         refreshActiveEntryDirtyState()
         return {
           ok: true,
@@ -487,10 +538,12 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       }
     },
     [
+      ensureBaselineLoaded,
+      loadBaseline,
+      markSynced,
       now,
       refreshActiveEntryDirtyState,
       resolveDirtyState,
-      saveBaseline,
       setEntryDirtyState,
       toMetadataKeyState,
       uploadMetadata,
@@ -569,17 +622,15 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       latestMetadataRef.current = metadata
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
-      const dirty = resolveDirtyState(keyState, {
-        fallbackWhenBaselineMissing: true,
-      })
       setEntryDirtyState(
         keyState.entryId,
-        dirty,
+        resolveDirtyState(keyState, {
+          fallbackWhenBaselineMissing: true,
+        }),
       )
       if (mountedRef.current) {
-        // 输入期间仅在状态边沿变化时触发更新，避免每次击键都重绘状态栏。
-        setStatus((prev) => (prev === 'idle' ? prev : 'idle'))
-        setErrorMessage((prev) => (prev === null ? prev : null))
+        setStatus('idle')
+        setErrorMessage(null)
       }
       void ensureBaselineLoaded(keyState.entryId).then(() => {
         if (!mountedRef.current) {
@@ -684,6 +735,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     conflictState,
     setActiveMetadata,
     onInputChange,
+    markSynced,
     saveNow,
     resolveConflict,
     dismissConflict,

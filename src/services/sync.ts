@@ -2,7 +2,7 @@ import { getDiary, getMetadata, saveDiary, saveMetadata, type DiaryRecord } from
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
-import { countVisibleChars } from '../utils/word-count'
+import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
 const DEFAULT_BRANCH = 'master'
@@ -34,6 +34,7 @@ export interface UploadResult {
 export interface UploadMetadataPayload<TMetadata = unknown> {
   metadata: TMetadata
   reason: SyncTriggerReason
+  expectedSha?: string
 }
 
 export interface UploadMetadataResult<TMetadata = unknown> {
@@ -115,9 +116,15 @@ export interface PullRemoteDiariesToIndexedDbParams {
 
 export interface PullRemoteDiariesToIndexedDbOptions {
   readRemoteMetadata?: () => Promise<RemoteMetadataFile>
-  readRemoteDiaryFile?: (path: string) => Promise<{ exists: boolean; content?: string }>
+  readRemoteDiaryFile?: (path: string) => Promise<{ exists: boolean; content?: string; sha?: string }>
   loadLocalDiary?: (entryId: string) => Promise<DiaryRecord | null>
   saveLocalDiary?: (record: DiaryRecord) => Promise<void>
+  saveBaseline?: (record: {
+    entryId: string
+    fingerprint: string
+    syncedAt: string
+    remoteSha?: string
+  }) => Promise<void>
 }
 
 export interface PullRemoteDiariesToIndexedDbResult {
@@ -170,6 +177,31 @@ export interface CreateDiaryUploadExecutorParams {
   fetchImpl?: typeof fetch
   useAccessTokenQuery?: boolean
   now?: () => string
+}
+
+export type PullDiaryFailureReason = 'not_found' | 'network' | 'auth'
+
+export interface PullDiaryFromGiteeParams {
+  token: string
+  owner: string
+  repo: string
+  dataEncryptionKey: CryptoKey
+  metadata: DiarySyncMetadata
+  branch?: string
+  apiBase?: string
+  fetchImpl?: typeof fetch
+  useAccessTokenQuery?: boolean
+  now?: () => string
+}
+
+export interface PullDiaryFromGiteeResult {
+  ok: boolean
+  conflict: boolean
+  reason?: PullDiaryFailureReason
+  pulledMetadata?: DiarySyncMetadata
+  remoteSha?: string
+  syncedAt?: string
+  conflictPayload?: UploadConflictPayload<DiarySyncMetadata>
 }
 
 function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
@@ -278,11 +310,7 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
     return dependencies.uploadMetadata
   }
 
-  if (
-    !dependencies.readRemoteMetadata ||
-    !dependencies.uploadRequest ||
-    !dependencies.serializeMetadata
-  ) {
+  if (!dependencies.uploadRequest || !dependencies.serializeMetadata) {
     return placeholderUploadMetadata<TMetadata>
   }
 
@@ -291,7 +319,6 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
   const now = dependencies.now ?? nowIsoString
   const buildCommitMessage = dependencies.buildCommitMessage ?? defaultBuildCommitMessage
   const serializeMetadata = dependencies.serializeMetadata
-  const readRemoteMetadata = dependencies.readRemoteMetadata
   const uploadRequest = dependencies.uploadRequest
 
   return async (
@@ -299,7 +326,6 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
   ): Promise<UploadMetadataResult<TMetadata>> => {
     try {
       const encryptedContent = await serializeMetadata(payload.metadata)
-      const remoteFile = await readRemoteMetadata()
 
       const request: UploadRequest = {
         path: metadataPath,
@@ -308,8 +334,8 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
         branch,
       }
 
-      if (!remoteFile.missing && remoteFile.sha) {
-        request.expectedSha = remoteFile.sha
+      if (payload.expectedSha?.trim()) {
+        request.expectedSha = payload.expectedSha.trim()
       }
 
       const uploadResult = await uploadRequest(request)
@@ -375,6 +401,31 @@ function isShaMismatchError(error: unknown): boolean {
   )
 }
 
+function looksLikeFileExistsConflict(status: number | undefined, message: string | undefined): boolean {
+  if (status !== 400 && status !== 409 && status !== 422) {
+    return false
+  }
+  if (!message) {
+    return false
+  }
+
+  const normalized = message.toLowerCase()
+  return /(already\s+exists|file\s+exists|path.*exists|已存在|同名文件)/i.test(normalized)
+}
+
+function isDiaryPushConflictError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const status = error instanceof GiteeApiError ? error.status : pickStatusFromError(error)
+  return isShaMismatchError(error) || looksLikeFileExistsConflict(status, error.message)
+}
+
+function normalizeDiaryContentForCompare(content: string): string {
+  return content.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '')
+}
+
 function isBranchNotFoundError(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false
@@ -419,6 +470,14 @@ function toRemoteDiaryMetadata(
     content: remoteContent,
     modifiedAt: now(),
   }
+}
+
+function countWords(content: string): number {
+  const normalized = content.trim()
+  if (!normalized) {
+    return 0
+  }
+  return normalized.split(/\s+/u).length
 }
 
 function createEmptyMetadata(nowIso: string): Metadata {
@@ -487,7 +546,7 @@ function upsertMetadataEntryFromDiary(
       type: 'daily',
       date: diary.date as `${number}-${number}-${number}`,
       filename: `${diary.date}.md.enc`,
-      wordCount: countVisibleChars(diary.content),
+      wordCount: countWords(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
     }
@@ -508,7 +567,7 @@ function upsertMetadataEntryFromDiary(
       year: diary.year,
       date: summaryDate,
       filename: `${diary.year}-summary.md.enc`,
-      wordCount: countVisibleChars(diary.content),
+      wordCount: countWords(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
     }
@@ -605,18 +664,7 @@ export function createDiaryUploadExecutor(
   ): Promise<UploadMetadataResult<DiarySyncMetadata>> => {
     const metadata = payload.metadata
     const path = buildDiaryPath(metadata)
-    const remoteFile = await readGiteeFileContents({
-      token: params.token,
-      owner: params.owner,
-      repo: params.repo,
-      path,
-      ref: targetBranch,
-      apiBase: params.apiBase,
-      fetchImpl: params.fetchImpl,
-      useAccessTokenQuery,
-    })
-
-    const expectedSha = remoteFile.exists ? remoteFile.sha : undefined
+    const expectedSha = payload.expectedSha?.trim()
     const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
     const upsertResult = await upsertGiteeFile({
       token: params.token,
@@ -656,8 +704,9 @@ export function createDiaryUploadExecutor(
     const metadata = payload.metadata
     const path = buildDiaryPath(metadata)
 
-    if (isShaMismatchError(error)) {
+    if (isDiaryPushConflictError(error)) {
       let remoteMetadata: DiarySyncMetadata | undefined
+      let remoteSha: string | undefined
       try {
         const latestRemote = await readGiteeFileContents({
           token: params.token,
@@ -670,6 +719,7 @@ export function createDiaryUploadExecutor(
           useAccessTokenQuery,
         })
         if (latestRemote.exists && typeof latestRemote.content === 'string') {
+          remoteSha = latestRemote.sha
           const decryptedRemoteContent = await decryptWithAesGcm(
             normalizeEncryptedContent(latestRemote.content),
             params.dataEncryptionKey,
@@ -684,6 +734,7 @@ export function createDiaryUploadExecutor(
         ok: false,
         conflict: true,
         reason: 'sha_mismatch',
+        remoteSha,
         conflictPayload: {
           local: metadata,
           remote: remoteMetadata,
@@ -719,6 +770,87 @@ export function createDiaryUploadExecutor(
     throw error
   }
 
+  const tryRecoverUploadWithoutExpectedSha = async (
+    error: unknown,
+    payload: UploadMetadataPayload<DiarySyncMetadata>,
+    targetBranch: string,
+  ): Promise<UploadMetadataResult<DiarySyncMetadata> | null> => {
+    if (payload.expectedSha?.trim()) {
+      return null
+    }
+    if (!isDiaryPushConflictError(error)) {
+      return null
+    }
+
+    const metadata = payload.metadata
+    const path = buildDiaryPath(metadata)
+    const latestRemote = await readGiteeFileContents({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      ref: targetBranch,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery,
+    })
+
+    if (!latestRemote.exists || !latestRemote.sha) {
+      return null
+    }
+
+    if (typeof latestRemote.content === 'string') {
+      try {
+        const remoteContent = await decryptWithAesGcm(
+          normalizeEncryptedContent(latestRemote.content),
+          params.dataEncryptionKey,
+        )
+        const normalizedRemote = normalizeDiaryContentForCompare(remoteContent)
+        const normalizedLocal = normalizeDiaryContentForCompare(metadata.content)
+        if (normalizedRemote === normalizedLocal) {
+          return {
+            ok: true,
+            conflict: false,
+            remoteSha: latestRemote.sha,
+            syncedAt: now(),
+          }
+        }
+      } catch {
+        // 远端解密失败时继续按覆盖流程处理。
+      }
+    }
+
+    const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
+    const overwriteResult = await upsertGiteeFile({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      content: encryptedContent,
+      message: buildDiaryCommitMessage(metadata),
+      branch: targetBranch,
+      expectedSha: latestRemote.sha,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery,
+    })
+
+    if (shouldSyncMetadata) {
+      try {
+        await syncMetadataForDiary(payload, targetBranch)
+      } catch {
+        // metadata 同步失败不应阻断主日记上传结果，避免用户误判为整次同步失败。
+      }
+    }
+
+    return {
+      ok: true,
+      conflict: false,
+      remoteSha: overwriteResult.sha,
+      syncedAt: now(),
+    }
+  }
+
   return async (payload) => {
     const branchCandidates = buildBranchCandidates(activeBranch)
     let lastError: unknown = null
@@ -735,11 +867,116 @@ export function createDiaryUploadExecutor(
         if (hasFallback && isBranchNotFoundError(error)) {
           continue
         }
+        try {
+          const recovered = await tryRecoverUploadWithoutExpectedSha(error, payload, candidateBranch)
+          if (recovered) {
+            activeBranch = candidateBranch
+            return recovered
+          }
+        } catch (recoverError) {
+          lastError = recoverError
+          return mapUploadError(recoverError, payload, candidateBranch)
+        }
         return mapUploadError(error, payload, candidateBranch)
       }
     }
 
     return mapUploadError(lastError, payload, activeBranch)
+  }
+}
+
+export async function pullDiaryFromGitee(
+  params: PullDiaryFromGiteeParams,
+): Promise<PullDiaryFromGiteeResult> {
+  const now = params.now ?? nowIsoString
+  const branch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const useAccessTokenQuery = params.useAccessTokenQuery ?? true
+  const localMetadata = params.metadata
+  const path = buildDiaryPath(localMetadata)
+
+  try {
+    const remoteFile = await readGiteeFileContents({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      ref: branch,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery,
+    })
+
+    if (!remoteFile.exists || typeof remoteFile.content !== 'string' || !remoteFile.content.trim()) {
+      return {
+        ok: false,
+        conflict: false,
+        reason: 'not_found',
+      }
+    }
+
+    const remoteContent = await decryptWithAesGcm(
+      normalizeEncryptedContent(remoteFile.content),
+      params.dataEncryptionKey,
+    )
+    const pulledMetadata = toRemoteDiaryMetadata(localMetadata, remoteContent, now)
+    const normalizedLocal = normalizeDiaryContentForCompare(localMetadata.content)
+    const normalizedRemote = normalizeDiaryContentForCompare(remoteContent)
+    const hasLocalContent = normalizedLocal.trim().length > 0
+
+    if (hasLocalContent && normalizedLocal !== normalizedRemote) {
+      return {
+        ok: false,
+        conflict: true,
+        remoteSha: remoteFile.sha,
+        conflictPayload: {
+          local: localMetadata,
+          remote: pulledMetadata,
+        },
+      }
+    }
+
+    return {
+      ok: true,
+      conflict: false,
+      pulledMetadata,
+      remoteSha: remoteFile.sha,
+      syncedAt: now(),
+    }
+  } catch (error) {
+    if (error instanceof GiteeApiError) {
+      if (error.status === 404) {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'not_found',
+        }
+      }
+      if (error.type === 'auth') {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'auth',
+        }
+      }
+      if (error.type === 'network') {
+        return {
+          ok: false,
+          conflict: false,
+          reason: 'network',
+        }
+      }
+    }
+
+    const reason = inferUploadFailureReason(error)
+    if (reason === 'auth' || reason === 'network') {
+      return {
+        ok: false,
+        conflict: false,
+        reason,
+      }
+    }
+
+    throw error
   }
 }
 
@@ -813,7 +1050,7 @@ function toDiaryRecordFromMetadataEntry(
       date: entry.date,
       filename: entry.filename,
       content,
-      wordCount: countVisibleChars(content),
+      wordCount: countWords(content),
       createdAt: entry.createdAt,
       modifiedAt: entry.modifiedAt,
     }
@@ -826,7 +1063,7 @@ function toDiaryRecordFromMetadataEntry(
     date: entry.date,
     filename: entry.filename,
     content,
-    wordCount: countVisibleChars(content),
+    wordCount: countWords(content),
     createdAt: entry.createdAt,
     modifiedAt: entry.modifiedAt,
   }
@@ -902,6 +1139,7 @@ export async function pullRemoteDiariesToIndexedDb(
 
   const loadLocalDiary = options.loadLocalDiary ?? ((entryId: string) => getDiary(entryId))
   const saveLocalDiary = options.saveLocalDiary ?? ((record: DiaryRecord) => saveDiary(record))
+  const saveBaseline = options.saveBaseline
 
   const remoteMetadata = await readRemoteMetadata()
   if (remoteMetadata.missing) {
@@ -930,15 +1168,53 @@ export async function pullRemoteDiariesToIndexedDb(
         params.dataEncryptionKey,
       )
       const remoteRecord = toDiaryRecordFromMetadataEntry(entry, decryptedDiaryContent)
+      const remoteSyncMetadata: DiarySyncMetadata =
+        entry.type === 'daily'
+          ? {
+              type: 'daily',
+              entryId: remoteRecord.id,
+              date: entry.date,
+              content: decryptedDiaryContent,
+              modifiedAt: entry.modifiedAt,
+            }
+          : {
+              type: 'yearly_summary',
+              entryId: remoteRecord.id,
+              year: entry.year,
+              content: decryptedDiaryContent,
+              modifiedAt: entry.modifiedAt,
+            }
+      const baselineRecord = {
+        entryId: getDiarySyncEntryId(remoteSyncMetadata),
+        fingerprint: getDiarySyncFingerprint(remoteSyncMetadata),
+        syncedAt: entry.modifiedAt,
+        remoteSha: remoteDiary.sha,
+      }
+      const persistBaseline = async (): Promise<void> => {
+        if (!saveBaseline) {
+          return
+        }
+        try {
+          await saveBaseline(baselineRecord)
+        } catch {
+          // baseline 持久化失败不应影响远端下拉主流程。
+        }
+      }
       const localRecord = await loadLocalDiary(remoteRecord.id)
 
       if (!localRecord) {
         await saveLocalDiary(remoteRecord)
+        await persistBaseline()
         result.inserted += 1
         continue
       }
 
       if (!shouldOverwriteLocalDiary(localRecord, remoteRecord)) {
+        const normalizedLocal = normalizeDiaryContentForCompare(localRecord.content ?? '')
+        const normalizedRemote = normalizeDiaryContentForCompare(remoteRecord.content ?? '')
+        if (normalizedLocal === normalizedRemote) {
+          await persistBaseline()
+        }
         result.skipped += 1
         continue
       }
@@ -947,6 +1223,7 @@ export async function pullRemoteDiariesToIndexedDb(
         ...localRecord,
         ...remoteRecord,
       })
+      await persistBaseline()
       result.updated += 1
     } catch {
       result.failed += 1
