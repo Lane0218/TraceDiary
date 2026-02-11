@@ -170,13 +170,41 @@ function yearlyEditorLocator(page: Page): Locator {
   return page.locator('[aria-label="yearly-summary-page"] .ProseMirror').first()
 }
 
+function parseWorkspaceDateFromUrl(page: Page): string | null {
+  try {
+    const url = new URL(page.url())
+    const date = url.searchParams.get('date')
+    return date && /^\d{4}-\d{2}-\d{2}$/u.test(date) ? date : null
+  } catch {
+    return null
+  }
+}
+
+function parseYearlyYearFromUrl(page: Page): number | null {
+  try {
+    const url = new URL(page.url())
+    const match = url.pathname.match(/\/yearly\/(\d{4})$/u)
+    if (!match) {
+      return null
+    }
+    const year = Number.parseInt(match[1], 10)
+    return Number.isFinite(year) ? year : null
+  } catch {
+    return null
+  }
+}
+
 export async function writeDailyContent(page: Page, content: string): Promise<void> {
   const editor = dailyEditorLocator(page)
   await expect(editor).toBeVisible()
 
   await editor.fill(content)
-
-  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+  const date = parseWorkspaceDateFromUrl(page)
+  if (date) {
+    await waitForDailyDiaryPersisted(page, date, content)
+    return
+  }
+  await expect(page.getByText('本地保存异常')).toHaveCount(0)
 }
 
 export async function writeYearlyContent(page: Page, content: string): Promise<void> {
@@ -184,8 +212,12 @@ export async function writeYearlyContent(page: Page, content: string): Promise<v
   await expect(editor).toBeVisible()
 
   await editor.fill(content)
-
-  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+  const year = parseYearlyYearFromUrl(page)
+  if (year !== null) {
+    await waitForYearlyPersisted(page, year, content)
+    return
+  }
+  await expect(page.getByText('本地保存异常')).toHaveCount(0)
 }
 
 async function waitForDiaryPersisted(
