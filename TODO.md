@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`78`
-- 状态统计：`DONE=64` / `DOING=0` / `TODO=14` / `BLOCKED=0`
+- 总任务：`79`
+- 状态统计：`DONE=65` / `DOING=0` / `TODO=14` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -85,6 +85,7 @@
 | `TD-SYNC-023` | `DONE` | 修复下载同步缺失导致云端日记无法落本地（解锁后自动拉取并按 `modifiedAt` 决策覆盖） | 解锁后自动从远端拉取 metadata 与对应日记并写入 IndexedDB；云端已有 `2100-01-01` 时页面可见；同条目仅在远端 `modifiedAt` 更新时覆盖本地 | `src/services/sync.ts` `src/hooks/use-auth.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/__tests__/integration/*` `e2e/specs/*` `TODO.md` | `npm run test:unit` 通过（50/50）；`npm run test:integration` 通过（46/46）；`npm run test:e2e` 通过（21/21） | `2026-02-11 / 42008cc` |
 | `TD-SYNC-024` | `DONE` | 将数据密钥改为仅由主密码导出并补齐“内容可解密可读”的端到端校验 | 数据加密主密钥不再依赖 `kdfParams` 随机盐；仅凭主密码可导出同一数据密钥；相关 E2E 必须断言拉取后内容可读且非空 | `src/services/crypto.ts` `src/hooks/use-auth.ts` `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/components/editor/markdown-editor.tsx` `src/hooks/use-diary.ts` `src/services/__tests__/crypto.test.ts` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/hooks/__tests__/use-diary.test.ts` `e2e/specs/remote-pull-sync.spec.ts` `TODO.md` | 用户明确授权采用必要测试策略；已执行：`npm run lint`（通过）、`npm run test:unit`（53/53 通过）、`npm run test:integration`（47/47 通过）、`npx playwright test e2e/specs/remote-pull-sync.spec.ts --project=chromium --retries=0`（1/1 通过）；未执行全量 `npm run test:e2e`（已按授权仅执行与改动直接相关用例） | `2026-02-11 / 1965ec9` |
 | `TD-SYNC-025` | `DONE` | 移除 fallback 密钥逻辑并强制仅使用主密码派生密钥进行加解密 | 代码中不再保留 fallback 密钥参数、状态与解密分支；上传与下载仅使用主密码派生数据密钥；相关单元/集成/E2E 回归通过 | `src/hooks/use-auth.ts` `src/services/sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-auth.test.tsx` `src/services/__tests__/sync.test.ts` `e2e/specs/upload-encryption.spec.ts` `e2e/specs/conflict-resolution.spec.ts` `TODO.md` | 用户明确授权“可不跑全量 E2E”；已执行：`npm run lint`（通过）、`npm run test:unit`（51/51 通过）、`npm run test:integration`（47/47 通过）、`npx playwright test e2e/specs/remote-pull-sync.spec.ts e2e/specs/upload-encryption.spec.ts --project=chromium --retries=0`（2/2 通过）；未执行全量 `npm run test:e2e`（按授权仅执行最相关用例） | `2026-02-11 / 38f812d` |
+| `TD-SYNC-026` | `DONE` | 清空 `.env.e2e` 指向测试仓库并按主密码密钥重建测试密文数据 | 远端旧密文被清空；重建后的 `metadata.json.enc` 与示例日记文件可被主密码成功解密且内容可读 | `TODO.md` | 已执行远端清空与重建脚本并校验通过：清理后文件数 `0`，重建后文件数 `4`（`2100-01-01.md.enc`、`2100-06-06.md.enc`、`2100-summary.md.enc`、`metadata.json.enc`）；回读后使用 `E2E_MASTER_PASSWORD` 可成功解密 `metadata.json.enc` 与 `2100-01-01.md.enc`，内容可读 | `2026-02-11 / 待回填` |
 
 ### 6.6 PWA、部署与安全头
 
