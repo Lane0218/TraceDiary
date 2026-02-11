@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`84`
-- 状态统计：`DONE=69` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 总任务：`85`
+- 状态统计：`DONE=70` / `DOING=0` / `TODO=15` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -127,6 +127,7 @@
 | `TD-UI-006` | `DONE` | 优化工作台信息简化与左侧结构（移除条目ID/冗余描述，分离往年今日卡片，缩小日历日期格） | 不显示条目ID；“往年今日”无附加解释文案；往年今日独立于日历卡片；日期格尺寸更紧凑 | `src/pages/workspace.tsx` `src/components/calendar/month-calendar.tsx` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 6f2fe9a` |
 | `TD-UI-007` | `DONE` | 重构“日记主页面 + 年度总结独立页”信息架构（移除同级 Tab，新增 `/yearly/:year` 长时写作页与年终提示） | 工作台仅保留日记编辑；可从按钮和年终提示进入年度总结独立页；年度总结支持按自然年切换与保存；返回日记不丢失上下文 | `src/App.tsx` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/*` | `npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过 | `2026-02-09 / 8d66a0b` |
 | `TD-UI-008` | `DONE` | 编辑器模式切换收敛为单“源码”按钮并对齐既有按钮样式 | 默认未点击“源码”时展示可视化编辑；点击“源码”后进入源码编辑；按钮样式与站内 `td-btn` 体系一致 | `src/components/editor/markdown-editor.tsx` `src/pages/workspace.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”） | `2026-02-11 / b53bd69` |
+| `TD-UI-009` | `DONE` | 收敛同步信息展示（移除编辑页分支显示，仅保留云端状态胶囊） | `workspace/yearly` 不展示“分支”与“未提交改动”；欢迎页与设置仍展示分支；云端状态胶囊保留并可反映同步状态 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-state-consistency.spec.ts` `e2e/specs/manual-sync-failure.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-failure.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3） | `2026-02-11 / 43b9ae5` |
 
 ### 6.9 数据导入（v1.1）
 
