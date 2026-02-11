@@ -22,7 +22,7 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   await sourceEditor.fill(markdown)
   await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
 
-  await page.getByTestId('daily-editor-mode-wysiwyg').click()
+  await page.getByTestId('daily-editor-mode-source').click()
   const heading = page.locator('[data-testid="daily-editor"] .ProseMirror h1').first()
   const paragraph = page
     .locator('[data-testid="daily-editor"] .ProseMirror p')

@@ -95,26 +95,12 @@ export default function MarkdownEditor({
     <div className="mb-2 flex items-center justify-end gap-2">
       <button
         type="button"
-        className={`td-btn px-2.5 py-1 text-xs ${mode === 'wysiwyg' ? 'td-btn-primary' : ''}`}
-        aria-pressed={mode === 'wysiwyg'}
-        onClick={() => {
-          if (mode === 'wysiwyg') {
-            return
-          }
-          setMode('wysiwyg')
-          setWysiwygRevision((prev) => prev + 1)
-        }}
-        disabled={disabled}
-        data-testid={testId ? `${testId}-mode-wysiwyg` : undefined}
-      >
-        可视化
-      </button>
-      <button
-        type="button"
         className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}
         aria-pressed={mode === 'source'}
         onClick={() => {
           if (mode === 'source') {
+            setMode('wysiwyg')
+            setWysiwygRevision((prev) => prev + 1)
             return
           }
           setMode('source')

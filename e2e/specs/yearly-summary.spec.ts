@@ -25,7 +25,7 @@ async function writeYearlySummaryInSourceMode(page: Page, content: string): Prom
   await sourceEditor.fill(content)
   await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
 
-  await page.getByRole('button', { name: '可视化' }).click()
+  await page.getByRole('button', { name: '源码' }).click()
   await expect(yearlyEditorLocator(page)).toBeVisible()
 }
 
