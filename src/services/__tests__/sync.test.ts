@@ -14,7 +14,7 @@ import {
   readRemoteMetadataFromGitee,
   uploadMetadataToGitee,
 } from '../sync'
-import { encryptWithAesGcm } from '../crypto'
+import { decryptWithAesGcm, encryptWithAesGcm } from '../crypto'
 import { decodeBase64Utf8, encodeBase64Utf8 } from '../gitee'
 
 interface TestMetadata {
@@ -348,6 +348,89 @@ describe('pullRemoteDiariesToIndexedDb', () => {
     expect(localStore.get('daily:2100-01-01')?.content).toBe('remote-new-1')
     expect(localStore.get('daily:2100-01-02')?.content).toBe('remote-new-2')
     expect(localStore.get('daily:2100-01-03')?.content).toBe('local-newer-3')
+  })
+
+  it('主 key 解密失败时应回退 fallback keys 完成 metadata 与日记解密', async () => {
+    const primaryKey = await createDataEncryptionKey('pull-primary-wrong')
+    const fallbackKey = await createDataEncryptionKey('pull-fallback-correct')
+    const marker = 'fallback-pull-marker'
+    const remoteMetadata = {
+      version: '1',
+      lastSync: '2100-01-10T01:00:00.000Z',
+      entries: [
+        {
+          type: 'daily' as const,
+          date: '2100-01-10',
+          filename: '2100-01-10.md.enc',
+          wordCount: 3,
+          createdAt: '2100-01-10T00:00:00.000Z',
+          modifiedAt: '2100-01-10T01:00:00.000Z',
+        },
+      ],
+    }
+    const encryptedMetadata = await encryptWithAesGcm(
+      JSON.stringify(remoteMetadata),
+      fallbackKey,
+    )
+    const encryptedDiary = await encryptWithAesGcm(`remote ${marker}`, fallbackKey)
+    const localStore = new Map<string, {
+      id: string
+      type: 'daily'
+      date: string
+      content: string
+      createdAt: string
+      modifiedAt: string
+      wordCount: number
+      filename: string
+    }>()
+
+    const result = await pullRemoteDiariesToIndexedDb(
+      {
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'master',
+        dataEncryptionKey: primaryKey,
+        fallbackDataEncryptionKeys: [fallbackKey],
+      },
+      {
+        readRemoteMetadata: async () => ({
+          missing: false,
+          encryptedContent: encryptedMetadata,
+          sha: 'sha-meta-fallback',
+        }),
+        readRemoteDiaryFile: async () => ({
+          exists: true,
+          content: encryptedDiary,
+        }),
+        loadLocalDiary: async (entryId) => localStore.get(entryId) ?? null,
+        saveLocalDiary: async (record) => {
+          if (record.type !== 'daily') {
+            return
+          }
+          localStore.set(record.id, {
+            id: record.id,
+            type: 'daily',
+            date: record.date,
+            content: record.content,
+            createdAt: record.createdAt,
+            modifiedAt: record.modifiedAt,
+            wordCount: record.wordCount,
+            filename: record.filename,
+          })
+        },
+      },
+    )
+
+    expect(result).toEqual({
+      total: 1,
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      metadataMissing: false,
+    })
+    expect(localStore.get('daily:2100-01-10')?.content).toContain(marker)
   })
 })
 
@@ -757,6 +840,104 @@ describe('createDiaryUploadExecutor', () => {
     expect(fetchMock.mock.calls[3]?.[0]).toContain('metadata.json.enc?branch=master')
   })
 
+  it('syncMetadata 读取远端 metadata 失败主 key 时应使用 fallback key 解密并合并旧条目', async () => {
+    const primaryKey = await createDataEncryptionKey('daily-metadata-primary')
+    const fallbackKey = await createDataEncryptionKey('daily-metadata-fallback')
+    const remoteMetadata = {
+      version: '1',
+      lastSync: '2026-02-01T00:00:00.000Z',
+      entries: [
+        {
+          type: 'daily' as const,
+          date: '2026-02-01',
+          filename: '2026-02-01.md.enc',
+          wordCount: 2,
+          createdAt: '2026-02-01T00:00:00.000Z',
+          modifiedAt: '2026-02-01T00:00:00.000Z',
+        },
+      ],
+    }
+    const encryptedRemoteMetadata = await encryptWithAesGcm(
+      JSON.stringify(remoteMetadata),
+      fallbackKey,
+    )
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-diary-created' },
+            commit: { sha: 'commit-diary-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: encodeBase64Utf8(encryptedRemoteMetadata),
+            encoding: 'base64',
+            sha: 'sha-metadata-old',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-metadata-new' },
+            commit: { sha: 'commit-metadata-new' },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      dataEncryptionKey: primaryKey,
+      fallbackDataEncryptionKeys: [fallbackKey],
+      syncMetadata: true,
+      branch: 'master',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T15:30:00.000Z',
+    })
+
+    const result = await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-14',
+        date: '2026-02-14',
+        content: 'with fallback metadata',
+        modifiedAt: '2026-02-14T08:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-diary-created',
+      syncedAt: '2026-02-09T15:30:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    const metadataUploadRequest = fetchMock.mock.calls[3]?.[1] as { body?: string } | undefined
+    const metadataUploadBody = JSON.parse(metadataUploadRequest?.body ?? '{}') as { content?: string }
+    const metadataCiphertext = decodeBase64Utf8(metadataUploadBody.content ?? '')
+    const uploadedMetadataJson = await decryptWithAesGcm(metadataCiphertext, primaryKey)
+    const uploadedMetadata = JSON.parse(uploadedMetadataJson) as {
+      entries: Array<{ type: string; date?: string }>
+    }
+    const dailyDates = uploadedMetadata.entries
+      .filter((entry) => entry.type === 'daily' && typeof entry.date === 'string')
+      .map((entry) => entry.date)
+    expect(dailyDates).toContain('2026-02-01')
+    expect(dailyDates).toContain('2026-02-14')
+  })
+
   it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {
     const dataEncryptionKey = await createDataEncryptionKey('daily-fallback')
     const fetchMock = vi
@@ -817,8 +998,9 @@ describe('createDiaryUploadExecutor', () => {
   })
 
   it('sha mismatch 冲突分支应解密远端内容后写入 conflictPayload.remote', async () => {
-    const dataEncryptionKey = await createDataEncryptionKey('daily-conflict')
-    const encryptedRemoteContent = await encryptWithAesGcm('# 远端版本', dataEncryptionKey)
+    const dataEncryptionKey = await createDataEncryptionKey('daily-conflict-primary')
+    const fallbackDataEncryptionKey = await createDataEncryptionKey('daily-conflict-fallback')
+    const encryptedRemoteContent = await encryptWithAesGcm('# 远端版本', fallbackDataEncryptionKey)
     const encryptedRemoteContentWithWhitespace = `${encryptedRemoteContent.slice(0, 20)}\n${encryptedRemoteContent.slice(20)}  `
     const fetchMock = vi
       .fn()
@@ -856,6 +1038,7 @@ describe('createDiaryUploadExecutor', () => {
       owner: 'owner',
       repo: 'repo',
       dataEncryptionKey,
+      fallbackDataEncryptionKeys: [fallbackDataEncryptionKey],
       syncMetadata: false,
       fetchImpl: fetchMock as unknown as typeof fetch,
       now: () => '2026-02-09T13:00:00.000Z',

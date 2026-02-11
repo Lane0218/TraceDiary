@@ -53,6 +53,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
+  const fallbackDataEncryptionKeys = auth.state.fallbackDataEncryptionKeys ?? []
 
   const syncAvailability = useMemo(
     () =>
@@ -80,6 +81,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        fallbackDataEncryptionKeys,
         syncMetadata: true,
       })
     : undefined
@@ -305,8 +307,8 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
             {!summary.isLoading ? (
               <MarkdownEditor
-                key={summary.entryId}
-                docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}`}
+                key={`${summary.entryId}:${summary.loadRevision}`}
+                docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
                 initialValue={summary.content}
                 onChange={handleEditorChange}
                 placeholder="写下本年度总结（长文写作场景，支持 Markdown）"

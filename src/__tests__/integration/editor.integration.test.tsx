@@ -57,6 +57,7 @@ function buildUseDiaryResult(overrides?: Partial<UseDiaryResult>): UseDiaryResul
     entryId: 'daily:2026-02-08',
     content: '',
     entry: null,
+    loadRevision: 0,
     isLoading: false,
     isSaving: false,
     error: null,

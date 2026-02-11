@@ -6,6 +6,7 @@ import {
   decryptToken,
   decryptWithAesGcm,
   deriveAesKeyFromPassword,
+  deriveDataEncryptionKeyFromMasterPassword,
   encryptToken,
   encryptWithAesGcm,
 } from '../crypto'
@@ -79,5 +80,15 @@ describe('crypto service', () => {
     await expect(
       decryptToken(encryptedToken, 'WrongPassword1', TEST_KDF_PARAMS),
     ).rejects.toThrow()
+  })
+
+  it('数据密钥应仅由主密码决定（同密码可互解，不同密码不可解）', async () => {
+    const keyA1 = await deriveDataEncryptionKeyFromMasterPassword('Password123')
+    const keyA2 = await deriveDataEncryptionKeyFromMasterPassword('Password123')
+    const keyB = await deriveDataEncryptionKeyFromMasterPassword('Password124')
+
+    const encrypted = await encryptWithAesGcm('diary-content', keyA1)
+    await expect(decryptWithAesGcm(encrypted, keyA2)).resolves.toBe('diary-content')
+    await expect(decryptWithAesGcm(encrypted, keyB)).rejects.toThrow()
   })
 })

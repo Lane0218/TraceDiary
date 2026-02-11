@@ -19,10 +19,15 @@ export interface DiaryDependencies {
   now: () => string
 }
 
+export interface UseDiaryOptions {
+  externalReloadSignal?: number
+}
+
 export interface UseDiaryResult {
   entryId: EntryId
   content: string
   entry: DiaryEntry | null
+  loadRevision: number
   isLoading: boolean
   isSaving: boolean
   error: string | null
@@ -139,6 +144,7 @@ function toEntryId(target: DiaryTarget): EntryId {
 export function useDiary(
   target: DiaryTarget,
   dependencies: DiaryDependencies = defaultDependencies,
+  options?: UseDiaryOptions,
 ): UseDiaryResult {
   const targetType = target.type
   const targetDate = targetType === 'daily' ? target.date : null
@@ -163,9 +169,11 @@ export function useDiary(
   const [entry, setEntry] = useState<DiaryEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null)
+  const [loadRevision, setLoadRevision] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
+  const externalReloadSignal = options?.externalReloadSignal ?? 0
 
   const entryRef = useRef<DiaryEntry | null>(null)
   const latestSaveTaskRef = useRef<Promise<void> | null>(null)
@@ -216,6 +224,7 @@ export function useDiary(
           setError(null)
           setIsLoading(false)
           setLoadedEntryId(entryId)
+          setLoadRevision((prev) => prev + 1)
           return
         }
 
@@ -228,6 +237,7 @@ export function useDiary(
         setError(null)
         setIsLoading(false)
         setLoadedEntryId(entryId)
+        setLoadRevision((prev) => prev + 1)
       })
       .catch((loadError: unknown) => {
         if (isCancelled || scopeVersion !== scopeVersionRef.current) {
@@ -239,12 +249,13 @@ export function useDiary(
         latestSaveTaskRef.current = null
         setIsLoading(false)
         setLoadedEntryId(entryId)
+        setLoadRevision((prev) => prev + 1)
       })
 
     return () => {
       isCancelled = true
     }
-  }, [dependencies, entryId, remotePullSignal, stableTarget])
+  }, [dependencies, entryId, externalReloadSignal, remotePullSignal, stableTarget])
 
   const setContent = useCallback(
     (nextContent: string) => {
@@ -324,6 +335,7 @@ export function useDiary(
     entryId,
     content: visibleContent,
     entry: visibleEntry,
+    loadRevision,
     isLoading: visibleIsLoading,
     isSaving,
     error,

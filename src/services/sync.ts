@@ -106,6 +106,7 @@ export interface PullRemoteDiariesToIndexedDbParams {
   owner: string
   repo: string
   dataEncryptionKey: CryptoKey
+  fallbackDataEncryptionKeys?: CryptoKey[]
   branch?: string
   apiBase?: string
   fetchImpl?: typeof fetch
@@ -163,6 +164,7 @@ export interface CreateDiaryUploadExecutorParams {
   owner: string
   repo: string
   dataEncryptionKey: CryptoKey
+  fallbackDataEncryptionKeys?: CryptoKey[]
   syncMetadata?: boolean
   branch?: string
   apiBase?: string
@@ -259,6 +261,57 @@ function nowIsoString(): string {
 
 function normalizeEncryptedContent(encryptedContent: string): string {
   return encryptedContent.replace(/\s+/g, '')
+}
+
+function buildDecryptKeyCandidates(
+  primaryKey: CryptoKey,
+  fallbackKeys: readonly CryptoKey[] = [],
+  preferredKey?: CryptoKey,
+): CryptoKey[] {
+  const candidates: CryptoKey[] = []
+  const seen = new Set<CryptoKey>()
+
+  const pushUnique = (key: CryptoKey | undefined): void => {
+    if (!key || seen.has(key)) {
+      return
+    }
+    seen.add(key)
+    candidates.push(key)
+  }
+
+  pushUnique(preferredKey)
+  pushUnique(primaryKey)
+  fallbackKeys.forEach((key) => pushUnique(key))
+
+  return candidates
+}
+
+async function decryptWithFallbackDataKeys(
+  encryptedContent: string,
+  primaryKey: CryptoKey,
+  fallbackKeys: readonly CryptoKey[] = [],
+  preferredKey?: CryptoKey,
+): Promise<{ decryptedContent: string; usedKey: CryptoKey }> {
+  const normalizedContent = normalizeEncryptedContent(encryptedContent)
+  const candidates = buildDecryptKeyCandidates(primaryKey, fallbackKeys, preferredKey)
+  let lastError: unknown
+
+  for (const candidate of candidates) {
+    try {
+      const decryptedContent = await decryptWithAesGcm(normalizedContent, candidate)
+      return {
+        decryptedContent,
+        usedKey: candidate,
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (lastError instanceof Error) {
+    throw lastError
+  }
+  throw new Error('无法解密远端内容：没有可用的数据密钥')
 }
 
 export async function placeholderUploadMetadata<TMetadata = unknown>(
@@ -544,6 +597,7 @@ export function createDiaryUploadExecutor(
   params: CreateDiaryUploadExecutorParams,
 ): UploadMetadataFn<DiarySyncMetadata> {
   let activeBranch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const fallbackDataEncryptionKeys = params.fallbackDataEncryptionKeys ?? []
   const now = params.now ?? nowIsoString
   const useAccessTokenQuery = params.useAccessTokenQuery ?? true
   const shouldSyncMetadata = params.syncMetadata !== false
@@ -573,11 +627,12 @@ export function createDiaryUploadExecutor(
       let baseMetadata = createEmptyMetadata(nowIso)
       if (remoteMetadata.exists && typeof remoteMetadata.content === 'string' && remoteMetadata.content.trim()) {
         try {
-          const decrypted = await decryptWithAesGcm(
-            normalizeEncryptedContent(remoteMetadata.content),
+          const { decryptedContent } = await decryptWithFallbackDataKeys(
+            remoteMetadata.content,
             params.dataEncryptionKey,
+            fallbackDataEncryptionKeys,
           )
-          const parsed = defaultParseMetadata<unknown>(decrypted)
+          const parsed = defaultParseMetadata<unknown>(decryptedContent)
           baseMetadata = normalizeMetadata(parsed, nowIso)
         } catch {
           baseMetadata = createEmptyMetadata(nowIso)
@@ -683,9 +738,10 @@ export function createDiaryUploadExecutor(
           useAccessTokenQuery,
         })
         if (latestRemote.exists && typeof latestRemote.content === 'string') {
-          const decryptedRemoteContent = await decryptWithAesGcm(
-            normalizeEncryptedContent(latestRemote.content),
+          const { decryptedContent: decryptedRemoteContent } = await decryptWithFallbackDataKeys(
+            latestRemote.content,
             params.dataEncryptionKey,
+            fallbackDataEncryptionKeys,
           )
           remoteMetadata = toRemoteDiaryMetadata(metadata, decryptedRemoteContent, now)
         }
@@ -881,6 +937,7 @@ export async function pullRemoteDiariesToIndexedDb(
   options: PullRemoteDiariesToIndexedDbOptions = {},
 ): Promise<PullRemoteDiariesToIndexedDbResult> {
   const branch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const fallbackDataEncryptionKeys = params.fallbackDataEncryptionKeys ?? []
   const useAccessTokenQuery = params.useAccessTokenQuery ?? true
   const result: PullRemoteDiariesToIndexedDbResult = {
     total: 0,
@@ -922,10 +979,15 @@ export async function pullRemoteDiariesToIndexedDb(
     return result
   }
 
-  const decryptedMetadata = await decryptWithAesGcm(
-    normalizeEncryptedContent(remoteMetadata.encryptedContent),
+  let preferredDecryptKey: CryptoKey | undefined
+  const metadataDecryptResult = await decryptWithFallbackDataKeys(
+    remoteMetadata.encryptedContent,
     params.dataEncryptionKey,
+    fallbackDataEncryptionKeys,
+    preferredDecryptKey,
   )
+  const decryptedMetadata = metadataDecryptResult.decryptedContent
+  preferredDecryptKey = metadataDecryptResult.usedKey
   const parsedMetadata = defaultParseMetadata<unknown>(decryptedMetadata)
   const metadata = normalizeMetadata(parsedMetadata, nowIsoString())
   result.total = metadata.entries.length
@@ -938,10 +1000,14 @@ export async function pullRemoteDiariesToIndexedDb(
         continue
       }
 
-      const decryptedDiaryContent = await decryptWithAesGcm(
-        normalizeEncryptedContent(remoteDiary.content),
+      const diaryDecryptResult = await decryptWithFallbackDataKeys(
+        remoteDiary.content,
         params.dataEncryptionKey,
+        fallbackDataEncryptionKeys,
+        preferredDecryptKey,
       )
+      const decryptedDiaryContent = diaryDecryptResult.decryptedContent
+      preferredDecryptKey = diaryDecryptResult.usedKey
       const remoteRecord = toDiaryRecordFromMetadataEntry(entry, decryptedDiaryContent)
       const localRecord = await loadLocalDiary(remoteRecord.id)
 

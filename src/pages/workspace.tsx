@@ -148,7 +148,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const baseMonth = useMemo(() => toMonthStartFromDateKey(date), [date])
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
 
-  const diary = useDiary({ type: 'daily', date })
+  const diary = useDiary(
+    { type: 'daily', date },
+    undefined,
+    {
+      externalReloadSignal: remotePullSignal,
+    },
+  )
   const activeSyncMetadata = useMemo<DiarySyncMetadata>(
     () => ({
       type: 'daily',
@@ -161,6 +167,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   )
   const giteeBranch = auth.state.config?.giteeBranch?.trim() || 'master'
   const dataEncryptionKey = auth.state.dataEncryptionKey
+  const fallbackDataEncryptionKeys = auth.state.fallbackDataEncryptionKeys ?? []
   const syncAvailability = useMemo(
     () =>
       getSyncAvailability({
@@ -187,6 +194,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         repo: auth.state.config?.giteeRepoName as string,
         branch: giteeBranch,
         dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        fallbackDataEncryptionKeys,
         syncMetadata: true,
       })
     : undefined
@@ -522,8 +530,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               <div className="mt-3">
                 {!diary.isLoading ? (
                   <MarkdownEditor
-                    key={diary.entryId}
-                    docKey={`${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}`}
+                    key={`${diary.entryId}:${diary.loadRevision}`}
+                    docKey={`${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}:${diary.loadRevision}`}
                     initialValue={diary.content}
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"

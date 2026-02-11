@@ -36,27 +36,7 @@ test('新本地设备解锁后应自动拉取远端已有日记到本地', async
   await gotoWorkspace(readerPage, TEST_DATE)
   await ensureReadySession(readerPage, env)
   await expect(readerPage.getByRole('heading', { name: `${TEST_DATE} 日记` })).toBeVisible()
-  await expect
-    .poll(
-      () =>
-        readerPage.evaluate(async (date) => {
-          const req = indexedDB.open('TraceDiary', 1)
-          const db = await new Promise<IDBDatabase>((resolve, reject) => {
-            req.onsuccess = () => resolve(req.result)
-            req.onerror = () => reject(req.error)
-          })
-          const tx = db.transaction('diaries', 'readonly')
-          const store = tx.objectStore('diaries')
-          const getReq = store.get(`daily:${date}`)
-          const row = await new Promise<{ id?: string } | null>((resolve, reject) => {
-            getReq.onsuccess = () => resolve((getReq.result as { id?: string } | undefined) ?? null)
-            getReq.onerror = () => reject(getReq.error)
-          })
-          return Boolean(row?.id)
-        }, TEST_DATE),
-      { timeout: 45_000 },
-    )
-    .toBe(true)
+  await waitForDailyDiaryPersisted(readerPage, TEST_DATE, marker)
   await expect(readerPage.getByLabel(`${TEST_DATE} 已记录`)).toBeVisible({ timeout: 45_000 })
 
   await readerContext.close()

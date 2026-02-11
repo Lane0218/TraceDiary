@@ -24,7 +24,10 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testI
   }, [onChange])
 
   useEditor((root) => {
-    let isInitialEvent = true
+    let allowChangeEvents = false
+    setTimeout(() => {
+      allowChangeEvents = true
+    }, 0)
 
     return Editor.make()
       .config(nord)
@@ -35,13 +38,13 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testI
           if (markdown === prevMarkdown) {
             return
           }
-
-          // 首次触发通常由初始化文档导致，避免误判为用户输入。
-          if (isInitialEvent) {
-            isInitialEvent = false
-            if (markdown === initialValue) {
-              return
-            }
+          if (!allowChangeEvents) {
+            // 初始化期会触发程序化更新，不能回写到数据层，否则会覆盖真实内容。
+            return
+          }
+          if (!root.contains(document.activeElement)) {
+            // 仅在编辑器获得焦点时回写，避免程序化刷新误判为用户输入。
+            return
           }
 
           onChangeRef.current(markdown)

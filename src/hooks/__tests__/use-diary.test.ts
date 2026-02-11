@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { DiaryRecord } from '../../services/indexeddb'
 import type { DateString } from '../../types/diary'
 import { useDiary, type DiaryDependencies } from '../use-diary'
+import { REMOTE_PULL_COMPLETED_EVENT } from '../../utils/remote-sync-events'
 
 function buildDependencies(seed: DiaryRecord[] = []): {
   dependencies: DiaryDependencies
@@ -228,5 +229,31 @@ describe('useDiary', () => {
       await Promise.resolve()
     })
     await waitFor(() => expect(result.current.content).toBe('# 2/9'))
+  })
+
+  it('远端拉取完成事件触发后应重新读取当前条目', async () => {
+    const date = '2026-02-14' as DateString
+    const { dependencies, store } = buildDependencies()
+    const { result } = renderHook(() => useDiary({ type: 'daily', date }, dependencies))
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.content).toBe('')
+
+    store.set('daily:2026-02-14', {
+      id: 'daily:2026-02-14',
+      type: 'daily',
+      date,
+      filename: '2026-02-14.md.enc',
+      content: 'remote-marker',
+      wordCount: 1,
+      createdAt: '2026-02-14T01:00:00.000Z',
+      modifiedAt: '2026-02-14T02:00:00.000Z',
+    })
+
+    act(() => {
+      window.dispatchEvent(new Event(REMOTE_PULL_COMPLETED_EVENT))
+    })
+
+    await waitFor(() => expect(result.current.content).toBe('remote-marker'))
   })
 })

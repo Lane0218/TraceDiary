@@ -223,6 +223,26 @@ export async function deriveAesKeyFromPassword(
   )
 }
 
+export async function deriveDataEncryptionKeyFromMasterPassword(
+  masterPassword: string,
+): Promise<CryptoKey> {
+  if (!masterPassword) {
+    throw new Error('主密码不能为空')
+  }
+
+  const cryptoApi = assertCryptoAvailable()
+  const passwordBytes = new TextEncoder().encode(masterPassword)
+  const digest = await cryptoApi.subtle.digest(SHA256_NAME, passwordBytes)
+
+  return cryptoApi.subtle.importKey(
+    'raw',
+    digest,
+    { name: AES_GCM_NAME },
+    true,
+    ['encrypt', 'decrypt'],
+  )
+}
+
 export async function hashMasterPassword(
   password: string,
   kdfParams: KdfParams,
