@@ -94,82 +94,84 @@ export function MonthCalendar({
         </button>
 
         {isPickerOpen ? (
-          <div className="absolute left-1/2 top-12 z-20 w-[272px] -translate-x-1/2 rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
-            <div className="mb-2.5 flex items-center gap-2">
+          <div className="absolute left-1/2 top-12 z-20 -translate-x-1/2">
+            <div className="w-[244px] rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
+              <div className="mb-2.5 flex items-center gap-2">
               <label htmlFor="month-picker-year" className="text-xs text-td-muted">
                 年份
               </label>
-              <input
-                id="month-picker-year"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={draftYearInput}
-                onChange={(event) => {
-                  const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
-                  setDraftYearInput(sanitized)
-                  const parsed = parseValidYearInput(sanitized)
-                  if (parsed !== null) {
-                    setDraftYear(parsed)
-                    onPickMonth(parsed, draftMonth)
-                  }
-                }}
-                onBlur={() => {
-                  const parsed = parseValidYearInput(draftYearInput)
-                  if (parsed === null) {
-                    setDraftYearInput(String(draftYear))
-                    return
-                  }
-                  setDraftYearInput(String(parsed))
-                }}
-                className="td-input h-9 w-24 rounded-[8px] border-[#d6d6d6] bg-white px-2.5 py-1.5 text-base sm:text-[15px]"
-              />
-              <button
-                type="button"
-                className="ml-auto rounded-[8px] border border-[#d2d2d2] bg-white px-2 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
-                onClick={resetToCurrentMonth}
-              >
-                回到本月
-              </button>
-            </div>
+                <input
+                  id="month-picker-year"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={draftYearInput}
+                  onChange={(event) => {
+                    const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
+                    setDraftYearInput(sanitized)
+                    const parsed = parseValidYearInput(sanitized)
+                    if (parsed !== null) {
+                      setDraftYear(parsed)
+                      onPickMonth(parsed, draftMonth)
+                    }
+                  }}
+                  onBlur={() => {
+                    const parsed = parseValidYearInput(draftYearInput)
+                    if (parsed === null) {
+                      setDraftYearInput(String(draftYear))
+                      return
+                    }
+                    setDraftYearInput(String(parsed))
+                  }}
+                  className="td-input h-9 w-20 rounded-[8px] border-[#d6d6d6] bg-white px-2.5 py-1.5 text-base sm:text-[15px]"
+                />
+                <button
+                  type="button"
+                  className="ml-auto rounded-[8px] border border-[#d2d2d2] bg-white px-2 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                  onClick={resetToCurrentMonth}
+                >
+                  回到本月
+                </button>
+              </div>
 
-            <div className="grid grid-cols-4 justify-items-center gap-2">
-              {MONTH_BUTTONS.map((monthIndex) => {
-                const active = monthIndex === draftMonth
-                return (
-                  <button
-                    key={monthIndex}
-                    type="button"
-                    className={`h-8 w-[54px] rounded-[8px] border px-1 py-1 text-[13px] font-medium transition ${
-                      active
-                        ? 'border-[#202020] bg-[#ececec] text-td-text shadow-thin'
-                        : 'border-[#d4d4d4] bg-white text-td-muted hover:border-[#bcbcbc] hover:text-td-text'
-                    }`}
-                    onClick={() => {
-                      setDraftMonth(monthIndex)
-                    }}
-                  >
-                    {monthIndex + 1}月
-                  </button>
-                )
-              })}
-            </div>
+              <div className="grid grid-cols-4 justify-items-center gap-1.5">
+                {MONTH_BUTTONS.map((monthIndex) => {
+                  const active = monthIndex === draftMonth
+                  return (
+                    <button
+                      key={monthIndex}
+                      type="button"
+                      className={`h-8 w-[46px] rounded-[8px] border px-1 py-1 text-[13px] font-medium transition ${
+                        active
+                          ? 'border-[#202020] bg-[#ececec] text-td-text shadow-thin'
+                          : 'border-[#d4d4d4] bg-white text-td-muted hover:border-[#bcbcbc] hover:text-td-text'
+                      }`}
+                      onClick={() => {
+                        setDraftMonth(monthIndex)
+                      }}
+                    >
+                      {monthIndex + 1}月
+                    </button>
+                  )
+                })}
+              </div>
 
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-[8px] border border-[#d2d2d2] bg-white px-2.5 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
-                onClick={() => setIsPickerOpen(false)}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                className="rounded-[8px] border border-[#1f1f1f] bg-[#1f1f1f] px-2.5 py-1 text-xs text-white transition hover:border-black hover:bg-black"
-                onClick={applyPickerSelection}
-              >
-                确定
-              </button>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-[8px] border border-[#d2d2d2] bg-white px-2.5 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                  onClick={() => setIsPickerOpen(false)}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="rounded-[8px] border border-[#1f1f1f] bg-[#1f1f1f] px-2.5 py-1 text-xs text-white transition hover:border-black hover:bg-black"
+                  onClick={applyPickerSelection}
+                >
+                  确定
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
