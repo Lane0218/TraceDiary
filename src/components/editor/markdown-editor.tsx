@@ -16,6 +16,7 @@ interface MarkdownEditorProps {
   testId?: string
   enableSourceMode?: boolean
   defaultMode?: 'wysiwyg' | 'source'
+  modeToggleClassName?: string
 }
 
 function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
@@ -79,6 +80,7 @@ export default function MarkdownEditor({
   testId,
   enableSourceMode = true,
   defaultMode = 'wysiwyg',
+  modeToggleClassName,
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
   const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
@@ -92,7 +94,7 @@ export default function MarkdownEditor({
   const showSourceMode = enableSourceMode && mode === 'source'
 
   const modeToggle = enableSourceMode ? (
-    <div className="mb-2 flex items-center justify-end gap-2">
+    <div className={`${modeToggleClassName ?? 'mb-2'} flex items-center justify-end gap-2`}>
       <button
         type="button"
         className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}

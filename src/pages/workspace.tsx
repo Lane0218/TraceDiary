@@ -533,6 +533,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
+                    modeToggleClassName="-mt-11 mb-3"
                   />
                 ) : null}
               </div>
