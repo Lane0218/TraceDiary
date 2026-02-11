@@ -6,7 +6,7 @@ import type { Metadata } from '../types/metadata'
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
 const DEFAULT_BRANCH = 'master'
 
-export type SyncTriggerReason = 'debounced' | 'manual'
+export type SyncTriggerReason = 'manual'
 
 export type UploadFailureReason = 'sha_mismatch' | 'network' | 'auth'
 
@@ -172,10 +172,8 @@ export interface CreateDiaryUploadExecutorParams {
 }
 
 function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
-  if (payload.reason === 'manual') {
-    return 'chore: 手动同步 metadata'
-  }
-  return 'chore: 自动同步 metadata'
+  void payload
+  return 'chore: 手动同步 metadata'
 }
 
 function looksLikeShaMismatch(status?: number, message?: string): boolean {
@@ -354,15 +352,11 @@ function buildDiaryPath(metadata: DiarySyncMetadata): string {
   return `${metadata.year}-summary.md.enc`
 }
 
-function buildDiaryCommitMessage(metadata: DiarySyncMetadata, reason: SyncTriggerReason): string {
+function buildDiaryCommitMessage(metadata: DiarySyncMetadata): string {
   if (metadata.type === 'daily') {
-    return reason === 'manual'
-      ? `chore: 手动同步日记 ${metadata.date}`
-      : `chore: 自动同步日记 ${metadata.date}`
+    return `chore: 手动同步日记 ${metadata.date}`
   }
-  return reason === 'manual'
-    ? `chore: 手动同步年度总结 ${metadata.year}`
-    : `chore: 自动同步年度总结 ${metadata.year}`
+  return `chore: 手动同步年度总结 ${metadata.year}`
 }
 
 function isShaMismatchError(error: unknown): boolean {
@@ -637,7 +631,7 @@ export function createDiaryUploadExecutor(
       repo: params.repo,
       path,
       content: encryptedContent,
-      message: buildDiaryCommitMessage(metadata, payload.reason),
+      message: buildDiaryCommitMessage(metadata),
       branch: targetBranch,
       expectedSha,
       apiBase: params.apiBase,

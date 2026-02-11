@@ -401,7 +401,7 @@ describe('createUploadMetadataExecutor', () => {
     })
   })
 
-  it('远端文件不存在时应走创建流程且不携带 expectedSha', async () => {
+  it('远端文件不存在时应走创建流程，文案为手动同步且不携带 expectedSha', async () => {
     const readRemoteMetadata = vi.fn(async () => ({ missing: true as const }))
     const uploadRequest = vi.fn(async (request: unknown) => {
       void request
@@ -424,7 +424,7 @@ describe('createUploadMetadataExecutor', () => {
         version: '2.1',
         entries: [],
       },
-      reason: 'debounced',
+      reason: 'manual',
     })
 
     expect(uploadRequest).toHaveBeenCalledTimes(1)
@@ -432,6 +432,7 @@ describe('createUploadMetadataExecutor', () => {
     expect(uploadCall).toMatchObject({
       path: 'metadata.json.enc',
       encryptedContent: 'encrypted:created',
+      message: 'chore: 手动同步 metadata',
       branch: 'master',
     })
     expect(Object.prototype.hasOwnProperty.call(uploadCall, 'expectedSha')).toBe(false)
