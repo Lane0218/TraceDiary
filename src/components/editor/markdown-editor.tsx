@@ -19,6 +19,12 @@ interface MarkdownEditorProps {
   modeToggleClassName?: string
 }
 
+type MarkdownEditorInnerProps = Omit<MarkdownEditorProps, 'docKey'> & {
+  docKey: string
+}
+
+const countNonWhitespaceCharacters = (value: string) => value.replace(/\s/g, '').length
+
 function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
   const onChangeRef = useRef(onChange)
 
@@ -71,20 +77,21 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testI
   )
 }
 
-export default function MarkdownEditor({
+function MarkdownEditorInner({
   initialValue,
   onChange,
   placeholder = '开始记录今天...',
   disabled = false,
-  docKey = 'default',
+  docKey,
   testId,
   enableSourceMode = true,
   defaultMode = 'wysiwyg',
   modeToggleClassName,
-}: MarkdownEditorProps) {
+}: MarkdownEditorInnerProps) {
   const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
   const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
   const [wysiwygRevision, setWysiwygRevision] = useState(0)
+  const wordCount = countNonWhitespaceCharacters(draftMarkdown)
 
   const applyDraftChange = (nextValue: string) => {
     setDraftMarkdown(nextValue)
@@ -92,6 +99,14 @@ export default function MarkdownEditor({
   }
 
   const showSourceMode = enableSourceMode && mode === 'source'
+  const wordCountBadge = (
+    <div
+      className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-td-line bg-td-surface/90 px-2 py-1 text-[11px] leading-none text-td-muted"
+      data-testid={testId ? `${testId}-word-count` : undefined}
+    >
+      字数 {wordCount}
+    </div>
+  )
 
   const modeToggle = enableSourceMode ? (
     <div className={`${modeToggleClassName ?? 'mb-2'} flex items-center justify-end gap-2`}>
@@ -119,17 +134,20 @@ export default function MarkdownEditor({
     return (
       <div>
         {modeToggle}
-        <textarea
-          key={docKey}
-          aria-label={placeholder}
-          data-testid={testId}
-          value={draftMarkdown}
-          onChange={(event) => applyDraftChange(event.target.value)}
-          disabled={disabled}
-          className={`min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
-            showSourceMode ? 'font-mono text-sm leading-7' : ''
-          }`}
-        />
+        <div className="relative">
+          <textarea
+            key={docKey}
+            aria-label={placeholder}
+            data-testid={testId}
+            value={draftMarkdown}
+            onChange={(event) => applyDraftChange(event.target.value)}
+            disabled={disabled}
+            className={`min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
+              showSourceMode ? 'font-mono text-sm leading-7' : ''
+            }`}
+          />
+          {wordCountBadge}
+        </div>
       </div>
     )
   }
@@ -138,16 +156,19 @@ export default function MarkdownEditor({
     return (
       <div>
         {modeToggle}
-        <textarea
-          key={docKey}
-          aria-label={placeholder}
-          data-testid={testId}
-          value={draftMarkdown}
-          onChange={(event) => applyDraftChange(event.target.value)}
-          disabled={disabled}
-          spellCheck={false}
-          className="trace-editor-source min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500"
-        />
+        <div className="relative">
+          <textarea
+            key={docKey}
+            aria-label={placeholder}
+            data-testid={testId}
+            value={draftMarkdown}
+            onChange={(event) => applyDraftChange(event.target.value)}
+            disabled={disabled}
+            spellCheck={false}
+            className="trace-editor-source min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500"
+          />
+          {wordCountBadge}
+        </div>
       </div>
     )
   }
@@ -155,16 +176,24 @@ export default function MarkdownEditor({
   return (
     <div>
       {modeToggle}
-      <MilkdownProvider>
-        <MilkdownRuntimeEditor
-          key={`${docKey}:${wysiwygRevision}`}
-          initialValue={draftMarkdown}
-          onChange={applyDraftChange}
-          disabled={disabled}
-          docKey={`${docKey}:${wysiwygRevision}`}
-          testId={testId}
-        />
-      </MilkdownProvider>
+      <div className="relative">
+        <MilkdownProvider>
+          <MilkdownRuntimeEditor
+            key={`${docKey}:${wysiwygRevision}`}
+            initialValue={draftMarkdown}
+            onChange={applyDraftChange}
+            disabled={disabled}
+            docKey={`${docKey}:${wysiwygRevision}`}
+            testId={testId}
+          />
+        </MilkdownProvider>
+        {wordCountBadge}
+      </div>
     </div>
   )
+}
+
+export default function MarkdownEditor(props: MarkdownEditorProps) {
+  const resolvedDocKey = props.docKey ?? 'default'
+  return <MarkdownEditorInner key={resolvedDocKey} {...props} docKey={resolvedDocKey} />
 }

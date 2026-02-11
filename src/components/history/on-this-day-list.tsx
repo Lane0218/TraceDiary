@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { List, type RowComponentProps } from 'react-window'
 import type { DiaryRecord } from '../../services/indexeddb'
 import { buildOnThisDayEntries, type OnThisDayEntry } from './on-this-day-utils'
@@ -16,6 +16,15 @@ export interface OnThisDayListProps {
   loadError?: string | null
 }
 
+const previewFadeMaskStyle: CSSProperties = {
+  WebkitMaskImage: 'linear-gradient(to bottom, #000 68%, transparent 100%)',
+  maskImage: 'linear-gradient(to bottom, #000 68%, transparent 100%)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+}
+
 function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps<HistoryRowProps>) {
   const entry = entries[index]
 
@@ -24,28 +33,23 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
       <button
         type="button"
         onClick={() => onSelectDate(entry.date)}
-        className="h-full w-full rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc] hover:bg-[#fcfcfc]"
+        className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[10px] border border-td-line bg-td-surface p-3 text-left transition hover:border-[#cccccc] hover:bg-[#fcfcfc]"
         aria-label={`打开 ${entry.date}`}
         data-testid="history-card"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="rounded-full border border-td-line bg-td-soft px-2 py-0.5 text-[11px] text-td-muted">
             {entry.year}
           </span>
           <p className="text-xs text-td-muted">{entry.date}</p>
         </div>
         <p
-          className="mt-2 whitespace-pre-line text-sm leading-6 text-td-text"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
+          className="mt-2 min-h-0 flex-1 overflow-hidden whitespace-pre-line break-words text-sm leading-6 text-td-text"
+          style={previewFadeMaskStyle}
         >
           {entry.preview}
         </p>
-        <p className="mt-2 text-xs text-td-muted">字数 {entry.wordCount}</p>
+        <p className="mt-2 shrink-0 text-xs text-td-muted">字数 {entry.wordCount}</p>
       </button>
     </div>
   )

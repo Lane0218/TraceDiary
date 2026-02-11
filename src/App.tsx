@@ -25,7 +25,6 @@ function AppRoutes() {
       <Route path="/workspace" element={<WorkspacePage auth={auth} />} />
       <Route path="/yearly/:year?" element={<YearlySummaryPage auth={auth} />} />
       <Route path="/welcome" element={<Navigate to="/workspace" replace />} />
-      <Route path="/calendar" element={<Navigate to="/workspace" replace />} />
       <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
       <Route path="*" element={<Navigate to="/workspace" replace />} />
     </Routes>
