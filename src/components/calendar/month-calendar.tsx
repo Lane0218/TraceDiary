@@ -9,6 +9,20 @@ const MONTH_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
 
 const MONTH_BUTTONS = Array.from({ length: 12 }, (_, index) => index)
 
+const MIN_YEAR = 1970
+const MAX_YEAR = 9999
+
+function parseValidYearInput(value: string): number | null {
+  if (value.length === 0) {
+    return null
+  }
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isFinite(parsed) || parsed < MIN_YEAR || parsed > MAX_YEAR) {
+    return null
+  }
+  return parsed
+}
+
 export interface MonthCalendarProps {
   month: Date
   activeDateKey: string
@@ -32,6 +46,7 @@ export function MonthCalendar({
   const grid = useMemo(() => buildMonthGrid(month, diaryDateSet), [month, diaryDateSet])
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [draftYear, setDraftYear] = useState(month.getFullYear())
+  const [draftYearInput, setDraftYearInput] = useState(String(month.getFullYear()))
   const [draftMonth, setDraftMonth] = useState(month.getMonth())
 
   const applyPickerSelection = () => {
@@ -41,7 +56,9 @@ export function MonthCalendar({
 
   const resetToCurrentMonth = () => {
     const now = new Date()
-    setDraftYear(now.getFullYear())
+    const year = now.getFullYear()
+    setDraftYear(year)
+    setDraftYearInput(String(year))
     setDraftMonth(now.getMonth())
   }
 
@@ -60,7 +77,9 @@ export function MonthCalendar({
               if (prev) {
                 return false
               }
-              setDraftYear(month.getFullYear())
+              const nextYear = month.getFullYear()
+              setDraftYear(nextYear)
+              setDraftYearInput(String(nextYear))
               setDraftMonth(month.getMonth())
               return true
             })
@@ -75,41 +94,56 @@ export function MonthCalendar({
         </button>
 
         {isPickerOpen ? (
-          <div className="absolute left-1/2 top-12 z-20 w-[290px] -translate-x-1/2 rounded-[10px] border border-td-line bg-td-surface p-3 shadow-card td-fade-in">
-            <div className="mb-2 flex items-center gap-2">
+          <div className="absolute left-1/2 top-12 z-20 w-[272px] -translate-x-1/2 rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
+            <div className="mb-2.5 flex items-center gap-2">
               <label htmlFor="month-picker-year" className="text-xs text-td-muted">
                 年份
               </label>
               <input
                 id="month-picker-year"
-                type="number"
-                min={1970}
-                max={9999}
-                value={draftYear}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={draftYearInput}
                 onChange={(event) => {
-                  const parsed = Number.parseInt(event.target.value, 10)
-                  if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+                  const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
+                  setDraftYearInput(sanitized)
+                  const parsed = parseValidYearInput(sanitized)
+                  if (parsed !== null) {
                     setDraftYear(parsed)
+                    onPickMonth(parsed, draftMonth)
                   }
                 }}
-                className="td-input w-28"
+                onBlur={() => {
+                  const parsed = parseValidYearInput(draftYearInput)
+                  if (parsed === null) {
+                    setDraftYearInput(String(draftYear))
+                    return
+                  }
+                  setDraftYearInput(String(parsed))
+                }}
+                className="td-input h-9 w-24 rounded-[8px] border-[#d6d6d6] bg-white px-2.5 py-1.5 text-base sm:text-[15px]"
               />
-              <button type="button" className="td-btn ml-auto px-2 py-1 text-xs" onClick={resetToCurrentMonth}>
+              <button
+                type="button"
+                className="ml-auto rounded-[8px] border border-[#d2d2d2] bg-white px-2 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                onClick={resetToCurrentMonth}
+              >
                 回到本月
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 justify-items-center gap-2">
               {MONTH_BUTTONS.map((monthIndex) => {
                 const active = monthIndex === draftMonth
                 return (
                   <button
                     key={monthIndex}
                     type="button"
-                    className={`rounded-[8px] border px-2 py-1.5 text-xs transition ${
+                    className={`h-8 w-[54px] rounded-[8px] border px-1 py-1 text-[13px] font-medium transition ${
                       active
-                        ? 'border-brand-500 bg-brand-50 text-brand-600'
-                        : 'border-td-line bg-td-surface text-td-muted hover:border-[#cccccc]'
+                        ? 'border-[#202020] bg-[#ececec] text-td-text shadow-thin'
+                        : 'border-[#d4d4d4] bg-white text-td-muted hover:border-[#bcbcbc] hover:text-td-text'
                     }`}
                     onClick={() => {
                       setDraftMonth(monthIndex)
@@ -122,10 +156,18 @@ export function MonthCalendar({
             </div>
 
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" className="td-btn px-2 py-1 text-xs" onClick={() => setIsPickerOpen(false)}>
+              <button
+                type="button"
+                className="rounded-[8px] border border-[#d2d2d2] bg-white px-2.5 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                onClick={() => setIsPickerOpen(false)}
+              >
                 取消
               </button>
-              <button type="button" className="td-btn td-btn-primary px-2 py-1 text-xs" onClick={applyPickerSelection}>
+              <button
+                type="button"
+                className="rounded-[8px] border border-[#1f1f1f] bg-[#1f1f1f] px-2.5 py-1 text-xs text-white transition hover:border-black hover:bg-black"
+                onClick={applyPickerSelection}
+              >
                 确定
               </button>
             </div>
