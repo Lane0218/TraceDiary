@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-11`
 - 总任务：`96`
-- 状态统计：`DONE=80` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-019`
+- 状态统计：`DONE=81` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -138,7 +138,7 @@
 | `TD-UI-016` | `DONE` | 将同步操作按钮文案统一为 `pull` / `push` | 日记页与年度总结页按钮默认态与进行态文案统一为英文 `pull/pulling...`、`push/pushing...`，相关集成与 E2E 断言同步通过 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-busy-clear.spec.ts` `e2e/specs/yearly-summary.spec.ts` `SPEC.md` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / a72146e` |
 | `TD-UI-017` | `DONE` | 修复字数口径回退：确保编辑器角标与 metadata `wordCount` 统计口径一致，并保留往年今日不显示字数 | `workspace` 与 `sync` 写入/回填 `wordCount` 统一为去空白字符数；往年今日列表不展示字数；补充回归断言防止再次回退 | `src/pages/workspace.tsx` `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 初次因缺少 `.env.e2e` 失败，补齐后通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 0e11160` |
 | `TD-UI-018` | `DONE` | 精简统计卡片信息层级（仅保留 3x2 指标）并重排“统计详情”入口到分段切换行 | 统计卡片仅保留 6 个指标，无底部说明文案与底部详情按钮；分段切换两项始终可见并有明确选中态；“统计详情”入口仅在选中统计时显示于切换行右侧 | `src/components/stats/stats-overview-card.tsx` `src/pages/workspace.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 3f06350` |
-| `TD-UI-019` | `DOING` | 修复左侧“往年今日/统计”分段条可见性与往年今日列表冗余外框 | 分段条两项始终可见且选中态明确；切换时分段区宽度稳定不抖动；往年今日列表外侧无冗余边框 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `e2e/specs/calendar-history.spec.ts` `TODO.md` | 待执行：`npm run lint`、`npm run test:unit`、`npm run test:integration`、`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0`、`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` | — |
+| `TD-UI-019` | `DONE` | 修复左侧“往年今日/统计”分段条可见性与往年今日列表冗余外框 | 分段条两项始终可见且选中态明确；切换时分段区宽度稳定不抖动；往年今日列表外侧无冗余边框 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `e2e/specs/calendar-history.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 07a7bf6` |
 
 ### 6.9 数据导入（v1.1）
 
