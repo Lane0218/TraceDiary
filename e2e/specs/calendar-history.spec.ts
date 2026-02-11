@@ -20,6 +20,7 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E 往年今日 ${marker}\n第二行用于预览断言`)
   await waitForDailyDiaryPersisted(page, HISTORY_SOURCE_DATE, marker)
+  await page.waitForTimeout(800)
 
   const pickMonthButton = page.getByRole('button', { name: '选择年月' })
   await pickMonthButton.click()
@@ -29,7 +30,6 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
 
   await expect(page).toHaveURL(new RegExp(`date=${TARGET_DATE}$`))
   await expect(page.getByRole('heading', { name: `${TARGET_DATE} 日记` })).toBeVisible()
-
   const historyList = page.getByLabel('往年今日列表')
   await expect(historyList).toBeVisible()
   await expect(historyList).toContainText(HISTORY_SOURCE_DATE)

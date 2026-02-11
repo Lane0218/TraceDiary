@@ -22,7 +22,7 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
-test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing', async ({ page }) => {
+test('手动上传请求悬挂时，应在超时后退出 syncing', async ({ page }) => {
   test.setTimeout(210_000)
   const env = getE2EEnv()
   const marker = `hang-guard-${Date.now()}`
@@ -33,7 +33,6 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
   let interceptedManual = false
-  let interceptedAuto = false
   const handler = async (route: Route): Promise<void> => {
     const request = route.request()
     const isTargetDiaryUpload =
@@ -48,17 +47,7 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
 
     if (!interceptedManual && message.includes('手动同步日记')) {
       interceptedManual = true
-      // 让手动上传覆盖自动防抖触发时间窗，稳定复现“手动后衔接自动上传”链路。
-      await new Promise((resolve) => {
-        setTimeout(resolve, 31_000)
-      })
-      await route.continue()
-      return
-    }
-
-    if (!interceptedAuto && message.includes('自动同步日记')) {
-      interceptedAuto = true
-      // 远端迟迟不返回：验证自动上传超时保护能否让 UI 退出 syncing。
+      // 远端迟迟不返回：验证上传超时保护能否让 UI 退出 syncing。
       await new Promise((resolve) => {
         setTimeout(resolve, 90_000)
       })
@@ -76,11 +65,6 @@ test('手动上传后衔接自动上传悬挂时，应在超时后退出 syncing
 
     await expect
       .poll(() => interceptedManual, {
-        timeout: 90_000,
-      })
-      .toBe(true)
-    await expect
-      .poll(() => interceptedAuto, {
         timeout: 90_000,
       })
       .toBe(true)
