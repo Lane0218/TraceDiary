@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`96`
-- 状态统计：`DONE=81` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`97`
+- 状态统计：`DONE=81` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-UI-020`
 
 ## 1. 任务清单（按模块）
 
@@ -139,6 +139,7 @@
 | `TD-UI-017` | `DONE` | 修复字数口径回退：确保编辑器角标与 metadata `wordCount` 统计口径一致，并保留往年今日不显示字数 | `workspace` 与 `sync` 写入/回填 `wordCount` 统一为去空白字符数；往年今日列表不展示字数；补充回归断言防止再次回退 | `src/pages/workspace.tsx` `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 初次因缺少 `.env.e2e` 失败，补齐后通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 0e11160` |
 | `TD-UI-018` | `DONE` | 精简统计卡片信息层级（仅保留 3x2 指标）并重排“统计详情”入口到分段切换行 | 统计卡片仅保留 6 个指标，无底部说明文案与底部详情按钮；分段切换两项始终可见并有明确选中态；“统计详情”入口仅在选中统计时显示于切换行右侧 | `src/components/stats/stats-overview-card.tsx` `src/pages/workspace.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 3f06350` |
 | `TD-UI-019` | `DONE` | 修复左侧“往年今日/统计”分段条可见性与往年今日列表冗余外框 | 分段条两项始终可见且选中态明确；切换时分段区宽度稳定不抖动；往年今日列表外侧无冗余边框 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `e2e/specs/calendar-history.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 07a7bf6` |
+| `TD-UI-020` | `DOING` | 重构左栏视觉语言（分段控件/往年今日/统计卡片）以提升整体质感 | 左栏分段控件、往年今日、统计卡片在色彩/边界/间距上形成统一设计语言；去除廉价感与拼接感；移动端与桌面端均可正常显示 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/components/stats/stats-overview-card.tsx` `TODO.md` | 用户已明确要求“这次不用跑测试”，本任务不执行自动化测试 | — |
 
 ### 6.9 数据导入（v1.1）
 

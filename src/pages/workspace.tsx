@@ -645,69 +645,75 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               />
             </section>
 
-            <section className="td-card-muted td-panel space-y-2.5">
-              <div className="flex items-center gap-2">
-                <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d7d7d7] bg-[#f0f0f0] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-                  <button
-                    type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
-                      leftPanelTab === 'history'
-                        ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
-                    }`}
-                    onClick={() => {
-                      setLeftPanelTab('history')
-                    }}
-                    data-testid="workspace-left-tab-history"
-                  >
-                    往年今日
-                  </button>
-                  <button
-                    type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
-                      leftPanelTab === 'stats'
-                        ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
-                    }`}
-                    onClick={() => {
-                      setLeftPanelTab('stats')
-                    }}
-                    data-testid="workspace-left-tab-stats"
-                  >
-                    统计
-                  </button>
-                </div>
-                <div className="w-[88px] shrink-0">
-                  {leftPanelTab === 'stats' ? (
+            <section className="relative overflow-hidden rounded-[16px] border border-[#ded6c4] bg-[linear-gradient(165deg,#f7f3e8_0%,#f0ebe0_54%,#f7f3ea_100%)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)] sm:p-4">
+              <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#e8deca]/65 blur-2xl" />
+              <div className="relative space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[12px] border border-[#d8cfbb] bg-[#ece5d6] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.74)]">
                     <button
                       type="button"
-                      className="td-btn w-full whitespace-nowrap px-2.5 py-1.5 text-xs"
-                      onClick={handleOpenInsights}
-                      data-testid="workspace-open-insights"
+                      className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold tracking-[0.01em] transition ${
+                        leftPanelTab === 'history'
+                          ? 'bg-[#fffdf7] text-[#2e2b22] shadow-[0_2px_8px_rgba(43,35,18,0.08)]'
+                          : 'text-[#676050] hover:bg-[#f7f2e4] hover:text-[#2f2b22]'
+                      }`}
+                      onClick={() => {
+                        setLeftPanelTab('history')
+                      }}
+                      data-testid="workspace-left-tab-history"
+                    >
+                      往年今日
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold tracking-[0.01em] transition ${
+                        leftPanelTab === 'stats'
+                          ? 'bg-[#fffdf7] text-[#2e2b22] shadow-[0_2px_8px_rgba(43,35,18,0.08)]'
+                          : 'text-[#676050] hover:bg-[#f7f2e4] hover:text-[#2f2b22]'
+                      }`}
+                      onClick={() => {
+                        setLeftPanelTab('stats')
+                      }}
+                      data-testid="workspace-left-tab-stats"
+                    >
+                      统计
+                    </button>
+                  </div>
+                  <div className="w-[90px] shrink-0">
+                    <button
+                      type="button"
+                      className={`w-full whitespace-nowrap rounded-[11px] border px-2.5 py-1.5 text-xs transition ${
+                        leftPanelTab === 'stats'
+                          ? 'border-[#cdbf9f] bg-[#fffdf6] text-[#494234] shadow-[0_2px_10px_rgba(52,40,18,0.08)] hover:border-[#c0ae88] hover:bg-[#fff9eb]'
+                          : 'cursor-default border-[#d8cfbc] bg-[#f4eee1] text-[#918975] opacity-80'
+                      }`}
+                      onClick={leftPanelTab === 'stats' ? handleOpenInsights : undefined}
+                      disabled={leftPanelTab !== 'stats'}
+                      {...(leftPanelTab === 'stats' ? { 'data-testid': 'workspace-open-insights' } : {})}
                     >
                       统计详情
                     </button>
+                  </div>
+                </div>
+
+                <div className="rounded-[14px] border border-[#e1d9c7] bg-[#fdfaf2] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                  {leftPanelTab === 'history' ? (
+                    <OnThisDayList
+                      targetDate={date}
+                      diaries={diaries}
+                      isLoading={isLoadingDiaries}
+                      loadError={diaryLoadError}
+                      onSelectDate={handleSelectDate}
+                    />
                   ) : (
-                    <span aria-hidden="true" className="block h-[34px]" />
+                    <StatsOverviewCard
+                      summary={statsSummary}
+                      isLoading={isLoadingDiaries}
+                      error={diaryLoadError}
+                    />
                   )}
                 </div>
               </div>
-
-              {leftPanelTab === 'history' ? (
-                <OnThisDayList
-                  targetDate={date}
-                  diaries={diaries}
-                  isLoading={isLoadingDiaries}
-                  loadError={diaryLoadError}
-                  onSelectDate={handleSelectDate}
-                />
-              ) : (
-                <StatsOverviewCard
-                  summary={statsSummary}
-                  isLoading={isLoadingDiaries}
-                  error={diaryLoadError}
-                />
-              )}
             </section>
           </aside>
 
