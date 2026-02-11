@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDiary, saveDiary, type DiaryRecord } from '../services/indexeddb'
 import type { DateString, DiaryEntry, EntryId } from '../types/diary'
+import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 
 export type DiaryTarget =
   | {
@@ -164,6 +165,7 @@ export function useDiary(
   const [loadedEntryId, setLoadedEntryId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [remotePullSignal, setRemotePullSignal] = useState(0)
 
   const entryRef = useRef<DiaryEntry | null>(null)
   const latestSaveTaskRef = useRef<Promise<void> | null>(null)
@@ -177,6 +179,21 @@ export function useDiary(
   useEffect(() => {
     entryRef.current = entry
   }, [entry])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const handleRemotePullCompleted = () => {
+      setRemotePullSignal((prev) => prev + 1)
+    }
+
+    window.addEventListener(REMOTE_PULL_COMPLETED_EVENT, handleRemotePullCompleted)
+    return () => {
+      window.removeEventListener(REMOTE_PULL_COMPLETED_EVENT, handleRemotePullCompleted)
+    }
+  }, [])
 
   useEffect(() => {
     let isCancelled = false
@@ -227,7 +244,7 @@ export function useDiary(
     return () => {
       isCancelled = true
     }
-  }, [dependencies, entryId, stableTarget])
+  }, [dependencies, entryId, remotePullSignal, stableTarget])
 
   const setContent = useCallback(
     (nextContent: string) => {

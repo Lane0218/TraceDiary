@@ -43,6 +43,7 @@ function buildDependencies(overrides?: Partial<AuthDependencies>): AuthDependenc
     encryptToken: vi.fn(async ({ token }) => `cipher:${token}`),
     decryptToken: vi.fn(async () => 'token-from-cipher'),
     deriveDataEncryptionKey: vi.fn(async () => sampleDataEncryptionKey),
+    pullRemoteDiariesToLocal: vi.fn(async () => undefined),
     restoreUnlockedToken: vi.fn(async () => null),
     now: vi.fn(() => fixedNow),
     ...overrides,
@@ -236,5 +237,33 @@ describe('useAuth', () => {
 
     expect(result.current.state.stage).toBe('needs-unlock')
     expect(result.current.state.dataEncryptionKey).toBeNull()
+  })
+
+  it('进入 ready 后应自动触发一次云端下拉', async () => {
+    const pullRemoteDiariesToLocal = vi.fn(async () => undefined)
+    const dependencies = buildDependencies({
+      pullRemoteDiariesToLocal,
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    await waitFor(() => expect(pullRemoteDiariesToLocal).toHaveBeenCalledTimes(1))
+    expect(pullRemoteDiariesToLocal).toHaveBeenCalledWith({
+      token: 'token-plain',
+      owner: 'alice',
+      repoName: 'trace-diary',
+      branch: 'master',
+      dataEncryptionKey: sampleDataEncryptionKey,
+    })
   })
 })

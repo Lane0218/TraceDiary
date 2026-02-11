@@ -1,4 +1,4 @@
-import { getMetadata, saveMetadata } from './indexeddb'
+import { getDiary, getMetadata, saveDiary, saveMetadata, type DiaryRecord } from './indexeddb'
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
@@ -99,6 +99,33 @@ export interface PullAndCacheMetadataResult<TMetadata = unknown> {
   metadata: TMetadata | null
   source: 'cache' | 'remote' | 'empty'
   remoteSha?: string
+}
+
+export interface PullRemoteDiariesToIndexedDbParams {
+  token: string
+  owner: string
+  repo: string
+  dataEncryptionKey: CryptoKey
+  branch?: string
+  apiBase?: string
+  fetchImpl?: typeof fetch
+  useAccessTokenQuery?: boolean
+}
+
+export interface PullRemoteDiariesToIndexedDbOptions {
+  readRemoteMetadata?: () => Promise<RemoteMetadataFile>
+  readRemoteDiaryFile?: (path: string) => Promise<{ exists: boolean; content?: string }>
+  loadLocalDiary?: (entryId: string) => Promise<DiaryRecord | null>
+  saveLocalDiary?: (record: DiaryRecord) => Promise<void>
+}
+
+export interface PullRemoteDiariesToIndexedDbResult {
+  total: number
+  inserted: number
+  updated: number
+  skipped: number
+  failed: number
+  metadataMissing: boolean
 }
 
 export interface ReadRemoteMetadataFromGiteeParams {
@@ -786,6 +813,160 @@ export function createGiteeMetadataReader(
   params: ReadRemoteMetadataFromGiteeParams,
 ): () => Promise<RemoteMetadataFile> {
   return () => readRemoteMetadataFromGitee(params)
+}
+
+function toDiaryRecordFromMetadataEntry(
+  entry: Metadata['entries'][number],
+  content: string,
+): DiaryRecord {
+  if (entry.type === 'daily') {
+    return {
+      id: `daily:${entry.date}`,
+      type: 'daily',
+      date: entry.date,
+      filename: entry.filename,
+      content,
+      wordCount: countWords(content),
+      createdAt: entry.createdAt,
+      modifiedAt: entry.modifiedAt,
+    }
+  }
+
+  return {
+    id: `summary:${entry.year}`,
+    type: 'yearly_summary',
+    year: entry.year,
+    date: entry.date,
+    filename: entry.filename,
+    content,
+    wordCount: countWords(content),
+    createdAt: entry.createdAt,
+    modifiedAt: entry.modifiedAt,
+  }
+}
+
+function parseTimeToMs(value: string | undefined): number | null {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null
+  }
+
+  const parsed = Date.parse(value)
+  if (!Number.isFinite(parsed)) {
+    return null
+  }
+
+  return parsed
+}
+
+function shouldOverwriteLocalDiary(
+  local: DiaryRecord,
+  remote: DiaryRecord,
+): boolean {
+  const localMs = parseTimeToMs(local.modifiedAt)
+  const remoteMs = parseTimeToMs(remote.modifiedAt)
+
+  if (remoteMs !== null && localMs !== null) {
+    return remoteMs > localMs
+  }
+
+  if (remoteMs !== null && localMs === null) {
+    return true
+  }
+
+  return false
+}
+
+export async function pullRemoteDiariesToIndexedDb(
+  params: PullRemoteDiariesToIndexedDbParams,
+  options: PullRemoteDiariesToIndexedDbOptions = {},
+): Promise<PullRemoteDiariesToIndexedDbResult> {
+  const branch = (params.branch ?? DEFAULT_BRANCH).trim() || DEFAULT_BRANCH
+  const useAccessTokenQuery = params.useAccessTokenQuery ?? true
+  const result: PullRemoteDiariesToIndexedDbResult = {
+    total: 0,
+    inserted: 0,
+    updated: 0,
+    skipped: 0,
+    failed: 0,
+    metadataMissing: false,
+  }
+
+  const readRemoteMetadata = options.readRemoteMetadata ?? (() =>
+    readRemoteMetadataFromGitee({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      branch,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+    }))
+
+  const readRemoteDiaryFile = options.readRemoteDiaryFile ?? ((path: string) =>
+    readGiteeFileContents({
+      token: params.token,
+      owner: params.owner,
+      repo: params.repo,
+      path,
+      ref: branch,
+      apiBase: params.apiBase,
+      fetchImpl: params.fetchImpl,
+      useAccessTokenQuery,
+    }))
+
+  const loadLocalDiary = options.loadLocalDiary ?? ((entryId: string) => getDiary(entryId))
+  const saveLocalDiary = options.saveLocalDiary ?? ((record: DiaryRecord) => saveDiary(record))
+
+  const remoteMetadata = await readRemoteMetadata()
+  if (remoteMetadata.missing) {
+    result.metadataMissing = true
+    return result
+  }
+
+  const decryptedMetadata = await decryptWithAesGcm(
+    normalizeEncryptedContent(remoteMetadata.encryptedContent),
+    params.dataEncryptionKey,
+  )
+  const parsedMetadata = defaultParseMetadata<unknown>(decryptedMetadata)
+  const metadata = normalizeMetadata(parsedMetadata, nowIsoString())
+  result.total = metadata.entries.length
+
+  for (const entry of metadata.entries) {
+    try {
+      const remoteDiary = await readRemoteDiaryFile(entry.filename)
+      if (!remoteDiary.exists || typeof remoteDiary.content !== 'string' || !remoteDiary.content.trim()) {
+        result.failed += 1
+        continue
+      }
+
+      const decryptedDiaryContent = await decryptWithAesGcm(
+        normalizeEncryptedContent(remoteDiary.content),
+        params.dataEncryptionKey,
+      )
+      const remoteRecord = toDiaryRecordFromMetadataEntry(entry, decryptedDiaryContent)
+      const localRecord = await loadLocalDiary(remoteRecord.id)
+
+      if (!localRecord) {
+        await saveLocalDiary(remoteRecord)
+        result.inserted += 1
+        continue
+      }
+
+      if (!shouldOverwriteLocalDiary(localRecord, remoteRecord)) {
+        result.skipped += 1
+        continue
+      }
+
+      await saveLocalDiary({
+        ...localRecord,
+        ...remoteRecord,
+      })
+      result.updated += 1
+    } catch {
+      result.failed += 1
+    }
+  }
+
+  return result
 }
 
 export async function uploadMetadataToGitee(

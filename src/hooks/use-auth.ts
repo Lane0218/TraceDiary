@@ -7,7 +7,9 @@ import {
   hashMasterPassword as hashMasterPasswordWithKdf,
 } from '../services/crypto'
 import { validateGiteeRepoAccess as validateGiteeRepoAccessService } from '../services/gitee'
+import { pullRemoteDiariesToIndexedDb } from '../services/sync'
 import type { AppConfig, KdfParams } from '../types/config'
+import { emitRemotePullCompletedEvent } from '../utils/remote-sync-events'
 export type { AppConfig, KdfParams } from '../types/config'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -28,6 +30,14 @@ export interface RepoRef {
   canonicalRepo: string
 }
 
+export interface PullRemoteDiariesPayload {
+  token: string
+  owner: string
+  repoName: string
+  branch: string
+  dataEncryptionKey: CryptoKey
+}
+
 export interface AuthDependencies {
   loadConfig: () => Promise<AppConfig | null>
   saveConfig: (config: AppConfig) => Promise<void>
@@ -40,6 +50,7 @@ export interface AuthDependencies {
     masterPassword: string
     kdfParams: KdfParams
   }) => Promise<CryptoKey>
+  pullRemoteDiariesToLocal: (payload: PullRemoteDiariesPayload) => Promise<void>
   restoreUnlockedToken?: (config: AppConfig) => Promise<string | null>
   now: () => number
 }
@@ -70,6 +81,8 @@ export interface AuthState {
   needsMasterPasswordForTokenRefresh: boolean
   tokenRefreshReason: 'decrypt-failed' | 'token-invalid' | 'missing-token' | null
   errorMessage: string | null
+  initialPullStatus?: 'idle' | 'pulling' | 'success' | 'error'
+  initialPullError?: string | null
 }
 
 export interface UseAuthResult {
@@ -339,6 +352,15 @@ function createDefaultDependencies(): AuthDependencies {
     deriveDataEncryptionKey: async ({ masterPassword, kdfParams }) => {
       return deriveAesKeyFromPassword(masterPassword, kdfParams)
     },
+    pullRemoteDiariesToLocal: async (payload) => {
+      await pullRemoteDiariesToIndexedDb({
+        token: payload.token,
+        owner: payload.owner,
+        repo: payload.repoName,
+        branch: payload.branch,
+        dataEncryptionKey: payload.dataEncryptionKey,
+      })
+    },
     restoreUnlockedToken: async () => {
       return restoreUnlockedTokenFromCache()
     },
@@ -357,6 +379,8 @@ function createInitialState(): AuthState {
     needsMasterPasswordForTokenRefresh: true,
     tokenRefreshReason: null,
     errorMessage: null,
+    initialPullStatus: 'idle',
+    initialPullError: null,
   }
 }
 
@@ -378,6 +402,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   }, [customDependencies])
 
   const masterPasswordRef = useRef<string | null>(null)
+  const lastReadyPullKeyRef = useRef<string | null>(null)
   const [state, setState] = useState<AuthState>(createInitialState)
 
   const markUnlockedWithFreshExpiry = useCallback(
@@ -545,6 +570,88 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   useEffect(() => {
     void bootstrap()
   }, [bootstrap])
+
+  useEffect(() => {
+    if (state.stage !== 'ready') {
+      lastReadyPullKeyRef.current = null
+      return
+    }
+
+    const config = state.config
+    const token = state.tokenInMemory
+    const dataEncryptionKey = state.dataEncryptionKey
+    if (!config || !token || !dataEncryptionKey) {
+      return
+    }
+
+    const branch = config.giteeBranch?.trim() || DEFAULT_GITEE_BRANCH
+    const pullKey = `${config.giteeOwner}/${config.giteeRepoName}@${branch}:${token}`
+    if (lastReadyPullKeyRef.current === pullKey) {
+      return
+    }
+    lastReadyPullKeyRef.current = pullKey
+
+    let cancelled = false
+    setState((prev) => ({
+      ...prev,
+      initialPullStatus: 'pulling',
+      initialPullError: null,
+    }))
+
+    void dependencies
+      .pullRemoteDiariesToLocal({
+        token,
+        owner: config.giteeOwner,
+        repoName: config.giteeRepoName,
+        branch,
+        dataEncryptionKey,
+      })
+      .then(() => {
+        if (cancelled) {
+          return
+        }
+
+        emitRemotePullCompletedEvent()
+        setState((prev) => {
+          if (prev.stage !== 'ready') {
+            return prev
+          }
+
+          return {
+            ...prev,
+            initialPullStatus: 'success',
+            initialPullError: null,
+          }
+        })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setState((prev) => {
+          if (prev.stage !== 'ready') {
+            return prev
+          }
+
+          return {
+            ...prev,
+            initialPullStatus: 'error',
+            initialPullError: error instanceof Error ? error.message : '云端下拉失败',
+          }
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    dependencies,
+    state.config,
+    state.dataEncryptionKey,
+    state.stage,
+    state.tokenInMemory,
+  ])
 
   const initializeFirstTime = useCallback(
     async (payload: InitializeAuthPayload) => {
@@ -877,6 +984,8 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       passwordExpired: true,
       needsMasterPasswordForTokenRefresh: true,
       tokenRefreshReason: null,
+      initialPullStatus: 'idle',
+      initialPullError: null,
     }))
   }, [])
 

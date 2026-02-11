@@ -29,6 +29,7 @@ import {
   getSyncLabel,
   getSyncToneClass,
 } from '../utils/sync-presentation'
+import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 
 interface WorkspacePageProps {
   auth: UseAuthResult
@@ -136,6 +137,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
+  const [remotePullSignal, setRemotePullSignal] = useState(0)
 
   const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
@@ -214,6 +216,21 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   }, [activeSyncMetadata, canSyncToRemote, setActiveSyncMetadata])
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const handleRemotePullCompleted = () => {
+      setRemotePullSignal((prev) => prev + 1)
+    }
+
+    window.addEventListener(REMOTE_PULL_COMPLETED_EVENT, handleRemotePullCompleted)
+    return () => {
+      window.removeEventListener(REMOTE_PULL_COMPLETED_EVENT, handleRemotePullCompleted)
+    }
+  }, [])
+
+  useEffect(() => {
     let mounted = true
 
     async function loadDailyDiaries(): Promise<void> {
@@ -243,7 +260,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [remotePullSignal])
 
   const patchSearch = useCallback(
     (patcher: (next: URLSearchParams) => void) => {

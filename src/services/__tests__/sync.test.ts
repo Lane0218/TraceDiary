@@ -10,6 +10,7 @@ import {
   createDiaryUploadExecutor,
   createUploadMetadataExecutor,
   pullAndCacheMetadata,
+  pullRemoteDiariesToIndexedDb,
   readRemoteMetadataFromGitee,
   uploadMetadataToGitee,
 } from '../sync'
@@ -178,6 +179,175 @@ describe('pullAndCacheMetadata', () => {
     expect(readRemoteMetadata).toHaveBeenCalledTimes(1)
     expect(decryptMetadata).not.toHaveBeenCalled()
     expect(metadataStore.putMetadata).not.toHaveBeenCalled()
+  })
+})
+
+describe('pullRemoteDiariesToIndexedDb', () => {
+  it('远端 metadata 缺失时应返回空结果且不报错', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('pull-empty')
+
+    const result = await pullRemoteDiariesToIndexedDb(
+      {
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'master',
+        dataEncryptionKey,
+      },
+      {
+        readRemoteMetadata: async () => ({ missing: true }),
+      },
+    )
+
+    expect(result).toEqual({
+      total: 0,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      metadataMissing: true,
+    })
+  })
+
+  it('应按 modifiedAt 决策插入/覆盖/跳过本地记录', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('pull-upsert')
+    const remoteMetadata = {
+      version: '1',
+      lastSync: '2100-01-04T00:00:00.000Z',
+      entries: [
+        {
+          type: 'daily' as const,
+          date: '2100-01-01',
+          filename: '2100-01-01.md.enc',
+          wordCount: 3,
+          createdAt: '2100-01-01T00:00:00.000Z',
+          modifiedAt: '2100-01-01T01:00:00.000Z',
+        },
+        {
+          type: 'daily' as const,
+          date: '2100-01-02',
+          filename: '2100-01-02.md.enc',
+          wordCount: 3,
+          createdAt: '2100-01-02T00:00:00.000Z',
+          modifiedAt: '2100-01-02T03:00:00.000Z',
+        },
+        {
+          type: 'daily' as const,
+          date: '2100-01-03',
+          filename: '2100-01-03.md.enc',
+          wordCount: 3,
+          createdAt: '2100-01-03T00:00:00.000Z',
+          modifiedAt: '2100-01-03T01:00:00.000Z',
+        },
+      ],
+    }
+    const encryptedMetadata = await encryptWithAesGcm(
+      JSON.stringify(remoteMetadata),
+      dataEncryptionKey,
+    )
+    const encryptedDiaryByPath = {
+      '2100-01-01.md.enc': await encryptWithAesGcm('remote-new-1', dataEncryptionKey),
+      '2100-01-02.md.enc': await encryptWithAesGcm('remote-new-2', dataEncryptionKey),
+      '2100-01-03.md.enc': await encryptWithAesGcm('remote-new-3', dataEncryptionKey),
+    } as const
+
+    const localStore = new Map<string, {
+      id: string
+      type: 'daily'
+      date: string
+      content: string
+      createdAt: string
+      modifiedAt: string
+      wordCount: number
+      filename: string
+    }>([
+      [
+        'daily:2100-01-02',
+        {
+          id: 'daily:2100-01-02',
+          type: 'daily',
+          date: '2100-01-02',
+          content: 'local-old-2',
+          createdAt: '2100-01-02T00:00:00.000Z',
+          modifiedAt: '2100-01-02T00:30:00.000Z',
+          wordCount: 2,
+          filename: '2100-01-02.md.enc',
+        },
+      ],
+      [
+        'daily:2100-01-03',
+        {
+          id: 'daily:2100-01-03',
+          type: 'daily',
+          date: '2100-01-03',
+          content: 'local-newer-3',
+          createdAt: '2100-01-03T00:00:00.000Z',
+          modifiedAt: '2100-01-03T05:00:00.000Z',
+          wordCount: 2,
+          filename: '2100-01-03.md.enc',
+        },
+      ],
+    ])
+    const saveLocalDiary = vi.fn(async (record: {
+      id: string
+      type: 'daily' | 'yearly_summary'
+      date: string
+      content?: string
+      createdAt: string
+      modifiedAt: string
+      wordCount?: number
+      filename?: string
+      year?: number
+    }) => {
+      if (record.type === 'daily') {
+        localStore.set(record.id, {
+          id: record.id,
+          type: 'daily',
+          date: record.date,
+          content: record.content ?? '',
+          createdAt: record.createdAt,
+          modifiedAt: record.modifiedAt,
+          wordCount: record.wordCount ?? 0,
+          filename: record.filename ?? `${record.date}.md.enc`,
+        })
+      }
+    })
+
+    const result = await pullRemoteDiariesToIndexedDb(
+      {
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'master',
+        dataEncryptionKey,
+      },
+      {
+        readRemoteMetadata: async () => ({
+          missing: false,
+          encryptedContent: encryptedMetadata,
+          sha: 'sha-metadata',
+        }),
+        readRemoteDiaryFile: async (path) => ({
+          exists: true,
+          content: encryptedDiaryByPath[path as keyof typeof encryptedDiaryByPath],
+        }),
+        loadLocalDiary: async (entryId) => localStore.get(entryId) ?? null,
+        saveLocalDiary,
+      },
+    )
+
+    expect(result).toEqual({
+      total: 3,
+      inserted: 1,
+      updated: 1,
+      skipped: 1,
+      failed: 0,
+      metadataMissing: false,
+    })
+    expect(saveLocalDiary).toHaveBeenCalledTimes(2)
+    expect(localStore.get('daily:2100-01-01')?.content).toBe('remote-new-1')
+    expect(localStore.get('daily:2100-01-02')?.content).toBe('remote-new-2')
+    expect(localStore.get('daily:2100-01-03')?.content).toBe('local-newer-3')
   })
 })
 
