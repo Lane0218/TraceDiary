@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../App'
+import OnThisDayList from '../../components/history/on-this-day-list'
+import type { DiaryRecord } from '../../services/indexeddb'
 
 describe('App 路由与工作台入口', () => {
   afterEach(() => {
@@ -53,5 +55,34 @@ describe('App 路由与工作台入口', () => {
     expect(
       await screen.findByText(/正在汇总统计数据|还没有记录，今天写下第一篇吧|统计读取失败/u),
     ).toBeTruthy()
+  })
+
+  it('往年今日列表不应展示字数文案', () => {
+    const diaries: DiaryRecord[] = [
+      {
+        id: 'daily:2024-02-11',
+        type: 'daily',
+        date: '2024-02-11',
+        content: '这是一条往年记录',
+        wordCount: 8,
+        createdAt: '2024-02-11T00:00:00.000Z',
+        modifiedAt: '2024-02-11T00:00:00.000Z',
+      },
+      {
+        id: 'daily:2026-02-11',
+        type: 'daily',
+        date: '2026-02-11',
+        content: '同年记录应被过滤',
+        wordCount: 8,
+        createdAt: '2026-02-11T00:00:00.000Z',
+        modifiedAt: '2026-02-11T00:00:00.000Z',
+      },
+    ]
+
+    render(<OnThisDayList targetDate="2026-02-11" diaries={diaries} onSelectDate={() => {}} />)
+
+    expect(screen.getByLabelText('往年今日列表')).toBeTruthy()
+    expect(screen.getByText('2024-02-11')).toBeTruthy()
+    expect(screen.queryByText(/^字数\s*\d+/)).toBeNull()
   })
 })

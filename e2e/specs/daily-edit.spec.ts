@@ -20,7 +20,7 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
   await expect(sourceEditor).toBeVisible()
   await sourceEditor.fill(markdown)
-  await expect(page.getByText('本地已保存')).toBeVisible({ timeout: 15_000 })
+  await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
   await page.getByTestId('daily-editor-mode-source').click()
   const heading = page.locator('[data-testid="daily-editor"] .ProseMirror h1').first()
@@ -40,7 +40,6 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   const paragraphFontSize = await paragraph.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize))
   expect(headingFontSize).toBeGreaterThan(paragraphFontSize)
 
-  await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
   await page.waitForTimeout(800)
 
   await page.reload()

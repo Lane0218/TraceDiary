@@ -23,6 +23,7 @@ import { formatDateKey } from '../utils/date'
 import { buildStatsSummary } from '../utils/stats'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
+import { countVisibleChars } from '../utils/word-count'
 import {
   MANUAL_SYNC_PENDING_MESSAGE,
   getDisplayedManualSyncError,
@@ -78,10 +79,6 @@ function shiftMonth(month: Date, offset: number): Date {
   return new Date(month.getFullYear(), month.getMonth() + offset, 1)
 }
 
-function countWords(content: string): number {
-  return content.trim().length === 0 ? 0 : content.trim().split(/\s+/u).length
-}
-
 function isDailySyncMetadata(value: DiarySyncMetadata): value is Extract<DiarySyncMetadata, { type: 'daily' }> {
   return value.type === 'daily'
 }
@@ -94,7 +91,7 @@ function upsertDailyRecord(records: DiaryRecord[], date: DateString, content: st
     type: 'daily',
     date,
     content,
-    wordCount: countWords(content),
+    wordCount: countVisibleChars(content),
     createdAt: now,
     modifiedAt: now,
   }

@@ -49,7 +49,6 @@ function OnThisDayRow({ index, style, entries, onSelectDate }: RowComponentProps
         >
           {entry.preview}
         </p>
-        <p className="mt-2 shrink-0 text-xs text-td-muted">字数 {entry.wordCount}</p>
       </button>
     </div>
   )
