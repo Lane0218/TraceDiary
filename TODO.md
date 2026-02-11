@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`93`
-- 状态统计：`DONE=78` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 总任务：`94`
+- 状态统计：`DONE=79` / `DOING=0` / `TODO=15` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -136,6 +136,7 @@
 | `TD-UI-014` | `DONE` | 消除编辑输入时“本地已保存/云端待同步”状态闪烁，收敛为仅异常/慢保存提示与稳定云端状态切换 | 连续输入时状态栏不频闪；本地仅在慢保存/失败时提示；云端状态仅在关键边沿切换 | `src/components/common/status-hint.tsx` `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `src/__tests__/integration/status-hint.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `e2e/fixtures/app.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（46/46）；`npm run test:e2e:fast` 通过（3/3）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 29323d7` |
 | `TD-UI-015` | `DONE` | 新增写作统计视图（侧栏“往年今日/统计”分段切换 + 统计详情页）并提供累计字数/篇数/连续天数等指标 | 工作台左侧支持“往年今日/统计”切换且默认不影响往年今日首屏可见；统计口径正确（总日记、总年度总结、累计字数、当前连续、最长连续、本年字数）；新增 `/insights` 页面可查看年度汇总与近12月趋势 | `src/App.tsx` `src/pages/workspace.tsx` `src/pages/insights.tsx` `src/components/stats/stats-overview-card.tsx` `src/hooks/use-stats.ts` `src/utils/stats.ts` `src/types/stats.ts` `src/__tests__/unit/stats.unit.test.ts` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（55/55）；`npm run test:integration` 通过（50/50）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 1c6f8e3` |
 | `TD-UI-016` | `DONE` | 将同步操作按钮文案统一为 `pull` / `push` | 日记页与年度总结页按钮默认态与进行态文案统一为英文 `pull/pulling...`、`push/pushing...`，相关集成与 E2E 断言同步通过 | `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-busy-clear.spec.ts` `e2e/specs/yearly-summary.spec.ts` `SPEC.md` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / a72146e` |
+| `TD-UI-017` | `DONE` | 修复字数口径回退：确保编辑器角标与 metadata `wordCount` 统计口径一致，并保留往年今日不显示字数 | `workspace` 与 `sync` 写入/回填 `wordCount` 统一为去空白字符数；往年今日列表不展示字数；补充回归断言防止再次回退 | `src/pages/workspace.tsx` `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 初次因缺少 `.env.e2e` 失败，补齐后通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 0e11160` |
 
 ### 6.9 数据导入（v1.1）
 
