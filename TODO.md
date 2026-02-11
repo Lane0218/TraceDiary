@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-11`
-- 总任务：`88`
-- 状态统计：`DONE=73` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`89`
+- 状态统计：`DONE=73` / `DOING=1` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`TD-UI-013`
 
 ## 1. 任务清单（按模块）
 
@@ -131,6 +131,7 @@
 | `TD-UI-010` | `DONE` | 新增编辑器右下角字数角标、修复往年今日渐隐截断并清理历史日历冗余组件 | 日记与年度总结编辑器右下角显示字数（非空白字符）；往年今日长内容不溢出且底部渐隐自然；移除不再使用的 `calendar` 页面与路由 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `src/components/history/on-this-day-list.tsx` `src/App.tsx` `src/pages/calendar.tsx` `src/__tests__/integration/calendar.integration.test.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”） | `2026-02-11 / 3f9e8d4` |
 | `TD-UI-011` | `DONE` | 优化月历年份输入交互与年月弹层视觉统一（支持年份直输即生效、去蓝色、缩窄月份格） | 年份可自然输入中间态并在合法值时即时切换；弹层与主页面风格统一且不使用蓝色强调；12 个月按钮视觉更紧凑 | `src/components/calendar/month-calendar.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 3b77020` |
 | `TD-UI-012` | `DONE` | 修复年月弹层定位跳动并收窄月份与年份输入控件 | 不再出现先右后中跳动；月份格和年份输入框更紧凑 | `src/components/calendar/month-calendar.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / 2ed232e` |
+| `TD-UI-013` | `DOING` | 移除往年今日字数展示并统一编辑器与metadata字数口径（去空白字符数） | 往年今日不再显示字数；编辑器右下角字数与新写入 metadata `wordCount` 口径一致（去空白字符数） | `src/components/history/on-this-day-list.tsx` `src/components/history/on-this-day-utils.ts` `src/components/editor/markdown-editor.tsx` `src/hooks/use-diary.ts` `src/pages/workspace.tsx` `src/services/sync.ts` `src/utils/word-count.ts` `src/__tests__/integration/markdown-editor.integration.test.tsx` `src/__tests__/integration/app.integration.test.tsx` `TODO.md` | — | — |
 
 ### 6.9 数据导入（v1.1）
 

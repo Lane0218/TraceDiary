@@ -5,6 +5,7 @@ import { gfm } from '@milkdown/kit/preset/gfm'
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
 import { nord } from '@milkdown/theme-nord'
 import { useEffect, useRef, useState } from 'react'
+import { countVisibleChars } from '../../utils/word-count'
 import './markdown-editor.css'
 
 interface MarkdownEditorProps {
@@ -22,8 +23,6 @@ interface MarkdownEditorProps {
 type MarkdownEditorInnerProps = Omit<MarkdownEditorProps, 'docKey'> & {
   docKey: string
 }
-
-const countNonWhitespaceCharacters = (value: string) => value.replace(/\s/g, '').length
 
 function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
   const onChangeRef = useRef(onChange)
@@ -91,7 +90,7 @@ function MarkdownEditorInner({
   const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
   const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
   const [wysiwygRevision, setWysiwygRevision] = useState(0)
-  const wordCount = countNonWhitespaceCharacters(draftMarkdown)
+  const wordCount = countVisibleChars(draftMarkdown)
 
   const applyDraftChange = (nextValue: string) => {
     setDraftMarkdown(nextValue)

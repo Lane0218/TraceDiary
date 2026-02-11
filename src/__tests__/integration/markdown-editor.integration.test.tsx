@@ -11,6 +11,21 @@ describe('MarkdownEditor 组件', () => {
     expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 4')
   })
 
+  it('字数应按去空白字符数统计', () => {
+    const onChange = vi.fn()
+    render(<MarkdownEditor initialValue={' A \nB\t C '} onChange={onChange} testId="daily-editor" />)
+
+    const editor = screen.getByLabelText('开始记录今天...')
+    expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 3')
+
+    fireEvent.change(editor, { target: { value: '  hello  \n world \t' } })
+    expect(onChange).toHaveBeenLastCalledWith('  hello  \n world \t')
+    expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 10')
+
+    fireEvent.change(editor, { target: { value: ' \n\t  ' } })
+    expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 0')
+  })
+
   it('源码按钮应在源码与可视化间切换并共享 Markdown 内容', () => {
     const onChange = vi.fn()
     render(<MarkdownEditor initialValue="hello" onChange={onChange} testId="daily-editor" />)

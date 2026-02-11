@@ -2,6 +2,7 @@ import { getDiary, getMetadata, saveDiary, saveMetadata, type DiaryRecord } from
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
+import { countVisibleChars } from '../utils/word-count'
 
 const DEFAULT_METADATA_PATH = 'metadata.json.enc'
 const DEFAULT_BRANCH = 'master'
@@ -420,14 +421,6 @@ function toRemoteDiaryMetadata(
   }
 }
 
-function countWords(content: string): number {
-  const normalized = content.trim()
-  if (!normalized) {
-    return 0
-  }
-  return normalized.split(/\s+/u).length
-}
-
 function createEmptyMetadata(nowIso: string): Metadata {
   return {
     version: '1',
@@ -494,7 +487,7 @@ function upsertMetadataEntryFromDiary(
       type: 'daily',
       date: diary.date as `${number}-${number}-${number}`,
       filename: `${diary.date}.md.enc`,
-      wordCount: countWords(diary.content),
+      wordCount: countVisibleChars(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
     }
@@ -515,7 +508,7 @@ function upsertMetadataEntryFromDiary(
       year: diary.year,
       date: summaryDate,
       filename: `${diary.year}-summary.md.enc`,
-      wordCount: countWords(diary.content),
+      wordCount: countVisibleChars(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
     }
@@ -820,7 +813,7 @@ function toDiaryRecordFromMetadataEntry(
       date: entry.date,
       filename: entry.filename,
       content,
-      wordCount: countWords(content),
+      wordCount: countVisibleChars(content),
       createdAt: entry.createdAt,
       modifiedAt: entry.modifiedAt,
     }
@@ -833,7 +826,7 @@ function toDiaryRecordFromMetadataEntry(
     date: entry.date,
     filename: entry.filename,
     content,
-    wordCount: countWords(content),
+    wordCount: countVisibleChars(content),
     createdAt: entry.createdAt,
     modifiedAt: entry.modifiedAt,
   }

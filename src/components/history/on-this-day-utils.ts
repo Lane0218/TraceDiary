@@ -10,7 +10,6 @@ export interface OnThisDayEntry {
   date: string
   year: number
   preview: string
-  wordCount: number
 }
 
 function parseDateKey(dateKey: string): ParsedDate | null {
@@ -24,13 +23,6 @@ function parseDateKey(dateKey: string): ParsedDate | null {
     year,
     monthDay: `${matched[2]}-${matched[3]}`,
   }
-}
-
-function normalizeWordCount(record: DiaryRecord, content: string): number {
-  if (typeof record.wordCount === 'number' && Number.isFinite(record.wordCount)) {
-    return record.wordCount
-  }
-  return content.replace(/\s+/g, '').length
 }
 
 export function buildPreview(content: string): string {
@@ -73,7 +65,6 @@ export function buildOnThisDayEntries(targetDate: string, diaries: DiaryRecord[]
       date: record.date,
       year: current.year,
       preview: buildPreview(content),
-      wordCount: normalizeWordCount(record, content),
     })
   }
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDiary, saveDiary, type DiaryRecord } from '../services/indexeddb'
 import type { DateString, DiaryEntry, EntryId } from '../types/diary'
 import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
+import { countVisibleChars } from '../utils/word-count'
 
 export type DiaryTarget =
   | {
@@ -48,21 +49,13 @@ function getErrorMessage(error: unknown): string {
   return '未知错误'
 }
 
-function countWords(content: string): number {
-  const normalized = content.trim()
-  if (!normalized) {
-    return 0
-  }
-  return normalized.split(/\s+/u).length
-}
-
 function buildEntryFromContent(
   target: DiaryTarget,
   content: string,
   existingEntry: DiaryEntry | null,
   nowIso: string,
 ): DiaryEntry {
-  const wordCount = countWords(content)
+  const wordCount = countVisibleChars(content)
   const createdAt = existingEntry?.createdAt ?? nowIso
 
   if (target.type === 'daily') {
@@ -110,7 +103,7 @@ function normalizeDiaryRecord(target: DiaryTarget, diary: DiaryRecord): DiaryEnt
       modifiedAt:
         typeof diary.modifiedAt === 'string' ? diary.modifiedAt : defaultEntry.modifiedAt,
       content,
-      wordCount: typeof diary.wordCount === 'number' ? diary.wordCount : countWords(content),
+      wordCount: typeof diary.wordCount === 'number' ? diary.wordCount : countVisibleChars(content),
     }
   }
 
@@ -130,7 +123,7 @@ function normalizeDiaryRecord(target: DiaryTarget, diary: DiaryRecord): DiaryEnt
     createdAt: typeof diary.createdAt === 'string' ? diary.createdAt : defaultEntry.createdAt,
     modifiedAt: typeof diary.modifiedAt === 'string' ? diary.modifiedAt : defaultEntry.modifiedAt,
     content,
-    wordCount: typeof diary.wordCount === 'number' ? diary.wordCount : countWords(content),
+    wordCount: typeof diary.wordCount === 'number' ? diary.wordCount : countVisibleChars(content),
   }
 }
 
