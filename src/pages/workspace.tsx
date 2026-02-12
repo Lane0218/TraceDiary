@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
@@ -50,6 +50,12 @@ interface YearlyReminder {
 type WorkspaceLeftPanelTab = 'history' | 'stats'
 
 const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
+const WORKSPACE_PANEL_HEIGHT_DESKTOP = 520
+const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 430
+const WORKSPACE_PANEL_HEIGHT_STYLE = {
+  '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
+  '--workspace-panel-body-height': `${WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}px`,
+} as CSSProperties
 
 function getInitialLeftPanelTab(): WorkspaceLeftPanelTab {
   if (typeof window === 'undefined') {
@@ -645,7 +651,11 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               />
             </section>
 
-            <section className="td-card-muted td-panel space-y-2.5">
+            <section
+              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--workspace-panel-height)]"
+              style={WORKSPACE_PANEL_HEIGHT_STYLE}
+              data-testid="workspace-left-panel"
+            >
               <div className="flex items-center gap-2">
                 <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d7d7d7] bg-[#f0f0f0] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                   <button
@@ -693,21 +703,28 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                 </div>
               </div>
 
-              {leftPanelTab === 'history' ? (
-                <OnThisDayList
-                  targetDate={date}
-                  diaries={diaries}
-                  isLoading={isLoadingDiaries}
-                  loadError={diaryLoadError}
-                  onSelectDate={handleSelectDate}
-                />
-              ) : (
-                <StatsOverviewCard
-                  summary={statsSummary}
-                  isLoading={isLoadingDiaries}
-                  error={diaryLoadError}
-                />
-              )}
+              <div
+                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
+                style={WORKSPACE_PANEL_HEIGHT_STYLE}
+                data-testid="workspace-left-panel-body"
+              >
+                {leftPanelTab === 'history' ? (
+                  <OnThisDayList
+                    targetDate={date}
+                    diaries={diaries}
+                    isLoading={isLoadingDiaries}
+                    loadError={diaryLoadError}
+                    onSelectDate={handleSelectDate}
+                    viewportHeight={WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}
+                  />
+                ) : (
+                  <StatsOverviewCard
+                    summary={statsSummary}
+                    isLoading={isLoadingDiaries}
+                    error={diaryLoadError}
+                  />
+                )}
+              </div>
             </section>
           </aside>
 
@@ -767,9 +784,17 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               {displayedSyncMessage ? <p className="text-sm text-td-danger">{displayedSyncMessage}</p> : null}
             </div>
 
-            <article className="td-card-primary td-panel">
+            <article
+              className="td-card-primary td-panel flex flex-col lg:h-[var(--workspace-panel-height)]"
+              style={WORKSPACE_PANEL_HEIGHT_STYLE}
+              data-testid="workspace-diary-panel"
+            >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div className="mt-3">
+              <div
+                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
+                style={WORKSPACE_PANEL_HEIGHT_STYLE}
+                data-testid="workspace-diary-editor-slot"
+              >
                 {!diary.isLoading ? (
                   <MarkdownEditor
                     key={`${diary.entryId}:${diary.loadRevision}`}
@@ -779,6 +804,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
                     modeToggleClassName="-mt-11 mb-3"
+                    viewportHeight={WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}
                   />
                 ) : null}
               </div>

@@ -1,16 +1,19 @@
 .trace-milkdown .milkdown {
-  min-height: 380px;
+  min-height: var(--td-editor-height, 380px);
+  height: var(--td-editor-height, auto);
   padding: 0.9rem 1rem;
   border-radius: 10px;
   background-color: #ffffff;
 }
 
 .trace-milkdown .milkdown .editor {
-  min-height: 340px;
+  min-height: var(--td-editor-content-height, 340px);
+  height: var(--td-editor-content-height, auto);
 }
 
 .trace-milkdown .milkdown .ProseMirror {
-  min-height: 340px;
+  min-height: var(--td-editor-content-height, 340px);
+  height: var(--td-editor-content-height, auto);
   outline: none;
   color: #111111;
   font-size: 0.98rem;

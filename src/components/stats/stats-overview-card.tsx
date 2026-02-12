@@ -19,7 +19,7 @@ export default function StatsOverviewCard({
 }: StatsOverviewCardProps) {
   if (error) {
     return (
-      <div className="rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
+      <div className="h-full rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
         统计读取失败：{error}
       </div>
     )
@@ -27,15 +27,15 @@ export default function StatsOverviewCard({
 
   if (isLoading) {
     return (
-      <div className="rounded-[10px] border border-td-line bg-td-surface p-4 text-sm text-td-muted">
+      <div className="h-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm text-td-muted">
         正在汇总统计数据...
       </div>
     )
   }
 
   return (
-    <div className="space-y-3" aria-label="stats-overview-card">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="h-full" aria-label="stats-overview-card">
+      <div className="grid h-full auto-rows-fr grid-cols-2 gap-2">
         <article className="rounded-[10px] border border-td-line bg-td-surface p-3">
           <p className="text-xs text-td-muted">总日记篇数</p>
           <p className="mt-1 font-display text-2xl text-td-text" data-testid="stats-total-daily-count">

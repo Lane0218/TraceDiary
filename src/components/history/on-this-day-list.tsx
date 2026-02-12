@@ -14,6 +14,7 @@ export interface OnThisDayListProps {
   onSelectDate: (dateKey: string) => void
   isLoading?: boolean
   loadError?: string | null
+  viewportHeight?: number
 }
 
 const previewFadeMaskStyle: CSSProperties = {
@@ -60,12 +61,14 @@ export function OnThisDayList({
   onSelectDate,
   isLoading = false,
   loadError = null,
+  viewportHeight = 360,
 }: OnThisDayListProps) {
   const entries = useMemo(() => buildOnThisDayEntries(targetDate, diaries), [targetDate, diaries])
+  const panelStyle: CSSProperties = { height: viewportHeight, width: '100%' }
 
   if (loadError) {
     return (
-      <div className="rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-[10px] border border-red-200 bg-red-50 p-4 text-sm text-red-700" style={panelStyle}>
         往年今日读取失败：{loadError}
       </div>
     )
@@ -73,7 +76,7 @@ export function OnThisDayList({
 
   if (isLoading) {
     return (
-      <div className="rounded-[10px] border border-td-line bg-td-soft p-4 text-sm text-td-muted">
+      <div className="rounded-[10px] border border-td-line bg-td-soft p-4 text-sm text-td-muted" style={panelStyle}>
         正在加载往年今日...
       </div>
     )
@@ -81,7 +84,10 @@ export function OnThisDayList({
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-[10px] border border-dashed border-td-line bg-td-soft p-4 text-sm text-td-muted">
+      <div
+        className="rounded-[10px] border border-dashed border-td-line bg-td-soft p-4 text-sm text-td-muted"
+        style={panelStyle}
+      >
         当前日期暂无往年记录。
       </div>
     )
@@ -93,10 +99,10 @@ export function OnThisDayList({
       rowHeight={138}
       rowComponent={OnThisDayRow}
       rowProps={{ entries, onSelectDate }}
-      defaultHeight={360}
+      defaultHeight={viewportHeight}
       overscanCount={4}
       className="rounded-[10px] bg-transparent"
-      style={{ height: 360, width: '100%' }}
+      style={panelStyle}
       aria-label="往年今日列表"
       data-testid="on-this-day-virtual-list"
     />

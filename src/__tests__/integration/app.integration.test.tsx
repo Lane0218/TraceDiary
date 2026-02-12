@@ -78,9 +78,10 @@ describe('App 路由与工作台入口', () => {
       },
     ]
 
-    render(<OnThisDayList targetDate="2026-02-11" diaries={diaries} onSelectDate={() => {}} />)
+    render(<OnThisDayList targetDate="2026-02-11" diaries={diaries} onSelectDate={() => {}} viewportHeight={430} />)
 
     expect(screen.getByLabelText('往年今日列表')).toBeTruthy()
+    expect(screen.getByLabelText('往年今日列表')).toHaveStyle({ height: '430px' })
     expect(screen.getByText('2024-02-11')).toBeTruthy()
     expect(screen.queryByText(/^字数\s*\d+/)).toBeNull()
   })

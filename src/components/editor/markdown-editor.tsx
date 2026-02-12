@@ -4,7 +4,7 @@ import { commonmark } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
 import { nord } from '@milkdown/theme-nord'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { countVisibleChars } from '../../utils/word-count'
 import './markdown-editor.css'
 
@@ -18,13 +18,30 @@ interface MarkdownEditorProps {
   enableSourceMode?: boolean
   defaultMode?: 'wysiwyg' | 'source'
   modeToggleClassName?: string
+  viewportHeight?: number
 }
 
 type MarkdownEditorInnerProps = Omit<MarkdownEditorProps, 'docKey'> & {
   docKey: string
 }
 
-function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testId }: MarkdownEditorProps) {
+interface MilkdownRuntimeEditorProps {
+  initialValue: string
+  onChange: (value: string) => void
+  disabled?: boolean
+  docKey: string
+  testId?: string
+  viewportHeight?: number
+}
+
+function MilkdownRuntimeEditor({
+  initialValue,
+  onChange,
+  disabled,
+  docKey,
+  testId,
+  viewportHeight,
+}: MilkdownRuntimeEditorProps) {
   const onChangeRef = useRef(onChange)
 
   useEffect(() => {
@@ -62,6 +79,13 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testI
       .use(gfm)
       .use(listener)
   }, [docKey])
+  const editorStyle =
+    typeof viewportHeight === 'number' && viewportHeight > 0
+      ? ({
+          '--td-editor-height': `${viewportHeight}px`,
+          '--td-editor-content-height': `${Math.max(viewportHeight - 40, 260)}px`,
+        } as CSSProperties)
+      : undefined
 
   return (
     <div
@@ -70,6 +94,7 @@ function MilkdownRuntimeEditor({ initialValue, onChange, disabled, docKey, testI
       }`}
       aria-disabled={disabled}
       data-testid={testId}
+      style={editorStyle}
     >
       <Milkdown />
     </div>
@@ -86,6 +111,7 @@ function MarkdownEditorInner({
   enableSourceMode = true,
   defaultMode = 'wysiwyg',
   modeToggleClassName,
+  viewportHeight,
 }: MarkdownEditorInnerProps) {
   const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
   const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
@@ -98,6 +124,10 @@ function MarkdownEditorInner({
   }
 
   const showSourceMode = enableSourceMode && mode === 'source'
+  const sourceEditorStyle =
+    typeof viewportHeight === 'number' && viewportHeight > 0
+      ? ({ height: `${viewportHeight}px` } as CSSProperties)
+      : undefined
   const wordCountBadge = (
     <div
       className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-td-line bg-td-surface/90 px-2 py-1 text-[11px] leading-none text-td-muted"
@@ -144,6 +174,7 @@ function MarkdownEditorInner({
             className={`min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
               showSourceMode ? 'font-mono text-sm leading-7' : ''
             }`}
+            style={sourceEditorStyle}
           />
           {wordCountBadge}
         </div>
@@ -165,6 +196,7 @@ function MarkdownEditorInner({
             disabled={disabled}
             spellCheck={false}
             className="trace-editor-source min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500"
+            style={sourceEditorStyle}
           />
           {wordCountBadge}
         </div>
@@ -184,6 +216,7 @@ function MarkdownEditorInner({
             disabled={disabled}
             docKey={`${docKey}:${wysiwygRevision}`}
             testId={testId}
+            viewportHeight={viewportHeight}
           />
         </MilkdownProvider>
         {wordCountBadge}

@@ -11,6 +11,12 @@ describe('MarkdownEditor 组件', () => {
     expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 4')
   })
 
+  it('传入 viewportHeight 时应应用固定编辑区高度', () => {
+    render(<MarkdownEditor initialValue="初始内容" onChange={() => {}} testId="daily-editor" viewportHeight={430} />)
+
+    expect(screen.getByLabelText('开始记录今天...')).toHaveStyle({ height: '430px' })
+  })
+
   it('字数应按去空白字符数统计', () => {
     const onChange = vi.fn()
     render(<MarkdownEditor initialValue={' A \nB\t C '} onChange={onChange} testId="daily-editor" />)

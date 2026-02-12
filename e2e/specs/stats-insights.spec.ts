@@ -100,7 +100,28 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await page.reload()
   await ensureReadySession(page, env)
 
+  const assertWorkspacePanelHeightsAligned = async () => {
+    const [leftPanelBox, diaryPanelBox, leftBodyBox, diaryEditorSlotBox] = await Promise.all([
+      page.getByTestId('workspace-left-panel').boundingBox(),
+      page.getByTestId('workspace-diary-panel').boundingBox(),
+      page.getByTestId('workspace-left-panel-body').boundingBox(),
+      page.getByTestId('workspace-diary-editor-slot').boundingBox(),
+    ])
+
+    expect(leftPanelBox).not.toBeNull()
+    expect(diaryPanelBox).not.toBeNull()
+    expect(leftBodyBox).not.toBeNull()
+    expect(diaryEditorSlotBox).not.toBeNull()
+
+    const panelHeightDiff = Math.abs((leftPanelBox?.height ?? 0) - (diaryPanelBox?.height ?? 0))
+    const bodyHeightDiff = Math.abs((leftBodyBox?.height ?? 0) - (diaryEditorSlotBox?.height ?? 0))
+
+    expect(panelHeightDiff).toBeLessThanOrEqual(2)
+    expect(bodyHeightDiff).toBeLessThanOrEqual(2)
+  }
+
   await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
+  await assertWorkspacePanelHeightsAligned()
   await page.getByTestId('workspace-left-tab-stats').click()
 
   await expect(page.getByTestId('stats-total-daily-count')).toContainText('3')
@@ -108,6 +129,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('stats-total-word-count')).toContainText('36')
   await expect(page.getByTestId('stats-current-streak-days')).toContainText('2')
   await expect(page.getByTestId('stats-longest-streak-days')).toContainText('2')
+  await assertWorkspacePanelHeightsAligned()
 
   await page.getByTestId('workspace-open-insights').click()
 
