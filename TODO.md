@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-12`
 - 总任务：`102`
-- 状态统计：`DONE=86` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-DOC-005`
+- 状态统计：`DONE=87` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -162,7 +162,7 @@
 | `TD-DOC-002` | `DONE` | 在 AGENTS 增加“大工作量任务默认并行多 agents 执行”规范 | `AGENTS.md` 明确要求 AI 对重任务主动采用并行多 agents，不依赖用户显式指定 | `AGENTS.md` `TODO.md` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（14 passed，3 flaky 重试通过） | `2026-02-09 / 6c99c2c` |
 | `TD-DOC-003` | `DONE` | 在 AGENTS 增加“用户明确授权时可采用必要测试策略”的执行规范 | AGENTS 明确必要测试策略的触发条件、最小测试集合、结果披露要求；不影响默认完整测试红线 | `AGENTS.md` `TODO.md` | 仅文档改动，无功能行为变化；未执行单元/集成/E2E | `2026-02-10 / a72056b` |
 | `TD-DOC-004` | `DONE` | 更新 SPEC 同步策略为“仅手动 pull/push”，并移除自动上传相关 E2E 用例 | `SPEC.md` 明确不再自动上传；仅保留手动 push 与手动/解锁触发 pull 的描述；自动上传专属 E2E 用例已移除 | `SPEC.md` `e2e/specs/auto-sync-last-synced.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`npx playwright test e2e/specs/manual-sync-success.spec.ts e2e/specs/remote-pull-sync.spec.ts --project=chromium --retries=0` 通过（2/2）；`npx playwright test --list --project=chromium` 显示总计 `20 tests in 13 files`（已移除自动上传专属 E2E） | `2026-02-11 / 5afde94` |
-| `TD-DOC-005` | `DOING` | 在 AGENTS 增加“接任务后先重命名 tmux pane”的执行规范 | `AGENTS.md` 明确要求每次接收任务先查看 pane 编号，再按任务语义重命名 pane，且提供命令示例 | `AGENTS.md` `TODO.md` | 待执行：`npm run lint`（仅文档改动，按低风险策略不执行 unit/integration/E2E） | — |
+| `TD-DOC-005` | `DONE` | 在 AGENTS 增加“接任务后先重命名 tmux pane”的执行规范 | `AGENTS.md` 明确要求每次接收任务先查看 pane 编号，再按任务语义重命名 pane，且提供命令示例 | `AGENTS.md` `TODO.md` | `npm run lint` 通过；仅文档改动，无功能行为变化，未执行 `npm run test:unit` / `npm run test:integration` / E2E | `2026-02-12 / b5ac147` |
 
 ### 6.11 开发效率与工具
 
