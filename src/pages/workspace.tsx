@@ -50,8 +50,9 @@ interface YearlyReminder {
 type WorkspaceLeftPanelTab = 'history' | 'stats'
 
 const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
-const WORKSPACE_PANEL_HEIGHT_DESKTOP = 520
-const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 430
+const WORKSPACE_PANEL_HEIGHT_DESKTOP = 500
+const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 390
+const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 500
 const WORKSPACE_PANEL_HEIGHT_STYLE = {
   '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
   '--workspace-panel-body-height': `${WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}px`,
@@ -637,7 +638,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           </section>
         ) : null}
 
-        <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] td-fade-in" aria-label="workspace-layout">
+        <section
+          className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] lg:items-stretch td-fade-in"
+          aria-label="workspace-layout"
+        >
           <aside className="space-y-3">
             <section className="td-card-muted td-panel">
               <MonthCalendar
@@ -652,8 +656,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
 
             <section
-              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--workspace-panel-height)]"
-              style={WORKSPACE_PANEL_HEIGHT_STYLE}
+              className={`td-card-muted td-panel flex flex-col space-y-2.5 ${
+                leftPanelTab === 'history' ? 'lg:h-[var(--workspace-panel-height)]' : ''
+              }`}
+              style={leftPanelTab === 'history' ? WORKSPACE_PANEL_HEIGHT_STYLE : undefined}
               data-testid="workspace-left-panel"
             >
               <div className="flex items-center gap-2">
@@ -704,8 +710,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               </div>
 
               <div
-                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
-                style={WORKSPACE_PANEL_HEIGHT_STYLE}
+                className={`min-h-0 ${
+                  leftPanelTab === 'history' ? 'flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none' : ''
+                }`}
+                style={leftPanelTab === 'history' ? WORKSPACE_PANEL_HEIGHT_STYLE : undefined}
                 data-testid="workspace-left-panel-body"
               >
                 {leftPanelTab === 'history' ? (
@@ -728,7 +736,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
           </aside>
 
-          <section className="space-y-3">
+          <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
             <div className="td-toolbar space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
@@ -785,14 +793,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </div>
 
             <article
-              className="td-card-primary td-panel flex flex-col lg:h-[var(--workspace-panel-height)]"
-              style={WORKSPACE_PANEL_HEIGHT_STYLE}
+              className="td-card-primary td-panel flex flex-col lg:min-h-[520px] lg:flex-1"
               data-testid="workspace-diary-panel"
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
               <div
-                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
-                style={WORKSPACE_PANEL_HEIGHT_STYLE}
+                className="min-h-0 flex-1"
                 data-testid="workspace-diary-editor-slot"
               >
                 {!diary.isLoading ? (
@@ -804,7 +810,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
                     modeToggleClassName="-mt-11 mb-3"
-                    viewportHeight={WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}
+                    viewportHeight={WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP}
                   />
                 ) : null}
               </div>
