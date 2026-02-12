@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-12`
 - 总任务：`101`
-- 状态统计：`DONE=85` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-023`
+- 状态统计：`DONE=86` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -142,7 +142,7 @@
 | `TD-UI-020` | `DONE` | 重构左栏视觉语言（分段控件/往年今日/统计卡片）以提升整体质感 | 左栏分段控件、往年今日、统计卡片在色彩/边界/间距上形成统一设计语言；去除廉价感与拼接感；移动端与桌面端均可正常显示 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/components/stats/stats-overview-card.tsx` `TODO.md` | 用户已明确要求“这次不用跑测试”，本任务未执行 `lint/unit/integration/E2E` 自动化测试 | `2026-02-11 / 594b1fc` |
 | `TD-UI-021` | `DONE` | 回退左栏为原中性色并移除“往年今日/统计”内容区外层边框 | 左栏恢复非彩色设计；往年今日与统计内容区不再存在额外外层边框，仅保留必要卡片边界；分段切换与详情入口行为不变 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/components/stats/stats-overview-card.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-11 / e921d52` |
 | `TD-UI-022` | `DONE` | 统一工作台“往年今日/统计/今日日记”内容区高度并补齐回归测试 | 桌面端三块内容区高度一致；移动端保持自适应；新增高度相关集成与 E2E 断言通过 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/components/stats/stats-overview-card.tsx` `src/components/editor/markdown-editor.tsx` `src/components/editor/markdown-editor.css` `src/__tests__/integration/app.integration.test.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（52/52）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含高度对齐断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-12 / 78290c3` |
-| `TD-UI-023` | `DOING` | 优化工作台左右视觉长度与统计卡片密度（避免编辑区偏短与统计单卡过高） | 编辑区在桌面端视觉上不再显著短于左栏；统计卡片高度与密度更紧凑；历史与统计切换体验保持稳定 | `src/pages/workspace.tsx` `src/components/stats/stats-overview-card.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 计划执行：`npm run lint`；`npm run test:unit`；`npm run test:integration`；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0`；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` | — |
+| `TD-UI-023` | `DONE` | 优化工作台左右视觉长度与统计卡片密度（避免编辑区偏短与统计单卡过高） | 编辑区在桌面端视觉上不再显著短于左栏；统计卡片高度与密度更紧凑；历史与统计切换体验保持稳定 | `src/pages/workspace.tsx` `src/components/stats/stats-overview-card.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（52/52）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含编辑区长度与统计卡片高度断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-12 / 900c3a7` |
 
 ### 6.9 数据导入（v1.1）
 
