@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-12`
 - 总任务：`99`
-- 状态统计：`DONE=83` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-DEV-001`
+- 状态统计：`DONE=84` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -165,4 +165,4 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-DEV-001` | `DOING` | 新增 WezTerm + tmux 四窗格 Codex 启动脚本（默认命名且支持后续手动重命名） | 一条命令可创建/附着 `2x2` 四窗格并在每个 pane 启动 `codex`；初始 pane 名称可见；可通过 `tmux select-pane -T` 手动改名 | `scripts/start-codex4.sh` `docs/codex-parallel.md` `TODO.md` | — | — |
+| `TD-DEV-001` | `DONE` | 新增 WezTerm + tmux 四窗格 Codex 启动脚本（默认命名且支持后续手动重命名） | 一条命令可创建/附着 `2x2` 四窗格并在每个 pane 启动 `codex`；初始 pane 名称可见；可通过 `tmux select-pane -T` 手动改名 | `scripts/start-codex4.sh` `docs/codex-parallel.md` `TODO.md` | `bash -n scripts/start-codex4.sh` 通过；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；用户明确要求“这个就不用测试了”，未继续执行 `npm run test:integration` 与 E2E | `2026-02-12 / 0fb306a` |
