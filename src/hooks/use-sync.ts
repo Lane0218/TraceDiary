@@ -576,9 +576,14 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const setActiveMetadata = useCallback(
     (metadata: TMetadata) => {
       latestMetadataRef.current = metadata
+      const previousEntryId = activeEntryIdRef.current
       const keyState = toMetadataKeyState(metadata)
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      if (mountedRef.current && previousEntryId !== keyState.entryId) {
+        // 切换条目时先清空展示时间，避免沿用上一个条目的最近同步时间。
+        setLastSyncedAt(null)
+      }
 
       setEntryDirtyState(
         keyState.entryId,
@@ -597,6 +602,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
         ) {
           return
         }
+        const baseline = baselineByEntryRef.current.get(keyState.entryId)
+        setLastSyncedAt(baseline?.syncedAt ?? null)
         refreshActiveEntryDirtyState()
       })
     },

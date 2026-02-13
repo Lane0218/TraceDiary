@@ -118,6 +118,11 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
   await expect(syncStatus).toBeVisible({ timeout: 30_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
 
+  await page.reload()
+  await ensureReadySession(page, env)
+  await expect(syncStatus).toBeVisible({ timeout: 30_000 })
+  await expect(syncStatus).not.toContainText('云端待同步')
+
   const remote = await readGiteeFile({
     owner: env.owner,
     repo: env.repo,
