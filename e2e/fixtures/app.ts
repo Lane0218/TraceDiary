@@ -162,12 +162,15 @@ export async function ensureReadySession(
   throw new Error(`会话未就绪（${totalTimeoutMs}ms）：stage=${finalStage}，authError=${finalError}`)
 }
 
-function dailyEditorLocator(page: Page): Locator {
-  return page.locator('[data-testid="daily-editor"] .ProseMirror').first()
-}
-
-function yearlyEditorLocator(page: Page): Locator {
-  return page.locator('[aria-label="yearly-summary-page"] .ProseMirror').first()
+async function resolveVisibleEditor(
+  sourceEditor: Locator,
+  wysiwygEditor: Locator,
+): Promise<Locator> {
+  if (await sourceEditor.isVisible().catch(() => false)) {
+    return sourceEditor
+  }
+  await expect(wysiwygEditor).toBeVisible()
+  return wysiwygEditor
 }
 
 function parseWorkspaceDateFromUrl(page: Page): string | null {
@@ -195,9 +198,10 @@ function parseYearlyYearFromUrl(page: Page): number | null {
 }
 
 export async function writeDailyContent(page: Page, content: string): Promise<void> {
-  const editor = dailyEditorLocator(page)
-  await expect(editor).toBeVisible()
-
+  const editor = await resolveVisibleEditor(
+    page.locator('textarea[data-testid="daily-editor"]').first(),
+    page.locator('[data-testid="daily-editor"] .ProseMirror').first(),
+  )
   await editor.fill(content)
   const date = parseWorkspaceDateFromUrl(page)
   if (date) {
@@ -208,9 +212,10 @@ export async function writeDailyContent(page: Page, content: string): Promise<vo
 }
 
 export async function writeYearlyContent(page: Page, content: string): Promise<void> {
-  const editor = yearlyEditorLocator(page)
-  await expect(editor).toBeVisible()
-
+  const editor = await resolveVisibleEditor(
+    page.locator('section[aria-label="yearly-summary-page"] textarea').first(),
+    page.locator('[aria-label="yearly-summary-page"] .ProseMirror').first(),
+  )
   await editor.fill(content)
   const year = parseYearlyYearFromUrl(page)
   if (year !== null) {

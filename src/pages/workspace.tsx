@@ -230,6 +230,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     uploadMetadata,
     getEntryId: getDiarySyncEntryId,
     getFingerprint: getDiarySyncFingerprint,
+    getLocalModifiedAt: (metadata) => metadata.modifiedAt,
     loadBaseline: async (entryId) => getSyncBaseline(entryId),
     saveBaseline: async (baseline) => saveSyncBaseline(baseline),
   })

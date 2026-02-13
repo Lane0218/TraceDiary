@@ -18,6 +18,7 @@ export interface UseSyncOptions<TMetadata = unknown> {
   isMetadataEqual?: (prev: TMetadata, next: TMetadata) => boolean
   getEntryId?: (metadata: TMetadata) => string
   getFingerprint?: (metadata: TMetadata) => string
+  getLocalModifiedAt?: (metadata: TMetadata) => string | null
   loadBaseline?: (entryId: string) => Promise<SyncBaselineRecord | null>
   saveBaseline?: (baseline: SyncBaselineRecord) => Promise<void>
   now?: () => string
@@ -111,6 +112,38 @@ function defaultGetFingerprint<TMetadata>(metadata: TMetadata): string {
   }
 }
 
+function defaultGetLocalModifiedAt<TMetadata>(metadata: TMetadata): string | null {
+  if (!metadata || typeof metadata !== 'object') {
+    return null
+  }
+  const maybeModifiedAt = (metadata as { modifiedAt?: unknown }).modifiedAt
+  if (typeof maybeModifiedAt !== 'string') {
+    return null
+  }
+  const normalized = maybeModifiedAt.trim()
+  return normalized || null
+}
+
+function parseTimestamp(value: string | null | undefined): number | null {
+  if (!value) {
+    return null
+  }
+  const parsed = Date.parse(value)
+  if (!Number.isFinite(parsed)) {
+    return null
+  }
+  return parsed
+}
+
+function resolveDirtyByTimestamp(localModifiedAt: string | null, syncedAt: string): boolean | null {
+  const localTs = parseTimestamp(localModifiedAt)
+  const syncedTs = parseTimestamp(syncedAt)
+  if (localTs === null || syncedTs === null) {
+    return null
+  }
+  return localTs > syncedTs
+}
+
 function getIsOffline(): boolean {
   if (typeof window === 'undefined' || typeof window.navigator === 'undefined') {
     return false
@@ -174,6 +207,7 @@ function withTimeout<T>(task: Promise<T>, timeoutMs: number, timeoutMessage: str
 interface MetadataKeyState {
   entryId: string
   fingerprint: string
+  localModifiedAt: string | null
 }
 
 export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> = {}): UseSyncResult<TMetadata> {
@@ -193,6 +227,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const isMetadataEqual = options.isMetadataEqual ?? defaultIsMetadataEqual<TMetadata>
   const getEntryId = options.getEntryId ?? defaultGetEntryId<TMetadata>
   const getFingerprint = options.getFingerprint ?? defaultGetFingerprint<TMetadata>
+  const getLocalModifiedAt = options.getLocalModifiedAt ?? defaultGetLocalModifiedAt<TMetadata>
   const loadBaseline = options.loadBaseline
   const saveBaseline = options.saveBaseline
   const uploadMetadata = useMemo(
@@ -210,6 +245,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const taskIdRef = useRef(0)
   const activeEntryIdRef = useRef<string | null>(null)
   const activeFingerprintRef = useRef<string | null>(null)
+  const activeLocalModifiedAtRef = useRef<string | null>(null)
   const baselineByEntryRef = useRef<Map<string, SyncBaselineRecord>>(new Map())
   const preferredExpectedShaByEntryRef = useRef<Map<string, string>>(new Map())
   const loadedBaselineEntriesRef = useRef<Set<string>>(new Set())
@@ -225,8 +261,9 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
     (metadata: TMetadata): MetadataKeyState => ({
       entryId: getEntryId(metadata).trim() || 'default:fallback',
       fingerprint: getFingerprint(metadata),
+      localModifiedAt: getLocalModifiedAt(metadata),
     }),
-    [getEntryId, getFingerprint],
+    [getEntryId, getFingerprint, getLocalModifiedAt],
   )
 
   const setEntryDirtyState = useCallback((entryId: string, dirty: boolean) => {
@@ -247,6 +284,11 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       if (!baseline) {
         return options.fallbackWhenBaselineMissing
       }
+      const timestampDirty = resolveDirtyByTimestamp(keyState.localModifiedAt, baseline.syncedAt)
+      if (timestampDirty !== null) {
+        return timestampDirty
+      }
+      // 时间戳不可用时退回内容指纹比较，兼容非日记类型调用。
       return baseline.fingerprint !== keyState.fingerprint
     },
     [],
@@ -280,6 +322,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const refreshActiveEntryDirtyState = useCallback(() => {
     const activeEntryId = activeEntryIdRef.current
     const activeFingerprint = activeFingerprintRef.current
+    const activeLocalModifiedAt = activeLocalModifiedAtRef.current
     if (!activeEntryId || activeFingerprint === null) {
       return
     }
@@ -288,6 +331,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       {
         entryId: activeEntryId,
         fingerprint: activeFingerprint,
+        localModifiedAt: activeLocalModifiedAt,
       },
       {
         fallbackWhenBaselineMissing: dirtyByEntryRef.current.get(activeEntryId) ?? false,
@@ -308,6 +352,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       latestMetadataRef.current = metadata
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      activeLocalModifiedAtRef.current = keyState.localModifiedAt
 
       const syncedAt = options?.syncedAt ?? now()
       const nextBaseline: SyncBaselineRecord = {
@@ -580,6 +625,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       const keyState = toMetadataKeyState(metadata)
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      activeLocalModifiedAtRef.current = keyState.localModifiedAt
       if (mountedRef.current && previousEntryId !== keyState.entryId) {
         // 切换条目时先清空展示时间，避免沿用上一个条目的最近同步时间。
         setLastSyncedAt(null)
@@ -629,6 +675,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       latestMetadataRef.current = metadata
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      activeLocalModifiedAtRef.current = keyState.localModifiedAt
       setEntryDirtyState(
         keyState.entryId,
         resolveDirtyState(keyState, {
@@ -668,6 +715,7 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
       latestMetadataRef.current = metadata
       activeEntryIdRef.current = keyState.entryId
       activeFingerprintRef.current = keyState.fingerprint
+      activeLocalModifiedAtRef.current = keyState.localModifiedAt
       setEntryDirtyState(
         keyState.entryId,
         resolveDirtyState(keyState, {

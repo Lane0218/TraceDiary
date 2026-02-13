@@ -639,4 +639,68 @@ describe('useSync', () => {
       }),
     ).toBe('云端已同步')
   })
+
+  it('本地 modifiedAt 晚于最近同步时间时应判定为云端待同步（即使内容一致）', async () => {
+    const loadBaseline = vi.fn(
+      async (entryId: string) =>
+        ({
+          entryId,
+          fingerprint: 'fp:stable',
+          syncedAt: '2026-02-12T09:30:00.000Z',
+        }) as { entryId: string; fingerprint: string; syncedAt: string },
+    )
+
+    const { result } = renderHook(() =>
+      useSync<{ entryId: string; content: string; modifiedAt: string }>({
+        getEntryId: (metadata) => metadata.entryId,
+        getFingerprint: () => 'fp:stable',
+        getLocalModifiedAt: (metadata) => metadata.modifiedAt,
+        loadBaseline,
+      }),
+    )
+
+    await act(async () => {
+      result.current.setActiveMetadata({
+        entryId: 'daily:2100-01-08',
+        content: 'same-content',
+        modifiedAt: '2026-02-12T09:20:00.000Z',
+      })
+      await Promise.resolve()
+    })
+
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+    expect(
+      getSyncLabel({
+        canSyncToRemote: true,
+        hasConflict: false,
+        isOffline: result.current.isOffline,
+        hasPendingRetry: result.current.hasPendingRetry,
+        status: result.current.status,
+        hasUnsyncedChanges: result.current.hasUnsyncedChanges,
+        lastSyncedAt: result.current.lastSyncedAt,
+      }),
+    ).toBe('云端已同步')
+
+    await act(async () => {
+      result.current.onInputChange({
+        entryId: 'daily:2100-01-08',
+        content: 'same-content',
+        modifiedAt: '2026-02-12T09:40:00.000Z',
+      })
+      await Promise.resolve()
+    })
+
+    expect(result.current.hasUnsyncedChanges).toBe(true)
+    expect(
+      getSyncLabel({
+        canSyncToRemote: true,
+        hasConflict: false,
+        isOffline: result.current.isOffline,
+        hasPendingRetry: result.current.hasPendingRetry,
+        status: result.current.status,
+        hasUnsyncedChanges: result.current.hasUnsyncedChanges,
+        lastSyncedAt: result.current.lastSyncedAt,
+      }),
+    ).toBe('云端待同步')
+  })
 })
