@@ -48,11 +48,9 @@ describe('App 路由与工作台入口', () => {
     render(<App />)
 
     expect(await screen.findByTestId('workspace-left-tab-history')).toBeTruthy()
-    expect(screen.queryByTestId('workspace-open-insights')).toBeNull()
     fireEvent.click(screen.getByTestId('workspace-left-tab-stats'))
 
     expect(screen.getByTestId('workspace-left-tab-stats')).toBeTruthy()
-    expect(screen.getByTestId('workspace-open-insights')).toBeTruthy()
     expect(await screen.findByText(/正在汇总统计数据|统计读取失败/u)).toBeTruthy()
   })
 

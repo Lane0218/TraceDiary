@@ -51,7 +51,7 @@ type WorkspaceLeftPanelTab = 'history' | 'stats'
 
 const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
 const WORKSPACE_PANEL_HEIGHT_DESKTOP = 340
-const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 230
+const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 252
 const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const WORKSPACE_PANEL_HEIGHT_STYLE = {
   '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
@@ -661,13 +661,13 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               data-testid="workspace-left-panel"
             >
               <div className="flex items-center gap-2">
-                <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d7d7d7] bg-[#f0f0f0] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d2d1cd] bg-[#ebe9e4] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                       leftPanelTab === 'history'
-                        ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
+                        ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
+                        : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('history')
@@ -678,10 +678,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   </button>
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition ${
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                       leftPanelTab === 'stats'
-                        ? 'bg-td-accent text-white shadow-thin'
-                        : 'text-[#4b5563] hover:bg-white hover:text-td-text'
+                        ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
+                        : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
                     }`}
                     onClick={() => {
                       setLeftPanelTab('stats')
@@ -690,20 +690,6 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                   >
                     统计
                   </button>
-                </div>
-                <div className="w-[88px] shrink-0">
-                  {leftPanelTab === 'stats' ? (
-                    <button
-                      type="button"
-                      className="td-btn w-full whitespace-nowrap px-2.5 py-1.5 text-xs"
-                      onClick={handleOpenInsights}
-                      data-testid="workspace-open-insights"
-                    >
-                      统计详情
-                    </button>
-                  ) : (
-                    <span aria-hidden="true" className="block h-[34px]" />
-                  )}
                 </div>
               </div>
 
@@ -802,7 +788,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
-                    modeToggleClassName="-mt-11 mb-3"
+                    modeToggleClassName="-mt-8 mb-5"
                     viewportHeight={WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
                   />

@@ -170,10 +170,48 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
     expect(lastCardBottom).toBeLessThanOrEqual(panelBodyBottom + 1)
   }
 
+  const assertEditorHeaderAligned = async () => {
+    const [titleBox, sourceButtonBox, editorBox] = await Promise.all([
+      page.getByRole('heading', { name: `${todayKey} 日记` }).boundingBox(),
+      page.getByTestId('daily-editor-mode-source').boundingBox(),
+      page.getByTestId('daily-editor').boundingBox(),
+    ])
+
+    expect(titleBox).not.toBeNull()
+    expect(sourceButtonBox).not.toBeNull()
+    expect(editorBox).not.toBeNull()
+
+    const titleCenterY = (titleBox?.y ?? 0) + (titleBox?.height ?? 0) / 2
+    const buttonCenterY = (sourceButtonBox?.y ?? 0) + (sourceButtonBox?.height ?? 0) / 2
+    expect(Math.abs(titleCenterY - buttonCenterY)).toBeLessThanOrEqual(12)
+
+    const titleBottom = (titleBox?.y ?? 0) + (titleBox?.height ?? 0)
+    const editorTop = editorBox?.y ?? 0
+    expect(editorTop - titleBottom).toBeGreaterThanOrEqual(12)
+  }
+
+  const assertSegmentContrast = async (activeTab: 'history' | 'stats') => {
+    const historyTab = page.getByTestId('workspace-left-tab-history')
+    const statsTab = page.getByTestId('workspace-left-tab-stats')
+
+    if (activeTab === 'history') {
+      await expect(historyTab).toHaveCSS('background-color', 'rgb(51, 58, 54)')
+      await expect(historyTab).toHaveCSS('color', 'rgb(247, 245, 239)')
+      await expect(statsTab).toHaveCSS('color', 'rgb(79, 87, 81)')
+      return
+    }
+
+    await expect(statsTab).toHaveCSS('background-color', 'rgb(51, 58, 54)')
+    await expect(statsTab).toHaveCSS('color', 'rgb(247, 245, 239)')
+    await expect(historyTab).toHaveCSS('color', 'rgb(79, 87, 81)')
+  }
+
   await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
   await assertEditorNotVisiblyTooShort()
   await assertEditorPanelHasNoLargeBottomGap()
   await assertColumnsBottomAligned()
+  await assertEditorHeaderAligned()
+  await assertSegmentContrast('history')
   const historyHeights = await readLeftPanelHeights()
   await page.getByTestId('workspace-left-tab-stats').click()
 
@@ -186,6 +224,8 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await assertEditorPanelHasNoLargeBottomGap()
   await assertColumnsBottomAligned()
   await assertStatsCardsNotOverflowPanel()
+  await assertEditorHeaderAligned()
+  await assertSegmentContrast('stats')
   const statsHeights = await readLeftPanelHeights()
 
   expect(Math.abs(historyHeights.panel - statsHeights.panel)).toBeLessThanOrEqual(2)
@@ -195,7 +235,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   expect(firstStatCardBox).not.toBeNull()
   expect(firstStatCardBox?.height ?? 0).toBeLessThanOrEqual(130)
 
-  await page.getByTestId('workspace-open-insights').click()
+  await page.getByRole('button', { name: '统计详情' }).first().click()
 
   await expect(page).toHaveURL(/\/insights$/)
   await expect(page.getByLabel('insights-page')).toBeVisible()
