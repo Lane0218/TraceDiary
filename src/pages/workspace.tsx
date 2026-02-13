@@ -50,9 +50,9 @@ interface YearlyReminder {
 type WorkspaceLeftPanelTab = 'history' | 'stats'
 
 const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
-const WORKSPACE_PANEL_HEIGHT_DESKTOP = 420
-const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 310
-const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 500
+const WORKSPACE_PANEL_HEIGHT_DESKTOP = 340
+const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 230
+const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const WORKSPACE_PANEL_HEIGHT_STYLE = {
   '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
   '--workspace-panel-body-height': `${WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}px`,
@@ -793,10 +793,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               data-testid="workspace-diary-panel"
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div
-                className="min-h-0 flex-1"
-                data-testid="workspace-diary-editor-slot"
-              >
+              <div className="min-h-0 flex-1" data-testid="workspace-diary-editor-slot">
                 {!diary.isLoading ? (
                   <MarkdownEditor
                     key={`${diary.entryId}:${diary.loadRevision}`}
@@ -807,6 +804,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     testId="daily-editor"
                     modeToggleClassName="-mt-11 mb-3"
                     viewportHeight={WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP}
+                    fillHeight
                   />
                 ) : null}
               </div>

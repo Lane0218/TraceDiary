@@ -126,8 +126,54 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
     expect(editorRatio).toBeGreaterThanOrEqual(0.62)
   }
 
+  const assertEditorPanelHasNoLargeBottomGap = async () => {
+    const [panelBox, editorBox] = await Promise.all([
+      page.getByTestId('workspace-diary-panel').boundingBox(),
+      page.getByTestId('daily-editor').boundingBox(),
+    ])
+
+    expect(panelBox).not.toBeNull()
+    expect(editorBox).not.toBeNull()
+
+    const panelBottom = (panelBox?.y ?? 0) + (panelBox?.height ?? 0)
+    const editorBottom = (editorBox?.y ?? 0) + (editorBox?.height ?? 0)
+    const bottomGap = panelBottom - editorBottom
+
+    expect(bottomGap).toBeLessThanOrEqual(40)
+  }
+
+  const assertColumnsBottomAligned = async () => {
+    const [leftBox, rightBox] = await Promise.all([
+      page.locator('[aria-label="workspace-layout"] aside').boundingBox(),
+      page.locator('[aria-label="workspace-layout"] > section').last().boundingBox(),
+    ])
+
+    expect(leftBox).not.toBeNull()
+    expect(rightBox).not.toBeNull()
+
+    const leftBottom = (leftBox?.y ?? 0) + (leftBox?.height ?? 0)
+    const rightBottom = (rightBox?.y ?? 0) + (rightBox?.height ?? 0)
+    expect(Math.abs(leftBottom - rightBottom)).toBeLessThanOrEqual(2)
+  }
+
+  const assertStatsCardsNotOverflowPanel = async () => {
+    const [panelBodyBox, lastCardBox] = await Promise.all([
+      page.getByTestId('workspace-left-panel-body').boundingBox(),
+      page.locator('[aria-label="stats-overview-card"] article').last().boundingBox(),
+    ])
+
+    expect(panelBodyBox).not.toBeNull()
+    expect(lastCardBox).not.toBeNull()
+
+    const panelBodyBottom = (panelBodyBox?.y ?? 0) + (panelBodyBox?.height ?? 0)
+    const lastCardBottom = (lastCardBox?.y ?? 0) + (lastCardBox?.height ?? 0)
+    expect(lastCardBottom).toBeLessThanOrEqual(panelBodyBottom + 1)
+  }
+
   await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
   await assertEditorNotVisiblyTooShort()
+  await assertEditorPanelHasNoLargeBottomGap()
+  await assertColumnsBottomAligned()
   const historyHeights = await readLeftPanelHeights()
   await page.getByTestId('workspace-left-tab-stats').click()
 
@@ -137,6 +183,9 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('stats-current-streak-days')).toContainText('2')
   await expect(page.getByTestId('stats-longest-streak-days')).toContainText('2')
   await assertEditorNotVisiblyTooShort()
+  await assertEditorPanelHasNoLargeBottomGap()
+  await assertColumnsBottomAligned()
+  await assertStatsCardsNotOverflowPanel()
   const statsHeights = await readLeftPanelHeights()
 
   expect(Math.abs(historyHeights.panel - statsHeights.panel)).toBeLessThanOrEqual(2)

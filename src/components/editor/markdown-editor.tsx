@@ -19,6 +19,7 @@ interface MarkdownEditorProps {
   defaultMode?: 'wysiwyg' | 'source'
   modeToggleClassName?: string
   viewportHeight?: number
+  fillHeight?: boolean
 }
 
 type MarkdownEditorInnerProps = Omit<MarkdownEditorProps, 'docKey'> & {
@@ -32,6 +33,7 @@ interface MilkdownRuntimeEditorProps {
   docKey: string
   testId?: string
   viewportHeight?: number
+  fillHeight?: boolean
 }
 
 function MilkdownRuntimeEditor({
@@ -41,6 +43,7 @@ function MilkdownRuntimeEditor({
   docKey,
   testId,
   viewportHeight,
+  fillHeight = false,
 }: MilkdownRuntimeEditorProps) {
   const onChangeRef = useRef(onChange)
 
@@ -79,8 +82,12 @@ function MilkdownRuntimeEditor({
       .use(gfm)
       .use(listener)
   }, [docKey])
-  const editorStyle =
-    typeof viewportHeight === 'number' && viewportHeight > 0
+  const editorStyle = fillHeight
+    ? ({
+        '--td-editor-height': '100%',
+        '--td-editor-content-height': 'calc(100% - 40px)',
+      } as CSSProperties)
+    : typeof viewportHeight === 'number' && viewportHeight > 0
       ? ({
           '--td-editor-height': `${viewportHeight}px`,
           '--td-editor-content-height': `${Math.max(viewportHeight - 40, 260)}px`,
@@ -90,6 +97,8 @@ function MilkdownRuntimeEditor({
   return (
     <div
       className={`trace-milkdown rounded-[10px] border border-td-line bg-td-surface ${
+        fillHeight ? 'h-full min-h-[360px]' : ''
+      } ${
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
       aria-disabled={disabled}
@@ -112,6 +121,7 @@ function MarkdownEditorInner({
   defaultMode = 'wysiwyg',
   modeToggleClassName,
   viewportHeight,
+  fillHeight = false,
 }: MarkdownEditorInnerProps) {
   const [mode, setMode] = useState<'wysiwyg' | 'source'>(defaultMode)
   const [draftMarkdown, setDraftMarkdown] = useState(initialValue)
@@ -124,10 +134,13 @@ function MarkdownEditorInner({
   }
 
   const showSourceMode = enableSourceMode && mode === 'source'
-  const sourceEditorStyle =
-    typeof viewportHeight === 'number' && viewportHeight > 0
+  const sourceEditorStyle = fillHeight
+    ? ({ height: '100%' } as CSSProperties)
+    : typeof viewportHeight === 'number' && viewportHeight > 0
       ? ({ height: `${viewportHeight}px` } as CSSProperties)
       : undefined
+  const editorShellClassName = fillHeight ? 'flex h-full min-h-0 flex-col' : ''
+  const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1' : 'relative'
   const wordCountBadge = (
     <div
       className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-td-line bg-td-surface/90 px-2 py-1 text-[11px] leading-none text-td-muted"
@@ -161,9 +174,9 @@ function MarkdownEditorInner({
 
   if (import.meta.env.MODE === 'test') {
     return (
-      <div>
+      <div className={editorShellClassName}>
         {modeToggle}
-        <div className="relative">
+        <div className={editorBodyClassName}>
           <textarea
             key={docKey}
             aria-label={placeholder}
@@ -171,7 +184,9 @@ function MarkdownEditorInner({
             value={draftMarkdown}
             onChange={(event) => applyDraftChange(event.target.value)}
             disabled={disabled}
-            className={`min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
+            className={`w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
+              fillHeight ? 'h-full min-h-[360px]' : 'min-h-[360px]'
+            } ${
               showSourceMode ? 'font-mono text-sm leading-7' : ''
             }`}
             style={sourceEditorStyle}
@@ -184,9 +199,9 @@ function MarkdownEditorInner({
 
   if (showSourceMode) {
     return (
-      <div>
+      <div className={editorShellClassName}>
         {modeToggle}
-        <div className="relative">
+        <div className={editorBodyClassName}>
           <textarea
             key={docKey}
             aria-label={placeholder}
@@ -195,7 +210,9 @@ function MarkdownEditorInner({
             onChange={(event) => applyDraftChange(event.target.value)}
             disabled={disabled}
             spellCheck={false}
-            className="trace-editor-source min-h-[360px] w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500"
+            className={`trace-editor-source w-full rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500 ${
+              fillHeight ? 'h-full min-h-[360px]' : 'min-h-[360px]'
+            }`}
             style={sourceEditorStyle}
           />
           {wordCountBadge}
@@ -205,9 +222,9 @@ function MarkdownEditorInner({
   }
 
   return (
-    <div>
+    <div className={editorShellClassName}>
       {modeToggle}
-      <div className="relative">
+      <div className={editorBodyClassName}>
         <MilkdownProvider>
           <MilkdownRuntimeEditor
             key={`${docKey}:${wysiwygRevision}`}
@@ -217,6 +234,7 @@ function MarkdownEditorInner({
             docKey={`${docKey}:${wysiwygRevision}`}
             testId={testId}
             viewportHeight={viewportHeight}
+            fillHeight={fillHeight}
           />
         </MilkdownProvider>
         {wordCountBadge}
