@@ -35,7 +35,7 @@ export default function StatsOverviewCard({
 
   return (
     <div className="h-full" aria-label="stats-overview-card">
-      <div className="grid h-full content-start grid-cols-2 gap-2">
+      <div className="grid h-full auto-rows-[minmax(88px,1fr)] grid-cols-2 gap-2">
         <article className="rounded-[10px] border border-td-line bg-td-surface p-3">
           <p className="text-xs text-td-muted">总日记篇数</p>
           <p className="mt-1 font-display text-2xl text-td-text" data-testid="stats-total-daily-count">

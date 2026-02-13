@@ -50,8 +50,8 @@ interface YearlyReminder {
 type WorkspaceLeftPanelTab = 'history' | 'stats'
 
 const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
-const WORKSPACE_PANEL_HEIGHT_DESKTOP = 500
-const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 390
+const WORKSPACE_PANEL_HEIGHT_DESKTOP = 420
+const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 310
 const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 500
 const WORKSPACE_PANEL_HEIGHT_STYLE = {
   '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
