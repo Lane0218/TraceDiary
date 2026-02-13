@@ -688,7 +688,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     }}
                     data-testid="workspace-left-tab-stats"
                   >
-                    统计
+                    数据统计
                   </button>
                 </div>
               </div>
