@@ -13,15 +13,16 @@
 
 ## 3. 工作流（强制）
 
-1. 每次接收用户任务后，先查看并重命名当前 tmux pane：先执行 `tmux list-panes -F '#{pane_id} #{pane_title}'` 确认 `pane_id`，再执行 `tmux select-pane -t <pane_id> -T "任务语义名称"` 完成重命名；名称必须反映任务内容，不得使用“新名称”等占位词（示例：`TD-UI-高度对齐排查`）。
-2. 接收任务后先明确范围：目标、影响文件、验收标准。
-3. 实施修改前，先在本文档的 TODO 清单中将对应任务标记为 `DOING`。
-4. 完成代码修改后，必须按第 8 节“测试执行策略（默认分层）”执行对应测试集合。
-5. 若任一测试失败，不得提交；必须先修复或标记 `BLOCKED` 并写明原因。
-6. 全部测试通过后，立即提交 Git commit。
-7. commit 完成后，立即 push 到远端分支。
-8. 将 TODO 状态更新为 `DONE`，并记录完成日期、commit hash 与测试记录。
-9. 向用户汇报：改动摘要、测试结果（含是否执行全量 E2E）、commit hash、push 结果。
+1. 每次接收“新任务”后，先查看并重命名当前 tmux pane：必须使用 `pane_index`（纯数字，如 `1`），不得使用 `pane_id`（如 `%1`）作为目标；为避免作用到错误 pane，必须显式带上 `session:window`。推荐顺序：`tmux display-message -p '#S:#I'` -> `tmux list-panes -t <session>:<window> -F '#{pane_index} #{pane_title}'` -> `tmux select-pane -t <session>:<window>.<pane_index> -T "任务语义名称"` -> `tmux list-panes -t <session>:<window> -F '#{pane_index} #{pane_title}'` 回读确认。名称必须反映任务内容，不得使用“新名称”等占位词（示例：`TD-UI-高度对齐排查`）。
+2. 同一任务的连续回合（例如：已完成后用户提出微调并继续在同一目标上修改）不需要重复改名；仅当任务语义发生切换时再重命名 pane。
+3. 接收任务后先明确范围：目标、影响文件、验收标准。
+4. 实施修改前，先在本文档的 TODO 清单中将对应任务标记为 `DOING`。
+5. 完成代码修改后，必须按第 8 节“测试执行策略（默认分层）”执行对应测试集合。
+6. 若任一测试失败，不得提交；必须先修复或标记 `BLOCKED` 并写明原因。
+7. 全部测试通过后，立即提交 Git commit。
+8. commit 完成后，立即 push 到远端分支。
+9. 将 TODO 状态更新为 `DONE`，并记录完成日期、commit hash 与测试记录。
+10. 向用户汇报：改动摘要、测试结果（含是否执行全量 E2E）、commit hash、push 结果。
 
 ## 4. Commit 与 Push 规范（强制）
 
