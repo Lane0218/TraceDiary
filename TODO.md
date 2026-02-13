@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-13`
-- 总任务：`106`
-- 状态统计：`DONE=91` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 总任务：`107`
+- 状态统计：`DONE=92` / `DOING=0` / `TODO=15` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -147,6 +147,7 @@
 | `TD-UI-024` | `DONE` | 统一“往年今日/统计”面板高度并将往年今日改为紧凑列表（去预览） | 左侧切换 history/stats 时外层与内容区高度一致；往年今日不再显示正文预览，仅展示紧凑日期条目；统计卡片不出现过高拉伸 | `src/pages/workspace.tsx` `src/components/history/on-this-day-list.tsx` `src/components/stats/stats-overview-card.tsx` `src/utils/sync-dirty.ts` `e2e/specs/stats-insights.spec.ts` `e2e/specs/calendar-history.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含 history/stats 等高断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1，已适配紧凑列表断言）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / 68bbce5` |
 | `TD-UI-025` | `DONE` | 收敛左侧统计态留白（在保持 history/stats 等高前提下下调左侧面板高度） | history/stats 两个 tab 的左侧面板高度保持一致；统计态不再出现大面积空白留白；往年今日紧凑列表与统计卡片展示正常 | `src/pages/workspace.tsx` `src/components/stats/stats-overview-card.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / 98a93d3` |
 | `TD-UI-026` | `DONE` | 继续收敛工作台高度：右侧编辑框外内框等高贴合并进一步下调左侧面板高度 | 右侧编辑区外框不再因拉伸出现内框下方大留白；左侧 history/stats 面板高度进一步收敛且两 tab 仍等高；统计卡片密度保持可读 | `src/pages/workspace.tsx` `src/components/stats/stats-overview-card.tsx` `src/components/editor/markdown-editor.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含左右底边对齐与统计卡不溢出断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / a06f71b` |
+| `TD-UI-027` | `DONE` | 微调工作台左栏分段控件（移除左栏“统计详情”按钮、分段去蓝）并修正编辑区标题与源码按钮对齐/间距 | 左栏不再出现“统计详情”冗余按钮；分段控件在选中/未选中态均具备清晰可读对比且不使用蓝色；“日记”标题与“源码”按钮视觉对齐且标题与编辑框间距更舒展 | `src/pages/workspace.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含分段对比度与入口回归断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / f458fd5` |
 
 ### 6.9 数据导入（v1.1）
 
