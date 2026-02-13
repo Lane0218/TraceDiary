@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UploadMetadataFn } from '../../services/sync'
+import { getSyncLabel } from '../../utils/sync-presentation'
 import type { SaveNowResult } from '../use-sync'
 import { useSync } from '../use-sync'
 
@@ -592,5 +593,50 @@ describe('useSync', () => {
     expect(result.current.status).toBe('success')
     expect(result.current.errorMessage).toBeNull()
     expect(result.current.lastSyncedAt).not.toBeNull()
+  })
+
+  it('加载到匹配 baseline 后应恢复“云端已同步”标签（刷新后状态收敛）', async () => {
+    const loadBaseline = vi.fn(
+      async (entryId: string) =>
+        ({
+          entryId,
+          fingerprint: 'fp:matched',
+          syncedAt: '2026-02-12T09:30:00.000Z',
+        }) as { entryId: string; fingerprint: string; syncedAt: string },
+    )
+
+    const { result } = renderHook(() =>
+      useSync<{ entryId: string; content: string }>({
+        uploadMetadata: vi.fn(async () => ({
+          ok: true,
+          conflict: false,
+          syncedAt: '2026-02-12T10:00:00.000Z',
+        })),
+        getEntryId: (metadata) => metadata.entryId,
+        getFingerprint: () => 'fp:matched',
+        loadBaseline,
+      }),
+    )
+
+    await act(async () => {
+      result.current.setActiveMetadata({
+        entryId: 'daily:2100-01-08',
+        content: 'persisted-content',
+      })
+      await Promise.resolve()
+    })
+
+    expect(result.current.hasUnsyncedChanges).toBe(false)
+    expect(
+      getSyncLabel({
+        canSyncToRemote: true,
+        hasConflict: false,
+        isOffline: result.current.isOffline,
+        hasPendingRetry: result.current.hasPendingRetry,
+        status: result.current.status,
+        hasUnsyncedChanges: result.current.hasUnsyncedChanges,
+        lastSyncedAt: result.current.lastSyncedAt,
+      }),
+    ).toBe('云端已同步')
   })
 })
