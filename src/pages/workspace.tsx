@@ -788,6 +788,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
+                    defaultMode="source"
                     modeToggleClassName="-mt-8 mb-5"
                     viewportHeight={WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight

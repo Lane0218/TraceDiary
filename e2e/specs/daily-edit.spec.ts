@@ -16,7 +16,7 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   await gotoWorkspace(page, TEST_DATE)
   await ensureReadySession(page, env)
 
-  await page.getByTestId('daily-editor-mode-source').click()
+  await expect(page.getByTestId('daily-editor-mode-source')).toHaveAttribute('aria-pressed', 'true')
   const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
   await expect(sourceEditor).toBeVisible()
   await sourceEditor.fill(markdown)
@@ -46,6 +46,11 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   await ensureReadySession(page, env)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
+  await expect(page.getByTestId('daily-editor-mode-source')).toHaveAttribute('aria-pressed', 'true')
+  const reloadedSourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+  await expect(reloadedSourceEditor).toHaveValue(new RegExp(marker), { timeout: 15_000 })
+
+  await page.getByTestId('daily-editor-mode-source').click()
   const editor = page.locator('[data-testid="daily-editor"] .ProseMirror').first()
   await expect(editor).toContainText(marker, { timeout: 15_000 })
 })
