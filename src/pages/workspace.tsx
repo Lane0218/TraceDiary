@@ -656,10 +656,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
 
             <section
-              className={`td-card-muted td-panel flex flex-col space-y-2.5 ${
-                leftPanelTab === 'history' ? 'lg:h-[var(--workspace-panel-height)]' : ''
-              }`}
-              style={leftPanelTab === 'history' ? WORKSPACE_PANEL_HEIGHT_STYLE : undefined}
+              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--workspace-panel-height)]"
+              style={WORKSPACE_PANEL_HEIGHT_STYLE}
               data-testid="workspace-left-panel"
             >
               <div className="flex items-center gap-2">
@@ -710,10 +708,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               </div>
 
               <div
-                className={`min-h-0 ${
-                  leftPanelTab === 'history' ? 'flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none' : ''
-                }`}
-                style={leftPanelTab === 'history' ? WORKSPACE_PANEL_HEIGHT_STYLE : undefined}
+                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
+                style={WORKSPACE_PANEL_HEIGHT_STYLE}
                 data-testid="workspace-left-panel-body"
               >
                 {leftPanelTab === 'history' ? (

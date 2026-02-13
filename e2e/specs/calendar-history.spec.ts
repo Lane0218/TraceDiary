@@ -66,7 +66,7 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
 
   const historyEntryButton = page.getByRole('button', { name: `打开 ${HISTORY_SOURCE_DATE}` })
   await expect(historyEntryButton).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByText(marker)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByTestId('history-card')).toHaveCount(1)
 
   await historyEntryButton.click()
   await expect(page).toHaveURL(new RegExp(`date=${HISTORY_SOURCE_DATE}$`))

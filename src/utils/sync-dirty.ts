@@ -1,7 +1,10 @@
 import type { DiarySyncMetadata } from '../services/sync'
 
 function normalizeContent(content: string): string {
-  return content.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '')
+  return content
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n+$/g, '')
 }
 
 function hashFnv1a(input: string): string {

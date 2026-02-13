@@ -100,6 +100,19 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await page.reload()
   await ensureReadySession(page, env)
 
+  const readLeftPanelHeights = async () => {
+    const [panelBox, bodyBox] = await Promise.all([
+      page.getByTestId('workspace-left-panel').boundingBox(),
+      page.getByTestId('workspace-left-panel-body').boundingBox(),
+    ])
+    expect(panelBox).not.toBeNull()
+    expect(bodyBox).not.toBeNull()
+    return {
+      panel: panelBox?.height ?? 0,
+      body: bodyBox?.height ?? 0,
+    }
+  }
+
   const assertEditorNotVisiblyTooShort = async () => {
     const [leftColumnBox, editorSlotBox] = await Promise.all([
       page.locator('[aria-label="workspace-layout"] aside').boundingBox(),
@@ -115,6 +128,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
   await assertEditorNotVisiblyTooShort()
+  const historyHeights = await readLeftPanelHeights()
   await page.getByTestId('workspace-left-tab-stats').click()
 
   await expect(page.getByTestId('stats-total-daily-count')).toContainText('3')
@@ -123,6 +137,10 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('stats-current-streak-days')).toContainText('2')
   await expect(page.getByTestId('stats-longest-streak-days')).toContainText('2')
   await assertEditorNotVisiblyTooShort()
+  const statsHeights = await readLeftPanelHeights()
+
+  expect(Math.abs(historyHeights.panel - statsHeights.panel)).toBeLessThanOrEqual(2)
+  expect(Math.abs(historyHeights.body - statsHeights.body)).toBeLessThanOrEqual(2)
 
   const firstStatCardBox = await page.locator('[aria-label="stats-overview-card"] article').first().boundingBox()
   expect(firstStatCardBox).not.toBeNull()
