@@ -87,7 +87,7 @@
   - 触达认证/同步/加解密主链路且影响面跨多个模块。
 - 测试执行顺序建议：`lint` -> `unit` -> `integration` -> `E2E`；任一步失败即停止提交流程。
 - 如当前阶段确实无法自动化 E2E，必须先补充人工端到端验证步骤并写入 `测试记录`，且同步创建自动化 E2E 补齐任务。
-- 仅文档改动可不执行 E2E，但需在汇报中明确“仅文档改动，无功能行为变化”。
+- 仅文档改动且无功能行为变化时，可不执行任何自动化测试（含 `lint/unit/integration/E2E`），但需在汇报与 `TODO.md` 的 `测试记录` 明确“仅文档改动，无功能行为变化”。
 
 ### 5.5 用户授权的必要测试策略（例外）
 
@@ -125,7 +125,7 @@
 
 ### 8.2 AI 风险分级与默认测试集
 
-- 低风险（仅文档、注释、非运行时重构）：`npm run lint`，必要时补 `npm run test:unit`。
+- 低风险（仅注释、非运行时重构）：`npm run lint`，必要时补 `npm run test:unit`；仅文档改动且无功能行为变化可不执行自动化测试。
 - 中风险（单模块逻辑改动、UI 交互改动）：`npm run lint` + `npm run test:unit` + `npm run test:integration` + `npm run test:e2e:fast`（或定向 E2E）。
 - 高风险（认证/同步/加解密/跨模块改动）：`npm run lint` + `npm run test:unit` + `npm run test:integration` + 定向 `@remote/@slow`；命中 5.4 条件时必须补 `npm run test:e2e:full`。
 
