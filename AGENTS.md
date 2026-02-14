@@ -13,7 +13,7 @@
 
 ## 3. 工作流（强制）
 
-1. 每次接收“新任务”后，先查看并重命名当前 tmux pane：必须使用 `pane_index`（纯数字，如 `1`），不得使用 `pane_id`（如 `%1`）作为目标；为避免作用到错误 pane，必须显式带上 `session:window`。推荐顺序：`tmux display-message -p '#S:#I'` -> `tmux list-panes -t <session>:<window> -F '#{pane_index} #{pane_title}'` -> `tmux select-pane -t <session>:<window>.<pane_index> -T "任务语义名称"` -> `tmux list-panes -t <session>:<window> -F '#{pane_index} #{pane_title}'` 回读确认。名称必须反映任务内容，不得使用“新名称”等占位词（示例：`TD-UI-高度对齐排查`）。
+1. 每次接收“新任务”后，先重命名当前 tmux pane（以当前 Codex 进程所在 pane 为准，不以 active pane 为准）：`pane_id=$TMUX_PANE` -> `sw=$(tmux display-message -p -t "$pane_id" '#S:#I')` -> `pi=$(tmux display-message -p -t "$pane_id" '#P')` -> `tmux select-pane -t "${sw}.${pi}" -T "任务语义名称"` -> `tmux list-panes -t "$sw" -F '#{pane_index} #{pane_title}'` 回读确认。最终目标必须使用 `pane_index`（纯数字，如 `1`），不得直接使用 `%pane_id`；禁止使用不带 `-t` 的 `tmux display-message -p '#S:#I.#P'` 判定当前 pane。名称必须反映任务内容，不得使用“新名称”等占位词（示例：`TD-UI-高度对齐排查`）。
 2. 同一任务的连续回合（例如：已完成后用户提出微调并继续在同一目标上修改）不需要重复改名；仅当任务语义发生切换时再重命名 pane。
 3. 接收任务后先明确范围：目标、影响文件、验收标准。
 4. 实施修改前，先在本文档的 TODO 清单中将对应任务标记为 `DOING`。
