@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
+import { StrictMode, createElement, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UploadMetadataFn } from '../../services/sync'
 import { getSyncLabel } from '../../utils/sync-presentation'
@@ -91,6 +92,37 @@ describe('useSync', () => {
     expect(result.current.errorMessage).toBeNull()
     expect(result.current.lastSyncedAt).toBe('2026-02-08T12:00:00.000Z')
     expect(result.current.hasUnsyncedChanges).toBe(false)
+  })
+
+  it('StrictMode 下单次手动保存不应被误判为 stale', async () => {
+    const uploadMetadata: UploadMetadataFn<TestMetadata> = vi.fn(async () => ({
+      syncedAt: '2026-02-16T00:00:00.000Z',
+    }))
+    const strictModeWrapper = ({ children }: { children: ReactNode }) =>
+      createElement(StrictMode, null, children)
+
+    const { result } = renderHook(
+      () =>
+        useSync<TestMetadata>({
+          uploadMetadata,
+        }),
+      {
+        wrapper: strictModeWrapper,
+      },
+    )
+
+    let saveResult: SaveNowResult | null = null
+    await act(async () => {
+      saveResult = await result.current.saveNow({ content: 'strict-mode' })
+    })
+
+    expect(uploadMetadata).toHaveBeenCalledTimes(1)
+    expect(saveResult).toEqual({
+      ok: true,
+      errorMessage: null,
+    })
+    expect(result.current.status).toBe('success')
+    expect(result.current.errorMessage).toBeNull()
   })
 
   it('手动保存在内容未变化时不应把未提交改动从无置为有', async () => {

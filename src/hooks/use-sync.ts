@@ -252,6 +252,8 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   const dirtyByEntryRef = useRef<Map<string, boolean>>(new Map())
 
   useEffect(() => {
+    // StrictMode 会额外执行一次 setup/cleanup 校验；每次 setup 都需要恢复为 mounted。
+    mountedRef.current = true
     return () => {
       mountedRef.current = false
     }
