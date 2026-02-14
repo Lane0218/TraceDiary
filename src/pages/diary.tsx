@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
+import AppHeader from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
@@ -34,7 +35,6 @@ import {
   createIdleSyncActionSnapshot,
   getManualPullFailureMessage,
   getManualSyncFailureMessage,
-  getSessionLabel,
   getSyncActionLabel,
   getSyncActionToneClass,
   loadSyncActionSnapshot,
@@ -162,7 +162,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
   const [leftPanelTab, setLeftPanelTab] = useState<DiaryLeftPanelTab>(() => getInitialLeftPanelTab())
-  const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
   const [isManualPulling, setIsManualPulling] = useState(false)
@@ -270,7 +269,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   }, [diaries])
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
-  const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
+  const authModalOpen = forceOpenAuthModal
 
   useEffect(() => {
     if (!canSyncToRemote) {
@@ -389,10 +388,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     },
     [date, navigate],
   )
-  const handleOpenInsights = useCallback(() => {
-    navigate('/insights')
-  }, [navigate])
-
   const handleEditorChange = (nextContent: string) => {
     diary.setContent(nextContent)
 
@@ -741,7 +736,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     resolvePushConflict('merged', mergedPayload)
   }
 
-  const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
   const pullStatusLabel = useMemo(() => getSyncActionLabel('pull', pullActionSnapshot), [pullActionSnapshot])
   const pushStatusLabel = useMemo(() => getSyncActionLabel('push', pushActionSnapshot), [pushActionSnapshot])
   const pullStatusToneClass = useMemo(
@@ -756,6 +750,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   const isManualSyncing = sync.status === 'syncing'
   const activeConflictState = pullConflictState ?? sync.conflictState
   const activeConflictMode = pullConflictState ? 'pull' : 'push'
+  const yearlyNavHref = useMemo(() => `/yearly/${Number.parseInt(date.slice(0, 4), 10)}`, [date])
 
   useEffect(() => {
     if (!sync.errorMessage) {
@@ -812,40 +807,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
-          <div>
-            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
-            <button type="button" className="td-btn" onClick={() => handleOpenYearly()}>
-              年度总结
-            </button>
-            <button type="button" className="td-btn" onClick={handleOpenInsights}>
-              统计详情
-            </button>
-            <button
-              type="button"
-              className="td-btn"
-              onClick={() => {
-                setManualAuthModalOpen(true)
-              }}
-            >
-              解锁/配置
-            </button>
-            {auth.state.stage === 'ready' ? (
-              <button
-                type="button"
-                className="td-btn"
-                onClick={() => {
-                  auth.lockNow()
-                }}
-              >
-                锁定
-              </button>
-            ) : null}
-          </div>
-        </header>
+        <AppHeader currentPage="diary" yearlyHref={yearlyNavHref} />
 
         {yearlyReminder.show ? (
           <section className="mt-4 td-toolbar" aria-label="yearly-reminder">
@@ -988,9 +950,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         auth={auth}
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
-        onClose={() => {
-          setManualAuthModalOpen(false)
-        }}
+        onClose={() => undefined}
       />
 
       <ConflictDialog

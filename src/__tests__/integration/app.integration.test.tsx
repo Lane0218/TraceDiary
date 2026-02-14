@@ -14,6 +14,8 @@ describe('App 路由与日记页入口', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
+    expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
+    expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
     expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
     expect(screen.getByText(/^状态：/)).toBeTruthy()
   })
@@ -31,7 +33,7 @@ describe('App 路由与日记页入口', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '返回日记' })).toBeTruthy()
+    expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
   })
 
   it('统计页路由应可访问并展示统计标题', async () => {
@@ -40,7 +42,17 @@ describe('App 路由与日记页入口', () => {
 
     expect(await screen.findByRole('heading', { name: '写作统计' })).toBeTruthy()
     expect(screen.getByLabelText('insights-page')).toBeTruthy()
-    expect(screen.getByRole('button', { name: '返回日记' })).toBeTruthy()
+    expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
+    expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
+  })
+
+  it('设置页路由应可访问并展示配置入口', async () => {
+    window.history.replaceState({}, '', '/settings')
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: '设置' })).toBeTruthy()
+    expect(screen.getByLabelText('settings-page')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '配置' })).toBeTruthy()
   })
 
   it('日记页左侧应支持往年今日与统计分段切换', async () => {
