@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ensureReadySession, gotoWorkspace } from '../fixtures/app'
+import { ensureReadySession, gotoDiary } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 
 function formatDateKey(date: Date): string {
@@ -15,7 +15,7 @@ function shiftDate(base: Date, offsetDays: number): Date {
   return next
 }
 
-test('工作台统计分段与统计详情页应展示核心指标', async ({ page }) => {
+test('日记页统计分段与统计详情页应展示核心指标', async ({ page }) => {
   const env = getE2EEnv()
   const today = new Date()
   const todayKey = formatDateKey(today)
@@ -23,7 +23,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   const threeDaysAgoKey = formatDateKey(shiftDate(today, -3))
   const currentYear = today.getFullYear()
 
-  await gotoWorkspace(page, todayKey)
+  await gotoDiary(page, todayKey)
   await ensureReadySession(page, env)
 
   await page.evaluate(
@@ -102,8 +102,8 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   const readLeftPanelHeights = async () => {
     const [panelBox, bodyBox] = await Promise.all([
-      page.getByTestId('workspace-left-panel').boundingBox(),
-      page.getByTestId('workspace-left-panel-body').boundingBox(),
+      page.getByTestId('diary-left-panel').boundingBox(),
+      page.getByTestId('diary-left-panel-body').boundingBox(),
     ])
     expect(panelBox).not.toBeNull()
     expect(bodyBox).not.toBeNull()
@@ -115,8 +115,8 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   const assertEditorNotVisiblyTooShort = async () => {
     const [leftColumnBox, editorSlotBox] = await Promise.all([
-      page.locator('[aria-label="workspace-layout"] aside').boundingBox(),
-      page.getByTestId('workspace-diary-editor-slot').boundingBox(),
+      page.locator('[aria-label="diary-layout"] aside').boundingBox(),
+      page.getByTestId('diary-editor-slot').boundingBox(),
     ])
 
     expect(leftColumnBox).not.toBeNull()
@@ -128,7 +128,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   const assertEditorPanelHasNoLargeBottomGap = async () => {
     const [panelBox, editorBox] = await Promise.all([
-      page.getByTestId('workspace-diary-panel').boundingBox(),
+      page.getByTestId('diary-panel').boundingBox(),
       page.getByTestId('daily-editor').boundingBox(),
     ])
 
@@ -144,8 +144,8 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   const assertColumnsBottomAligned = async () => {
     const [leftBox, rightBox] = await Promise.all([
-      page.locator('[aria-label="workspace-layout"] aside').boundingBox(),
-      page.locator('[aria-label="workspace-layout"] > section').last().boundingBox(),
+      page.locator('[aria-label="diary-layout"] aside').boundingBox(),
+      page.locator('[aria-label="diary-layout"] > section').last().boundingBox(),
     ])
 
     expect(leftBox).not.toBeNull()
@@ -158,7 +158,7 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
 
   const assertStatsCardsNotOverflowPanel = async () => {
     const [panelBodyBox, lastCardBox] = await Promise.all([
-      page.getByTestId('workspace-left-panel-body').boundingBox(),
+      page.getByTestId('diary-left-panel-body').boundingBox(),
       page.locator('[aria-label="stats-overview-card"] article').last().boundingBox(),
     ])
 
@@ -191,8 +191,8 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
   }
 
   const assertSegmentContrast = async (activeTab: 'history' | 'stats') => {
-    const historyTab = page.getByTestId('workspace-left-tab-history')
-    const statsTab = page.getByTestId('workspace-left-tab-stats')
+    const historyTab = page.getByTestId('diary-left-tab-history')
+    const statsTab = page.getByTestId('diary-left-tab-stats')
 
     if (activeTab === 'history') {
       await expect(historyTab).toHaveCSS('background-color', 'rgb(51, 58, 54)')
@@ -206,14 +206,14 @@ test('工作台统计分段与统计详情页应展示核心指标', async ({ pa
     await expect(historyTab).toHaveCSS('color', 'rgb(79, 87, 81)')
   }
 
-  await expect(page.getByTestId('workspace-left-tab-history')).toBeVisible()
+  await expect(page.getByTestId('diary-left-tab-history')).toBeVisible()
   await assertEditorNotVisiblyTooShort()
   await assertEditorPanelHasNoLargeBottomGap()
   await assertColumnsBottomAligned()
   await assertEditorHeaderAligned()
   await assertSegmentContrast('history')
   const historyHeights = await readLeftPanelHeights()
-  await page.getByTestId('workspace-left-tab-stats').click()
+  await page.getByTestId('diary-left-tab-stats').click()
 
   await expect(page.getByTestId('stats-total-daily-count')).toContainText('3')
   await expect(page.getByTestId('stats-total-yearly-count')).toContainText('1')

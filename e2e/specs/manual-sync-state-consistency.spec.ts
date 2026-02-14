@@ -3,7 +3,7 @@ import {
   buildRunMarker,
   clickManualSync,
   ensureReadySession,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   writeDailyContent,
 } from '../fixtures/app'
@@ -27,7 +27,7 @@ test('手动上传成功后应收敛为已同步，且不展示未提交改动�
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-state')
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)

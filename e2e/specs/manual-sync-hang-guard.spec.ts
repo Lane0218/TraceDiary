@@ -2,7 +2,7 @@ import { expect, test, type Request, type Route } from '@playwright/test'
 import {
   clickManualSync,
   ensureReadySession,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   writeDailyContent,
 } from '../fixtures/app'
@@ -27,7 +27,7 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
   const env = getE2EEnv()
   const marker = `hang-guard-${Date.now()}`
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)

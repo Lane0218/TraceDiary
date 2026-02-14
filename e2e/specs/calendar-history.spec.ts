@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import {
   buildRunMarker,
   ensureReadySession,
-  gotoWorkspace,
+  gotoDiary,
 } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 
@@ -15,7 +15,7 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
   const marker = buildRunMarker('calendar-history')
   const historyContent = `E2E 往年今日 ${marker}\\n第二行用于预览断言`
 
-  await gotoWorkspace(page, HISTORY_SOURCE_DATE)
+  await gotoDiary(page, HISTORY_SOURCE_DATE)
   await ensureReadySession(page, env)
   await page.evaluate(
     async ({ date, content }) => {

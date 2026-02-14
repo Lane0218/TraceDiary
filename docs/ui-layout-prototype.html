@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TraceDiary 单页工作台原型</title>
+    <title>TraceDiary 单页日记页原型</title>
     <style>
       :root {
         --bg: #f3f5f8;
@@ -376,11 +376,11 @@
       </header>
 
       <section class="hero">
-        <h1>日记工作台</h1>
+        <h1>日记页</h1>
         <p>单页布局：左侧日历与往年今日，右侧同屏切换“日记 / 年度总结”。欢迎流程改为启动弹层，不再占用独立页面。</p>
       </section>
 
-      <section class="layout" aria-label="workspace-layout">
+      <section class="layout" aria-label="diary-layout">
         <aside class="card panel">
           <div class="calendar-head">
             <button class="btn" id="prevMonth">上个月</button>
@@ -416,7 +416,7 @@
             <h2 id="editorTitle" style="margin: 0 0 10px; font-size: 18px">2026-02-08 日记</h2>
             <textarea class="editor" id="editorArea"># 今天的记录
 
-这里演示“单页工作台”布局与状态流，不展示业务细节。</textarea>
+这里演示“单页日记页”布局与状态流，不展示业务细节。</textarea>
           </article>
         </main>
       </section>
@@ -454,7 +454,7 @@
           </div>
 
           <div class="modal-actions">
-            <span class="ghost">弹层提交后关闭，进入单页工作台。</span>
+            <span class="ghost">弹层提交后关闭，进入单页日记页。</span>
             <button class="btn primary" id="submitAuth">提交并进入</button>
           </div>
         </div>

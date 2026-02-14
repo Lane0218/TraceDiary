@@ -41,7 +41,7 @@ import {
 } from '../utils/sync-presentation'
 import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 
-interface WorkspacePageProps {
+interface DiaryPageProps {
   auth: UseAuthResult
 }
 
@@ -51,22 +51,22 @@ interface YearlyReminder {
   message: string
 }
 
-type WorkspaceLeftPanelTab = 'history' | 'stats'
+type DiaryLeftPanelTab = 'history' | 'stats'
 
-const WORKSPACE_LEFT_PANEL_STORAGE_KEY = 'trace-diary:workspace:left-panel'
-const WORKSPACE_PANEL_HEIGHT_DESKTOP = 340
-const WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP = 252
-const WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP = 480
-const WORKSPACE_PANEL_HEIGHT_STYLE = {
-  '--workspace-panel-height': `${WORKSPACE_PANEL_HEIGHT_DESKTOP}px`,
-  '--workspace-panel-body-height': `${WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}px`,
+const DIARY_LEFT_PANEL_STORAGE_KEY = 'trace-diary:diary:left-panel'
+const DIARY_PANEL_HEIGHT_DESKTOP = 340
+const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
+const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
+const DIARY_PANEL_HEIGHT_STYLE = {
+  '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
+  '--diary-panel-body-height': `${DIARY_PANEL_BODY_HEIGHT_DESKTOP}px`,
 } as CSSProperties
 
-function getInitialLeftPanelTab(): WorkspaceLeftPanelTab {
+function getInitialLeftPanelTab(): DiaryLeftPanelTab {
   if (typeof window === 'undefined') {
     return 'history'
   }
-  const persisted = window.localStorage.getItem(WORKSPACE_LEFT_PANEL_STORAGE_KEY)
+  const persisted = window.localStorage.getItem(DIARY_LEFT_PANEL_STORAGE_KEY)
   return persisted === 'stats' ? 'stats' : 'history'
 }
 
@@ -153,11 +153,11 @@ function getYearlyReminder(now: Date): YearlyReminder {
   }
 }
 
-export default function WorkspacePage({ auth }: WorkspacePageProps) {
+export default function DiaryPage({ auth }: DiaryPageProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [monthOffset, setMonthOffset] = useState(0)
-  const [leftPanelTab, setLeftPanelTab] = useState<WorkspaceLeftPanelTab>(() => getInitialLeftPanelTab())
+  const [leftPanelTab, setLeftPanelTab] = useState<DiaryLeftPanelTab>(() => getInitialLeftPanelTab())
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
@@ -252,7 +252,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       } else {
         setPushActionSnapshot(snapshot)
       }
-      saveSyncActionSnapshot('workspace', diary.entryId, action, snapshot)
+      saveSyncActionSnapshot('diary', diary.entryId, action, snapshot)
     },
     [diary.entryId],
   )
@@ -275,8 +275,8 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   }, [activeSyncMetadata, canSyncToRemote, setActiveSyncMetadata])
 
   useEffect(() => {
-    setPullActionSnapshot(loadSyncActionSnapshot('workspace', diary.entryId, 'pull'))
-    setPushActionSnapshot(loadSyncActionSnapshot('workspace', diary.entryId, 'push'))
+    setPullActionSnapshot(loadSyncActionSnapshot('diary', diary.entryId, 'pull'))
+    setPushActionSnapshot(loadSyncActionSnapshot('diary', diary.entryId, 'push'))
   }, [diary.entryId])
 
   useEffect(() => {
@@ -334,7 +334,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     if (typeof window === 'undefined') {
       return
     }
-    window.localStorage.setItem(WORKSPACE_LEFT_PANEL_STORAGE_KEY, leftPanelTab)
+    window.localStorage.setItem(DIARY_LEFT_PANEL_STORAGE_KEY, leftPanelTab)
   }, [leftPanelTab])
 
   const patchSearch = useCallback(
@@ -731,7 +731,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
 
         <section
           className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] lg:items-stretch td-fade-in"
-          aria-label="workspace-layout"
+          aria-label="diary-layout"
         >
           <aside className="space-y-3">
             <section className="td-card-muted td-panel">
@@ -747,9 +747,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             </section>
 
             <section
-              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--workspace-panel-height)]"
-              style={WORKSPACE_PANEL_HEIGHT_STYLE}
-              data-testid="workspace-left-panel"
+              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--diary-panel-height)]"
+              style={DIARY_PANEL_HEIGHT_STYLE}
+              data-testid="diary-left-panel"
             >
               <div className="flex items-center gap-2">
                 <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d2d1cd] bg-[#ebe9e4] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
@@ -763,7 +763,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onClick={() => {
                       setLeftPanelTab('history')
                     }}
-                    data-testid="workspace-left-tab-history"
+                    data-testid="diary-left-tab-history"
                   >
                     往年今日
                   </button>
@@ -777,7 +777,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     onClick={() => {
                       setLeftPanelTab('stats')
                     }}
-                    data-testid="workspace-left-tab-stats"
+                    data-testid="diary-left-tab-stats"
                   >
                     数据统计
                   </button>
@@ -785,9 +785,9 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
               </div>
 
               <div
-                className="min-h-0 flex-1 lg:h-[var(--workspace-panel-body-height)] lg:flex-none"
-                style={WORKSPACE_PANEL_HEIGHT_STYLE}
-                data-testid="workspace-left-panel-body"
+                className="min-h-0 flex-1 lg:h-[var(--diary-panel-body-height)] lg:flex-none"
+                style={DIARY_PANEL_HEIGHT_STYLE}
+                data-testid="diary-left-panel-body"
               >
                 {leftPanelTab === 'history' ? (
                   <OnThisDayList
@@ -796,7 +796,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     isLoading={isLoadingDiaries}
                     loadError={diaryLoadError}
                     onSelectDate={handleSelectDate}
-                    viewportHeight={WORKSPACE_PANEL_BODY_HEIGHT_DESKTOP}
+                    viewportHeight={DIARY_PANEL_BODY_HEIGHT_DESKTOP}
                   />
                 ) : (
                   <StatsOverviewCard
@@ -865,10 +865,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
 
             <article
               className="td-card-primary td-panel flex flex-col lg:min-h-[520px] lg:flex-1"
-              data-testid="workspace-diary-panel"
+              data-testid="diary-panel"
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div className="min-h-0 flex-1" data-testid="workspace-diary-editor-slot">
+              <div className="min-h-0 flex-1" data-testid="diary-editor-slot">
                 {!diary.isLoading ? (
                   <MarkdownEditor
                     key={`${diary.entryId}:${diary.loadRevision}`}
@@ -878,7 +878,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
                     modeToggleClassName="-mt-8 mb-5"
-                    viewportHeight={WORKSPACE_EDITOR_BODY_HEIGHT_DESKTOP}
+                    viewportHeight={DIARY_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
                   />
                 ) : null}

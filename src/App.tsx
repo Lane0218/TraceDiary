@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/use-auth'
 import InsightsPage from './pages/insights'
-import WorkspacePage from './pages/workspace'
+import DiaryPage from './pages/diary'
 import YearlySummaryPage from './pages/yearly-summary'
 
 function YearlySummaryRedirect() {
@@ -22,13 +22,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route index element={<Navigate to="/workspace" replace />} />
-      <Route path="/workspace" element={<WorkspacePage auth={auth} />} />
+      <Route index element={<Navigate to="/diary" replace />} />
+      <Route path="/diary" element={<DiaryPage auth={auth} />} />
       <Route path="/yearly/:year?" element={<YearlySummaryPage auth={auth} />} />
       <Route path="/insights" element={<InsightsPage auth={auth} />} />
-      <Route path="/welcome" element={<Navigate to="/workspace" replace />} />
+      <Route path="/welcome" element={<Navigate to="/diary" replace />} />
       <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
-      <Route path="*" element={<Navigate to="/workspace" replace />} />
+      <Route path="*" element={<Navigate to="/diary" replace />} />
     </Routes>
   )
 }

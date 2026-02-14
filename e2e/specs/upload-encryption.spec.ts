@@ -7,7 +7,7 @@ import {
   clickManualSync,
   ensureReadySession,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   writeDailyContent,
 } from '../fixtures/app'
@@ -53,7 +53,7 @@ test('手动上传后的远端日记内容应为非明文密文 @remote', async 
 
   await page.route('**/api/v5/repos/**/contents/**', metadataUploadHandler)
 
-  await gotoWorkspace(page, testDate)
+  await gotoDiary(page, testDate)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, testDate, marker)

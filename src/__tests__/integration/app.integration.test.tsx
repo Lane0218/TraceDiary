@@ -4,13 +4,13 @@ import App from '../../App'
 import OnThisDayList from '../../components/history/on-this-day-list'
 import type { DiaryRecord } from '../../services/indexeddb'
 
-describe('App 路由与工作台入口', () => {
+describe('App 路由与日记页入口', () => {
   afterEach(() => {
     window.history.replaceState({}, '', '/')
     localStorage.clear()
   })
 
-  it('应默认进入单页工作台并显示认证弹层', async () => {
+  it('应默认进入单页日记并显示认证弹层', async () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
@@ -18,12 +18,12 @@ describe('App 路由与工作台入口', () => {
     expect(screen.getByText(/^状态：/)).toBeTruthy()
   })
 
-  it('未知路由应回退到工作台', async () => {
+  it('未知路由应回退到日记页', async () => {
     window.history.replaceState({}, '', '/editor?date=2026-02-20')
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
-    expect(screen.getByLabelText('workspace-layout')).toBeTruthy()
+    expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
 
   it('旧年度总结路由应重定向到年度总结独立页', async () => {
@@ -31,7 +31,7 @@ describe('App 路由与工作台入口', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '返回日记工作台' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '返回日记' })).toBeTruthy()
   })
 
   it('统计页路由应可访问并展示统计标题', async () => {
@@ -40,17 +40,17 @@ describe('App 路由与工作台入口', () => {
 
     expect(await screen.findByRole('heading', { name: '写作统计' })).toBeTruthy()
     expect(screen.getByLabelText('insights-page')).toBeTruthy()
-    expect(screen.getByRole('button', { name: '返回日记工作台' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '返回日记' })).toBeTruthy()
   })
 
-  it('工作台左侧应支持往年今日与统计分段切换', async () => {
-    window.history.replaceState({}, '', '/workspace')
+  it('日记页左侧应支持往年今日与统计分段切换', async () => {
+    window.history.replaceState({}, '', '/diary')
     render(<App />)
 
-    expect(await screen.findByTestId('workspace-left-tab-history')).toBeTruthy()
-    fireEvent.click(screen.getByTestId('workspace-left-tab-stats'))
+    expect(await screen.findByTestId('diary-left-tab-history')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('diary-left-tab-stats'))
 
-    expect(screen.getByTestId('workspace-left-tab-stats')).toBeTruthy()
+    expect(screen.getByTestId('diary-left-tab-stats')).toBeTruthy()
     expect(await screen.findByText(/正在汇总统计数据|统计读取失败/u)).toBeTruthy()
   })
 

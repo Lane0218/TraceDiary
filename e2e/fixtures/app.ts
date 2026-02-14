@@ -23,9 +23,9 @@ export function buildRunMarker(prefix: string): string {
   return `${prefix}-${now}-${Math.random().toString(16).slice(2, 8)}`
 }
 
-export async function gotoWorkspace(page: Page, date: string): Promise<void> {
-  await page.goto(`/workspace?date=${date}`)
-  await expect(page.getByLabel('workspace-layout')).toBeVisible()
+export async function gotoDiary(page: Page, date: string): Promise<void> {
+  await page.goto(`/diary?date=${date}`)
+  await expect(page.getByLabel('diary-layout')).toBeVisible()
 }
 
 export async function gotoYearly(page: Page, year: number): Promise<void> {
@@ -173,7 +173,7 @@ async function resolveVisibleEditor(
   return wysiwygEditor
 }
 
-function parseWorkspaceDateFromUrl(page: Page): string | null {
+function parseDiaryDateFromUrl(page: Page): string | null {
   try {
     const url = new URL(page.url())
     const date = url.searchParams.get('date')
@@ -203,7 +203,7 @@ export async function writeDailyContent(page: Page, content: string): Promise<vo
     page.locator('[data-testid="daily-editor"] .ProseMirror').first(),
   )
   await editor.fill(content)
-  const date = parseWorkspaceDateFromUrl(page)
+  const date = parseDiaryDateFromUrl(page)
   if (date) {
     await waitForDailyDiaryPersisted(page, date, content)
     return

@@ -4,7 +4,7 @@ import {
   clickManualSync,
   ensureReadySession,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   writeDailyContent,
 } from '../fixtures/app'
@@ -16,7 +16,7 @@ test('手动上传并发触发忙碌提示后，上传成功应自动清空提�
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-busy-clear')
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)

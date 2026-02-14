@@ -10,7 +10,7 @@ import {
   ensureReadySession,
   expectAuthStage,
   expectSessionReady,
-  gotoWorkspace,
+  gotoDiary,
   submitRefreshToken,
   submitUnlock,
 } from '../fixtures/app'
@@ -86,7 +86,7 @@ async function forceLockAndClearUnlockCache(
 test('7天免输主密码期间刷新页面应保持已解锁', async ({ page }) => {
   const env = getE2EEnv()
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   const expiryTimestamp = await page.evaluate((key) => Number(localStorage.getItem(key)), AUTH_PASSWORD_EXPIRY_KEY)
@@ -101,7 +101,7 @@ test('7天免输主密码期间刷新页面应保持已解锁', async ({ page })
 test('主密码过期后应进入解锁阶段并在重输后恢复已解锁', async ({ page }) => {
   const env = getE2EEnv()
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   await page.evaluate(
@@ -126,7 +126,7 @@ test('主密码过期后应进入解锁阶段并在重输后恢复已解锁', as
 test('token 解密失败后应进入 refresh，并在覆盖后恢复 ready', async ({ page }) => {
   const env = getE2EEnv()
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   await patchEncryptedToken(page, 'invalid-token-ciphertext')
@@ -146,7 +146,7 @@ test('token 解密失败后应进入 refresh，并在覆盖后恢复 ready', asy
 test('token 失效后应进入 refresh，并在补输有效 token 后恢复 ready', async ({ page }) => {
   const env = getE2EEnv()
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   const config = await readStoredConfig(page)

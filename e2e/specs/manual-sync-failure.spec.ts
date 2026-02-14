@@ -5,7 +5,7 @@ import {
   ensureReadySession,
   expectManualSyncError,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   writeDailyContent,
 } from '../fixtures/app'
@@ -17,7 +17,7 @@ test('离线失败恢复在线后，可再次手动上传成功', async ({ page,
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-offline')
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)

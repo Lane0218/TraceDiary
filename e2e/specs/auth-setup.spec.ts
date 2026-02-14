@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ensureReadySession, gotoWorkspace } from '../fixtures/app'
+import { ensureReadySession, gotoDiary } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 
 const CONFIG_STORAGE_KEY = 'trace-diary:app-config'
@@ -9,7 +9,7 @@ const TEST_DATE = '2099-12-28'
 test('首次配置后应进入已解锁状态，且本地仅保存 encryptedToken @smoke', async ({ page }) => {
   const env = getE2EEnv()
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   const config = await page.evaluate((key) => {

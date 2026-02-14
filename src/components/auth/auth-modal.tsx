@@ -27,7 +27,7 @@ function getStageTitle(stage: string): { title: string; subtitle: string; badge:
     case 'needs-unlock':
       return {
         title: '解锁会话',
-        subtitle: '输入主密码后进入日记工作台。',
+        subtitle: '输入主密码后进入日记。',
         badge: 'UNLOCK',
       }
     case 'needs-token-refresh':
