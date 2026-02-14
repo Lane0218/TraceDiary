@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-14`
 - 总任务：`115`
-- 状态统计：`DONE=99` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-UI-031`
+- 状态统计：`DONE=100` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -154,7 +154,7 @@
 | `TD-UI-028` | `DONE` | 将“今日日记”编辑框默认模式改为编辑（源码）模式 | 进入工作台后，日记编辑框默认处于源码可输入态，无需先点“源码”按钮 | `src/pages/workspace.tsx` `e2e/specs/daily-edit.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/daily-edit.spec.ts --project=chromium --retries=0` 首次失败（用例仍按旧默认可视化断言），修正用例后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / 1101a59` |
 | `TD-UI-029` | `DONE` | 将“今日日记”编辑框默认模式回退为可视化（所见即所得） | 进入工作台后，日记编辑框默认处于可视化编辑态；仅点击“源码”后才进入源码输入态 | `src/pages/workspace.tsx` `e2e/specs/daily-edit.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/daily-edit.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-13 / c3a611d` |
 | `TD-UI-030` | `DONE` | 全仓去除“Workspace/工作台”命名并统一为“日记/diary”（不做兼容） | 用户可见与代码层（路由、页面名、测试标识、E2E helper、文档）不再使用 workspace 术语；默认入口为 `/diary`；不保留 `/workspace` 兼容路由；`TODO.md` 历史记录保持原样 | `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/pages/insights.tsx` `src/components/auth/auth-modal.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/*.spec.ts` `SPEC.md` `docs/ui-layout-prototype.html` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/stats-insights.spec.ts e2e/specs/calendar-history.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；复制主工作区 `.env.e2e` 后重跑通过（9/9）；`rg -n -i "workspace|工作台" --glob '!.git' --glob '!.worktrees/**' --glob '!TODO.md'` 无命中 | `2026-02-14 / 5c0b76e` |
-| `TD-UI-031` | `DOING` | 同步工具栏与同步提示回退为中性灰风格（去蓝色强调） | 日记页与年度总结页同步工具栏不使用蓝色背景/按钮/信息态强调，整体回归中性灰风格且不影响 pull/push/Toast 行为 | `src/index.css` `src/components/common/sync-control-bar.tsx` `src/components/common/toast-center.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `TODO.md` | — | — |
+| `TD-UI-031` | `DONE` | 同步工具栏与同步提示回退为中性灰风格（去蓝色强调） | 日记页与年度总结页同步工具栏不使用蓝色背景/按钮/信息态强调，整体回归中性灰风格且不影响 pull/push/Toast 行为 | `src/index.css` `src/components/common/sync-control-bar.tsx` `src/components/common/toast-center.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:fast` 通过（4/4） | `2026-02-14 / 994e551` |
 
 ### 6.9 数据导入（v1.1）
 
