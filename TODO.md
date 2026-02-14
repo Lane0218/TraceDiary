@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-14`
 - 总任务：`114`
-- 状态统计：`DONE=98` / `DOING=1` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`TD-DOC-008`
+- 状态统计：`DONE=99` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -174,7 +174,7 @@
 | `TD-DOC-005` | `DONE` | 在 AGENTS 增加“接任务后先重命名 tmux pane”的执行规范 | `AGENTS.md` 明确要求每次接收任务先查看 pane 编号，再按任务语义重命名 pane，且提供命令示例 | `AGENTS.md` `TODO.md` | `npm run lint` 通过；仅文档改动，无功能行为变化，未执行 `npm run test:unit` / `npm run test:integration` / E2E | `2026-02-12 / b5ac147` |
 | `TD-DOC-006` | `DONE` | 在 AGENTS 补充 pane 定位与复用规范（`pane_index`、`session/window`、同任务不重复改名） | AGENTS 明确使用 `pane_index`（纯数字）而非 `%pane_id`；重命名命令必须显式绑定 `session:window.pane_index`；同一任务连续微调无需重复改名，仅任务语义切换时改名 | `AGENTS.md` `TODO.md` | `npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-13 / 2700d07` |
 | `TD-DOC-007` | `DONE` | 压缩 AGENTS 的 pane 重命名说明并改为基于 `TMUX_PANE` 定位当前 Codex pane | AGENTS 第 3 节以最少步骤明确：通过 `TMUX_PANE` 反查 `session:window.pane_index` 后重命名并回读；禁止用不带 `-t` 的 `#S:#I.#P` 判定当前 pane | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-14 / 9d87dea` |
-| `TD-DOC-008` | `DOING` | 调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint） | AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述 | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；按用户授权本任务不执行自动化测试 | — |
+| `TD-DOC-008` | `DONE` | 调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint） | AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述 | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；按用户授权本任务未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-14 / 4f1280e` |
 
 ### 6.11 开发效率与工具
 
