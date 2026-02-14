@@ -5,7 +5,7 @@ import {
   clickManualSync,
   ensureReadySession,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   waitForSyncIdle,
   writeDailyContent,
@@ -133,7 +133,7 @@ test('发生 sha mismatch 时可选择保留本地版本并完成同步 @slow @r
   const localMarker = buildRunMarker('conflict-local-choice')
   const remoteMarker = buildRunMarker('conflict-remote-shadow')
 
-  await gotoWorkspace(page, KEEP_LOCAL_DATE)
+  await gotoDiary(page, KEEP_LOCAL_DATE)
   await ensureReadySession(page, env)
 
   const dialog = await openConflictDialogWithReadableRemote(page, env, {
@@ -151,7 +151,7 @@ test('发生 sha mismatch 时可选择保留远端版本并完成同步 @slow @r
   const localMarker = buildRunMarker('conflict-local-shadow')
   const remoteMarker = buildRunMarker('conflict-remote-choice')
 
-  await gotoWorkspace(page, KEEP_REMOTE_DATE)
+  await gotoDiary(page, KEEP_REMOTE_DATE)
   await ensureReadySession(page, env)
 
   const dialog = await openConflictDialogWithReadableRemote(page, env, {
@@ -170,7 +170,7 @@ test('发生 sha mismatch 时可编辑合并内容并提交成功 @slow @remote'
   const remoteMarker = buildRunMarker('conflict-remote-merge')
   const mergedMarker = buildRunMarker('conflict-merged-result')
 
-  await gotoWorkspace(page, MERGE_DATE)
+  await gotoDiary(page, MERGE_DATE)
   await ensureReadySession(page, env)
 
   const dialog = await openConflictDialogWithReadableRemote(page, env, {
@@ -195,7 +195,7 @@ test('冲突处理完成后再次发生冲突仍可再次处理并成功同步 @
   const secondLocalMarker = buildRunMarker('conflict-local-second')
   const secondRemoteMarker = buildRunMarker('conflict-remote-second')
 
-  await gotoWorkspace(page, RETRY_CONFLICT_DATE)
+  await gotoDiary(page, RETRY_CONFLICT_DATE)
   await ensureReadySession(page, env)
 
   const firstDialog = await openConflictDialogWithReadableRemote(page, env, {

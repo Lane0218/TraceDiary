@@ -4,7 +4,7 @@ import {
   clickManualSync,
   ensureReadySession,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   waitForSyncIdle,
   writeDailyContent,
@@ -17,7 +17,7 @@ test('手动保存并立即上传成功时应显示同步成功状态 @smoke', a
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-ok')
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
   await writeDailyContent(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)

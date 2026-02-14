@@ -4,7 +4,7 @@ import {
   clickManualSync,
   ensureReadySession,
   expectSyncSuccess,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
   waitForSyncIdle,
   writeDailyContent,
@@ -20,7 +20,7 @@ test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote
   const writerContext = await browser.newContext()
   const writerPage = await writerContext.newPage()
 
-  await gotoWorkspace(writerPage, TEST_DATE)
+  await gotoDiary(writerPage, TEST_DATE)
   await ensureReadySession(writerPage, env)
   await writeDailyContent(writerPage, `E2E 云端预置 ${marker}`)
   await waitForDailyDiaryPersisted(writerPage, TEST_DATE, marker)
@@ -33,7 +33,7 @@ test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote
   const readerContext = await browser.newContext({ storageState })
   const readerPage = await readerContext.newPage()
 
-  await gotoWorkspace(readerPage, TEST_DATE)
+  await gotoDiary(readerPage, TEST_DATE)
   await ensureReadySession(readerPage, env)
   await expect(readerPage.getByRole('heading', { name: `${TEST_DATE} 日记` })).toBeVisible()
   await waitForDailyDiaryPersisted(readerPage, TEST_DATE, marker)

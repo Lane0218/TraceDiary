@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import {
   ensureReadySession,
-  gotoWorkspace,
+  gotoDiary,
   waitForDailyDiaryPersisted,
 } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
@@ -13,7 +13,7 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   const marker = `daily-edit-${Date.now().toString(36)}`
   const markdown = `# 标题 ${marker}\n\n正文 ${marker}\n\n- 无序项 ${marker}\n1. 编号项 ${marker}`
 
-  await gotoWorkspace(page, TEST_DATE)
+  await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
 
   await expect(page.getByTestId('daily-editor-mode-source')).toHaveAttribute('aria-pressed', 'false')
