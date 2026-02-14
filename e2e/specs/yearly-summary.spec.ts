@@ -10,14 +10,6 @@ function yearlyEditorLocator(page: Page): Locator {
   return page.locator('section[aria-label="yearly-summary-page"] .ProseMirror').first()
 }
 
-async function writeYearlySummary(page: Page, year: number, content: string): Promise<void> {
-  const editor = yearlyEditorLocator(page)
-  await expect(editor).toBeVisible()
-
-  await editor.fill(content)
-  await waitForYearlySummaryPersisted(page, year, content)
-}
-
 async function writeYearlySummaryInSourceMode(page: Page, year: number, content: string): Promise<void> {
   await page.getByRole('button', { name: '源码' }).click()
   const sourceEditor = page.locator('section[aria-label="yearly-summary-page"] textarea').first()
@@ -107,7 +99,7 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
   await page.goto(`/yearly/${SYNC_YEAR}`)
   await ensureReadySession(page, env)
 
-  await writeYearlySummary(page, SYNC_YEAR, `E2E 年度上传 ${marker}`)
+  await writeYearlySummaryInSourceMode(page, SYNC_YEAR, `E2E 年度上传 ${marker}`)
 
   await page.getByRole('button', { name: 'push' }).click()
 

@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import ToastCenter from '../../components/common/toast-center'
+import { ToastProvider } from '../../hooks/use-toast'
 import YearlySummaryPage from '../../pages/yearly-summary'
 import type { AppConfig, UseAuthResult } from '../../hooks/use-auth'
 import { useDiary, type UseDiaryResult } from '../../hooks/use-diary'
@@ -44,11 +46,14 @@ const useDiaryMock = vi.mocked(useDiary)
 
 function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/yearly/:year" element={<YearlySummaryPage auth={auth ?? buildAuthResult()} />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/yearly/:year" element={<YearlySummaryPage auth={auth ?? buildAuthResult()} />} />
+        </Routes>
+      </MemoryRouter>
+      <ToastCenter />
+    </ToastProvider>,
   )
 }
 
@@ -112,6 +117,7 @@ function buildAuthResult(overrides?: Partial<UseAuthResult['state']>): UseAuthRe
 describe('年度总结页面', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.localStorage.clear()
     createDiaryUploadExecutorMock.mockReset()
     createDiaryUploadExecutorMock.mockImplementation(
       () => async () => ({ ok: true, conflict: false, syncedAt: '2026-02-09T00:00:00.000Z' }),
@@ -202,25 +208,26 @@ describe('年度总结页面', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
-    expect(screen.getByText('云端同步未就绪：请先配置 Gitee 仓库。')).toBeTruthy()
+    expect(screen.getByTestId('toast-push')).toHaveTextContent('云端同步未就绪：请先配置 Gitee 仓库。')
   })
 
-  it('手动上传失败时应在按钮旁展示失败原因', async () => {
+  it('手动上传失败时应通过 toast 展示失败原因', async () => {
     createDiaryUploadExecutorMock.mockImplementation(
       () => async () => ({ ok: false, conflict: false, reason: 'auth' as const }),
     )
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({
         entryId: 'summary:2026',
+        content: '已有内容',
       }),
     )
 
     renderYearlyPage('/yearly/2026')
     fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
-    await waitFor(() =>
-      expect(screen.getAllByText('鉴权失败，请重新解锁或更新 Token 配置').length).toBeGreaterThan(0),
-    )
+    await waitFor(() => {
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('鉴权失败，请重新解锁或更新 Token 配置')
+    })
   })
 
   it('手动上传进行中再次点击应提示忙碌而非无响应', async () => {
@@ -235,6 +242,7 @@ describe('年度总结页面', () => {
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({
         entryId: 'summary:2026',
+        content: '已有内容',
       }),
     )
 
@@ -242,21 +250,21 @@ describe('年度总结页面', () => {
     fireEvent.click(screen.getByRole('button', { name: 'push' }))
 
     await waitFor(() => {
-      expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('手动上传已触发，正在等待结果...')
       const uploadingButton = screen.getByRole('button', { name: 'pushing...' }) as HTMLButtonElement
       expect(uploadingButton.disabled).toBe(false)
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'pushing...' }))
-    await waitFor(() =>
-      expect(screen.getByText('当前正在上传，请稍候重试')).toBeTruthy(),
-    )
+    await waitFor(() => {
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('当前正在上传，请稍候重试')
+    })
 
     resolveUpload({ ok: true, conflict: false, syncedAt: '2026-02-09T01:00:00.000Z' })
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'push' })).toBeTruthy()
-      expect(screen.queryByText('当前正在上传，请稍候重试')).toBeNull()
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('push 已完成，同步成功')
     })
   })
 
@@ -288,7 +296,7 @@ describe('年度总结页面', () => {
         fireEvent.click(screen.getByRole('button', { name: 'push' }))
         await Promise.resolve()
       })
-      expect(screen.getByText('手动上传已触发，正在等待结果...')).toBeTruthy()
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('手动上传已触发，正在等待结果...')
       expect(uploadExecutor).toHaveBeenCalledTimes(1)
 
       await act(async () => {
@@ -296,9 +304,29 @@ describe('年度总结页面', () => {
       })
 
       expect(screen.getByText(/Push：失败/)).toBeTruthy()
-      expect(screen.getAllByText('同步超时，请检查网络后重试').length).toBeGreaterThan(0)
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('同步超时，请检查网络后重试')
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('空内容点击 push 时应拦截上传并提示无需 push', async () => {
+    const uploadExecutor = vi.fn(async () => ({ ok: true, conflict: false, syncedAt: '2026-02-09T00:00:00.000Z' }))
+    createDiaryUploadExecutorMock.mockImplementation(() => uploadExecutor)
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+        content: '',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByRole('button', { name: 'push' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('toast-push')).toHaveTextContent('当前内容为空，无需 push')
+    })
+    expect(uploadExecutor).toHaveBeenCalledTimes(0)
+    expect(screen.getByText(/Push：未执行/)).toBeTruthy()
   })
 })

@@ -292,7 +292,7 @@ export async function expectSyncSuccess(page: Page): Promise<void> {
 }
 
 export async function expectManualSyncError(page: Page, patterns: RegExp[]): Promise<void> {
-  const error = page.getByTestId('manual-sync-error')
+  const error = page.getByTestId('toast-push')
   await expect(error).toBeVisible({ timeout: 20_000 })
 
   const text = (await error.textContent()) ?? ''

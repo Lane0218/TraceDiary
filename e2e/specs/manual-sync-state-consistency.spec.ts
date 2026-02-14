@@ -59,8 +59,8 @@ test('手动上传成功后应收敛为已同步，且不展示未提交改动�
 
   try {
     await clickManualSync(page)
-    await expect(page.getByTestId('manual-sync-error')).toContainText('手动上传已触发，正在等待结果...')
-    await expect(page.getByTestId('manual-sync-error')).toHaveCount(0, { timeout: 30_000 })
+    await expect(page.getByTestId('toast-push')).toContainText('手动上传已触发，正在等待结果...')
+    await expect(page.getByTestId('toast-push')).toContainText('push 已完成，同步成功', { timeout: 30_000 })
 
     await expect
       .poll(() => targetDiaryUploadCount, {
