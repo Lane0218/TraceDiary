@@ -288,7 +288,7 @@ export async function clickManualSync(page: Page): Promise<void> {
 }
 
 export async function expectSyncSuccess(page: Page): Promise<void> {
-  await expect(page.getByTestId('sync-status-pill')).toContainText('云端已同步', { timeout: 30_000 })
+  await expect(page.getByTestId('push-status-pill')).toContainText('Push：成功', { timeout: 30_000 })
 }
 
 export async function expectManualSyncError(page: Page, patterns: RegExp[]): Promise<void> {
@@ -301,7 +301,7 @@ export async function expectManualSyncError(page: Page, patterns: RegExp[]): Pro
 }
 
 export async function waitForSyncIdle(page: Page, options: WaitForSyncIdleOptions = {}): Promise<void> {
-  await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', {
+  await expect(page.getByTestId('push-status-pill')).not.toContainText('Push：进行中', {
     timeout: options.timeoutMs ?? 30_000,
   })
 }

@@ -170,7 +170,8 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
-    expect(screen.getByText('云端待同步')).toBeTruthy()
+    expect(screen.getByText(/Pull：未执行/)).toBeTruthy()
+    expect(screen.getByText(/Push：未执行/)).toBeTruthy()
     expect(screen.queryByText(/未提交改动：/)).toBeNull()
     expect(screen.queryByText(/分支：/)).toBeNull()
 
@@ -179,7 +180,8 @@ describe('年度总结页面', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('云端待同步')).toBeTruthy()
+      expect(screen.getByText(/Pull：未执行/)).toBeTruthy()
+      expect(screen.getByText(/Push：未执行/)).toBeTruthy()
       expect(screen.queryByText(/未提交改动：/)).toBeNull()
       expect(screen.queryByText(/分支：/)).toBeNull()
     })
@@ -293,7 +295,7 @@ describe('年度总结页面', () => {
         await vi.advanceTimersByTimeAsync(26_000)
       })
 
-      expect(screen.getByText('云端同步失败')).toBeTruthy()
+      expect(screen.getByText(/Push：失败/)).toBeTruthy()
       expect(screen.getAllByText('同步超时，请检查网络后重试').length).toBeGreaterThan(0)
     } finally {
       vi.useRealTimers()

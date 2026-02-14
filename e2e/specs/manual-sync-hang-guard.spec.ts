@@ -72,10 +72,10 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
       .toBe(true)
     expect(manualCommitMessage).toContain('手动同步日记')
 
-    await expect(page.getByTestId('sync-status-pill')).toContainText('云端同步失败', {
+    await expect(page.getByTestId('push-status-pill')).toContainText('Push：失败', {
       timeout: 90_000,
     })
-    await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端同步中', {
+    await expect(page.getByTestId('push-status-pill')).not.toContainText('Push：进行中', {
       timeout: 20_000,
     })
     await expect(page.getByTestId('manual-sync-error')).toContainText('同步超时，请检查网络后重试', {

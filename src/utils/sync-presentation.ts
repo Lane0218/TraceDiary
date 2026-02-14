@@ -24,6 +24,146 @@ interface SyncPresentationInput {
   lastSyncedAt: string | null
 }
 
+export type SyncActionType = 'pull' | 'push'
+export type SyncActionStatus = 'idle' | 'running' | 'success' | 'error'
+
+export interface SyncActionSnapshot {
+  status: SyncActionStatus
+  at: string | null
+}
+
+const SYNC_ACTION_STORAGE_PREFIX = 'trace-diary:sync-action'
+
+function buildSyncActionStorageKey(scope: string, entryId: string, action: SyncActionType): string {
+  const normalizedScope = scope.trim() || 'default'
+  const normalizedEntryId = entryId.trim() || 'default'
+  return `${SYNC_ACTION_STORAGE_PREFIX}:${normalizedScope}:${normalizedEntryId}:${action}`
+}
+
+function toActionLabel(action: SyncActionType): string {
+  return action === 'pull' ? 'Pull' : 'Push'
+}
+
+function toActionStatusLabel(status: SyncActionStatus): string {
+  if (status === 'running') {
+    return '进行中'
+  }
+  if (status === 'success') {
+    return '成功'
+  }
+  if (status === 'error') {
+    return '失败'
+  }
+  return '未执行'
+}
+
+function isValidSyncActionStatus(value: unknown): value is SyncActionStatus {
+  return value === 'idle' || value === 'running' || value === 'success' || value === 'error'
+}
+
+function parseTimestamp(value: string): number | null {
+  const timestamp = Date.parse(value)
+  if (!Number.isFinite(timestamp)) {
+    return null
+  }
+  return timestamp
+}
+
+function formatAbsoluteTime(isoTime: string): string {
+  const parsed = parseTimestamp(isoTime)
+  if (parsed === null) {
+    return isoTime
+  }
+
+  const date = new Date(parsed)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+  const second = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+}
+
+export function createIdleSyncActionSnapshot(): SyncActionSnapshot {
+  return {
+    status: 'idle',
+    at: null,
+  }
+}
+
+export function getSyncActionLabel(action: SyncActionType, snapshot: SyncActionSnapshot): string {
+  const actionLabel = toActionLabel(action)
+  const statusLabel = toActionStatusLabel(snapshot.status)
+  if (!snapshot.at) {
+    return `${actionLabel}：${statusLabel}`
+  }
+  return `${actionLabel}：${statusLabel} · ${formatAbsoluteTime(snapshot.at)}`
+}
+
+export function getSyncActionToneClass(status: SyncActionStatus): string {
+  if (status === 'success') {
+    return 'td-status-success'
+  }
+  if (status === 'error') {
+    return 'td-status-danger'
+  }
+  if (status === 'running') {
+    return 'td-status-warning'
+  }
+  return 'td-status-muted'
+}
+
+export function loadSyncActionSnapshot(
+  scope: string,
+  entryId: string,
+  action: SyncActionType,
+): SyncActionSnapshot {
+  if (typeof window === 'undefined') {
+    return createIdleSyncActionSnapshot()
+  }
+
+  const key = buildSyncActionStorageKey(scope, entryId, action)
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (!raw) {
+      return createIdleSyncActionSnapshot()
+    }
+    const parsed = JSON.parse(raw) as Partial<SyncActionSnapshot>
+    if (!isValidSyncActionStatus(parsed.status)) {
+      return createIdleSyncActionSnapshot()
+    }
+    const at =
+      typeof parsed.at === 'string' && parsed.at.trim() && parseTimestamp(parsed.at) !== null
+        ? parsed.at.trim()
+        : null
+    return {
+      status: parsed.status,
+      at,
+    }
+  } catch {
+    return createIdleSyncActionSnapshot()
+  }
+}
+
+export function saveSyncActionSnapshot(
+  scope: string,
+  entryId: string,
+  action: SyncActionType,
+  snapshot: SyncActionSnapshot,
+): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const key = buildSyncActionStorageKey(scope, entryId, action)
+  try {
+    window.localStorage.setItem(key, JSON.stringify(snapshot))
+  } catch {
+    // 本地存储失败不阻塞主流程。
+  }
+}
+
 export function getSessionLabel(stage: AuthState['stage']): string {
   if (stage === 'ready') {
     return '会话：已解锁'

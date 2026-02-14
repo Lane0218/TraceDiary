@@ -28,12 +28,16 @@ import {
   MANUAL_PULL_BUSY_MESSAGE,
   MANUAL_PULL_PENDING_MESSAGE,
   MANUAL_SYNC_PENDING_MESSAGE,
+  createIdleSyncActionSnapshot,
   getManualPullFailureMessage,
   getDisplayedManualSyncError,
   getManualSyncFailureMessage,
   getSessionLabel,
-  getSyncLabel,
-  getSyncToneClass,
+  getSyncActionLabel,
+  getSyncActionToneClass,
+  loadSyncActionSnapshot,
+  saveSyncActionSnapshot,
+  type SyncActionSnapshot,
 } from '../utils/sync-presentation'
 import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 
@@ -158,6 +162,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
   const [isManualPulling, setIsManualPulling] = useState(false)
+  const [pullActionSnapshot, setPullActionSnapshot] = useState<SyncActionSnapshot>(() =>
+    createIdleSyncActionSnapshot(),
+  )
+  const [pushActionSnapshot, setPushActionSnapshot] = useState<SyncActionSnapshot>(() =>
+    createIdleSyncActionSnapshot(),
+  )
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [yearlySummaries, setYearlySummaries] = useState<DiaryRecord[]>([])
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
@@ -235,6 +245,17 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     saveBaseline: async (baseline) => saveSyncBaseline(baseline),
   })
   const setActiveSyncMetadata = sync.setActiveMetadata
+  const updateSyncActionSnapshot = useCallback(
+    (action: 'pull' | 'push', snapshot: SyncActionSnapshot) => {
+      if (action === 'pull') {
+        setPullActionSnapshot(snapshot)
+      } else {
+        setPushActionSnapshot(snapshot)
+      }
+      saveSyncActionSnapshot('workspace', diary.entryId, action, snapshot)
+    },
+    [diary.entryId],
+  )
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
   const statsSummary = useMemo(() => buildStatsSummary([...diaries, ...yearlySummaries]), [diaries, yearlySummaries])
@@ -252,6 +273,11 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     setActiveSyncMetadata(activeSyncMetadata)
   }, [activeSyncMetadata, canSyncToRemote, setActiveSyncMetadata])
+
+  useEffect(() => {
+    setPullActionSnapshot(loadSyncActionSnapshot('workspace', diary.entryId, 'pull'))
+    setPushActionSnapshot(loadSyncActionSnapshot('workspace', diary.entryId, 'push'))
+  }, [diary.entryId])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -387,6 +413,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
   const saveNow = async () => {
     if (!canSyncToRemote) {
       setManualSyncError(syncDisabledMessage)
+      updateSyncActionSnapshot('push', {
+        status: 'error',
+        at: new Date().toISOString(),
+      })
       return
     }
     if (manualPullError) {
@@ -404,12 +434,27 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       content: latestDailyEntry?.content ?? diary.content,
       modifiedAt: latestDailyEntry?.modifiedAt ?? new Date().toISOString(),
     }
+    const pushStartedAt = new Date().toISOString()
+    updateSyncActionSnapshot('push', {
+      status: 'running',
+      at: pushStartedAt,
+    })
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     const result = await sync.saveNow(payload)
     if (!result.ok) {
+      if (result.code !== 'busy') {
+        updateSyncActionSnapshot('push', {
+          status: 'error',
+          at: new Date().toISOString(),
+        })
+      }
       setManualSyncError(getManualSyncFailureMessage(result))
       return
     }
+    updateSyncActionSnapshot('push', {
+      status: 'success',
+      at: new Date().toISOString(),
+    })
     setManualSyncError(null)
   }
 
@@ -429,6 +474,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
         remoteSha,
       },
     )
+    updateSyncActionSnapshot('pull', {
+      status: 'success',
+      at: new Date().toISOString(),
+    })
     setManualSyncError(null)
   }
 
@@ -439,6 +488,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
     if (!canSyncToRemote) {
       setManualPullError(syncDisabledMessage)
+      updateSyncActionSnapshot('pull', {
+        status: 'error',
+        at: new Date().toISOString(),
+      })
       return
     }
     if (manualSyncError) {
@@ -457,6 +510,10 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
     }
 
     setIsManualPulling(true)
+    updateSyncActionSnapshot('pull', {
+      status: 'running',
+      at: new Date().toISOString(),
+    })
     setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
     try {
       const result = await pullDiaryFromGitee({
@@ -474,11 +531,19 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
           remote: result.conflictPayload?.remote ?? null,
           remoteSha: result.remoteSha,
         })
+        updateSyncActionSnapshot('pull', {
+          status: 'error',
+          at: new Date().toISOString(),
+        })
         setManualPullError('检测到拉取冲突，请选择保留本地、远端或合并版本')
         return
       }
 
       if (!result.ok || !result.pulledMetadata) {
+        updateSyncActionSnapshot('pull', {
+          status: 'error',
+          at: new Date().toISOString(),
+        })
         setManualPullError(getManualPullFailureMessage(result.reason))
         return
       }
@@ -486,10 +551,48 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       await applyRemotePullPayload(result.pulledMetadata, result.remoteSha)
       setManualPullError(null)
     } catch (error) {
+      updateSyncActionSnapshot('pull', {
+        status: 'error',
+        at: new Date().toISOString(),
+      })
       setManualPullError(error instanceof Error ? error.message : '拉取失败，请稍后重试')
     } finally {
       setIsManualPulling(false)
     }
+  }
+
+  const resolvePushConflict = (choice: 'local' | 'remote' | 'merged', mergedPayload?: DiarySyncMetadata) => {
+    updateSyncActionSnapshot('push', {
+      status: 'running',
+      at: new Date().toISOString(),
+    })
+    setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
+    void sync
+      .resolveConflict(choice, mergedPayload)
+      .then((result) => {
+        if (!result.ok) {
+          if (result.code !== 'busy') {
+            updateSyncActionSnapshot('push', {
+              status: 'error',
+              at: new Date().toISOString(),
+            })
+          }
+          setManualSyncError(result.errorMessage)
+          return
+        }
+        updateSyncActionSnapshot('push', {
+          status: 'success',
+          at: new Date().toISOString(),
+        })
+        setManualSyncError(null)
+      })
+      .catch((error) => {
+        updateSyncActionSnapshot('push', {
+          status: 'error',
+          at: new Date().toISOString(),
+        })
+        setManualSyncError(error instanceof Error ? error.message : '冲突处理失败，请稍后重试')
+      })
   }
 
   const resolveMergeConflict = (mergedContent: string) => {
@@ -522,33 +625,20 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       content: mergedContent,
       modifiedAt: new Date().toISOString(),
     }
-    void sync.resolveConflict('merged', mergedPayload)
+    resolvePushConflict('merged', mergedPayload)
   }
 
   const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
-  const syncPresentationState = useMemo(
-    () => ({
-      canSyncToRemote,
-      hasConflict: Boolean(pullConflictState || sync.conflictState),
-      isOffline: sync.isOffline,
-      hasPendingRetry: sync.hasPendingRetry,
-      status: sync.status,
-      hasUnsyncedChanges: sync.hasUnsyncedChanges,
-      lastSyncedAt: sync.lastSyncedAt,
-    }),
-    [
-      canSyncToRemote,
-      pullConflictState,
-      sync.conflictState,
-      sync.hasPendingRetry,
-      sync.hasUnsyncedChanges,
-      sync.isOffline,
-      sync.lastSyncedAt,
-      sync.status,
-    ],
+  const pullStatusLabel = useMemo(() => getSyncActionLabel('pull', pullActionSnapshot), [pullActionSnapshot])
+  const pushStatusLabel = useMemo(() => getSyncActionLabel('push', pushActionSnapshot), [pushActionSnapshot])
+  const pullStatusToneClass = useMemo(
+    () => getSyncActionToneClass(pullActionSnapshot.status),
+    [pullActionSnapshot.status],
   )
-  const syncLabel = useMemo(() => getSyncLabel(syncPresentationState), [syncPresentationState])
-  const syncToneClass = useMemo(() => getSyncToneClass(syncPresentationState), [syncPresentationState])
+  const pushStatusToneClass = useMemo(
+    () => getSyncActionToneClass(pushActionSnapshot.status),
+    [pushActionSnapshot.status],
+  )
 
   const displayedSyncMessage = sync.errorMessage
   const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
@@ -561,7 +651,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       setManualPullError(null)
       return
     }
-    void sync.resolveConflict('local')
+    resolvePushConflict('local')
   }
   const handleKeepRemoteConflict = () => {
     if (pullConflictState) {
@@ -576,7 +666,7 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
       setManualPullError('远端版本不可用，请稍后重试拉取')
       return
     }
-    void sync.resolveConflict('remote')
+    resolvePushConflict('remote')
   }
   const handleCloseConflict = () => {
     if (pullConflictState) {
@@ -723,14 +813,12 @@ export default function WorkspacePage({ auth }: WorkspacePageProps) {
             <div className="td-toolbar space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />
-                <span className={`td-status-pill ${syncToneClass}`} data-testid="sync-status-pill">
-                  {syncLabel}
+                <span className={`td-status-pill ${pullStatusToneClass}`} data-testid="pull-status-pill">
+                  {pullStatusLabel}
                 </span>
-                {sync.lastSyncedAt ? (
-                  <span className="rounded-full border border-td-line bg-td-surface px-2.5 py-1 text-xs text-td-muted">
-                    最近同步：{sync.lastSyncedAt}
-                  </span>
-                ) : null}
+                <span className={`td-status-pill ${pushStatusToneClass}`} data-testid="push-status-pill">
+                  {pushStatusLabel}
+                </span>
                 <div className="ml-auto flex max-w-full items-center gap-2">
                   <button
                     type="button"

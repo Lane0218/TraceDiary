@@ -55,7 +55,7 @@ export interface UseSyncResult<TMetadata = unknown> {
   resolveConflict: (
     choice: 'local' | 'remote' | 'merged',
     mergedMetadata?: TMetadata,
-  ) => Promise<void>
+  ) => Promise<SaveNowResult>
   dismissConflict: () => void
 }
 
@@ -754,9 +754,13 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
   }, [])
 
   const resolveConflict = useCallback(
-    async (choice: 'local' | 'remote' | 'merged', mergedMetadata?: TMetadata) => {
+    async (choice: 'local' | 'remote' | 'merged', mergedMetadata?: TMetadata): Promise<SaveNowResult> => {
       if (!conflictState) {
-        return
+        return {
+          ok: false,
+          code: 'unknown',
+          errorMessage: '当前没有待处理冲突',
+        }
       }
 
       let resolvedMetadata: TMetadata | null = null
@@ -770,12 +774,16 @@ export function useSync<TMetadata = unknown>(options: UseSyncOptions<TMetadata> 
 
       if (!resolvedMetadata) {
         setErrorMessage('无法获取冲突版本，请刷新后重试')
-        return
+        return {
+          ok: false,
+          code: 'unknown',
+          errorMessage: '无法获取冲突版本，请刷新后重试',
+        }
       }
 
       resolvingConflictRef.current = true
       setConflictState(null)
-      await saveNow(resolvedMetadata)
+      return saveNow(resolvedMetadata)
     },
     [conflictState, saveNow],
   )

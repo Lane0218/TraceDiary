@@ -6,10 +6,10 @@
 
 ## 0. 快速看板
 
-- 更新时间：`2026-02-13`
-- 总任务：`111`
-- 状态统计：`DONE=96` / `DOING=0` / `TODO=15` / `BLOCKED=0`
-- 当前进行中：`无`
+- 更新时间：`2026-02-14`
+- 总任务：`112`
+- 状态统计：`DONE=97` / `DOING=0` / `TODO=15` / `BLOCKED=0`
+- 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
 
@@ -91,6 +91,7 @@
 | `TD-SYNC-028` | `DONE` | 修复手动 Push 后状态不收敛并拆分 Pull/Push 按钮（Push 取消预检读取，冲突统一走弹窗处理） | Push 成功后状态可收敛为“云端已同步”；编辑页支持独立 Pull/Push；Push 不再先读取远端内容；Pull/Push 冲突均可进入冲突弹窗 | `src/services/sync.ts` `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/utils/sync-presentation.ts` `src/utils/sync-dirty.ts` `src/services/__tests__/sync.test.ts` `src/hooks/__tests__/use-sync.test.ts` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-*.spec.ts` `SPEC.md` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（54/54）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0 --workers=1` 通过（1/1）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --workers=1 --retries=1 --grep \"保留本地版本\"` 通过（1/1） | `2026-02-11 / e01a8ce` |
 | `TD-SYNC-029` | `DONE` | 修复“push 成功后仍显示云端待同步”状态不收敛问题（覆盖刷新后状态恢复） | push 成功后状态应收敛为“云端已同步”；刷新/重进页面后仍保持“云端已同步”；新增回归测试可稳定覆盖该链路 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `e2e/specs/manual-sync-state-consistency.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npm run test:e2e:full` 首次失败（新 worktree 缺少 `.env.e2e`）；复制主工作区 `.env.e2e` 后重跑 `npm run test:e2e:full` 通过（21/21） | `2026-02-13 / 517ef81` |
 | `TD-SYNC-030` | `DONE` | 将“云端待同步/已同步”判定收敛为时间戳方案（本地修改时间 vs 最后同步时间） | push 成功后基于 `lastSyncedAt` 与本地 `modifiedAt` 判定“已同步/待同步”；刷新后状态保持一致；相关单元/集成/E2E 回归通过 | `src/hooks/use-sync.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-sync.test.ts` `e2e/fixtures/app.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npm run test:e2e:full` 首轮失败（11 failed，根因为 fixture 仅匹配 `.ProseMirror` 与默认源码模式不兼容）；修复 `e2e/fixtures/app.ts` 后执行 `npx playwright test e2e/specs/manual-sync-success.spec.ts e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；`npx playwright test e2e/specs/conflict-resolution.spec.ts e2e/specs/manual-sync-failure.spec.ts e2e/specs/manual-sync-hang-guard.spec.ts e2e/specs/remote-pull-sync.spec.ts e2e/specs/upload-encryption.spec.ts --project=chromium --retries=0 --workers=1` 通过（8/8）；重跑 `npm run test:e2e:full` 通过（21/21） | `2026-02-13 / 4735ee9` |
+| `TD-SYNC-031` | `DONE` | 移除“云端待同步/已同步”推断展示，改为 Pull/Push 执行结果与时间展示（不显示耗时） | 工作台与年度总结页均展示 `Pull` 与 `Push` 最近执行状态（未执行/进行中/成功/失败）及绝对时间；不再展示“云端待同步/已同步”胶囊；刷新后状态可恢复；相关单元/集成/E2E 回归通过 | `src/utils/sync-presentation.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/manual-sync-*.spec.ts` `e2e/specs/conflict-resolution.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --workers=1 --retries=1` 通过（4/4）；`npm run test:e2e:full` 通过（21/21） | `2026-02-14 / —` |
 
 ### 6.6 PWA、部署与安全头
 

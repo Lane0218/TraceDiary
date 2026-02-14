@@ -78,7 +78,6 @@ async function openConflictDialogWithReadableRemote(
 
   const remoteEncryptedContent = await buildEncryptedDiaryContent(page, env.masterPassword, `E2E ${params.remoteMarker}`)
   const dialog = page.getByTestId('conflict-dialog')
-  const syncStatus = page.getByTestId('sync-status-pill')
   let opened = false
   let lastError: unknown = null
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -106,12 +105,6 @@ async function openConflictDialogWithReadableRemote(
         break
       }
 
-      if (await syncStatus.textContent().then((text) => text?.includes('检测到冲突') ?? false).catch(() => false)) {
-        await expect(dialog).toBeVisible({ timeout: 10_000 })
-        opened = true
-        break
-      }
-
       if (!page.isClosed()) {
         await waitForSyncIdle(page, { timeoutMs: 8_000 }).catch(() => undefined)
       }
@@ -125,14 +118,12 @@ async function openConflictDialogWithReadableRemote(
   }
 
   await expect(dialog).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByTestId('sync-status-pill')).toContainText('检测到冲突', { timeout: 30_000 })
   await expect(dialog).toContainText(params.remoteMarker)
   return dialog
 }
 
 async function expectConflictResolved(page: Page, dialog: Locator): Promise<void> {
   await expect(dialog).toBeHidden({ timeout: 30_000 })
-  await expect(page.getByTestId('sync-status-pill')).not.toContainText('检测到冲突', { timeout: 30_000 })
   await waitForSyncIdle(page, { timeoutMs: 45_000 })
   await expectSyncSuccess(page)
 }

@@ -111,17 +111,15 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
 
   await page.getByRole('button', { name: 'push' }).click()
 
-  const syncStatus = page
-    .locator('section[aria-label="yearly-summary-page"] .td-status-pill')
-    .filter({ hasText: '云端已同步' })
-    .first()
+  const syncStatus = page.getByTestId('push-status-pill')
   await expect(syncStatus).toBeVisible({ timeout: 30_000 })
+  await expect(syncStatus).toContainText('Push：成功', { timeout: 30_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
 
   await page.reload()
   await ensureReadySession(page, env)
-  await expect(syncStatus).toBeVisible({ timeout: 30_000 })
-  await expect(syncStatus).not.toContainText('云端待同步')
+  await expect(syncStatus).toContainText('Push：成功', { timeout: 30_000 })
+  await expect(syncStatus).not.toContainText('Push：失败')
 
   const remote = await readGiteeFile({
     owner: env.owner,

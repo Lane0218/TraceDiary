@@ -69,15 +69,15 @@ test('手动上传成功后应收敛为已同步，且不展示未提交改动�
       .toBeGreaterThan(0)
     expect(latestTargetDiaryMessage).toContain('手动同步日记')
 
-    await expect(page.getByTestId('sync-status-pill')).toContainText('云端已同步', { timeout: 30_000 })
+    await expect(page.getByTestId('push-status-pill')).toContainText('Push：成功', { timeout: 30_000 })
     await expect(page.getByText(/未提交改动：/u)).toHaveCount(0)
     await expect(page.getByText(/分支：/u)).toHaveCount(0)
-    await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端待同步')
+    await expect(page.getByTestId('push-status-pill')).not.toContainText('Push：失败')
 
     await page.reload()
     await ensureReadySession(page, env)
-    await expect(page.getByTestId('sync-status-pill')).toContainText('云端已同步', { timeout: 30_000 })
-    await expect(page.getByTestId('sync-status-pill')).not.toContainText('云端待同步')
+    await expect(page.getByTestId('push-status-pill')).toContainText('Push：成功', { timeout: 30_000 })
+    await expect(page.getByTestId('push-status-pill')).not.toContainText('Push：失败')
   } finally {
     if (!page.isClosed()) {
       await page.unroute('**/api/v5/repos/**/contents/**', handler)
