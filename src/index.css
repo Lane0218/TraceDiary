@@ -176,10 +176,10 @@
 
   .td-sync-control-bar {
     @apply relative flex flex-wrap items-center gap-2.5 overflow-hidden rounded-[14px] border px-3 py-3 sm:px-4;
-    border-color: #cfdae7;
+    border-color: #d3cec5;
     background:
-      radial-gradient(130% 170% at 0% 0%, rgba(37, 99, 235, 0.12), transparent 50%),
-      linear-gradient(98deg, #fbfdff 0%, #f1f6ff 46%, #fbfcff 100%);
+      radial-gradient(130% 170% at 0% 0%, rgba(128, 118, 103, 0.12), transparent 50%),
+      linear-gradient(98deg, #faf8f4 0%, #f1eee7 46%, #faf8f4 100%);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.88),
       0 7px 15px rgba(15, 23, 42, 0.06);
@@ -192,8 +192,8 @@
     pointer-events: none;
     opacity: 0.32;
     background:
-      linear-gradient(90deg, rgba(148, 163, 184, 0.22) 0 1px, transparent 1px 18px),
-      linear-gradient(0deg, rgba(148, 163, 184, 0.18) 0 1px, transparent 1px 18px);
+      linear-gradient(90deg, rgba(153, 144, 128, 0.22) 0 1px, transparent 1px 18px),
+      linear-gradient(0deg, rgba(153, 144, 128, 0.18) 0 1px, transparent 1px 18px);
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), transparent 72%);
   }
 
@@ -203,8 +203,8 @@
 
   .td-sync-control-caption {
     @apply rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em];
-    border-color: rgba(148, 163, 184, 0.42);
-    color: #334155;
+    border-color: rgba(125, 117, 103, 0.42);
+    color: #4b5563;
     background-color: rgba(255, 255, 255, 0.75);
   }
 
@@ -218,23 +218,23 @@
 
   .td-sync-control-btn-secondary {
     background-color: rgba(255, 255, 255, 0.94);
-    border-color: #cfd9e8;
+    border-color: #d2ccc0;
   }
 
   .td-sync-control-btn-secondary:hover {
-    border-color: #b7c6dc;
+    border-color: #b9b1a4;
   }
 
   .td-sync-control-btn-primary {
-    border-color: #2f5fa9;
-    background-color: #2f5fa9;
+    border-color: #3f4742;
+    background-color: #3f4742;
     color: #ffffff;
   }
 
   .td-sync-control-btn-primary:hover {
-    border-color: #284f8c;
-    background-color: #284f8c;
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+    border-color: #333a36;
+    background-color: #333a36;
+    box-shadow: 0 6px 14px rgba(51, 58, 54, 0.25);
   }
 
   .td-toast-center {
@@ -305,9 +305,9 @@
   }
 
   .td-toast-info {
-    background: rgba(239, 246, 255, 0.94);
-    border-color: #60a5fa;
-    color: #1e40af;
+    background: rgba(246, 244, 240, 0.94);
+    border-color: #c7c0b3;
+    color: #4b5563;
   }
 
   .td-toast-warning {
