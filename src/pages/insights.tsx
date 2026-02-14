@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
+import AppHeader from '../components/common/app-header'
 import StatsOverviewCard from '../components/stats/stats-overview-card'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useStats } from '../hooks/use-stats'
-import { getSessionLabel } from '../utils/sync-presentation'
 
 interface InsightsPageProps {
   auth: UseAuthResult
@@ -17,14 +16,12 @@ function formatNumber(value: number): string {
 }
 
 export default function InsightsPage({ auth }: InsightsPageProps) {
-  const navigate = useNavigate()
-  const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [reloadSignal, setReloadSignal] = useState(0)
   const stats = useStats({ reloadSignal })
 
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
   const forceOpenAuthModal = auth.state.stage !== 'ready'
-  const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
-  const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
+  const authModalOpen = forceOpenAuthModal
   const monthlyMaxWordCount = useMemo(
     () => Math.max(1, ...stats.summary.recentMonthItems.map((item) => item.totalWordCount)),
     [stats.summary.recentMonthItems],
@@ -33,43 +30,18 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
-            <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" className="td-btn" onClick={() => navigate('/diary')}>
-              返回日记
-            </button>
-            <button type="button" className="td-btn" onClick={() => navigate(`/yearly/${new Date().getFullYear()}`)}>
-              年度总结
-            </button>
-            <button type="button" className="td-btn" onClick={() => setReloadSignal((prev) => prev + 1)}>
-              刷新统计
-            </button>
-            <button type="button" className="td-btn" onClick={() => setManualAuthModalOpen(true)}>
-              解锁/配置
-            </button>
-            {auth.state.stage === 'ready' ? (
-              <button
-                type="button"
-                className="td-btn"
-                onClick={() => {
-                  auth.lockNow()
-                }}
-              >
-                锁定
-              </button>
-            ) : null}
-          </div>
-        </header>
+        <AppHeader currentPage="insights" yearlyHref={`/yearly/${currentYear}`} />
 
         <section className="mt-4 space-y-4 td-fade-in" aria-label="insights-page">
           <article className="td-card-primary td-panel space-y-3">
             <header className="flex items-center justify-between gap-2">
               <h2 className="font-display text-2xl text-td-text">写作统计</h2>
-              <span className="text-xs text-td-muted">累计与连续性总览</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-td-muted">累计与连续性总览</span>
+                <button type="button" className="td-btn" onClick={() => setReloadSignal((prev) => prev + 1)}>
+                  刷新统计
+                </button>
+              </div>
             </header>
             <StatsOverviewCard summary={stats.summary} isLoading={stats.isLoading} error={stats.error} />
           </article>
@@ -154,9 +126,7 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
         auth={auth}
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
-        onClose={() => {
-          setManualAuthModalOpen(false)
-        }}
+        onClose={() => undefined}
       />
     </>
   )

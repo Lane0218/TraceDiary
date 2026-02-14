@@ -73,7 +73,8 @@ export async function expectAuthStage(page: Page, expected: AuthStage | RegExp):
 }
 
 export async function expectSessionReady(page: Page): Promise<void> {
-  await expect(page.getByText('会话：已解锁')).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: 'TraceDiary' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('navigation', { name: '应用主导航' })).toBeVisible({ timeout: 30_000 })
   await expect(page.getByLabel('auth-modal')).toHaveCount(0)
 }
 
@@ -85,18 +86,23 @@ export async function ensureReadySession(
   const totalTimeoutMs = Math.max(30_000, options.totalTimeoutMs ?? 90_000)
   const retryIntervalMs = Math.max(250, options.retryIntervalMs ?? 300)
   const authModal = page.getByLabel('auth-modal')
-  const sessionReady = page.getByText('会话：已解锁')
+  const appHeader = page.getByRole('heading', { name: 'TraceDiary' }).first()
   const deadline = Date.now() + totalTimeoutMs
   let lastStage = 'unknown'
   let lastAuthError: string | null = null
 
   while (Date.now() < deadline) {
-    if (await sessionReady.isVisible()) {
+    const isUnlocked = await page
+      .evaluate((key) => localStorage.getItem(key) === 'unlocked', AUTH_LOCK_STATE_KEY)
+      .catch(() => false)
+    const headerVisible = await appHeader.isVisible().catch(() => false)
+    const modalVisible = await authModal.isVisible().catch(() => false)
+    if (isUnlocked && headerVisible && !modalVisible) {
       await expect(authModal).toBeHidden({ timeout: 15_000 })
       return
     }
 
-    if (!(await authModal.isVisible())) {
+    if (!modalVisible) {
       await page.waitForTimeout(retryIntervalMs)
       continue
     }
@@ -139,7 +145,10 @@ export async function ensureReadySession(
     await page.waitForTimeout(retryIntervalMs)
   }
 
-  if (await sessionReady.isVisible().catch(() => false)) {
+  const unlockedAtEnd = await page
+    .evaluate((key) => localStorage.getItem(key) === 'unlocked', AUTH_LOCK_STATE_KEY)
+    .catch(() => false)
+  if (unlockedAtEnd && (await appHeader.isVisible().catch(() => false))) {
     await expect(authModal).toBeHidden({ timeout: 15_000 })
     return
   }

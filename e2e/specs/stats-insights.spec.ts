@@ -235,7 +235,7 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   expect(firstStatCardBox).not.toBeNull()
   expect(firstStatCardBox?.height ?? 0).toBeLessThanOrEqual(130)
 
-  await page.getByRole('button', { name: '统计详情' }).first().click()
+  await page.getByTestId('app-nav-insights').click()
 
   await expect(page).toHaveURL(/\/insights$/)
   await expect(page.getByLabel('insights-page')).toBeVisible()

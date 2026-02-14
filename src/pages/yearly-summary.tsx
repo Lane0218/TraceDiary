@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
+import AppHeader from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
@@ -20,7 +21,6 @@ import {
   createIdleSyncActionSnapshot,
   getManualPullFailureMessage,
   getManualSyncFailureMessage,
-  getSessionLabel,
   getSyncActionLabel,
   getSyncActionToneClass,
   loadSyncActionSnapshot,
@@ -46,7 +46,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const params = useParams<{ year?: string }>()
-  const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
   const [isManualPulling, setIsManualPulling] = useState(false)
@@ -127,7 +126,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const lastSyncNotifyMessageRef = useRef<string | null>(null)
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
-  const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
+  const authModalOpen = forceOpenAuthModal
 
   useEffect(() => {
     if (!canSyncToRemote) {
@@ -141,7 +140,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     setPushActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'push'))
   }, [summary.entryId])
 
-  const sessionLabel = useMemo(() => getSessionLabel(auth.state.stage), [auth.state.stage])
   const pullStatusLabel = useMemo(() => getSyncActionLabel('pull', pullActionSnapshot), [pullActionSnapshot])
   const pushStatusLabel = useMemo(() => getSyncActionLabel('push', pushActionSnapshot), [pushActionSnapshot])
   const pullStatusToneClass = useMemo(
@@ -557,37 +555,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
-            <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" className="td-btn" onClick={() => navigate('/diary')}>
-              返回日记
-            </button>
-            <button
-              type="button"
-              className="td-btn"
-              onClick={() => {
-                setManualAuthModalOpen(true)
-              }}
-            >
-              解锁/配置
-            </button>
-            {auth.state.stage === 'ready' ? (
-              <button
-                type="button"
-                className="td-btn"
-                onClick={() => {
-                  auth.lockNow()
-                }}
-              >
-                锁定
-              </button>
-            ) : null}
-          </div>
-        </header>
+        <AppHeader currentPage="yearly" yearlyHref={`/yearly/${year}`} />
 
         <section className="mt-4 space-y-3 td-fade-in" aria-label="yearly-summary-page">
           <article className="td-card-primary td-panel space-y-4">
@@ -663,9 +631,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         auth={auth}
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
-        onClose={() => {
-          setManualAuthModalOpen(false)
-        }}
+        onClose={() => undefined}
       />
 
       <ConflictDialog

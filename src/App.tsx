@@ -3,6 +3,7 @@ import { useAuth } from './hooks/use-auth'
 import { ToastProvider } from './hooks/use-toast'
 import InsightsPage from './pages/insights'
 import DiaryPage from './pages/diary'
+import SettingsPage from './pages/settings'
 import YearlySummaryPage from './pages/yearly-summary'
 import ToastCenter from './components/common/toast-center'
 
@@ -28,6 +29,7 @@ function AppRoutes() {
       <Route path="/diary" element={<DiaryPage auth={auth} />} />
       <Route path="/yearly/:year?" element={<YearlySummaryPage auth={auth} />} />
       <Route path="/insights" element={<InsightsPage auth={auth} />} />
+      <Route path="/settings" element={<SettingsPage auth={auth} />} />
       <Route path="/welcome" element={<Navigate to="/diary" replace />} />
       <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
       <Route path="*" element={<Navigate to="/diary" replace />} />

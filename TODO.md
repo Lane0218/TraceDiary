@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-14`
-- 总任务：`118`
-- 状态统计：`DONE=102` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`119`
+- 状态统计：`DONE=103` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
@@ -158,6 +158,7 @@
 | `TD-UI-030` | `DONE` | 全仓去除“Workspace/工作台”命名并统一为“日记/diary”（不做兼容） | 用户可见与代码层（路由、页面名、测试标识、E2E helper、文档）不再使用 workspace 术语；默认入口为 `/diary`；不保留 `/workspace` 兼容路由；`TODO.md` 历史记录保持原样 | `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/pages/insights.tsx` `src/components/auth/auth-modal.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/*.spec.ts` `SPEC.md` `docs/ui-layout-prototype.html` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/stats-insights.spec.ts e2e/specs/calendar-history.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；复制主工作区 `.env.e2e` 后重跑通过（9/9）；`rg -n -i "workspace|工作台" --glob '!.git' --glob '!.worktrees/**' --glob '!TODO.md'` 无命中 | `2026-02-14 / 5c0b76e` |
 | `TD-UI-031` | `DONE` | 同步工具栏与同步提示回退为中性灰风格（去蓝色强调） | 日记页与年度总结页同步工具栏不使用蓝色背景/按钮/信息态强调，整体回归中性灰风格且不影响 pull/push/Toast 行为 | `src/index.css` `src/components/common/sync-control-bar.tsx` `src/components/common/toast-center.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:fast` 通过（4/4） | `2026-02-14 / 994e551` |
 | `TD-UI-032` | `DONE` | 同步工具栏背景色与日历背景保持一致（去除偏色叠加） | 同步工具栏背景与日历卡片背景完全一致（同色值来源）；视觉上不再偏暖/偏蓝；不影响 pull/push/Toast 功能与状态展示 | `src/index.css` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:fast` 首次失败（`manual-sync-success` 出现 push 失败）；重跑 `npx playwright test e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（1/1）；复跑 `npm run test:e2e:fast` 通过（4/4） | `2026-02-14 / 5a4295b` |
+| `TD-UI-033` | `DONE` | 统一三页导航栏并将“会话”改为“设置”（进入设置页进行配置） | 日记/年度总结/统计三页使用同一导航结构；顶部移除“会话状态胶囊”；“设置”入口统一跳转设置页；设置页可完成配置并保留锁定入口；整体视觉保持当前简约风格 | `src/components/common/app-header.tsx` `src/pages/settings.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/pages/insights.tsx` `src/App.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（56/56）；`npm run test:e2e:full` 通过（22/22） | `2026-02-14 / 97228db` |
 
 ### 6.9 数据导入（v1.1）
 
