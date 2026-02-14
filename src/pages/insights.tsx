@@ -39,8 +39,8 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             <span className="rounded-full border border-td-line bg-td-surface px-3 py-1 text-xs text-td-muted">{sessionLabel}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" className="td-btn" onClick={() => navigate('/workspace')}>
-              返回日记工作台
+            <button type="button" className="td-btn" onClick={() => navigate('/diary')}>
+              返回日记
             </button>
             <button type="button" className="td-btn" onClick={() => navigate(`/yearly/${new Date().getFullYear()}`)}>
               年度总结
