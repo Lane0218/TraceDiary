@@ -1,8 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/use-auth'
+import { ToastProvider } from './hooks/use-toast'
 import InsightsPage from './pages/insights'
 import DiaryPage from './pages/diary'
 import YearlySummaryPage from './pages/yearly-summary'
+import ToastCenter from './components/common/toast-center'
 
 function YearlySummaryRedirect() {
   const location = useLocation()
@@ -35,9 +37,12 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+      <ToastCenter />
+    </ToastProvider>
   )
 }
 

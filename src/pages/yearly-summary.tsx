@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import ConflictDialog from '../components/common/conflict-dialog'
+import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
-import { getSyncBaseline, saveSyncBaseline } from '../services/indexeddb'
+import { useToast } from '../hooks/use-toast'
+import { getDiary, getSyncBaseline, saveSyncBaseline } from '../services/indexeddb'
 import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
@@ -17,7 +19,6 @@ import {
   MANUAL_SYNC_PENDING_MESSAGE,
   createIdleSyncActionSnapshot,
   getManualPullFailureMessage,
-  getDisplayedManualSyncError,
   getManualSyncFailureMessage,
   getSessionLabel,
   getSyncActionLabel,
@@ -31,6 +32,8 @@ interface YearlySummaryPageProps {
   auth: UseAuthResult
 }
 
+const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
+
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
   if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
@@ -41,6 +44,7 @@ function normalizeYear(yearParam: string | undefined, fallbackYear: number): num
 
 export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const navigate = useNavigate()
+  const { push: pushToast } = useToast()
   const params = useParams<{ year?: string }>()
   const [manualAuthModalOpen, setManualAuthModalOpen] = useState(false)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
@@ -120,6 +124,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }
     saveSyncActionSnapshot('yearly', summary.entryId, action, snapshot)
   }
+  const lastSyncNotifyMessageRef = useRef<string | null>(null)
 
   const forceOpenAuthModal = auth.state.stage !== 'ready'
   const authModalOpen = forceOpenAuthModal || manualAuthModalOpen
@@ -178,6 +183,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         status: 'error',
         at: new Date().toISOString(),
       })
+      pushToast({
+        kind: 'push',
+        level: 'warning',
+        message: syncDisabledMessage,
+      })
       return
     }
     if (manualPullError) {
@@ -187,12 +197,32 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     const persistedEntry = await summary.waitForPersisted()
     const latestSummaryEntry =
       persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
+    const persistedContent = latestSummaryEntry?.content ?? ''
+    const liveContent = summary.content
+    let contentForSync = persistedContent.trim() ? persistedContent : liveContent
+
+    if (!contentForSync.trim()) {
+      const storedEntry = await getDiary(summary.entryId).catch(() => null)
+      const storedContent = typeof storedEntry?.content === 'string' ? storedEntry.content : ''
+      if (storedContent.trim()) {
+        contentForSync = storedContent
+      }
+    }
     const manualPayload: DiarySyncMetadata = {
       type: 'yearly_summary',
       entryId: summary.entryId,
       year,
-      content: latestSummaryEntry?.content ?? summary.content,
+      content: contentForSync,
       modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
+    }
+    if (!manualPayload.content.trim()) {
+      setManualSyncError(null)
+      pushToast({
+        kind: 'push',
+        level: 'warning',
+        message: EMPTY_PUSH_BLOCKED_MESSAGE,
+      })
+      return
     }
     const pushStartedAt = new Date().toISOString()
     updateSyncActionSnapshot('push', {
@@ -200,6 +230,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       at: pushStartedAt,
     })
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
+    pushToast({
+      kind: 'push',
+      level: 'info',
+      message: MANUAL_SYNC_PENDING_MESSAGE,
+    })
     const result = await sync.saveNow(manualPayload)
     if (!result.ok) {
       if (result.code !== 'busy') {
@@ -208,7 +243,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
           at: new Date().toISOString(),
         })
       }
-      setManualSyncError(getManualSyncFailureMessage(result))
+      const errorMessage = getManualSyncFailureMessage(result)
+      setManualSyncError(errorMessage)
+      pushToast({
+        kind: 'push',
+        level: result.code === 'busy' || result.code === 'offline' ? 'warning' : 'error',
+        message: errorMessage,
+      })
       return
     }
     updateSyncActionSnapshot('push', {
@@ -216,6 +257,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       at: new Date().toISOString(),
     })
     setManualSyncError(null)
+    pushToast({
+      kind: 'push',
+      level: 'success',
+      message: 'push 已完成，同步成功',
+    })
   }
 
   const applyRemotePullPayload = async (remote: DiarySyncMetadata, remoteSha?: string) => {
@@ -238,11 +284,21 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       at: new Date().toISOString(),
     })
     setManualSyncError(null)
+    pushToast({
+      kind: 'pull',
+      level: 'success',
+      message: 'pull 已完成，已更新本地内容',
+    })
   }
 
   const pullNow = async () => {
     if (isManualPulling) {
       setManualPullError(MANUAL_PULL_BUSY_MESSAGE)
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: MANUAL_PULL_BUSY_MESSAGE,
+      })
       return
     }
     if (!canSyncToRemote) {
@@ -250,6 +306,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       updateSyncActionSnapshot('pull', {
         status: 'error',
         at: new Date().toISOString(),
+      })
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: syncDisabledMessage,
       })
       return
     }
@@ -260,11 +321,14 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     const persistedEntry = await summary.waitForPersisted()
     const latestSummaryEntry =
       persistedEntry && persistedEntry.type === 'yearly_summary' ? persistedEntry : summary.entry
+    const persistedContent = latestSummaryEntry?.content ?? ''
+    const liveContent = summary.content
+    const contentForSync = persistedContent.trim() ? persistedContent : liveContent
     const localPayload: DiarySyncMetadata = {
       type: 'yearly_summary',
       entryId: summary.entryId,
       year,
-      content: latestSummaryEntry?.content ?? summary.content,
+      content: contentForSync,
       modifiedAt: latestSummaryEntry?.modifiedAt ?? new Date().toISOString(),
     }
 
@@ -274,6 +338,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       at: new Date().toISOString(),
     })
     setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
+    pushToast({
+      kind: 'pull',
+      level: 'info',
+      message: MANUAL_PULL_PENDING_MESSAGE,
+    })
     try {
       const result = await pullDiaryFromGitee({
         token: auth.state.tokenInMemory as string,
@@ -294,7 +363,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
           status: 'error',
           at: new Date().toISOString(),
         })
-        setManualPullError('检测到拉取冲突，请选择保留本地、远端或合并版本')
+        const message = '检测到拉取冲突，请选择保留本地、远端或合并版本'
+        setManualPullError(message)
+        pushToast({
+          kind: 'pull',
+          level: 'warning',
+          message,
+        })
         return
       }
 
@@ -303,7 +378,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
           status: 'error',
           at: new Date().toISOString(),
         })
-        setManualPullError(getManualPullFailureMessage(result.reason))
+        const message = getManualPullFailureMessage(result.reason)
+        setManualPullError(message)
+        pushToast({
+          kind: 'pull',
+          level: 'error',
+          message,
+        })
         return
       }
 
@@ -314,7 +395,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         status: 'error',
         at: new Date().toISOString(),
       })
-      setManualPullError(error instanceof Error ? error.message : '拉取失败，请稍后重试')
+      const message = error instanceof Error ? error.message : '拉取失败，请稍后重试'
+      setManualPullError(message)
+      pushToast({
+        kind: 'pull',
+        level: 'error',
+        message,
+      })
     } finally {
       setIsManualPulling(false)
     }
@@ -326,6 +413,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       at: new Date().toISOString(),
     })
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
+    pushToast({
+      kind: 'push',
+      level: 'info',
+      message: MANUAL_SYNC_PENDING_MESSAGE,
+    })
     void sync
       .resolveConflict(choice, mergedPayload)
       .then((result) => {
@@ -337,6 +429,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
             })
           }
           setManualSyncError(result.errorMessage)
+          pushToast({
+            kind: 'push',
+            level: result.code === 'busy' || result.code === 'offline' ? 'warning' : 'error',
+            message: result.errorMessage,
+          })
           return
         }
         updateSyncActionSnapshot('push', {
@@ -344,13 +441,24 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
           at: new Date().toISOString(),
         })
         setManualSyncError(null)
+        pushToast({
+          kind: 'push',
+          level: 'success',
+          message: '冲突已处理，push 成功',
+        })
       })
       .catch((error) => {
         updateSyncActionSnapshot('push', {
           status: 'error',
           at: new Date().toISOString(),
         })
-        setManualSyncError(error instanceof Error ? error.message : '冲突处理失败，请稍后重试')
+        const message = error instanceof Error ? error.message : '冲突处理失败，请稍后重试'
+        setManualSyncError(message)
+        pushToast({
+          kind: 'push',
+          level: 'error',
+          message,
+        })
       })
   }
 
@@ -370,6 +478,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       sync.onInputChange(mergedPayload)
       setPullConflictState(null)
       setManualPullError('已应用合并内容，请确认后手动上传')
+      pushToast({
+        kind: 'pull',
+        level: 'info',
+        message: '已应用合并内容，请确认后手动上传',
+      })
       return
     }
 
@@ -385,11 +498,26 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }
     resolvePushConflict('merged', mergedPayload)
   }
-  const displayedSyncMessage = sync.errorMessage
-  const displayedManualSyncError = getDisplayedManualSyncError(manualSyncError, sync.status)
   const isManualSyncing = sync.status === 'syncing'
   const activeConflictState = pullConflictState ?? sync.conflictState
   const activeConflictMode = pullConflictState ? 'pull' : 'push'
+
+  useEffect(() => {
+    if (!sync.errorMessage) {
+      lastSyncNotifyMessageRef.current = null
+      return
+    }
+    if (lastSyncNotifyMessageRef.current === sync.errorMessage) {
+      return
+    }
+    lastSyncNotifyMessageRef.current = sync.errorMessage
+    pushToast({
+      kind: 'system',
+      level: 'error',
+      message: sync.errorMessage,
+    })
+  }, [pushToast, sync.errorMessage])
+
   const handleKeepLocalConflict = () => {
     if (pullConflictState) {
       setPullConflictState(null)
@@ -409,6 +537,11 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         return
       }
       setManualPullError('远端版本不可用，请稍后重试拉取')
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: '远端版本不可用，请稍后重试拉取',
+      })
       return
     }
     resolvePushConflict('remote')
@@ -496,59 +629,21 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />
-                <span className={`td-status-pill ${pullStatusToneClass}`} data-testid="pull-status-pill">
-                  {pullStatusLabel}
-                </span>
-                <span className={`td-status-pill ${pushStatusToneClass}`} data-testid="push-status-pill">
-                  {pushStatusLabel}
-                </span>
-                <div className="ml-auto flex max-w-full items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void pullNow()
-                    }}
-                    className="td-btn"
-                    data-testid="manual-pull-button"
-                  >
-                    {isManualPulling ? 'pulling...' : 'pull'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void saveNow()
-                    }}
-                    className="td-btn"
-                  >
-                    {isManualSyncing ? 'pushing...' : 'push'}
-                  </button>
-                  {manualPullError ? (
-                    <span
-                      role="alert"
-                      data-testid="manual-pull-error"
-                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
-                    >
-                      {manualPullError}
-                    </span>
-                  ) : null}
-                  {displayedManualSyncError ? (
-                    <span
-                      role="alert"
-                      className="max-w-[340px] rounded-[10px] border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700"
-                    >
-                      {displayedManualSyncError}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              {displayedSyncMessage ? (
-                <p className="text-sm text-td-danger" role="alert">
-                  {displayedSyncMessage}
-                </p>
-              ) : null}
+              <SyncControlBar
+                statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
+                pullStatusLabel={pullStatusLabel}
+                pushStatusLabel={pushStatusLabel}
+                pullStatusToneClass={pullStatusToneClass}
+                pushStatusToneClass={pushStatusToneClass}
+                isPulling={isManualPulling}
+                isPushing={isManualSyncing}
+                onPull={() => {
+                  void pullNow()
+                }}
+                onPush={() => {
+                  void saveNow()
+                }}
+              />
             </header>
 
             {!summary.isLoading ? (

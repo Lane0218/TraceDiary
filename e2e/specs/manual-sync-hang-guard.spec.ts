@@ -10,6 +10,15 @@ import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2100-01-08'
 
+async function writeDailyContentInSourceMode(page: Parameters<typeof writeDailyContent>[0], content: string) {
+  const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+  if (!(await sourceEditor.isVisible().catch(() => false))) {
+    await page.getByRole('button', { name: '源码' }).click()
+    await expect(sourceEditor).toBeVisible()
+  }
+  await sourceEditor.fill(content)
+}
+
 function readCommitMessage(request: Request): string {
   try {
     const payload = request.postDataJSON() as { message?: unknown } | null
@@ -29,7 +38,7 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
 
   await gotoDiary(page, TEST_DATE)
   await ensureReadySession(page, env)
-  await writeDailyContent(page, `E2E ${marker}`)
+  await writeDailyContentInSourceMode(page, `E2E ${marker}`)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
   let interceptedManual = false
@@ -63,7 +72,6 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
 
   try {
     await clickManualSync(page)
-    await expect(page.getByTestId('manual-sync-error')).toContainText('手动上传已触发，正在等待结果...')
 
     await expect
       .poll(() => interceptedManual, {
@@ -78,7 +86,7 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
     await expect(page.getByTestId('push-status-pill')).not.toContainText('Push：进行中', {
       timeout: 20_000,
     })
-    await expect(page.getByTestId('manual-sync-error')).toContainText('同步超时，请检查网络后重试', {
+    await expect(page.getByTestId('toast-push')).toContainText('同步超时，请检查网络后重试', {
       timeout: 20_000,
     })
   } finally {

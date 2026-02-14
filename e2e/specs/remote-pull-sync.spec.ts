@@ -7,11 +7,19 @@ import {
   gotoDiary,
   waitForDailyDiaryPersisted,
   waitForSyncIdle,
-  writeDailyContent,
 } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2100-06-06'
+
+async function writeDailyContentInSourceMode(page: Parameters<typeof writeDailyContent>[0], content: string) {
+  const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+  if (!(await sourceEditor.isVisible().catch(() => false))) {
+    await page.getByRole('button', { name: '源码' }).click()
+    await expect(sourceEditor).toBeVisible()
+  }
+  await sourceEditor.fill(content)
+}
 
 test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote', async ({ browser }) => {
   const env = getE2EEnv()
@@ -22,7 +30,7 @@ test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote
 
   await gotoDiary(writerPage, TEST_DATE)
   await ensureReadySession(writerPage, env)
-  await writeDailyContent(writerPage, `E2E 云端预置 ${marker}`)
+  await writeDailyContentInSourceMode(writerPage, `E2E 云端预置 ${marker}`)
   await waitForDailyDiaryPersisted(writerPage, TEST_DATE, marker)
   await clickManualSync(writerPage)
   await expectSyncSuccess(writerPage)

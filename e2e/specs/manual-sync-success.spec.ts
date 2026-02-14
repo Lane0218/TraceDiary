@@ -26,5 +26,5 @@ test('手动保存并立即上传成功时应显示同步成功状态 @smoke', a
   await clickManualSync(page)
   await waitForSyncIdle(page)
   await expectSyncSuccess(page)
-  await expect(page.getByTestId('manual-sync-error')).toHaveCount(0)
+  await expect(page.getByTestId('toast-push')).toContainText('push 已完成，同步成功')
 })
