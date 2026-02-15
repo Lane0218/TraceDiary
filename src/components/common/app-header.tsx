@@ -28,7 +28,7 @@ export default function AppHeader({ currentPage, yearlyHref }: AppHeaderProps) {
     },
     {
       id: 'insights',
-      label: '统计',
+      label: '数据统计',
       to: '/insights',
     },
     {

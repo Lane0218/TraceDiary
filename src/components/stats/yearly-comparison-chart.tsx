@@ -7,13 +7,13 @@ interface YearlyComparisonChartProps {
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
 
-const CHART_WIDTH = 760
-const CHART_HEIGHT = 300
+const CHART_WIDTH = 960
+const CHART_HEIGHT = 360
 const CHART_MARGIN = {
-  top: 18,
-  right: 52,
-  bottom: 44,
-  left: 52,
+  top: 22,
+  right: 64,
+  bottom: 52,
+  left: 64,
 }
 
 function formatNumber(value: number): string {
@@ -21,13 +21,13 @@ function formatNumber(value: number): string {
 }
 
 function shouldRenderXAxisLabel(index: number, total: number): boolean {
-  if (total <= 8) {
+  if (total <= 10) {
     return true
   }
   if (index === 0 || index === total - 1) {
     return true
   }
-  const step = Math.ceil(total / 8)
+  const step = Math.ceil(total / 10)
   return index % step === 0
 }
 
@@ -54,7 +54,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
   const wordMax = Math.max(1, ...items.map((item) => item.totalWordCount))
   const activeMax = Math.max(1, ...items.map((item) => item.activeDayCount))
   const step = items.length > 1 ? plotWidth / (items.length - 1) : 0
-  const barWidth = items.length > 1 ? Math.max(8, Math.min(56, step * 0.55)) : 56
+  const barWidth = items.length > 1 ? Math.max(12, Math.min(72, step * 0.58)) : 64
 
   const chartPoints = items.map((item, index) => {
     const x = CHART_MARGIN.left + (items.length > 1 ? index * step : plotWidth / 2)
@@ -79,7 +79,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
 
   return (
     <div className="space-y-3" data-testid="insights-yearly-chart" aria-label="年度对比图">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-td-muted">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-td-muted">
         <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
           <i className="inline-block h-2 w-2 rounded-[2px] bg-[#0ea5e9]" aria-hidden="true" />
           年度字数
@@ -112,10 +112,10 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
                   stroke="rgba(17,17,17,0.12)"
                   strokeDasharray="3 4"
                 />
-                <text x={CHART_MARGIN.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#666666">
+                <text x={CHART_MARGIN.left - 10} y={y + 4} textAnchor="end" fontSize="12" fill="#666666">
                   {formatNumber(wordValue)}
                 </text>
-                <text x={CHART_MARGIN.left + plotWidth + 8} y={y + 4} fontSize="11" fill="#666666">
+                <text x={CHART_MARGIN.left + plotWidth + 10} y={y + 4} fontSize="12" fill="#666666">
                   {formatNumber(activeValue)}
                 </text>
               </g>
@@ -140,7 +140,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
               </rect>
 
               {shouldRenderXAxisLabel(index, chartPoints.length) ? (
-                <text x={point.x} y={CHART_MARGIN.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill="#666666">
+                <text x={point.x} y={CHART_MARGIN.top + plotHeight + 24} textAnchor="middle" fontSize="12" fill="#666666">
                   {point.year}
                 </text>
               ) : null}
