@@ -1,5 +1,12 @@
 import type { DiaryRecord } from '../services/indexeddb'
-import type { MonthlyStatsItem, StatsSummary, YearlyStatsItem } from '../types/stats'
+import type {
+  MonthlyStatsItem,
+  MonthlyTrendPoint,
+  StatsChartModel,
+  StatsSummary,
+  YearlyStatsItem,
+  YearlyTrendPoint,
+} from '../types/stats'
 import { formatDateKey } from './date'
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -307,5 +314,46 @@ export function buildStatsSummary(records: DiaryRecord[], now = new Date()): Sta
     streakGapDays,
     yearlyItems,
     recentMonthItems,
+  }
+}
+
+export function buildStatsChartModel(summary: StatsSummary): StatsChartModel {
+  const monthly: MonthlyTrendPoint[] = summary.recentMonthItems.map((item, index, array) => {
+    const entryCount = item.dailyCount + item.yearlySummaryCount
+    const prev = index > 0 ? array[index - 1] : null
+    const momWordDelta = prev ? item.totalWordCount - prev.totalWordCount : null
+    const momWordDeltaRatio =
+      prev && prev.totalWordCount > 0 && momWordDelta !== null ? momWordDelta / prev.totalWordCount : null
+
+    return {
+      label: item.label,
+      totalWordCount: item.totalWordCount,
+      entryCount,
+      momWordDelta,
+      momWordDeltaRatio,
+    }
+  })
+
+  const yearly: YearlyTrendPoint[] = [...summary.yearlyItems]
+    .sort((left, right) => left.year - right.year)
+    .map((item) => ({
+      year: item.year,
+      totalWordCount: item.totalWordCount,
+      activeDayCount: item.activeDayCount,
+      entryCount: item.dailyCount + item.yearlySummaryCount,
+    }))
+
+  const monthlyWordMax = Math.max(1, ...monthly.map((item) => item.totalWordCount))
+  const monthlyEntryMax = Math.max(1, ...monthly.map((item) => item.entryCount))
+  const yearlyWordMax = Math.max(1, ...yearly.map((item) => item.totalWordCount))
+  const yearlyActiveDayMax = Math.max(1, ...yearly.map((item) => item.activeDayCount))
+
+  return {
+    monthly,
+    yearly,
+    monthlyWordMax,
+    monthlyEntryMax,
+    yearlyWordMax,
+    yearlyActiveDayMax,
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DiaryRecord } from '../../services/indexeddb'
-import { buildStatsSummary } from '../../utils/stats'
+import { buildStatsChartModel, buildStatsSummary } from '../../utils/stats'
 
 function buildDailyRecord(date: string, wordCount: number): DiaryRecord {
   return {
@@ -136,5 +136,63 @@ describe('buildStatsSummary', () => {
       yearlySummaryCount: 1,
       totalWordCount: 55,
     })
+  })
+})
+
+describe('buildStatsChartModel', () => {
+  it('应构建月度趋势与年度对比所需数据模型', () => {
+    const records: DiaryRecord[] = [
+      buildDailyRecord('2025-12-10', 5),
+      buildYearlyRecord(2025, 9),
+      buildDailyRecord('2026-01-05', 10),
+      buildDailyRecord('2026-02-06', 20),
+    ]
+
+    const summary = buildStatsSummary(records, new Date(2026, 1, 11, 12))
+    const chartModel = buildStatsChartModel(summary)
+
+    expect(chartModel.monthly).toHaveLength(12)
+
+    const month202512 = chartModel.monthly.find((item) => item.label === '2025-12')
+    const month202601 = chartModel.monthly.find((item) => item.label === '2026-01')
+    const month202602 = chartModel.monthly.find((item) => item.label === '2026-02')
+
+    expect(month202512).toMatchObject({
+      totalWordCount: 14,
+      entryCount: 2,
+      momWordDelta: 14,
+      momWordDeltaRatio: null,
+    })
+    expect(month202601).toMatchObject({
+      totalWordCount: 10,
+      entryCount: 1,
+      momWordDelta: -4,
+    })
+    expect(month202602).toMatchObject({
+      totalWordCount: 20,
+      entryCount: 1,
+      momWordDelta: 10,
+      momWordDeltaRatio: 1,
+    })
+
+    expect(chartModel.yearly).toEqual([
+      {
+        year: 2025,
+        totalWordCount: 14,
+        activeDayCount: 1,
+        entryCount: 2,
+      },
+      {
+        year: 2026,
+        totalWordCount: 30,
+        activeDayCount: 2,
+        entryCount: 2,
+      },
+    ])
+
+    expect(chartModel.monthlyWordMax).toBeGreaterThanOrEqual(20)
+    expect(chartModel.monthlyEntryMax).toBeGreaterThanOrEqual(2)
+    expect(chartModel.yearlyWordMax).toBe(30)
+    expect(chartModel.yearlyActiveDayMax).toBe(2)
   })
 })

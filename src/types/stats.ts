@@ -32,3 +32,27 @@ export interface StatsSummary {
   yearlyItems: YearlyStatsItem[]
   recentMonthItems: MonthlyStatsItem[]
 }
+
+export interface MonthlyTrendPoint {
+  label: string
+  totalWordCount: number
+  entryCount: number
+  momWordDelta: number | null
+  momWordDeltaRatio: number | null
+}
+
+export interface YearlyTrendPoint {
+  year: number
+  totalWordCount: number
+  activeDayCount: number
+  entryCount: number
+}
+
+export interface StatsChartModel {
+  monthly: MonthlyTrendPoint[]
+  yearly: YearlyTrendPoint[]
+  monthlyWordMax: number
+  monthlyEntryMax: number
+  yearlyWordMax: number
+  yearlyActiveDayMax: number
+}
