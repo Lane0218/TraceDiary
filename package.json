@@ -28,6 +28,7 @@
     "@milkdown/react": "^7.18.0",
     "@milkdown/theme-nord": "^7.18.0",
     "@tanstack/react-query": "^5.90.20",
+    "jszip": "^3.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
