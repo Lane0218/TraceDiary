@@ -259,6 +259,17 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     },
     [diary.entryId],
   )
+  const updateSyncActionStatus = useCallback(
+    (
+      action: 'pull' | 'push',
+      status: SyncActionSnapshot['status'],
+      reason: string | null = null,
+      at: string = new Date().toISOString(),
+    ) => {
+      updateSyncActionSnapshot(action, { status, at, reason })
+    },
+    [updateSyncActionSnapshot],
+  )
   const lastSyncNotifyMessageRef = useRef<string | null>(null)
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
@@ -413,10 +424,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   const saveNow = async () => {
     if (!canSyncToRemote) {
       setManualSyncError(syncDisabledMessage)
-      updateSyncActionSnapshot('push', {
-        status: 'error',
-        at: new Date().toISOString(),
-      })
+      updateSyncActionStatus('push', 'error', syncDisabledMessage)
       pushToast({
         kind: 'push',
         level: 'warning',
@@ -460,10 +468,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       return
     }
     const pushStartedAt = new Date().toISOString()
-    updateSyncActionSnapshot('push', {
-      status: 'running',
-      at: pushStartedAt,
-    })
+    updateSyncActionStatus('push', 'running', null, pushStartedAt)
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     pushToast({
       kind: 'push',
@@ -473,13 +478,10 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     })
     const result = await sync.saveNow(payload)
     if (!result.ok) {
-      if (result.code !== 'busy') {
-        updateSyncActionSnapshot('push', {
-          status: 'error',
-          at: new Date().toISOString(),
-        })
-      }
       const errorMessage = getManualSyncFailureMessage(result)
+      if (result.code !== 'busy') {
+        updateSyncActionStatus('push', 'error', errorMessage)
+      }
       setManualSyncError(errorMessage)
       pushToast({
         kind: 'push',
@@ -488,10 +490,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       })
       return
     }
-    updateSyncActionSnapshot('push', {
-      status: 'success',
-      at: new Date().toISOString(),
-    })
+    updateSyncActionStatus('push', 'success')
     setManualSyncError(null)
     pushToast({
       kind: 'push',
@@ -516,10 +515,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         remoteSha,
       },
     )
-    updateSyncActionSnapshot('pull', {
-      status: 'success',
-      at: new Date().toISOString(),
-    })
+    updateSyncActionStatus('pull', 'success')
     setManualSyncError(null)
     pushToast({
       kind: 'pull',
@@ -540,10 +536,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     }
     if (!canSyncToRemote) {
       setManualPullError(syncDisabledMessage)
-      updateSyncActionSnapshot('pull', {
-        status: 'error',
-        at: new Date().toISOString(),
-      })
+      updateSyncActionStatus('pull', 'error', syncDisabledMessage)
       pushToast({
         kind: 'pull',
         level: 'warning',
@@ -570,10 +563,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     }
 
     setIsManualPulling(true)
-    updateSyncActionSnapshot('pull', {
-      status: 'running',
-      at: new Date().toISOString(),
-    })
+    updateSyncActionStatus('pull', 'running')
     setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
     pushToast({
       kind: 'pull',
@@ -592,16 +582,13 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       })
 
       if (result.conflict) {
+        const message = '检测到拉取冲突，请选择保留本地、远端或合并版本'
         setPullConflictState({
           local: result.conflictPayload?.local ?? localPayload,
           remote: result.conflictPayload?.remote ?? null,
           remoteSha: result.remoteSha,
         })
-        updateSyncActionSnapshot('pull', {
-          status: 'error',
-          at: new Date().toISOString(),
-        })
-        const message = '检测到拉取冲突，请选择保留本地、远端或合并版本'
+        updateSyncActionStatus('pull', 'error', message)
         setManualPullError(message)
         pushToast({
           kind: 'pull',
@@ -612,11 +599,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       }
 
       if (!result.ok || !result.pulledMetadata) {
-        updateSyncActionSnapshot('pull', {
-          status: 'error',
-          at: new Date().toISOString(),
-        })
         const message = getManualPullFailureMessage(result.reason)
+        updateSyncActionStatus('pull', 'error', message)
         setManualPullError(message)
         pushToast({
           kind: 'pull',
@@ -629,11 +613,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       await applyRemotePullPayload(result.pulledMetadata, result.remoteSha)
       setManualPullError(null)
     } catch (error) {
-      updateSyncActionSnapshot('pull', {
-        status: 'error',
-        at: new Date().toISOString(),
-      })
       const message = error instanceof Error ? error.message : '拉取失败，请稍后重试'
+      updateSyncActionStatus('pull', 'error', message)
       setManualPullError(message)
       pushToast({
         kind: 'pull',
@@ -646,10 +627,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   }
 
   const resolvePushConflict = (choice: 'local' | 'remote' | 'merged', mergedPayload?: DiarySyncMetadata) => {
-    updateSyncActionSnapshot('push', {
-      status: 'running',
-      at: new Date().toISOString(),
-    })
+    updateSyncActionStatus('push', 'running')
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
     pushToast({
       kind: 'push',
@@ -662,10 +640,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       .then((result) => {
         if (!result.ok) {
           if (result.code !== 'busy') {
-            updateSyncActionSnapshot('push', {
-              status: 'error',
-              at: new Date().toISOString(),
-            })
+            updateSyncActionStatus('push', 'error', result.errorMessage)
           }
           setManualSyncError(result.errorMessage)
           pushToast({
@@ -675,10 +650,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
           })
           return
         }
-        updateSyncActionSnapshot('push', {
-          status: 'success',
-          at: new Date().toISOString(),
-        })
+        updateSyncActionStatus('push', 'success')
         setManualSyncError(null)
         pushToast({
           kind: 'push',
@@ -687,11 +659,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         })
       })
       .catch((error) => {
-        updateSyncActionSnapshot('push', {
-          status: 'error',
-          at: new Date().toISOString(),
-        })
         const message = error instanceof Error ? error.message : '冲突处理失败，请稍后重试'
+        updateSyncActionStatus('push', 'error', message)
         setManualSyncError(message)
         pushToast({
           kind: 'push',
@@ -916,6 +885,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
               pushStatusToneClass={pushStatusToneClass}
               pullStatus={pullActionSnapshot.status}
               pushStatus={pushActionSnapshot.status}
+              pullFailureReason={pullActionSnapshot.reason}
+              pushFailureReason={pushActionSnapshot.reason}
               isPulling={isManualPulling}
               isPushing={isManualSyncing}
               onPull={() => {

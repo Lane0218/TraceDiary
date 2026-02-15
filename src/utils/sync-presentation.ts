@@ -30,6 +30,7 @@ export type SyncActionStatus = 'idle' | 'running' | 'success' | 'error'
 export interface SyncActionSnapshot {
   status: SyncActionStatus
   at: string | null
+  reason: string | null
 }
 
 const SYNC_ACTION_STORAGE_PREFIX = 'trace-diary:sync-action'
@@ -89,6 +90,7 @@ export function createIdleSyncActionSnapshot(): SyncActionSnapshot {
   return {
     status: 'idle',
     at: null,
+    reason: null,
   }
 }
 
@@ -137,9 +139,11 @@ export function loadSyncActionSnapshot(
       typeof parsed.at === 'string' && parsed.at.trim() && parseTimestamp(parsed.at) !== null
         ? parsed.at.trim()
         : null
+    const reason = typeof parsed.reason === 'string' && parsed.reason.trim() ? parsed.reason.trim() : null
     return {
       status: parsed.status,
       at,
+      reason,
     }
   } catch {
     return createIdleSyncActionSnapshot()

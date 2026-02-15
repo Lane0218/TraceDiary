@@ -31,6 +31,10 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
+function isDiaryUploadCommitMessage(message: string): boolean {
+  return /手动同步日记/u.test(message) || /日记\s+\d{4}-\d{2}-\d{2}/u.test(message)
+}
+
 test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote', async ({ page }) => {
   test.setTimeout(210_000)
   const env = getE2EEnv()
@@ -55,7 +59,7 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
 
     const message = readCommitMessage(request)
 
-    if (!interceptedManual && message.includes('手动同步日记')) {
+    if (!interceptedManual && isDiaryUploadCommitMessage(message)) {
       interceptedManual = true
       manualCommitMessage = message
       // 模拟单次手动上传请求卡住，验证超时保护可以收敛状态。
@@ -78,7 +82,7 @@ test('单次手动上传超时后应退出 syncing 并展示错误 @slow @remote
         timeout: 90_000,
       })
       .toBe(true)
-    expect(manualCommitMessage).toContain('手动同步日记')
+    expect(isDiaryUploadCommitMessage(manualCommitMessage)).toBe(true)
 
     await expect(page.getByTestId('push-status-pill')).toContainText('Push：失败', {
       timeout: 90_000,

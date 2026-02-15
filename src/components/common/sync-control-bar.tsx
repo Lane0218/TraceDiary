@@ -10,6 +10,8 @@ interface SyncControlBarProps {
   pushStatusToneClass: string
   pullStatus: SyncActionStatus
   pushStatus: SyncActionStatus
+  pullFailureReason: string | null
+  pushFailureReason: string | null
   isPulling: boolean
   isPushing: boolean
   onPull: () => void
@@ -24,6 +26,8 @@ export default function SyncControlBar({
   pushStatusToneClass,
   pullStatus,
   pushStatus,
+  pullFailureReason,
+  pushFailureReason,
   isPulling,
   isPushing,
   onPull,
@@ -31,9 +35,7 @@ export default function SyncControlBar({
 }: SyncControlBarProps) {
   const isActionRunning = isPulling || isPushing
   const rootRef = useRef<HTMLElement | null>(null)
-  const [isDetailsPinned, setIsDetailsPinned] = useState(false)
-  const [isHoveringDetails, setIsHoveringDetails] = useState(false)
-  const [isFocusWithin, setIsFocusWithin] = useState(false)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const hasSuccess = pullStatus === 'success' || pushStatus === 'success'
   const hasError = pullStatus === 'error' || pushStatus === 'error'
   const summaryLabel = isActionRunning ? '同步中' : hasSuccess ? '已同步' : '未同步'
@@ -44,10 +46,9 @@ export default function SyncControlBar({
       : hasError
         ? 'td-status-warning'
         : 'td-status-muted'
-  const isDetailsOpen = isDetailsPinned || isHoveringDetails || isFocusWithin
 
   useEffect(() => {
-    if (!isDetailsPinned) {
+    if (!isDetailsOpen) {
       return
     }
 
@@ -60,13 +61,13 @@ export default function SyncControlBar({
         return
       }
       if (!rootRef.current.contains(target)) {
-        setIsDetailsPinned(false)
+        setIsDetailsOpen(false)
       }
     }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsDetailsPinned(false)
+        setIsDetailsOpen(false)
       }
     }
 
@@ -76,22 +77,10 @@ export default function SyncControlBar({
       window.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('keydown', handleEscape)
     }
-  }, [isDetailsPinned])
+  }, [isDetailsOpen])
 
   return (
-    <section
-      ref={rootRef}
-      className="td-sync-control"
-      aria-label="sync-control-bar"
-      onMouseEnter={() => setIsHoveringDetails(true)}
-      onMouseLeave={() => setIsHoveringDetails(false)}
-      onFocusCapture={() => setIsFocusWithin(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setIsFocusWithin(false)
-        }
-      }}
-    >
+    <section ref={rootRef} className="td-sync-control" aria-label="sync-control-bar">
       <div className="td-sync-control-bar">
         <div className="td-sync-control-main">
           <div className="td-sync-control-hint">{statusHint}</div>
@@ -100,7 +89,7 @@ export default function SyncControlBar({
             className="td-sync-summary-trigger"
             aria-label="查看同步明细"
             aria-expanded={isDetailsOpen}
-            onClick={() => setIsDetailsPinned((prev) => !prev)}
+            onClick={() => setIsDetailsOpen((prev) => !prev)}
           >
             <span className={`td-status-pill ${summaryToneClass}`} data-testid="sync-summary-pill">
               {summaryLabel}
@@ -150,11 +139,21 @@ export default function SyncControlBar({
           <span className={`td-status-pill ${pullStatusToneClass}`} data-testid="pull-status-pill">
             {pullStatusLabel}
           </span>
+          {pullStatus === 'error' && pullFailureReason ? (
+            <p className="td-sync-details-reason" data-testid="pull-status-reason">
+              {pullFailureReason}
+            </p>
+          ) : null}
         </div>
         <div className="td-sync-details-row">
           <span className={`td-status-pill ${pushStatusToneClass}`} data-testid="push-status-pill">
             {pushStatusLabel}
           </span>
+          {pushStatus === 'error' && pushFailureReason ? (
+            <p className="td-sync-details-reason" data-testid="push-status-reason">
+              {pushFailureReason}
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

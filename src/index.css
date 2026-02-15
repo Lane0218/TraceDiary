@@ -264,7 +264,14 @@
   }
 
   .td-sync-details-row {
-    @apply flex items-center py-0.5;
+    @apply flex flex-col items-start gap-1 py-0.5;
+  }
+
+  .td-sync-details-reason {
+    @apply text-xs leading-5;
+    color: #4b5563;
+    max-width: min(520px, calc(100vw - 56px));
+    word-break: break-word;
   }
 
   .td-sync-control-btn-label {

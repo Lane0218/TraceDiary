@@ -26,7 +26,9 @@ test('离线失败恢复在线后，可再次手动上传成功', async ({ page,
   await context.setOffline(true)
   await clickManualSync(page)
   await expectManualSyncError(page, [/离线/u, /手动上传/u])
+  await page.getByRole('button', { name: '查看同步明细' }).click()
   await expect(page.getByTestId('push-status-pill')).toContainText('Push：失败', { timeout: 30_000 })
+  await expect(page.getByTestId('push-status-reason')).toContainText(/离线/u)
   await expect(page.getByText(/未提交改动：/u)).toHaveCount(0)
   await expect(page.getByText(/分支：/u)).toHaveCount(0)
 
