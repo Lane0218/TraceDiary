@@ -10,7 +10,14 @@ import {
 } from '../components/auth/auth-form-shared'
 
 export default function WelcomePage() {
-  const { state, getMasterPasswordError, initializeFirstTime, unlockWithMasterPassword, updateTokenCiphertext } =
+  const {
+    state,
+    getMasterPasswordError,
+    initializeFirstTime,
+    unlockWithMasterPassword,
+    updateTokenCiphertext,
+    updateConnectionSettings,
+  } =
     useAuth()
   const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
   const submitModel = createAuthSubmitModel(
@@ -18,6 +25,7 @@ export default function WelcomePage() {
       initializeFirstTime,
       unlockWithMasterPassword,
       updateTokenCiphertext,
+      updateConnectionSettings,
     },
     form,
   )

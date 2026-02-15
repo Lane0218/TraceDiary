@@ -8,6 +8,10 @@ export interface AuthFormState {
   masterPassword: string
   refreshToken: string
   refreshMasterPassword: string
+  readyRepoInput: string
+  readyRepoBranch: string
+  readyToken: string
+  readyMasterPassword: string
 }
 
 export const INITIAL_AUTH_FORM_STATE: AuthFormState = {
@@ -17,18 +21,24 @@ export const INITIAL_AUTH_FORM_STATE: AuthFormState = {
   masterPassword: '',
   refreshToken: '',
   refreshMasterPassword: '',
+  readyRepoInput: '',
+  readyRepoBranch: 'master',
+  readyToken: '',
+  readyMasterPassword: '',
 }
 
 interface AuthSubmitActions {
   initializeFirstTime: UseAuthResult['initializeFirstTime']
   unlockWithMasterPassword: UseAuthResult['unlockWithMasterPassword']
   updateTokenCiphertext: UseAuthResult['updateTokenCiphertext']
+  updateConnectionSettings: UseAuthResult['updateConnectionSettings']
 }
 
 export interface AuthSubmitModel {
   onSetupSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   onUnlockSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   onRefreshTokenSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
+  onReadyUpdateSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
 }
 
 export function createAuthSubmitModel(actions: AuthSubmitActions, form: AuthFormState): AuthSubmitModel {
@@ -53,6 +63,15 @@ export function createAuthSubmitModel(actions: AuthSubmitActions, form: AuthForm
       await actions.updateTokenCiphertext({
         token: form.refreshToken,
         masterPassword: form.refreshMasterPassword || undefined,
+      })
+    },
+    onReadyUpdateSubmit: async (event) => {
+      event.preventDefault()
+      await actions.updateConnectionSettings({
+        repoInput: form.readyRepoInput,
+        giteeBranch: form.readyRepoBranch,
+        token: form.readyToken || undefined,
+        masterPassword: form.readyMasterPassword || undefined,
       })
     },
   }

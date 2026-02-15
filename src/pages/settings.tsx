@@ -15,10 +15,9 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
       <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
 
       <section className="mt-4 td-fade-in" aria-label="settings-page">
-        <article className="td-card-primary td-panel space-y-4">
-          <header className="space-y-1">
+        <article className="td-card-primary td-panel space-y-3">
+          <header>
             <h2 className="font-display text-2xl text-td-text">设置</h2>
-            <p className="text-sm text-td-muted">在此直接管理配置、解锁状态与 Token 凭据。</p>
           </header>
           <AuthPanel auth={auth} variant="embedded" />
         </article>

@@ -69,6 +69,13 @@ export interface RefreshTokenPayload {
   masterPassword?: string
 }
 
+export interface UpdateConnectionSettingsPayload {
+  repoInput: string
+  giteeBranch?: string
+  token?: string
+  masterPassword?: string
+}
+
 export interface AuthState {
   stage: 'checking' | 'needs-setup' | 'needs-unlock' | 'needs-token-refresh' | 'ready'
   config: AppConfig | null
@@ -89,6 +96,7 @@ export interface UseAuthResult {
   initializeFirstTime: (payload: InitializeAuthPayload) => Promise<void>
   unlockWithMasterPassword: (payload: UnlockPayload) => Promise<void>
   updateTokenCiphertext: (payload: RefreshTokenPayload) => Promise<void>
+  updateConnectionSettings: (payload: UpdateConnectionSettingsPayload) => Promise<void>
   lockNow: () => void
   clearError: () => void
 }
@@ -964,6 +972,120 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     [clearError, dependencies, markUnlockedWithFreshExpiry, state.config],
   )
 
+  const updateConnectionSettings = useCallback(
+    async (payload: UpdateConnectionSettingsPayload) => {
+      clearError()
+
+      if (state.stage !== 'ready' || !state.config) {
+        setState((prev) => ({ ...prev, errorMessage: '当前会话未就绪，请先完成解锁' }))
+        return
+      }
+
+      const repoRef = parseGiteeRepo(payload.repoInput)
+      const nextBranch = normalizeGiteeBranch(payload.giteeBranch)
+      const nextToken = payload.token?.trim() ?? ''
+      const hasTokenUpdate = nextToken.length > 0
+      const validationToken = hasTokenUpdate ? nextToken : state.tokenInMemory?.trim() ?? ''
+      if (!validationToken) {
+        setState((prev) => ({ ...prev, errorMessage: '当前会话缺少可用 Token，请输入 Token 后重试' }))
+        return
+      }
+
+      setState((prev) => ({ ...prev, stage: 'checking' }))
+
+      try {
+        await dependencies.validateGiteeRepoAccess({
+          owner: repoRef.owner,
+          repoName: repoRef.repoName,
+          token: validationToken,
+        })
+
+        let nextEncryptedToken = state.config.encryptedToken
+        let nextTokenInMemory = state.tokenInMemory
+        let nextDataEncryptionKey = state.dataEncryptionKey
+        let nextPasswordExpiry = state.config.passwordExpiry
+        let masterPasswordForUpdate = masterPasswordRef.current
+
+        if (hasTokenUpdate) {
+          masterPasswordForUpdate = payload.masterPassword?.trim() || masterPasswordRef.current
+          if (!masterPasswordForUpdate) {
+            throw new Error('请补充主密码后再更新 Token')
+          }
+
+          const passwordHash = await dependencies.hashMasterPassword({
+            masterPassword: masterPasswordForUpdate,
+            kdfParams: state.config.kdfParams,
+          })
+          if (passwordHash !== state.config.passwordHash) {
+            throw new Error('主密码错误，无法更新 Token')
+          }
+
+          nextEncryptedToken = await dependencies.encryptToken({
+            token: nextToken,
+            masterPassword: masterPasswordForUpdate,
+            kdfParams: state.config.kdfParams,
+          })
+          nextTokenInMemory = nextToken
+
+          if (!nextDataEncryptionKey) {
+            nextDataEncryptionKey = await dependencies.deriveDataEncryptionKey(masterPasswordForUpdate)
+          }
+
+          const now = dependencies.now()
+          const expiry = markUnlockedWithFreshExpiry(now)
+          nextPasswordExpiry = expiry.iso
+        }
+
+        const nextConfig: AppConfig = {
+          ...state.config,
+          giteeRepo: `https://gitee.com/${repoRef.canonicalRepo}`,
+          giteeOwner: repoRef.owner,
+          giteeRepoName: repoRef.repoName,
+          giteeBranch: nextBranch,
+          passwordExpiry: nextPasswordExpiry,
+          encryptedToken: nextEncryptedToken,
+          tokenCipherVersion: 'v1',
+        }
+
+        await dependencies.saveConfig(nextConfig)
+
+        if (hasTokenUpdate && nextTokenInMemory && nextDataEncryptionKey) {
+          try {
+            await cacheUnlockedToken(nextTokenInMemory)
+            await cacheUnlockedDataEncryptionKey(nextDataEncryptionKey)
+          } catch {
+            // 缓存写入失败不阻断当前会话，仅影响后续免输恢复能力。
+          }
+        }
+
+        if (hasTokenUpdate && masterPasswordForUpdate) {
+          masterPasswordRef.current = masterPasswordForUpdate
+        }
+
+        setState({
+          stage: 'ready',
+          config: nextConfig,
+          tokenInMemory: nextTokenInMemory,
+          dataEncryptionKey: nextDataEncryptionKey,
+          isLocked: false,
+          passwordExpired: false,
+          needsMasterPasswordForTokenRefresh: false,
+          tokenRefreshReason: null,
+          errorMessage: null,
+          initialPullStatus: 'idle',
+          initialPullError: null,
+        })
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          stage: 'ready',
+          errorMessage: error instanceof Error ? error.message : '连接配置更新失败，请重试',
+        }))
+      }
+    },
+    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config, state.dataEncryptionKey, state.stage, state.tokenInMemory],
+  )
+
   const lockNow = useCallback(() => {
     writeLockState(true)
     clearUnlockStateCache()
@@ -988,6 +1110,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     initializeFirstTime,
     unlockWithMasterPassword,
     updateTokenCiphertext,
+    updateConnectionSettings,
     lockNow,
     clearError,
   }

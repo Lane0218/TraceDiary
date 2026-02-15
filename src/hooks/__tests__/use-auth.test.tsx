@@ -222,6 +222,110 @@ describe('useAuth', () => {
     expect(result.current.state.dataEncryptionKey).toBeNull()
   })
 
+  it('ready 状态应支持仅更新仓库与分支（不改 token）', async () => {
+    const saveConfig = vi.fn(async () => undefined)
+    const dependencies = buildDependencies({
+      saveConfig,
+    })
+
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        giteeBranch: 'master',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+
+    await act(async () => {
+      await result.current.updateConnectionSettings({
+        repoInput: 'alice/trace-diary-next',
+        giteeBranch: 'main',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.config?.giteeOwner).toBe('alice')
+    expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
+    expect(result.current.state.config?.giteeBranch).toBe('main')
+    expect(result.current.state.tokenInMemory).toBe('token-plain')
+    expect(result.current.state.config?.encryptedToken).toBe('cipher:token-plain')
+    expect(saveConfig).toHaveBeenCalledTimes(2)
+  })
+
+  it('ready 状态更新 token 时若主密码错误应回退并保留原配置', async () => {
+    const saveConfig = vi.fn(async () => undefined)
+    const dependencies = buildDependencies({
+      saveConfig,
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+
+    await act(async () => {
+      await result.current.updateConnectionSettings({
+        repoInput: 'alice/trace-diary',
+        giteeBranch: 'master',
+        token: 'token-new',
+        masterPassword: 'wrongpass1',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.errorMessage).toBe('主密码错误，无法更新 Token')
+    expect(result.current.state.tokenInMemory).toBe('token-plain')
+    expect(result.current.state.config?.encryptedToken).toBe('cipher:token-plain')
+    expect(saveConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it('ready 状态应支持同时更新仓库分支与 token', async () => {
+    const saveConfig = vi.fn(async () => undefined)
+    const dependencies = buildDependencies({
+      saveConfig,
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+
+    await act(async () => {
+      await result.current.updateConnectionSettings({
+        repoInput: 'alice/trace-diary-next',
+        giteeBranch: 'main',
+        token: 'token-new',
+        masterPassword: 'master1234',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
+    expect(result.current.state.config?.giteeBranch).toBe('main')
+    expect(result.current.state.config?.encryptedToken).toBe('cipher:token-new')
+    expect(result.current.state.tokenInMemory).toBe('token-new')
+    expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
+    expect(saveConfig).toHaveBeenCalledTimes(2)
+  })
+
   it('手动锁定后应清空 dataEncryptionKey', async () => {
     const dependencies = buildDependencies()
     const { result } = renderHook(() => useAuth(dependencies))
