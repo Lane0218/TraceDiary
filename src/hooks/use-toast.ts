@@ -17,12 +17,14 @@ export interface ToastInput {
   level: ToastLevel
   title?: string
   message: string
+  autoDismiss?: boolean
 }
 
 export interface ToastMessage extends ToastInput {
   id: string
   createdAt: number
-  expiresAt: number
+  autoDismiss: boolean
+  expiresAt: number | null
 }
 
 interface ToastContextValue {
@@ -59,11 +61,13 @@ export function ToastProvider({ children }: PropsWithChildren) {
   const push = useCallback(
     (input: ToastInput): ToastMessage => {
       const createdAt = Date.now()
+      const autoDismiss = input.autoDismiss !== false
       const nextToast: ToastMessage = {
         ...input,
         id: createToastId(input.kind),
         createdAt,
-        expiresAt: createdAt + AUTO_DISMISS_MS[input.level],
+        autoDismiss,
+        expiresAt: autoDismiss ? createdAt + AUTO_DISMISS_MS[input.level] : null,
       }
 
       setToasts((previous) => [nextToast, ...previous.filter((toast) => toast.kind !== input.kind)])
@@ -78,6 +82,9 @@ export function ToastProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const timers = toasts.map((toast) => {
+      if (!toast.autoDismiss || typeof toast.expiresAt !== 'number') {
+        return null
+      }
       const remaining = Math.max(0, toast.expiresAt - Date.now())
       return window.setTimeout(() => {
         setToasts((previous) => previous.filter((item) => item.id !== toast.id))
@@ -85,7 +92,11 @@ export function ToastProvider({ children }: PropsWithChildren) {
     })
 
     return () => {
-      timers.forEach((timer) => clearTimeout(timer))
+      timers.forEach((timer) => {
+        if (typeof timer === 'number') {
+          clearTimeout(timer)
+        }
+      })
     }
   }, [toasts])
 

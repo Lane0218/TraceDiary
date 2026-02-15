@@ -232,6 +232,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       kind: 'push',
       level: 'info',
       message: MANUAL_SYNC_PENDING_MESSAGE,
+      autoDismiss: false,
     })
     const result = await sync.saveNow(manualPayload)
     if (!result.ok) {
@@ -340,6 +341,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       kind: 'pull',
       level: 'info',
       message: MANUAL_PULL_PENDING_MESSAGE,
+      autoDismiss: false,
     })
     try {
       const result = await pullDiaryFromGitee({
@@ -415,6 +417,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       kind: 'push',
       level: 'info',
       message: MANUAL_SYNC_PENDING_MESSAGE,
+      autoDismiss: false,
     })
     void sync
       .resolveConflict(choice, mergedPayload)

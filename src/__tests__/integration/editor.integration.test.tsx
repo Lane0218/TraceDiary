@@ -251,9 +251,11 @@ describe('年度总结页面', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('toast-push')).toHaveTextContent('手动上传已触发，正在等待结果...')
-      const uploadingButton = screen.getByRole('button', { name: 'pushing...' }) as HTMLButtonElement
+      const uploadingButton = screen.getByRole('button', { name: 'push' }) as HTMLButtonElement
       const pullButton = screen.getByRole('button', { name: 'pull' }) as HTMLButtonElement
       expect(uploadingButton.disabled).toBe(true)
+      expect(uploadingButton.getAttribute('aria-busy')).toBe('true')
+      expect(uploadingButton.querySelector('.td-sync-control-running-dot')).toBeTruthy()
       expect(pullButton.disabled).toBe(true)
     })
 
