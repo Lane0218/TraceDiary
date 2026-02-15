@@ -104,6 +104,19 @@
     transform: translateY(0);
   }
 
+  .td-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .td-btn:disabled:hover {
+    border-color: var(--td-line);
+    box-shadow: none;
+    transform: none;
+  }
+
   .td-btn-primary {
     border-color: var(--td-accent);
     background-color: var(--td-accent);

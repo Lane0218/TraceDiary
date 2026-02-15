@@ -23,6 +23,8 @@ export default function SyncControlBar({
   onPull,
   onPush,
 }: SyncControlBarProps) {
+  const isActionRunning = isPulling || isPushing
+
   return (
     <section className="td-sync-control" aria-label="sync-control-bar">
       <div className="td-sync-control-bar">
@@ -42,6 +44,7 @@ export default function SyncControlBar({
             type="button"
             className="td-btn td-sync-control-btn-secondary"
             onClick={onPull}
+            disabled={isActionRunning}
             data-testid="manual-pull-button"
           >
             {isPulling ? 'pulling...' : 'pull'}
@@ -50,6 +53,7 @@ export default function SyncControlBar({
             type="button"
             className="td-btn td-sync-control-btn-primary"
             onClick={onPush}
+            disabled={isActionRunning}
             data-testid="manual-sync-button"
           >
             {isPushing ? 'pushing...' : 'push'}
