@@ -11,7 +11,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
   const currentYear = useMemo(() => new Date().getFullYear(), [])
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
+    <main className="mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6">
       <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
 
       <section className="mt-4 td-fade-in" aria-label="settings-page">

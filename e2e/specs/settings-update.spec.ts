@@ -34,6 +34,7 @@ test('ready 状态下应可在设置页更新仓库与分支（不改 token）',
   await expect(page.getByLabel('settings-page')).toBeVisible()
   await expect(page.getByText('READY')).toHaveCount(0)
   await expect(page.getByText(/^状态：\s*ready$/)).toHaveCount(0)
+  await expect(page.getByText('仅保留必要项：修改后立即生效；不改 Token 可留空。')).toHaveCount(0)
 
   const nextBranch = env.branch === 'master' ? 'main' : 'master'
   await page.getByTestId('auth-ready-repo-input').fill(`${env.owner}/${env.repo}`)
