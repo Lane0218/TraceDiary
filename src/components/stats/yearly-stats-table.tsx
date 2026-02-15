@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { YearlyStatsItem } from '../../types/stats'
 
-type SortKey = 'year' | 'dailyCount' | 'yearlySummaryCount' | 'activeDayCount' | 'totalWordCount'
+type SortKey = 'year' | 'dailyCount' | 'activeDayCount' | 'totalWordCount'
 type SortDirection = 'asc' | 'desc'
 
 interface YearlyStatsTableProps {
@@ -19,7 +19,6 @@ const numberFormatter = new Intl.NumberFormat('zh-CN')
 const headers: HeaderCell[] = [
   { key: 'year', label: '年份' },
   { key: 'dailyCount', label: '日记篇数' },
-  { key: 'yearlySummaryCount', label: '年度总结篇数' },
   { key: 'activeDayCount', label: '活跃天数' },
   { key: 'totalWordCount', label: '总字数' },
 ]
@@ -101,7 +100,6 @@ export default function YearlyStatsTable({ items, isLoading = false }: YearlySta
             <tr key={item.year} className="border-b border-td-line last:border-b-0">
               <td className="px-3 py-2 text-td-text">{item.year}</td>
               <td className="px-3 py-2 text-td-text">{formatNumber(item.dailyCount)}</td>
-              <td className="px-3 py-2 text-td-text">{formatNumber(item.yearlySummaryCount)}</td>
               <td className="px-3 py-2 text-td-text">{formatNumber(item.activeDayCount)}</td>
               <td className="px-3 py-2 text-td-text">{formatNumber(item.totalWordCount)}</td>
             </tr>

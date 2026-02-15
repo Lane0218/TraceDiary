@@ -243,6 +243,14 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('insights-monthly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-table')).toBeVisible()
+  const monthlyChartOverflow = await page.getByTestId('insights-monthly-chart-frame').evaluate((element) => {
+    return element.scrollWidth - element.clientWidth
+  })
+  const yearlyChartOverflow = await page.getByTestId('insights-yearly-chart-frame').evaluate((element) => {
+    return element.scrollWidth - element.clientWidth
+  })
+  expect(monthlyChartOverflow).toBeLessThanOrEqual(1)
+  expect(yearlyChartOverflow).toBeLessThanOrEqual(1)
   await expect(page.getByText('年度汇总')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-table').getByRole('cell', { name: String(currentYear) })).toBeVisible()
 })

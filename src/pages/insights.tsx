@@ -58,10 +58,7 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
         <section className="mt-4 space-y-4 td-fade-in" aria-label="insights-page">
           <article className="td-card-primary td-panel space-y-3">
             <header className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="font-display text-2xl text-td-text">写作统计</h2>
-                <p className="mt-1 text-xs text-td-muted">先看趋势，再看明细。字数与活跃度同屏呈现。</p>
-              </div>
+              <h2 className="font-display text-2xl text-td-text">写作统计</h2>
               <button
                 type="button"
                 className="td-btn"
@@ -79,7 +76,6 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             <article className="td-card-muted td-panel space-y-3">
               <header className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-display text-xl text-td-text">近 12 个月趋势</h3>
-                <span className="text-xs text-td-muted">双轴：柱=字数，线=篇数</span>
               </header>
 
               <div className="grid gap-2 sm:grid-cols-3">
@@ -103,7 +99,6 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             <article className="td-card-muted td-panel space-y-3">
               <header className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-display text-xl text-td-text">年度对比</h3>
-                <span className="text-xs text-td-muted">字数规模与活跃天数</span>
               </header>
 
               <YearlyComparisonChart items={chartModel.yearly} isLoading={stats.isLoading} />
@@ -113,7 +108,6 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
           <article className="td-card-muted td-panel space-y-3">
             <header className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-display text-xl text-td-text">年度汇总</h3>
-              <span className="text-xs text-td-muted">可排序明细</span>
             </header>
 
             <YearlyStatsTable items={stats.summary.yearlyItems} isLoading={stats.isLoading} />

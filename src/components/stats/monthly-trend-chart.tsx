@@ -97,10 +97,10 @@ export default function MonthlyTrendChart({ items, isLoading = false }: MonthlyT
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-[12px] border border-td-line bg-td-surface">
+      <div className="rounded-[12px] border border-td-line bg-td-surface" data-testid="insights-monthly-chart-frame">
         <svg
           viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-          className="block min-w-[760px]"
+          className="block h-auto w-full"
           role="img"
           aria-label="近12个月字数与篇数趋势图"
         >
