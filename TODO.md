@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-15`
-- 总任务：`133`
-- 状态统计：`DONE=117` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`134`
+- 状态统计：`DONE=118` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -183,6 +183,12 @@
 | `TD-IMP-003` | `TODO` | 实现冲突逐条确认（覆盖/跳过）写入流程 | 同日期/同年份冲突可逐条决策并正确落库 | `src/components/common/import-conflict-dialog.tsx` `src/hooks/use-diary.ts` | — | — |
 | `TD-IMP-004` | `TODO` | 实现导入结果汇总反馈（成功/跳过/失败） | 完成后可查看汇总统计与失败明细 | `src/components/common/import-result-dialog.tsx` `src/pages/workspace.tsx` | — | — |
 | `TD-IMP-005` | `TODO` | 补齐导入单元/集成/E2E 测试 | 覆盖命名识别、冲突处理、异常跳过、部分失败容错 | `src/services/__tests__/import.test.ts` `src/__tests__/integration/import.integration.test.tsx` `e2e/import.spec.ts` | — | — |
+
+### 6.12 数据导出（v1.1）
+
+| ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TD-EXP-001` | `DONE` | 实现设置页明文导出入口与 ZIP 导出流程（含 manifest）并补齐分层测试 | 设置页可触发明文导出并下载 `trace-diary-export-YYYYMMDD-HHmmss.zip`；产物包含 `diaries/*.md`、`summaries/*-summary.md` 与 `manifest.json`；未解锁/无数据/部分失败反馈符合 SPEC 4.8；导出过程不触发 Push/Pull | `src/pages/settings.tsx` `src/components/common/export-data-panel.tsx` `src/services/export.ts` `src/types/export.ts` `src/index.css` `src/services/__tests__/export.test.ts` `src/__tests__/integration/export.integration.test.tsx` `e2e/specs/export-data.spec.ts` `package.json` `package-lock.json` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（63/63）；`npm run test:integration` 通过（65/65）；`npx playwright test e2e/specs/export-data.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/export-settings-only --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_export-settings-only --e2e-cmd \"npx playwright test e2e/specs/export-data.spec.ts --project=chromium --retries=0\"` 后重跑通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-15 / 待提交` |
 
 ### 6.10 文档维护
 
