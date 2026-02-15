@@ -46,13 +46,15 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
   })
 
-  it('设置页路由应可访问并展示配置入口', async () => {
+  it('设置页路由应可访问并直接展示认证面板', async () => {
     window.history.replaceState({}, '', '/settings')
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: '设置' })).toBeTruthy()
     expect(screen.getByLabelText('settings-page')).toBeTruthy()
-    expect(screen.getByRole('button', { name: '配置' })).toBeTruthy()
+    expect(screen.getByLabelText('settings-auth-panel')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '配置' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '锁定' })).toBeNull()
   })
 
   it('日记页左侧应支持往年今日与统计分段切换', async () => {

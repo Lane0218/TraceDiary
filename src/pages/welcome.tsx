@@ -10,7 +10,7 @@ import {
 } from '../components/auth/auth-form-shared'
 
 export default function WelcomePage() {
-  const { state, getMasterPasswordError, initializeFirstTime, unlockWithMasterPassword, updateTokenCiphertext, lockNow } =
+  const { state, getMasterPasswordError, initializeFirstTime, unlockWithMasterPassword, updateTokenCiphertext } =
     useAuth()
   const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
   const submitModel = createAuthSubmitModel(
@@ -158,15 +158,8 @@ export default function WelcomePage() {
       ) : null}
 
       {state.stage === 'ready' ? (
-        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+        <div className="text-sm text-slate-700">
           <p>主密码 7 天内免输已生效（仅保存锁态与过期时间）。</p>
-          <button
-            type="button"
-            className="rounded-full border border-slate-300 px-4 py-1.5 text-sm transition hover:bg-slate-100"
-            onClick={lockNow}
-          >
-            立即锁定
-          </button>
         </div>
       ) : null}
     </article>
