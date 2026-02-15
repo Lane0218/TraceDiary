@@ -262,11 +262,9 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   expect(yearlyChartOverflow).toBeLessThanOrEqual(1)
   expect(yearlyHeatmapOverflow).toBeLessThanOrEqual(1)
 
-  const currentYearSwitchButton = page
-    .getByLabel('热力图年份切换')
-    .getByRole('button', { name: String(currentYear), exact: true })
-    .first()
-  await currentYearSwitchButton.click()
+  const heatmapYearInput = page.getByRole('textbox', { name: '热力图年份' })
+  await heatmapYearInput.fill(String(currentYear))
+  await heatmapYearInput.blur()
 
   const todayHeatmapCell = page
     .getByTestId('insights-yearly-heatmap')

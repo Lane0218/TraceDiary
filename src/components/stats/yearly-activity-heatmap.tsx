@@ -104,7 +104,10 @@ export default function YearlyActivityHeatmap({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-base font-semibold text-td-text">年度热力图</h4>
 
-        <div className="inline-flex h-9 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
+        <div
+          className="inline-flex h-9 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white"
+          aria-label="热力图年份切换"
+        >
           <button
             type="button"
             aria-label="热力图年份减一"
@@ -153,63 +156,103 @@ export default function YearlyActivityHeatmap({
         </div>
       </header>
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px]">
-        <div className="overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4" data-testid="insights-yearly-heatmap-grid-frame">
-          <div className="min-w-fit">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="w-[16px] text-[10px] text-transparent">一</span>
-              <div className="relative h-4" style={{ width: `${heatmapWidth}px` }}>
-                {heatmapModel.monthTicks.map((tick) => (
+      <div className="grid gap-3 xl:grid-cols-[auto_240px] xl:items-start xl:justify-between">
+        <div className="space-y-2">
+          <div
+            className="w-fit max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
+            data-testid="insights-yearly-heatmap-grid-frame"
+          >
+            <div className="min-w-fit">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="w-[16px] text-[10px] text-transparent">一</span>
+                <div className="relative h-4" style={{ width: `${heatmapWidth}px` }}>
+                  {heatmapModel.monthTicks.map((tick) => (
+                    <span
+                      key={tick.month}
+                      className="absolute top-0 text-[10px] text-td-muted"
+                      style={{ left: `${tick.weekIndex * (CELL_SIZE + CELL_GAP)}px` }}
+                    >
+                      {tick.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <div
+                  className="grid grid-rows-7 gap-[3px] text-[10px] leading-none text-td-muted"
+                  data-testid="insights-yearly-heatmap-weekday-axis"
+                >
+                  {DAY_LABELS.map((label, index) => (
+                    <span key={label} className="h-[12px] w-[16px] text-left">
+                      {index % 2 === 0 ? label : ''}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="grid grid-flow-col gap-[3px]" style={{ gridAutoColumns: `${CELL_SIZE}px` }}>
+                  {heatmapModel.weeks.map((week) => (
+                    <div key={week.index} className="grid grid-rows-7 gap-[3px]">
+                      {week.days.map((cell, dayIndex) => {
+                        if (!cell) {
+                          return (
+                            <span
+                              key={`${week.index}-${dayIndex}`}
+                              className="h-[12px] w-[12px] opacity-0"
+                              aria-hidden="true"
+                            />
+                          )
+                        }
+
+                        const description = getCellDescription(cell)
+                        const isSelected = selectedDateKey === cell.dateKey
+                        return (
+                          <button
+                            key={cell.dateKey}
+                            type="button"
+                            className={`h-[12px] w-[12px] rounded-[3px] border transition ${
+                              isSelected
+                                ? 'border-[#111111] shadow-[0_0_0_1px_rgba(17,17,17,0.12)]'
+                                : 'border-transparent hover:border-[#111111]/45'
+                            }`}
+                            style={{ backgroundColor: HEATMAP_COLORS[cell.intensity] }}
+                            title={description}
+                            aria-label={description}
+                            onClick={() => setSelectedDateKey(cell.dateKey)}
+                          />
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center">
+            <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+              <p className="text-xs text-td-muted">字数图例</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2" aria-label="热力图图例">
+                {HEATMAP_COLORS.map((color, index) => (
                   <span
-                    key={tick.month}
-                    className="absolute top-0 text-[10px] text-td-muted"
-                    style={{ left: `${tick.weekIndex * (CELL_SIZE + CELL_GAP)}px` }}
-                  >
-                    {tick.label}
-                  </span>
+                    key={color}
+                    className="inline-block h-[10px] w-[20px] rounded-[2px] border border-black/5"
+                    style={{ backgroundColor: color }}
+                    aria-label={index === 0 ? '0 字' : `${index} 级强度`}
+                  />
                 ))}
+                <span className="text-sm text-td-muted">0 ~ {formatNumber(heatmapModel.maxWordCount)} 字</span>
               </div>
-            </div>
+            </article>
 
-            <div className="flex gap-2">
-              <div className="grid grid-rows-7 gap-[3px] text-[10px] leading-none text-td-muted" data-testid="insights-yearly-heatmap-weekday-axis">
-                {DAY_LABELS.map((label, index) => (
-                  <span key={label} className="h-[12px] w-[16px] text-left">
-                    {index % 2 === 0 ? label : ''}
-                  </span>
-                ))}
-              </div>
-
-              <div className="grid grid-flow-col gap-[3px]" style={{ gridAutoColumns: `${CELL_SIZE}px` }}>
-                {heatmapModel.weeks.map((week) => (
-                  <div key={week.index} className="grid grid-rows-7 gap-[3px]">
-                    {week.days.map((cell, dayIndex) => {
-                      if (!cell) {
-                        return <span key={`${week.index}-${dayIndex}`} className="h-[12px] w-[12px] opacity-0" aria-hidden="true" />
-                      }
-
-                      const description = getCellDescription(cell)
-                      const isSelected = selectedDateKey === cell.dateKey
-                      return (
-                        <button
-                          key={cell.dateKey}
-                          type="button"
-                          className={`h-[12px] w-[12px] rounded-[3px] border transition ${
-                            isSelected
-                              ? 'border-[#111111] shadow-[0_0_0_1px_rgba(17,17,17,0.12)]'
-                              : 'border-transparent hover:border-[#111111]/45'
-                          }`}
-                          style={{ backgroundColor: HEATMAP_COLORS[cell.intensity] }}
-                          title={description}
-                          aria-label={description}
-                          onClick={() => setSelectedDateKey(cell.dateKey)}
-                        />
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+              <p className="text-xs text-td-muted">选中日期</p>
+              <p className="mt-1 text-sm text-td-text" data-testid="insights-yearly-heatmap-selection" aria-live="polite">
+                {selectedCell
+                  ? `${selectedCell.dateKey} / ${selectedCell.wordCount > 0 ? `${formatNumber(selectedCell.wordCount)} 字` : '无日记记录'}`
+                  : '点击左侧日期查看当天字数。'}
+              </p>
+            </article>
           </div>
         </div>
 
@@ -225,30 +268,6 @@ export default function YearlyActivityHeatmap({
           <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
             <p className="text-xs text-td-muted">单日峰值字数</p>
             <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(heatmapModel.maxWordCount)}</p>
-          </article>
-
-          <article className="space-y-2 rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-            <p className="text-xs text-td-muted">字数图例</p>
-            <div className="flex flex-wrap items-center gap-2" aria-label="热力图图例">
-              {HEATMAP_COLORS.map((color, index) => (
-                <span
-                  key={color}
-                  className="inline-block h-[10px] w-[20px] rounded-[2px] border border-black/5"
-                  style={{ backgroundColor: color }}
-                  aria-label={index === 0 ? '0 字' : `${index} 级强度`}
-                />
-              ))}
-              <span className="text-xs text-td-muted">0 ~ {formatNumber(heatmapModel.maxWordCount)} 字</span>
-            </div>
-          </article>
-
-          <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-            <p className="text-xs text-td-muted">选中日期</p>
-            <p className="mt-1 text-sm text-td-text" data-testid="insights-yearly-heatmap-selection" aria-live="polite">
-              {selectedCell
-                ? `${selectedCell.dateKey} / ${selectedCell.wordCount > 0 ? `${formatNumber(selectedCell.wordCount)} 字` : '无日记记录'}`
-                : '点击左侧日期查看当天字数。'}
-            </p>
           </article>
         </aside>
       </div>

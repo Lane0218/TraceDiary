@@ -163,18 +163,6 @@ export default function MonthlyTrendChart({ items, isLoading = false }: MonthlyT
           ))}
         </svg>
       </div>
-
-      <div className="grid gap-2 sm:grid-cols-3">
-        {chartPoints.slice(-3).map((point) => (
-          <article key={`${point.label}-summary`} className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-            <p className="text-xs text-td-muted">{point.label}</p>
-            <p className="mt-1 text-sm text-td-text">
-              字数 {formatNumber(point.totalWordCount)} / 篇数 {formatNumber(point.entryCount)}
-            </p>
-            <p className="mt-1 text-xs text-td-muted">{formatMomLabel(point.momWordDeltaRatio)}</p>
-          </article>
-        ))}
-      </div>
     </div>
   )
 }

@@ -76,41 +76,46 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
 
           <article className="td-card-muted td-panel space-y-3">
             <header className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-xl text-td-text">近 12 个月趋势</h3>
+              <h3 className="font-display text-xl text-td-text">月度趋势</h3>
             </header>
 
-            <div className="grid gap-2 sm:grid-cols-3">
-              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                <p className="text-xs text-td-muted">最近月份字数</p>
-                <p className="mt-1 text-sm text-td-text">{formatNumber(latestMonth?.totalWordCount ?? 0)}</p>
-              </article>
-              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                <p className="text-xs text-td-muted">最近月份环比</p>
-                <p className="mt-1 text-sm text-td-text">{formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}</p>
-              </article>
-              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                <p className="text-xs text-td-muted">近 3 月平均字数</p>
-                <p className="mt-1 text-sm text-td-text">{formatNumber(trailingQuarterAverage)}</p>
-              </article>
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-start">
+              <MonthlyTrendChart items={chartModel.monthly} isLoading={stats.isLoading} />
+
+              <aside className="grid gap-2" data-testid="insights-monthly-metrics">
+                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                  <p className="text-xs text-td-muted">最近月份字数</p>
+                  <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(latestMonth?.totalWordCount ?? 0)}</p>
+                </article>
+                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                  <p className="text-xs text-td-muted">最近月份环比</p>
+                  <p className="mt-1 text-lg font-semibold text-td-text">
+                    {formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}
+                  </p>
+                </article>
+                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                  <p className="text-xs text-td-muted">近 3 月平均字数</p>
+                  <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(trailingQuarterAverage)}</p>
+                </article>
+              </aside>
             </div>
-
-            <MonthlyTrendChart items={chartModel.monthly} isLoading={stats.isLoading} />
-          </article>
-
-          <article className="td-card-muted td-panel space-y-3">
-            <header className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-xl text-td-text">年度对比</h3>
-            </header>
-
-            <YearlyComparisonChart items={chartModel.yearly} isLoading={stats.isLoading} />
           </article>
 
           <article className="td-card-muted td-panel space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-xl text-td-text">年度洞察</h3>
+              <h3 className="font-display text-xl text-td-text">年度分析</h3>
             </header>
 
-            <YearlySummaryCards items={stats.summary.yearlyItems} isLoading={stats.isLoading} />
+            <section className="space-y-2" aria-label="年度摘要">
+              <h4 className="text-sm font-semibold text-td-muted">年度摘要</h4>
+              <YearlySummaryCards items={stats.summary.yearlyItems} isLoading={stats.isLoading} />
+            </section>
+
+            <section className="space-y-2" aria-label="年度对比">
+              <h4 className="text-sm font-semibold text-td-muted">年度对比</h4>
+              <YearlyComparisonChart items={chartModel.yearly} isLoading={stats.isLoading} />
+            </section>
+
             <YearlyActivityHeatmap
               records={stats.records}
               yearlyItems={stats.summary.yearlyItems}
