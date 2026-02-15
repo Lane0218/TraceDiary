@@ -56,7 +56,7 @@ export interface CreateUploadMetadataDependencies<TMetadata = unknown> {
   readRemoteMetadata?: () => Promise<RemoteMetadataFile>
   uploadRequest?: (request: UploadRequest) => Promise<UploadResult>
   serializeMetadata?: (metadata: TMetadata) => Promise<string> | string
-  buildCommitMessage?: (payload: UploadMetadataPayload<TMetadata>) => string
+  buildCommitMessage?: (payload: UploadMetadataPayload<TMetadata>, nowIso: string) => string
   path?: string
   branch?: string
   now?: () => string
@@ -205,9 +205,9 @@ export interface PullDiaryFromGiteeResult {
   conflictPayload?: UploadConflictPayload<DiarySyncMetadata>
 }
 
-function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>): string {
+function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>, nowIso: string): string {
   void payload
-  return 'chore: 手动同步 metadata'
+  return `chore: 手动同步 metadata ${nowIso}`
 }
 
 function looksLikeShaMismatch(status?: number, message?: string): boolean {
@@ -289,6 +289,14 @@ function nowIsoString(): string {
   return new Date().toISOString()
 }
 
+function toSecondPrecisionIso(isoString: string): string {
+  const parsed = new Date(isoString)
+  if (Number.isNaN(parsed.getTime())) {
+    return isoString
+  }
+  return parsed.toISOString().replace(/\.\d{3}Z$/, 'Z')
+}
+
 function normalizeEncryptedContent(encryptedContent: string): string {
   return encryptedContent.replace(/\s+/g, '')
 }
@@ -327,11 +335,12 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
   ): Promise<UploadMetadataResult<TMetadata>> => {
     try {
       const encryptedContent = await serializeMetadata(payload.metadata)
+      const commitTimestamp = toSecondPrecisionIso(now())
 
       const request: UploadRequest = {
         path: metadataPath,
         encryptedContent,
-        message: buildCommitMessage(payload),
+        message: buildCommitMessage(payload, commitTimestamp),
         branch,
       }
 
@@ -380,11 +389,11 @@ function buildDiaryPath(metadata: DiarySyncMetadata): string {
   return `${metadata.year}-summary.md.enc`
 }
 
-function buildDiaryCommitMessage(metadata: DiarySyncMetadata): string {
+function buildDiaryCommitMessage(metadata: DiarySyncMetadata, nowIso: string): string {
   if (metadata.type === 'daily') {
-    return `chore: 手动同步日记 ${metadata.date}`
+    return `chore: 手动同步日记 ${metadata.date} ${nowIso}`
   }
-  return `chore: 手动同步年度总结 ${metadata.year}`
+  return `chore: 手动同步年度总结 ${metadata.year} ${nowIso}`
 }
 
 function isShaMismatchError(error: unknown): boolean {
@@ -635,7 +644,7 @@ export function createDiaryUploadExecutor(
           repo: params.repo,
           path: DEFAULT_METADATA_PATH,
           content: encryptedMetadata,
-          message: defaultBuildCommitMessage(payload),
+          message: defaultBuildCommitMessage(payload, toSecondPrecisionIso(nowIso)),
           branch: targetBranch,
           expectedSha: remoteMetadata.exists ? remoteMetadata.sha : undefined,
           apiBase: params.apiBase,
@@ -658,6 +667,7 @@ export function createDiaryUploadExecutor(
     const metadata = payload.metadata
     const path = buildDiaryPath(metadata)
     const expectedSha = payload.expectedSha?.trim()
+    const commitTimestamp = toSecondPrecisionIso(now())
     const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
     const upsertResult = await upsertGiteeFile({
       token: params.token,
@@ -665,7 +675,7 @@ export function createDiaryUploadExecutor(
       repo: params.repo,
       path,
       content: encryptedContent,
-      message: buildDiaryCommitMessage(metadata),
+      message: buildDiaryCommitMessage(metadata, commitTimestamp),
       branch: targetBranch,
       expectedSha,
       apiBase: params.apiBase,
@@ -814,13 +824,14 @@ export function createDiaryUploadExecutor(
     }
 
     const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
+    const commitTimestamp = toSecondPrecisionIso(now())
     const overwriteResult = await upsertGiteeFile({
       token: params.token,
       owner: params.owner,
       repo: params.repo,
       path,
       content: encryptedContent,
-      message: buildDiaryCommitMessage(metadata),
+      message: buildDiaryCommitMessage(metadata, commitTimestamp),
       branch: targetBranch,
       expectedSha: latestRemote.sha,
       apiBase: params.apiBase,

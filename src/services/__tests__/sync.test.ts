@@ -428,7 +428,7 @@ describe('createUploadMetadataExecutor', () => {
     expect(uploadCall).toMatchObject({
       path: 'metadata.json.enc',
       encryptedContent: 'encrypted:created',
-      message: 'chore: 手动同步 metadata',
+      message: 'chore: 手动同步 metadata 2026-02-09T00:01:00Z',
       branch: 'master',
     })
     expect(Object.prototype.hasOwnProperty.call(uploadCall, 'expectedSha')).toBe(false)
@@ -761,7 +761,9 @@ describe('createDiaryUploadExecutor', () => {
     })
     const uploadRequestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}')) as {
       content: string
+      message: string
     }
+    expect(uploadRequestBody.message).toBe('chore: 手动同步日记 2026-02-09 2026-02-09T10:00:00Z')
     const uploadedPayload = decodeBase64Utf8(uploadRequestBody.content)
     expect(uploadedPayload).not.toBe('# 日记')
   })
@@ -862,6 +864,10 @@ describe('createDiaryUploadExecutor', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-13.md.enc?branch=master')
     expect(fetchMock.mock.calls[1]?.[0]).toContain('metadata.json.enc?ref=master')
     expect(fetchMock.mock.calls[2]?.[0]).toContain('metadata.json.enc?branch=master')
+    const metadataUploadBody = JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body ?? '{}')) as {
+      message: string
+    }
+    expect(metadataUploadBody.message).toBe('chore: 手动同步 metadata 2026-02-09T15:00:00Z')
   })
 
   it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {
