@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import AuthModal from '../components/auth/auth-modal'
 import AppHeader from '../components/common/app-header'
 import MonthlyTrendChart from '../components/stats/monthly-trend-chart'
-import StatsOverviewCard from '../components/stats/stats-overview-card'
+import YearlyActivityHeatmap from '../components/stats/yearly-activity-heatmap'
 import YearlyComparisonChart from '../components/stats/yearly-comparison-chart'
-import YearlyStatsTable from '../components/stats/yearly-stats-table'
+import YearlySummaryCards from '../components/stats/yearly-summary-cards'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useStats } from '../hooks/use-stats'
 import { buildStatsChartModel } from '../utils/stats'
@@ -56,61 +56,66 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
         <AppHeader currentPage="insights" yearlyHref={`/yearly/${currentYear}`} />
 
         <section className="mt-4 space-y-4 td-fade-in" aria-label="insights-page">
-          <article className="td-card-primary td-panel space-y-3">
-            <header className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-2xl text-td-text">写作统计</h2>
-              <button
-                type="button"
-                className="td-btn"
-                onClick={() => setReloadSignal((prev) => prev + 1)}
-                aria-label="刷新统计"
-              >
-                刷新统计
-              </button>
-            </header>
+          <header className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-2xl text-td-text">数据统计</h2>
+            <button
+              type="button"
+              className="td-btn"
+              onClick={() => setReloadSignal((prev) => prev + 1)}
+              aria-label="刷新统计"
+            >
+              刷新统计
+            </button>
+          </header>
 
-            <StatsOverviewCard summary={stats.summary} isLoading={stats.isLoading} error={stats.error} />
-          </article>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-            <article className="td-card-muted td-panel space-y-3">
-              <header className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-display text-xl text-td-text">近 12 个月趋势</h3>
-              </header>
-
-              <div className="grid gap-2 sm:grid-cols-3">
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                  <p className="text-xs text-td-muted">最近月份字数</p>
-                  <p className="mt-1 text-sm text-td-text">{formatNumber(latestMonth?.totalWordCount ?? 0)}</p>
-                </article>
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                  <p className="text-xs text-td-muted">最近月份环比</p>
-                  <p className="mt-1 text-sm text-td-text">{formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}</p>
-                </article>
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
-                  <p className="text-xs text-td-muted">近 3 月平均字数</p>
-                  <p className="mt-1 text-sm text-td-text">{formatNumber(trailingQuarterAverage)}</p>
-                </article>
-              </div>
-
-              <MonthlyTrendChart items={chartModel.monthly} isLoading={stats.isLoading} />
-            </article>
-
-            <article className="td-card-muted td-panel space-y-3">
-              <header className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-display text-xl text-td-text">年度对比</h3>
-              </header>
-
-              <YearlyComparisonChart items={chartModel.yearly} isLoading={stats.isLoading} />
-            </article>
-          </div>
+          {stats.error ? (
+            <p className="rounded-[10px] border border-[#f4d1d1] bg-[#fff4f4] px-3 py-2 text-sm text-[#a63f3f]">
+              统计读取失败：{stats.error}
+            </p>
+          ) : null}
 
           <article className="td-card-muted td-panel space-y-3">
             <header className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-display text-xl text-td-text">年度汇总</h3>
+              <h3 className="font-display text-xl text-td-text">近 12 个月趋势</h3>
             </header>
 
-            <YearlyStatsTable items={stats.summary.yearlyItems} isLoading={stats.isLoading} />
+            <div className="grid gap-2 sm:grid-cols-3">
+              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                <p className="text-xs text-td-muted">最近月份字数</p>
+                <p className="mt-1 text-sm text-td-text">{formatNumber(latestMonth?.totalWordCount ?? 0)}</p>
+              </article>
+              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                <p className="text-xs text-td-muted">最近月份环比</p>
+                <p className="mt-1 text-sm text-td-text">{formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}</p>
+              </article>
+              <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                <p className="text-xs text-td-muted">近 3 月平均字数</p>
+                <p className="mt-1 text-sm text-td-text">{formatNumber(trailingQuarterAverage)}</p>
+              </article>
+            </div>
+
+            <MonthlyTrendChart items={chartModel.monthly} isLoading={stats.isLoading} />
+          </article>
+
+          <article className="td-card-muted td-panel space-y-3">
+            <header className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-display text-xl text-td-text">年度对比</h3>
+            </header>
+
+            <YearlyComparisonChart items={chartModel.yearly} isLoading={stats.isLoading} />
+          </article>
+
+          <article className="td-card-muted td-panel space-y-4">
+            <header className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-display text-xl text-td-text">年度洞察</h3>
+            </header>
+
+            <YearlySummaryCards items={stats.summary.yearlyItems} isLoading={stats.isLoading} />
+            <YearlyActivityHeatmap
+              records={stats.records}
+              yearlyItems={stats.summary.yearlyItems}
+              isLoading={stats.isLoading}
+            />
           </article>
         </section>
       </main>
