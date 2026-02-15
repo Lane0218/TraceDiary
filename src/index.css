@@ -183,11 +183,6 @@
     background-color: var(--td-surface-soft);
   }
 
-  .td-import-progress {
-    @apply mt-2 text-xs;
-    color: #4f4a42;
-  }
-
   .td-import-conflict-card {
     @apply rounded-[10px] border px-3 py-2.5;
     border-color: #d6cec0;
@@ -413,36 +408,6 @@
     mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), transparent 72%);
   }
 
-  .td-export-eyebrow {
-    margin: 0;
-    display: inline-flex;
-    width: fit-content;
-    border-radius: 999px;
-    border: 1px solid rgba(86, 74, 49, 0.22);
-    background: rgba(255, 255, 255, 0.72);
-    padding: 2px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    color: #5f5035;
-  }
-
-  .td-export-subtitle {
-    margin: 0;
-    max-width: 66ch;
-    color: #57534e;
-    font-size: 14px;
-  }
-
-  .td-export-subtitle code {
-    border-radius: 6px;
-    border: 1px solid rgba(87, 83, 78, 0.2);
-    background: rgba(255, 255, 255, 0.7);
-    padding: 1px 6px;
-    font-size: 12px;
-    color: #3f3a30;
-  }
-
   .td-export-actions {
     display: flex;
     flex-wrap: wrap;
@@ -463,12 +428,6 @@
     border-color: #2c2922;
     background: #2c2922;
     box-shadow: 0 10px 22px rgba(44, 41, 34, 0.22);
-  }
-
-  .td-export-warning {
-    margin: 0;
-    font-size: 13px;
-    color: #625f57;
   }
 
   .td-export-result {

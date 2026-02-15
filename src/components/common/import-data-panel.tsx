@@ -27,8 +27,6 @@ interface ImportExecutionState {
   uploadSkippedReason: string | null
 }
 
-const IMPORT_IDLE_HINT = '支持导入 .md/.txt'
-
 function uniqueEntryIds(entryIds: string[]): string[] {
   return [...new Set(entryIds)]
 }
@@ -37,7 +35,6 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
   const { push: pushToast } = useToast()
   const importFileInputRef = useRef<HTMLInputElement | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-  const [importProgressLabel, setImportProgressLabel] = useState<string | null>(null)
   const [importReadyCandidates, setImportReadyCandidates] = useState<ImportCandidateEntry[]>([])
   const [importConflictQueue, setImportConflictQueue] = useState<ImportConflictItem[]>([])
   const [importConflictIndex, setImportConflictIndex] = useState(0)
@@ -110,7 +107,12 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
       const candidatesToPersist = [...input.readyCandidates, ...overwriteCandidates]
 
       setIsImporting(true)
-      setImportProgressLabel('正在写入本地数据...')
+      pushToast({
+        kind: 'push',
+        level: 'info',
+        message: '导入处理中...',
+        autoDismiss: false,
+      })
       try {
         const applyResult = await applyImportCandidates(candidatesToPersist, {
           loadExistingDiary: getDiary,
@@ -159,9 +161,6 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
             uploadDiary: uploadMetadata,
             loadBaseline: (entryId) => getSyncBaseline(entryId),
             saveBaseline: (baseline) => saveSyncBaseline(baseline),
-            onProgress: ({ current, total }) => {
-              setImportProgressLabel(`正在自动上传 ${current}/${total}`)
-            },
           })
 
           if (uploadResult.failed.length > 0) {
@@ -187,7 +186,7 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
 
         if (importResult.success.length === 0) {
           pushToast({
-            kind: 'system',
+            kind: 'push',
             level: 'warning',
             message: '本次未导入任何有效条目',
           })
@@ -207,14 +206,13 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
           uploadSkippedReason: '未执行自动上传：导入流程异常终止。',
         })
         pushToast({
-          kind: 'system',
+          kind: 'push',
           level: 'error',
           message: `导入失败：${reason}`,
         })
       } finally {
         resetImportSession()
         setIsImporting(false)
-        setImportProgressLabel(null)
       }
     },
     [canSyncToRemote, pushToast, resetImportSession, syncDisabledMessage, uploadMetadata],
@@ -238,7 +236,12 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
     async (files: File[]) => {
       setImportExecutionState(null)
       setIsImporting(true)
-      setImportProgressLabel('正在读取导入文件...')
+      pushToast({
+        kind: 'push',
+        level: 'info',
+        message: '导入处理中...',
+        autoDismiss: false,
+      })
 
       try {
         const sourceResults = await Promise.all(
@@ -289,16 +292,19 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
             uploadResult: null,
             uploadSkippedReason: '未执行自动上传：没有可导入的有效条目。',
           })
-          setImportProgressLabel(null)
           setIsImporting(false)
+          pushToast({
+            kind: 'push',
+            level: 'warning',
+            message: '未找到可导入内容',
+          })
           return
         }
 
         if (preview.conflicts.length > 0) {
-          setImportProgressLabel(null)
           setIsImporting(false)
           pushToast({
-            kind: 'system',
+            kind: 'push',
             level: 'info',
             message: `检测到 ${preview.conflicts.length} 条冲突，请逐条确认。`,
           })
@@ -316,10 +322,9 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
       } catch (error) {
         const reason = error instanceof Error ? error.message : '未知错误'
         resetImportSession()
-        setImportProgressLabel(null)
         setIsImporting(false)
         pushToast({
-          kind: 'system',
+          kind: 'push',
           level: 'error',
           message: `读取导入文件失败：${reason}`,
         })
@@ -397,13 +402,11 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
   return (
     <>
       <article className="td-card-primary td-panel td-export-panel" aria-label="settings-import-panel">
-        <header className="space-y-2">
-          <p className="td-export-eyebrow">DATA IMPORT</p>
-          <h3 className="font-display text-2xl text-td-text">导入日记数据</h3>
-          <p className="td-export-subtitle">批量导入 `.md/.txt`，支持自动上传。</p>
+        <header>
+          <h3 className="font-display text-2xl text-td-text">导入</h3>
         </header>
 
-        <div className="td-export-actions">
+        <div className="td-export-actions mt-3">
           <button
             type="button"
             className="td-btn td-export-btn"
@@ -411,14 +414,12 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
             disabled={isImporting}
             data-testid="settings-import-button"
           >
-            {isImporting ? '正在处理导入...' : '导入 .md/.txt'}
+            <span className={`td-sync-control-btn-label ${isImporting ? 'is-running' : ''}`}>
+              {isImporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+              <span>导入</span>
+            </span>
           </button>
-          <p className="td-export-warning">冲突会逐条确认，不会直接覆盖。</p>
         </div>
-
-        <p className="td-import-progress" data-testid="import-progress-label">
-          {importProgressLabel ?? (isImporting ? '处理中...' : IMPORT_IDLE_HINT)}
-        </p>
 
         <input
           ref={importFileInputRef}

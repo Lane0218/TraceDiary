@@ -64,6 +64,12 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
     }
 
     setIsExporting(true)
+    pushToast({
+      kind: 'system',
+      level: 'info',
+      message: '导出处理中...',
+      autoDismiss: false,
+    })
     try {
       const result = await exportDiaryData()
       setLastResult(result)
@@ -104,15 +110,11 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
 
   return (
     <article className="td-card-primary td-panel td-export-panel" aria-label="settings-export-panel">
-      <header className="space-y-2">
-        <p className="td-export-eyebrow">DATA EXPORT</p>
-        <h3 className="font-display text-2xl text-td-text">导出日记数据</h3>
-        <p className="td-export-subtitle">
-          导出日记与年度总结为明文 Markdown（含 <code>manifest.json</code>）。
-        </p>
+      <header>
+        <h3 className="font-display text-2xl text-td-text">导出</h3>
       </header>
 
-      <div className="td-export-actions">
+      <div className="td-export-actions mt-3">
         <button
           type="button"
           className="td-btn td-export-btn"
@@ -122,9 +124,11 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
           disabled={!canExport}
           data-testid="settings-export-button"
         >
-          {isExporting ? '正在打包导出...' : '导出明文 ZIP'}
+          <span className={`td-sync-control-btn-label ${isExporting ? 'is-running' : ''}`}>
+            {isExporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+            <span>导出</span>
+          </span>
         </button>
-        <p className="td-export-warning">明文文件，请妥善保管。</p>
       </div>
 
       {lastResult ? (
