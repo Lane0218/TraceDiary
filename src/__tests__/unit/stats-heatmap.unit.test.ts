@@ -97,4 +97,15 @@ describe('buildYearlyHeatmapModel', () => {
     expect(model.maxWordCount).toBe(0)
     expect(day?.intensity).toBe(0)
   })
+
+  it('应按周一作为每周起始构建网格', () => {
+    const model = buildYearlyHeatmapModel([], 2026)
+    const firstWeek = model.weeks[0]
+    const firstDayOfYear = findCell(model, '2026-01-01')
+
+    expect(firstWeek.days[0]).toBeNull()
+    expect(firstWeek.days[1]).toBeNull()
+    expect(firstWeek.days[2]).toBeNull()
+    expect(firstDayOfYear?.dayOfWeek).toBe(3)
+  })
 })

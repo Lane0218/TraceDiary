@@ -244,6 +244,11 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('insights-yearly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-summary-cards')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap')).toBeVisible()
+  await expect(page.getByLabel('热力图年份减一')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '热力图年份' })).toBeVisible()
+  await expect(page.getByLabel('热力图年份加一')).toBeVisible()
+  await expect(page.getByTestId('insights-yearly-heatmap-side-panel')).toBeVisible()
+  await expect(page.getByTestId('insights-yearly-heatmap-weekday-axis').locator('span').first()).toHaveText('一')
   const monthlyChartOverflow = await page.getByTestId('insights-monthly-chart-frame').evaluate((element) => {
     return element.scrollWidth - element.clientWidth
   })
