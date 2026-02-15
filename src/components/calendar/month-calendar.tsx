@@ -106,9 +106,6 @@ export function MonthCalendar({
           <div className="absolute left-1/2 top-12 z-20 -translate-x-1/2">
             <div className="w-[244px] rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
               <div className="mb-2.5 flex items-center gap-2">
-                <label htmlFor="month-picker-year" className="text-xs text-td-muted">
-                  年份
-                </label>
                 <div className="inline-flex h-9 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
                   <button
                     type="button"
@@ -124,6 +121,7 @@ export function MonthCalendar({
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
+                    aria-label="年份"
                     value={draftYearInput}
                     onChange={(event) => {
                       const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
@@ -155,10 +153,25 @@ export function MonthCalendar({
                 </div>
                 <button
                   type="button"
-                  className="ml-auto rounded-[8px] border border-[#d2d2d2] bg-white px-2 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                  aria-label="回到本月"
+                  title="回到本月"
+                  className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#d2d2d2] bg-white text-td-muted transition hover:border-[#bcbcbc] hover:bg-[#fafafa] hover:text-td-text"
                   onClick={resetToCurrentMonth}
                 >
-                  回到本月
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.35"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2.5" y="3.5" width="11" height="10" rx="1.8" />
+                    <path d="M5 2.5v2M11 2.5v2M2.5 6.5h11" />
+                    <circle cx="8" cy="10.2" r="1.35" fill="currentColor" stroke="none" />
+                  </svg>
                 </button>
               </div>
 
