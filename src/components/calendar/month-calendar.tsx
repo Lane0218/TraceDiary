@@ -168,9 +168,8 @@ export function MonthCalendar({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <rect x="2.5" y="3.5" width="11" height="10" rx="1.8" />
-                    <path d="M5 2.5v2M11 2.5v2M2.5 6.5h11" />
-                    <circle cx="8" cy="10.2" r="1.35" fill="currentColor" stroke="none" />
+                    <path d="M6.2 4.6L3.2 7.6l3 3" />
+                    <path d="M3.6 7.6h5.7A3.7 3.7 0 0 1 13 11.3v.9" />
                   </svg>
                 </button>
               </div>
