@@ -67,7 +67,7 @@ export default function ImportResultDialog({
               关闭
             </button>
           </div>
-          <p className="mt-1 text-sm text-td-muted">本次导入与自动上传的执行结果如下。</p>
+          <p className="mt-1 text-sm text-td-muted">导入与上传结果如下。</p>
         </header>
 
         <section className="space-y-3 px-4 py-4 sm:px-5">

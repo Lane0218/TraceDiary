@@ -7,7 +7,7 @@ interface ExportDataPanelProps {
   auth: UseAuthResult
 }
 
-const EXPORT_CONFIRM_MESSAGE = '导出文件为明文，请妥善保管导出文件。确认立即导出吗？'
+const EXPORT_CONFIRM_MESSAGE = '将导出明文文件，确认继续？'
 
 function formatExportedAt(value: string): string {
   const date = new Date(value)
@@ -108,7 +108,7 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
         <p className="td-export-eyebrow">DATA EXPORT</p>
         <h3 className="font-display text-2xl text-td-text">导出日记数据</h3>
         <p className="td-export-subtitle">
-          将本地已解密日记与年度总结导出为明文 Markdown（含 <code>manifest.json</code>）。
+          导出日记与年度总结为明文 Markdown（含 <code>manifest.json</code>）。
         </p>
       </header>
 
@@ -124,7 +124,7 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
         >
           {isExporting ? '正在打包导出...' : '导出明文 ZIP'}
         </button>
-        <p className="td-export-warning">导出产物为明文，请仅在可信设备中存储与传输。</p>
+        <p className="td-export-warning">明文文件，请妥善保管。</p>
       </div>
 
       {lastResult ? (

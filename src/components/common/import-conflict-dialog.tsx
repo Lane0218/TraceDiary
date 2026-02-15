@@ -35,14 +35,12 @@ export default function ImportConflictDialog({
       <article className="td-card w-full max-w-2xl bg-td-bg shadow-card" aria-label="import-conflict-dialog" data-testid="import-conflict-dialog">
         <header className="border-b border-td-line px-4 py-3 sm:px-5">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg text-td-text">导入冲突确认</h2>
+            <h2 className="text-lg text-td-text">导入冲突</h2>
             <button type="button" className="td-btn px-2 py-1 text-xs" onClick={onClose}>
-              结束导入
+              结束
             </button>
           </div>
-          <p className="mt-1 text-sm text-td-muted">
-            第 {currentIndex}/{total} 条冲突：请选择覆盖本地或跳过该文件。
-          </p>
+          <p className="mt-1 text-sm text-td-muted">第 {currentIndex}/{total} 条：覆盖或跳过。</p>
         </header>
 
         <section className="space-y-3 px-4 py-4 sm:px-5">
@@ -59,7 +57,7 @@ export default function ImportConflictDialog({
 
           <div className="flex flex-wrap gap-2">
             <button type="button" className="td-btn" onClick={onSkip} data-testid="import-conflict-skip">
-              跳过此条
+              跳过
             </button>
             <button
               type="button"

@@ -27,7 +27,7 @@ interface ImportExecutionState {
   uploadSkippedReason: string | null
 }
 
-const IMPORT_IDLE_HINT = '支持批量导入 .md/.txt，导入后自动上传本次条目'
+const IMPORT_IDLE_HINT = '支持导入 .md/.txt'
 
 function uniqueEntryIds(entryIds: string[]): string[] {
   return [...new Set(entryIds)]
@@ -400,7 +400,7 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
         <header className="space-y-2">
           <p className="td-export-eyebrow">DATA IMPORT</p>
           <h3 className="font-display text-2xl text-td-text">导入日记数据</h3>
-          <p className="td-export-subtitle">支持批量导入 `.md/.txt`，导入后会自动尝试上传本次条目。</p>
+          <p className="td-export-subtitle">批量导入 `.md/.txt`，支持自动上传。</p>
         </header>
 
         <div className="td-export-actions">
@@ -413,7 +413,7 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
           >
             {isImporting ? '正在处理导入...' : '导入 .md/.txt'}
           </button>
-          <p className="td-export-warning">如遇同键冲突将逐条确认覆盖/跳过，不会直接覆盖本地内容。</p>
+          <p className="td-export-warning">冲突会逐条确认，不会直接覆盖。</p>
         </div>
 
         <p className="td-import-progress" data-testid="import-progress-label">
