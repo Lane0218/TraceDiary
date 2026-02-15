@@ -230,7 +230,7 @@ describe('年度总结页面', () => {
     })
   })
 
-  it('手动上传进行中再次点击应提示忙碌而非无响应', async () => {
+  it('手动上传进行中应禁用 pull/push 按钮，避免重复触发', async () => {
     let resolveUpload!: (value: { ok: true; conflict: false; syncedAt: string }) => void
     createDiaryUploadExecutorMock.mockImplementation(
       () =>
@@ -252,18 +252,18 @@ describe('年度总结页面', () => {
     await waitFor(() => {
       expect(screen.getByTestId('toast-push')).toHaveTextContent('手动上传已触发，正在等待结果...')
       const uploadingButton = screen.getByRole('button', { name: 'pushing...' }) as HTMLButtonElement
-      expect(uploadingButton.disabled).toBe(false)
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: 'pushing...' }))
-    await waitFor(() => {
-      expect(screen.getByTestId('toast-push')).toHaveTextContent('当前正在上传，请稍候重试')
+      const pullButton = screen.getByRole('button', { name: 'pull' }) as HTMLButtonElement
+      expect(uploadingButton.disabled).toBe(true)
+      expect(pullButton.disabled).toBe(true)
     })
 
     resolveUpload({ ok: true, conflict: false, syncedAt: '2026-02-09T01:00:00.000Z' })
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'push' })).toBeTruthy()
+      const pushButton = screen.getByRole('button', { name: 'push' }) as HTMLButtonElement
+      const pullButton = screen.getByRole('button', { name: 'pull' }) as HTMLButtonElement
+      expect(pushButton.disabled).toBe(false)
+      expect(pullButton.disabled).toBe(false)
       expect(screen.getByTestId('toast-push')).toHaveTextContent('push 已完成，同步成功')
     })
   })

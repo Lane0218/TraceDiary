@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-15`
-- 总任务：`121`
-- 状态统计：`DONE=105` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`122`
+- 状态统计：`DONE=106` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
@@ -161,6 +161,7 @@
 | `TD-UI-033` | `DONE` | 统一三页导航栏并将“会话”改为“设置”（进入设置页进行配置） | 日记/年度总结/统计三页使用同一导航结构；顶部移除“会话状态胶囊”；“设置”入口统一跳转设置页；设置页可完成配置并保留锁定入口；整体视觉保持当前简约风格 | `src/components/common/app-header.tsx` `src/pages/settings.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/pages/insights.tsx` `src/App.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（56/56）；`npm run test:e2e:full` 通过（22/22） | `2026-02-14 / 97228db` |
 | `TD-UI-034` | `DONE` | 优化月历年份步进控件为“箭头按钮 + 输入框”并保留直输跳转 | 年份选择器支持点击左右箭头按年增减；保留输入合法年份即时跳转；边界年份按钮禁用且样式清晰；整体视觉与现有中性风格一致 | `src/components/calendar/month-calendar.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-15 / 81550f7` |
 | `TD-UI-035` | `DONE` | 精简年月弹层文案：移除“年份”标签并将“回到本月”改为图标按钮 | 弹层中年份区域不再显示“年份”字样；回到当前月份入口改为仅图标按钮且具备可访问名称；保留年份输入与箭头步进全部功能 | `src/components/calendar/month-calendar.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（116/116，含 `.worktrees` 重复测试文件）；`npm run test:integration` 通过（114/114，含 `.worktrees` 重复测试文件）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-15 / 65445f5` |
+| `TD-UI-036` | `DONE` | 点击 pull/push 任一按钮后，两个按钮在进行中同时禁用 | 触发 pull 或 push 后，两按钮均立即进入禁用态；请求结束后恢复；不影响现有成功/失败提示与冲突流程 | `src/components/common/sync-control-bar.tsx` `src/index.css` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-busy-clear.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npm run test:e2e:fast` 首次失败（新 worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/push-pull-dual-disable --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan-push-pull-dual-disable --e2e-cmd \"npm run test:e2e:fast\"` 后重跑通过（4/4） | `2026-02-15 / 28ebb5d` |
 
 ### 6.9 数据导入（v1.1）
 

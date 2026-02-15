@@ -12,7 +12,7 @@ import { getE2EEnv } from '../fixtures/env'
 
 const TEST_DATE = '2100-01-02'
 
-test('手动上传并发触发忙碌提示后，toast 应被成功消息覆盖', async ({ page }) => {
+test('手动上传进行中应禁用 pull/push，完成后恢复并提示成功', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-busy-clear')
 
@@ -47,12 +47,13 @@ test('手动上传并发触发忙碌提示后，toast 应被成功消息覆盖',
   try {
     await clickManualSync(page)
     await expect(page.getByRole('button', { name: 'pushing...' })).toBeVisible()
-
-    await clickManualSync(page)
-    await expect(page.getByTestId('toast-push')).toContainText('当前正在上传，请稍候重试')
+    await expect(page.getByTestId('manual-sync-button')).toBeDisabled()
+    await expect(page.getByTestId('manual-pull-button')).toBeDisabled()
 
     releaseFirstUpload()
     await expectSyncSuccess(page)
+    await expect(page.getByTestId('manual-sync-button')).toBeEnabled()
+    await expect(page.getByTestId('manual-pull-button')).toBeEnabled()
     await expect(page.getByTestId('toast-push')).toContainText('push 已完成，同步成功')
   } finally {
     releaseFirstUpload?.()
