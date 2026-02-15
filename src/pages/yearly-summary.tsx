@@ -33,13 +33,27 @@ interface YearlySummaryPageProps {
 }
 
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
+const MIN_YEAR = 1970
+const MAX_YEAR = 9999
+const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
-  if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+  if (Number.isFinite(parsed) && parsed >= MIN_YEAR && parsed <= MAX_YEAR) {
     return parsed
   }
   return fallbackYear
+}
+
+function parseValidYearInput(value: string): number | null {
+  if (value.length === 0) {
+    return null
+  }
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isFinite(parsed) || parsed < MIN_YEAR || parsed > MAX_YEAR) {
+    return null
+  }
+  return parsed
 }
 
 export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
@@ -63,6 +77,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
+  const [yearInput, setYearInput] = useState(String(year))
   const summary = useDiary({ type: 'yearly_summary', year })
   const syncPayload = useMemo<DiarySyncMetadata>(
     () => ({
@@ -136,6 +151,10 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }, [canSyncToRemote, setActiveSyncMetadata, syncPayload])
 
   useEffect(() => {
+    setYearInput(String(year))
+  }, [year])
+
+  useEffect(() => {
     setPullActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'pull'))
     setPushActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'push'))
   }, [summary.entryId])
@@ -152,7 +171,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   )
 
   const handleYearChange = (nextYear: number) => {
-    if (!Number.isFinite(nextYear) || nextYear < 1970 || nextYear > 9999) {
+    if (!Number.isFinite(nextYear) || nextYear < MIN_YEAR || nextYear > MAX_YEAR || nextYear === year) {
       return
     }
     navigate(`/yearly/${nextYear}`)
@@ -557,72 +576,90 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
         <AppHeader currentPage="yearly" yearlyHref={`/yearly/${year}`} />
 
-        <section className="mt-4 space-y-3 td-fade-in" aria-label="yearly-summary-page">
-          <article className="td-card-primary td-panel space-y-4">
-            <header className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display text-2xl text-td-text sm:text-3xl">{year} 年度总结</h2>
+        <section
+          className="mt-4 space-y-3 td-fade-in lg:flex lg:min-h-[calc(100vh-150px)] lg:flex-col"
+          aria-label="yearly-summary-page"
+        >
+          <SyncControlBar
+            statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
+            pullStatusLabel={pullStatusLabel}
+            pushStatusLabel={pushStatusLabel}
+            pullStatusToneClass={pullStatusToneClass}
+            pushStatusToneClass={pushStatusToneClass}
+            isPulling={isManualPulling}
+            isPushing={isManualSyncing}
+            onPull={() => {
+              void pullNow()
+            }}
+            onPush={() => {
+              void saveNow()
+            }}
+          />
+
+          <article className="td-card-primary td-panel flex flex-col lg:min-h-0 lg:flex-1" data-testid="yearly-panel">
+            <header className="mb-3 flex flex-wrap items-center gap-2">
+              <h2 className="font-display text-2xl text-td-text sm:text-3xl">{year} 年度总结</h2>
+              <div className="inline-flex h-10 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
                 <button
                   type="button"
-                  className="td-btn"
+                  aria-label="年份减一"
+                  disabled={year <= MIN_YEAR}
+                  className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
                   onClick={() => handleYearChange(year - 1)}
-                  aria-label="上一年"
                 >
-                  上一年
+                  &#8249;
                 </button>
-                <button
-                  type="button"
-                  className="td-btn"
-                  onClick={() => handleYearChange(year + 1)}
-                  aria-label="下一年"
-                >
-                  下一年
-                </button>
-                <label htmlFor="summary-year" className="text-xs text-td-muted">
-                  跳转年份
-                </label>
                 <input
                   id="summary-year"
-                  type="number"
-                  min={1970}
-                  max={9999}
-                  value={year}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  aria-label="跳转年份"
+                  value={yearInput}
                   onChange={(event) => {
-                    const parsed = Number.parseInt(event.target.value, 10)
-                    if (Number.isFinite(parsed) && parsed >= 1970 && parsed <= 9999) {
+                    const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
+                    setYearInput(sanitized)
+                    const parsed = parseValidYearInput(sanitized)
+                    if (parsed !== null) {
                       handleYearChange(parsed)
                     }
                   }}
-                  className="td-input w-28"
+                  onBlur={() => {
+                    const parsed = parseValidYearInput(yearInput)
+                    if (parsed === null) {
+                      setYearInput(String(year))
+                      return
+                    }
+                    setYearInput(String(parsed))
+                  }}
+                  className="h-full w-[92px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[18px] font-semibold text-td-text outline-none"
                 />
+                <button
+                  type="button"
+                  aria-label="年份加一"
+                  disabled={year >= MAX_YEAR}
+                  className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                  onClick={() => handleYearChange(year + 1)}
+                >
+                  &#8250;
+                </button>
               </div>
-
-              <SyncControlBar
-                statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
-                pullStatusLabel={pullStatusLabel}
-                pushStatusLabel={pushStatusLabel}
-                pullStatusToneClass={pullStatusToneClass}
-                pushStatusToneClass={pushStatusToneClass}
-                isPulling={isManualPulling}
-                isPushing={isManualSyncing}
-                onPull={() => {
-                  void pullNow()
-                }}
-                onPush={() => {
-                  void saveNow()
-                }}
-              />
             </header>
 
-            {!summary.isLoading ? (
-              <MarkdownEditor
-                key={`${summary.entryId}:${summary.loadRevision}`}
-                docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
-                initialValue={summary.content}
-                onChange={handleEditorChange}
-                placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
-              />
-            ) : null}
+            <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
+              {!summary.isLoading ? (
+                <MarkdownEditor
+                  key={`${summary.entryId}:${summary.loadRevision}`}
+                  docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
+                  initialValue={summary.content}
+                  onChange={handleEditorChange}
+                  placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
+                  modeToggleClassName="mb-5"
+                  viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
+                  fillHeight
+                />
+              ) : null}
+            </div>
           </article>
         </section>
       </main>
