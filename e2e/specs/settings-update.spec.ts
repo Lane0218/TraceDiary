@@ -32,12 +32,14 @@ test('ready 状态下应可在设置页更新仓库与分支（不改 token）',
 
   await page.getByTestId('app-nav-settings').click()
   await expect(page.getByLabel('settings-page')).toBeVisible()
+  await expect(page.getByText('READY')).toHaveCount(0)
+  await expect(page.getByText(/^状态：\s*ready$/)).toHaveCount(0)
 
   const nextBranch = env.branch === 'master' ? 'main' : 'master'
   await page.getByTestId('auth-ready-repo-input').fill(`${env.owner}/${env.repo}`)
   await page.getByTestId('auth-ready-branch-input').fill(nextBranch)
   await page.getByTestId('auth-ready-token-input').fill('')
-  await page.getByTestId('auth-ready-password-input').fill('')
+  await expect(page.getByTestId('auth-ready-password-input')).toHaveCount(0)
   await page.getByTestId('auth-ready-submit').click()
   await page.waitForFunction(
     ({ key, branch }) => {
@@ -74,6 +76,7 @@ test('ready 状态下应可在设置页更新 token', async ({ page }) => {
   await page.getByTestId('auth-ready-repo-input').fill(`${env.owner}/${env.repo}`)
   await page.getByTestId('auth-ready-branch-input').fill(env.branch)
   await page.getByTestId('auth-ready-token-input').fill(env.token)
+  await expect(page.getByTestId('auth-ready-password-input')).toBeVisible()
   await page.getByTestId('auth-ready-password-input').fill(env.masterPassword)
   await page.getByTestId('auth-ready-submit').click()
   await page.waitForFunction(
