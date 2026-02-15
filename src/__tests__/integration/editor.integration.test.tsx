@@ -109,6 +109,7 @@ function buildAuthResult(overrides?: Partial<UseAuthResult['state']>): UseAuthRe
     initializeFirstTime: vi.fn(async () => {}),
     unlockWithMasterPassword: vi.fn(async () => {}),
     updateTokenCiphertext: vi.fn(async () => {}),
+    updateConnectionSettings: vi.fn(async () => {}),
     lockNow: vi.fn(),
     clearError: vi.fn(),
   }
