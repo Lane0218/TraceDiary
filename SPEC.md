@@ -7,7 +7,7 @@
 - **项目名称**：TraceDiary
 - **版本**：Web 版 v1.0
 - **架构类型**：纯前端 Web 应用 + Gitee 私有仓库存储
-- **更新日期**：2026-02-11
+- **更新日期**：2026-02-15
 
 ---
 
@@ -16,9 +16,9 @@
 1. [项目概述](#1-项目概述)：定义产品定位、目标用户、MVP 范围与核心成功指标，明确本项目的业务边界。
 2. [技术栈](#2-技术栈)：说明前端框架、编辑器、数据层、PWA 与部署平台的选型及其职责。
 3. [架构设计](#3-架构设计)：描述浏览器端加密架构、读写数据流、远端仓库结构与状态管理策略。
-4. [核心功能](#4-核心功能)：细化认证初始化、日记编辑、年度总结、日历导航、往年今日、导入与冲突处理行为。
-5. [数据结构](#5-数据结构)：给出类型定义、IndexedDB 设计和同步接口约定，作为实现时的数据契约。
-6. [用户流程](#6-用户流程)：用流程图串联首次使用、日常使用、跨设备同步与批量导入，强调关键状态转换节点。
+4. [核心功能](#4-核心功能)：细化认证初始化、日记编辑、年度总结、日历导航、往年今日、导入/导出与冲突处理行为。
+5. [数据结构](#5-数据结构)：给出类型定义、IndexedDB 设计和同步/导入/导出接口约定，作为实现时的数据契约。
+6. [用户流程](#6-用户流程)：用流程图串联首次使用、日常使用、跨设备同步、批量导入与明文导出，强调关键状态转换节点。
 7. [安全与隐私](#7-安全与隐私)：规范加密方案、凭证存储、密码策略与公网访问控制要求。
 8. [部署方案](#8-部署方案)：定义构建参数、Vercel 配置、安全响应头和 PWA 发布相关配置。
 9. [开发规范](#9-开发规范)：约束代码风格、目录结构、提交规范与测试覆盖要求。
@@ -398,6 +398,41 @@ diary-data/                    # 用户的私有仓库名称
   - 失败条目列表与失败原因
 - 系统负责自动生成并维护 metadata，用户无需手工编写 JSON 文件
 
+### 4.8 数据导出（v1.1）
+
+#### 4.8.1 导出入口与流程
+
+1. 用户在设置页或日记页点击“导出数据”
+2. 系统校验当前会话已解锁（可访问数据加密密钥）
+3. 从 IndexedDB 读取全部已解密条目（`daily` + `yearly_summary`）
+4. 按导出命名规则生成明文 Markdown 文件与 `manifest.json`
+5. 生成压缩包 `trace-diary-export-YYYYMMDD-HHmmss.zip`
+6. 浏览器触发下载并展示导出结果（成功/失败）
+
+#### 4.8.2 导出文件组织与命名
+
+- 日常日记导出路径：`diaries/YYYY-MM-DD.md`
+- 年度总结导出路径：`summaries/YYYY-summary.md`
+- 附带清单文件：`manifest.json`（记录导出时间、条目数量、条目索引）
+- 文本编码统一为 UTF-8（LF 换行），内容保持可直接阅读的 Markdown 明文
+- 空内容条目允许导出为空文件，不因单条空内容中断全量导出
+
+#### 4.8.3 安全与隐私策略
+
+- 导出产物为明文，不做二次加密；导出前必须提示“请妥善保管导出文件”
+- 导出过程全部在前端本地完成，不调用 Gitee API，不上传任何导出内容
+- 导出操作不修改本地数据与远端仓库状态，不触发 Push/Pull
+
+#### 4.8.4 失败与反馈
+
+- 会话未解锁：阻止导出并提示先输入主密码
+- 无可导出数据：提示“暂无可导出的日记数据”，不生成空压缩包
+- 单条序列化失败：记录失败明细并继续导出其它条目
+- 导出结果需包含：
+  - 成功导出的条目数与条目列表
+  - 失败条目列表与失败原因
+  - 导出压缩包文件名与导出时间
+
 ---
 
 ## 5. 数据结构
@@ -574,6 +609,47 @@ interface ImportResult {
 - 导入流程复用现有 `DiaryEntry` / `MetadataEntry` 存储结构，不新增持久化 schema
 - metadata 由系统自动创建与更新，不对用户暴露编辑入口
 
+### 5.5 导出接口约定（v1.1）
+
+```typescript
+interface ExportFileItem {
+  entryId: string;            // daily:YYYY-MM-DD 或 summary:YYYY
+  type: 'daily' | 'yearly_summary';
+  path: string;               // 压缩包内相对路径（如 diaries/2026-02-08.md）
+  filename: string;           // 纯文件名
+  content: string;            // Markdown 明文内容
+  modifiedAt: string;         // ISO 8601
+  wordCount: number;
+}
+
+interface ExportManifest {
+  version: '1.1';
+  exportedAt: string;         // ISO 8601
+  archiveName: string;        // trace-diary-export-YYYYMMDD-HHmmss.zip
+  entryCount: number;
+  dailyCount: number;
+  yearlySummaryCount: number;
+  files: Array<{
+    entryId: string;
+    path: string;
+    modifiedAt: string;
+    wordCount: number;
+  }>;
+}
+
+interface ExportResult {
+  archiveName: string;
+  success: string[];          // 成功导出的 entryId
+  failed: Array<{ entryId: string; reason: string }>;
+}
+```
+
+说明：
+
+- 导出文件名规则与 4.7 导入规则保持一致，可直接回导
+- 导出读取来源为 IndexedDB 中的解密内容，不读取远端 `.enc` 密文作为输出
+- `manifest.json` 仅用于导出包内索引说明，不写回业务 metadata
+
 ---
 
 ## 6. 用户流程
@@ -662,6 +738,22 @@ interface ImportResult {
 系统自动更新 metadata（用户无需 JSON 清单）
     ↓
 展示导入汇总（成功/覆盖/跳过/失败）
+```
+
+### 6.5 明文导出流程图（v1.1）
+
+```
+用户点击“导出数据”
+    ↓
+校验当前会话已解锁
+    ↓
+从 IndexedDB 读取解密后的日记与年度总结
+    ↓
+生成明文文件（diaries/*.md, summaries/*-summary.md）
+    ↓
+生成 manifest.json 并打包为 zip
+    ↓
+触发浏览器下载并展示导出结果
 ```
 
 ---
@@ -970,6 +1062,14 @@ src/
 - [ ] 同键冲突支持逐条确认（覆盖/跳过）
 - [ ] 无效命名文件被跳过并在结果中给出原因
 - [ ] metadata 自动更新，无需用户提供或编辑 JSON 清单
+
+#### 数据导出（v1.1）
+
+- [ ] 支持一键导出解密后的明文数据（非 `.enc` 密文）
+- [ ] 导出文件命名规则准确（`YYYY-MM-DD.md` 与 `YYYY-summary.md`）
+- [ ] 导出包包含 `manifest.json` 且条目索引完整
+- [ ] 导出文件可直接阅读，并可作为导入输入重新回导
+- [ ] 导出前有明文风险提示，导出过程不触发远端 Push/Pull
 
 ### 10.2 性能验收
 
