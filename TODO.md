@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-15`
-- 总任务：`126`
-- 状态统计：`DONE=110` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`127`
+- 状态统计：`DONE=111` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
@@ -166,6 +166,7 @@
 | `TD-UI-038` | `DONE` | 年度总结页对齐日记页编辑布局并统一年份切换控件 | 年度总结页使用与日记页一致的“同步栏在上 + 编辑卡片在下”结构；年份切换交互与日历弹层一致（箭头步进+输入跳转）；编辑区在桌面端明显加长并接近铺满页面 | `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npx playwright test e2e/specs/yearly-summary.spec.ts e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-15 / c4172c6` |
 | `TD-UI-039` | `DONE` | 设置页去冗余并支持 ready 状态下直接编辑仓库/分支/Token | 设置页改为单层紧凑布局，移除解释性冗余文案与二级嵌套头；ready 状态可提交仓库/分支/Token 变更并即时校验生效；继续不提供“立即锁定”按钮 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `src/components/auth/auth-form-model.ts` `src/hooks/use-auth.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/settings-update.spec.ts` `TODO.md` | 风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（60/60）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-page-compact-editable --e2e-cmd "npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0"` 后发现新增 settings 用例失败，修复后重跑同命令通过（7/7）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 46fadd6` |
 | `TD-UI-040` | `DONE` | 优化同步按钮进行中视觉与 Toast 生命周期（移除 `...`、进行中常驻到结束后被结果顶替） | 按钮进行中不再显示 `pulling.../pushing...`，改为 `pull/push + 小圆点脉冲`；`pull/push` 进行中提示不自动消失，成功/失败结束提示到达后顶替进行中提示并按原时长自动消失 | `src/components/common/sync-control-bar.tsx` `src/index.css` `src/hooks/use-toast.ts` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/use-toast.test.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-busy-clear.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 首次失败（worktree 缺少依赖，`eslint: not found`），挂载主工作区 `node_modules` 后通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（59/59）；`npm run test:e2e:fast` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-toast-motion-polish --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_sync-toast-motion-polish --e2e-cmd "npm run test:e2e:fast"` 后重跑通过（4/4）；`npx playwright test e2e/specs/manual-sync-busy-clear.spec.ts --project=chromium --retries=0` 通过（1/1） | `2026-02-15 / 36b519e` |
+| `TD-UI-041` | `DONE` | 继续精简设置页 ready 区域：移除重复状态展示并收敛文案到必要信息 | 设置页 ready 区域不再重复出现 `READY/状态卡/状态行`；仅保留可编辑项与必要说明；文案简洁且无重复解释 | `src/components/auth/auth-panel.tsx` `e2e/specs/settings-update.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 35a06d1` |
 
 ### 6.9 数据导入（v1.1）
 
