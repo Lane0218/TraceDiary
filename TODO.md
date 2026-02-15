@@ -8,7 +8,7 @@
 
 - 更新时间：`2026-02-15`
 - 总任务：`134`
-- 状态统计：`DONE=118` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 状态统计：`DONE=123` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -179,11 +179,11 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-IMP-001` | `TODO` | 实现 md/txt 文件名解析器（`YYYY-MM-DD` 与 `YYYY-summary`） | 可正确识别 `daily`/`yearly_summary` 并产出结构化结果 | `src/services/import.ts` `src/types/diary.ts` | — | — |
-| `TD-IMP-002` | `TODO` | 实现批量导入预检（有效/冲突/无效分类） | 导入前能输出三类列表，错误文件可定位 | `src/services/import.ts` `src/pages/workspace.tsx` | — | — |
-| `TD-IMP-003` | `TODO` | 实现冲突逐条确认（覆盖/跳过）写入流程 | 同日期/同年份冲突可逐条决策并正确落库 | `src/components/common/import-conflict-dialog.tsx` `src/hooks/use-diary.ts` | — | — |
-| `TD-IMP-004` | `TODO` | 实现导入结果汇总反馈（成功/跳过/失败） | 完成后可查看汇总统计与失败明细 | `src/components/common/import-result-dialog.tsx` `src/pages/workspace.tsx` | — | — |
-| `TD-IMP-005` | `TODO` | 补齐导入单元/集成/E2E 测试 | 覆盖命名识别、冲突处理、异常跳过、部分失败容错 | `src/services/__tests__/import.test.ts` `src/__tests__/integration/import.integration.test.tsx` `e2e/import.spec.ts` | — | — |
+| `TD-IMP-001` | `DONE` | 实现 md/txt 文件名解析器（`YYYY-MM-DD` 与 `YYYY-summary`） | 可正确识别 `daily`/`yearly_summary` 并产出结构化结果 | `src/services/import.ts` `src/types/diary.ts` | 风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（67/67）；`npm run test:integration` 通过（64/64）；`npx playwright test e2e/specs/import.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/import-auto-batch-push --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_import-auto-batch-push --e2e-cmd \"npx playwright test e2e/specs/import.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1） | `2026-02-15 / 8bf65d2` |
+| `TD-IMP-002` | `DONE` | 实现批量导入预检（有效/冲突/无效分类） | 导入前能输出三类列表，错误文件可定位 | `src/services/import.ts` `src/pages/diary.tsx` | 风险分级：高；同 `TD-IMP-001` 测试集全部通过 | `2026-02-15 / 8bf65d2` |
+| `TD-IMP-003` | `DONE` | 实现冲突逐条确认（覆盖/跳过）写入流程 | 同日期/同年份冲突可逐条决策并正确落库 | `src/components/common/import-conflict-dialog.tsx` `src/pages/diary.tsx` | 风险分级：高；同 `TD-IMP-001` 测试集全部通过 | `2026-02-15 / 8bf65d2` |
+| `TD-IMP-004` | `DONE` | 实现导入结果汇总反馈（成功/跳过/失败） | 完成后可查看汇总统计与失败明细 | `src/components/common/import-result-dialog.tsx` `src/pages/diary.tsx` | 风险分级：高；同 `TD-IMP-001` 测试集全部通过 | `2026-02-15 / 8bf65d2` |
+| `TD-IMP-005` | `DONE` | 补齐导入单元/集成/E2E 测试 | 覆盖命名识别、冲突处理、异常跳过、部分失败容错 | `src/services/__tests__/import.test.ts` `src/services/__tests__/import-sync.test.ts` `src/__tests__/integration/import.integration.test.tsx` `e2e/specs/import.spec.ts` | 风险分级：高；同 `TD-IMP-001` 测试集全部通过 | `2026-02-15 / 8bf65d2` |
 
 ### 6.10 文档维护
 
