@@ -94,7 +94,6 @@ export default function SyncControlBar({
     >
       <div className="td-sync-control-bar">
         <div className="td-sync-control-main">
-          <span className="td-sync-control-caption">同步状态</span>
           <div className="td-sync-control-hint">{statusHint}</div>
           <button
             type="button"
@@ -148,13 +147,11 @@ export default function SyncControlBar({
         data-testid="sync-details-popover"
       >
         <div className="td-sync-details-row">
-          <span className="td-sync-details-key">Pull</span>
           <span className={`td-status-pill ${pullStatusToneClass}`} data-testid="pull-status-pill">
             {pullStatusLabel}
           </span>
         </div>
         <div className="td-sync-details-row">
-          <span className="td-sync-details-key">Push</span>
           <span className={`td-status-pill ${pushStatusToneClass}`} data-testid="push-status-pill">
             {pushStatusLabel}
           </span>

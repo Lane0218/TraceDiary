@@ -23,6 +23,11 @@ function readCommitMessage(request: Request): string {
   return ''
 }
 
+function isDiaryUploadCommitMessage(message: string): boolean {
+  // 兼容历史“手动同步日记”与当前“chore: 日记 yyyy-mm-dd @ 时间”两种提交信息格式。
+  return /手动同步日记/u.test(message) || /日记\s+\d{4}-\d{2}-\d{2}/u.test(message)
+}
+
 test('手动上传成功后应收敛为已同步，且不展示未提交改动与分支徽标', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('manual-sync-state')
@@ -46,7 +51,7 @@ test('手动上传成功后应收敛为已同步，且不展示未提交改动�
       latestTargetDiaryMessage = readCommitMessage(request)
 
       // 放慢首个手动上传，确保“等待结果”提示稳定可见。
-      if (!delayedManualUpload && latestTargetDiaryMessage.includes('手动同步日记')) {
+      if (!delayedManualUpload && isDiaryUploadCommitMessage(latestTargetDiaryMessage)) {
         delayedManualUpload = true
         await new Promise((resolve) => {
           setTimeout(resolve, 1_200)
@@ -67,7 +72,7 @@ test('手动上传成功后应收敛为已同步，且不展示未提交改动�
         timeout: 30_000,
       })
       .toBeGreaterThan(0)
-    expect(latestTargetDiaryMessage).toContain('手动同步日记')
+    expect(isDiaryUploadCommitMessage(latestTargetDiaryMessage)).toBe(true)
 
     await expect(page.getByTestId('push-status-pill')).toContainText('Push：成功', { timeout: 30_000 })
     await expect(page.getByText(/未提交改动：/u)).toHaveCount(0)

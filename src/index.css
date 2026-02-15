@@ -201,13 +201,6 @@
     @apply relative z-[1] flex min-w-0 flex-1 flex-wrap items-center gap-2;
   }
 
-  .td-sync-control-caption {
-    @apply rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em];
-    border-color: rgba(125, 117, 103, 0.42);
-    color: #4b5563;
-    background-color: rgba(255, 255, 255, 0.75);
-  }
-
   .td-sync-control-hint {
     @apply flex-shrink-0;
   }
@@ -251,10 +244,12 @@
   }
 
   .td-sync-details-popover {
-    @apply pointer-events-none absolute left-3 top-[calc(100%+6px)] z-[6] w-[min(440px,calc(100%-24px))] rounded-[12px] border p-2.5;
+    @apply pointer-events-none absolute left-3 top-[calc(100%+6px)] z-[6] max-w-[calc(100vw-24px)] rounded-[12px] border p-2.5;
     border-color: #ddd9cf;
     background-color: rgba(255, 255, 255, 0.97);
     box-shadow: 0 12px 26px rgba(19, 25, 22, 0.14);
+    width: max-content;
+    min-width: 0;
     opacity: 0;
     transform: translateY(-4px);
     transition:
@@ -269,12 +264,7 @@
   }
 
   .td-sync-details-row {
-    @apply flex items-center gap-2 py-1;
-  }
-
-  .td-sync-details-key {
-    @apply inline-flex w-11 flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.08em];
-    color: #6b7280;
+    @apply flex items-center py-0.5;
   }
 
   .td-sync-control-btn-label {
@@ -428,7 +418,7 @@
 
     .td-sync-details-popover {
       left: 4px;
-      width: 460px;
+      max-width: min(520px, calc(100vw - 32px));
     }
   }
 
