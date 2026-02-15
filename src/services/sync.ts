@@ -56,7 +56,7 @@ export interface CreateUploadMetadataDependencies<TMetadata = unknown> {
   readRemoteMetadata?: () => Promise<RemoteMetadataFile>
   uploadRequest?: (request: UploadRequest) => Promise<UploadResult>
   serializeMetadata?: (metadata: TMetadata) => Promise<string> | string
-  buildCommitMessage?: (payload: UploadMetadataPayload<TMetadata>, nowIso: string) => string
+  buildCommitMessage?: (payload: UploadMetadataPayload<TMetadata>, commitTimestamp: string) => string
   path?: string
   branch?: string
   now?: () => string
@@ -205,9 +205,12 @@ export interface PullDiaryFromGiteeResult {
   conflictPayload?: UploadConflictPayload<DiarySyncMetadata>
 }
 
-function defaultBuildCommitMessage<TMetadata>(payload: UploadMetadataPayload<TMetadata>, nowIso: string): string {
+function defaultBuildCommitMessage<TMetadata>(
+  payload: UploadMetadataPayload<TMetadata>,
+  commitTimestamp: string,
+): string {
   void payload
-  return `chore: 手动同步 metadata ${nowIso}`
+  return `chore: metadata @ ${commitTimestamp}`
 }
 
 function looksLikeShaMismatch(status?: number, message?: string): boolean {
@@ -289,12 +292,21 @@ function nowIsoString(): string {
   return new Date().toISOString()
 }
 
-function toSecondPrecisionIso(isoString: string): string {
+function toBeijingSecondTimestamp(isoString: string): string {
   const parsed = new Date(isoString)
   if (Number.isNaN(parsed.getTime())) {
     return isoString
   }
-  return parsed.toISOString().replace(/\.\d{3}Z$/, 'Z')
+
+  const beijingOffsetMilliseconds = 8 * 60 * 60 * 1000
+  const beijingDate = new Date(parsed.getTime() + beijingOffsetMilliseconds)
+  const year = beijingDate.getUTCFullYear()
+  const month = String(beijingDate.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(beijingDate.getUTCDate()).padStart(2, '0')
+  const hours = String(beijingDate.getUTCHours()).padStart(2, '0')
+  const minutes = String(beijingDate.getUTCMinutes()).padStart(2, '0')
+  const seconds = String(beijingDate.getUTCSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+08:00`
 }
 
 function normalizeEncryptedContent(encryptedContent: string): string {
@@ -335,7 +347,7 @@ export function createUploadMetadataExecutor<TMetadata = unknown>(
   ): Promise<UploadMetadataResult<TMetadata>> => {
     try {
       const encryptedContent = await serializeMetadata(payload.metadata)
-      const commitTimestamp = toSecondPrecisionIso(now())
+      const commitTimestamp = toBeijingSecondTimestamp(now())
 
       const request: UploadRequest = {
         path: metadataPath,
@@ -389,11 +401,11 @@ function buildDiaryPath(metadata: DiarySyncMetadata): string {
   return `${metadata.year}-summary.md.enc`
 }
 
-function buildDiaryCommitMessage(metadata: DiarySyncMetadata, nowIso: string): string {
+function buildDiaryCommitMessage(metadata: DiarySyncMetadata, commitTimestamp: string): string {
   if (metadata.type === 'daily') {
-    return `chore: 手动同步日记 ${metadata.date} ${nowIso}`
+    return `chore: 日记 ${metadata.date} @ ${commitTimestamp}`
   }
-  return `chore: 手动同步年度总结 ${metadata.year} ${nowIso}`
+  return `chore: 年度总结 ${metadata.year} @ ${commitTimestamp}`
 }
 
 function isShaMismatchError(error: unknown): boolean {
@@ -644,7 +656,7 @@ export function createDiaryUploadExecutor(
           repo: params.repo,
           path: DEFAULT_METADATA_PATH,
           content: encryptedMetadata,
-          message: defaultBuildCommitMessage(payload, toSecondPrecisionIso(nowIso)),
+          message: defaultBuildCommitMessage(payload, toBeijingSecondTimestamp(nowIso)),
           branch: targetBranch,
           expectedSha: remoteMetadata.exists ? remoteMetadata.sha : undefined,
           apiBase: params.apiBase,
@@ -667,7 +679,7 @@ export function createDiaryUploadExecutor(
     const metadata = payload.metadata
     const path = buildDiaryPath(metadata)
     const expectedSha = payload.expectedSha?.trim()
-    const commitTimestamp = toSecondPrecisionIso(now())
+    const commitTimestamp = toBeijingSecondTimestamp(now())
     const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
     const upsertResult = await upsertGiteeFile({
       token: params.token,
@@ -824,7 +836,7 @@ export function createDiaryUploadExecutor(
     }
 
     const encryptedContent = await encryptWithAesGcm(metadata.content, params.dataEncryptionKey)
-    const commitTimestamp = toSecondPrecisionIso(now())
+    const commitTimestamp = toBeijingSecondTimestamp(now())
     const overwriteResult = await upsertGiteeFile({
       token: params.token,
       owner: params.owner,
