@@ -183,38 +183,6 @@
     background-color: var(--td-surface-soft);
   }
 
-  .td-import-toolbar {
-    @apply rounded-[12px] border p-3 sm:p-4;
-    border-color: #d8d0c2;
-    background:
-      radial-gradient(circle at 88% 12%, rgba(214, 166, 109, 0.18), transparent 44%),
-      linear-gradient(142deg, rgba(255, 250, 242, 0.98), rgba(243, 236, 226, 0.96));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.72),
-      0 9px 20px rgba(74, 62, 43, 0.08);
-  }
-
-  .td-import-toolbar-main {
-    @apply flex flex-wrap items-center gap-2.5;
-  }
-
-  .td-import-btn {
-    border-color: #6f5840;
-    background-color: #6f5840;
-    color: #fffaf2;
-  }
-
-  .td-import-btn:hover {
-    border-color: #5a4734;
-    background-color: #5a4734;
-    box-shadow: 0 7px 14px rgba(53, 40, 28, 0.24);
-  }
-
-  .td-import-hint {
-    @apply text-sm;
-    color: #5f5a4f;
-  }
-
   .td-import-progress {
     @apply mt-2 text-xs;
     color: #4f4a42;

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import AuthPanel from '../components/auth/auth-panel'
 import AppHeader from '../components/common/app-header'
 import ExportDataPanel from '../components/common/export-data-panel'
+import ImportDataPanel from '../components/common/import-data-panel'
 import type { UseAuthResult } from '../hooks/use-auth'
 
 interface SettingsPageProps {
@@ -22,7 +23,10 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
           </header>
           <AuthPanel auth={auth} variant="embedded" />
         </article>
-        <ExportDataPanel auth={auth} />
+        <section className="grid gap-4 xl:grid-cols-2" aria-label="settings-data-panels">
+          <ImportDataPanel auth={auth} />
+          <ExportDataPanel auth={auth} />
+        </section>
       </section>
     </main>
   )
