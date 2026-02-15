@@ -184,7 +184,7 @@
   }
 
   .td-sync-control {
-    @apply space-y-2;
+    @apply relative;
   }
 
   .td-sync-control-bar {
@@ -212,8 +212,69 @@
     @apply flex-shrink-0;
   }
 
+  .td-sync-summary-trigger {
+    @apply inline-flex items-center gap-1 rounded-full border px-1 py-0.5 transition;
+    border-color: #ddd9cf;
+    background-color: rgba(255, 255, 255, 0.86);
+  }
+
+  .td-sync-summary-trigger:hover {
+    border-color: #c9c2b5;
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+
+  .td-sync-summary-trigger:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.2);
+    outline-offset: 1px;
+  }
+
+  .td-sync-summary-trigger .td-status-pill {
+    border-color: transparent;
+    background: transparent;
+    padding-right: 4px;
+    padding-left: 6px;
+  }
+
+  .td-sync-summary-chevron {
+    padding-right: 6px;
+    font-size: 10px;
+    color: #6b7280;
+    transition: transform 0.12s ease;
+  }
+
+  .td-sync-summary-chevron.is-open {
+    transform: rotate(180deg);
+  }
+
   .td-sync-control-actions {
     @apply relative z-[1] ml-auto flex max-w-full flex-wrap items-center gap-2;
+  }
+
+  .td-sync-details-popover {
+    @apply pointer-events-none absolute left-3 top-[calc(100%+6px)] z-[6] w-[min(440px,calc(100%-24px))] rounded-[12px] border p-2.5;
+    border-color: #ddd9cf;
+    background-color: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 12px 26px rgba(19, 25, 22, 0.14);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 0.14s ease,
+      transform 0.14s ease;
+  }
+
+  .td-sync-details-popover.is-open {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .td-sync-details-row {
+    @apply flex items-center gap-2 py-1;
+  }
+
+  .td-sync-details-key {
+    @apply inline-flex w-11 flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.08em];
+    color: #6b7280;
   }
 
   .td-sync-control-btn-label {
@@ -363,6 +424,11 @@
 
     .td-sync-control-actions {
       @apply flex-nowrap;
+    }
+
+    .td-sync-details-popover {
+      left: 4px;
+      width: 460px;
     }
   }
 

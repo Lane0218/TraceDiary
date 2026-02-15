@@ -914,6 +914,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
               pushStatusLabel={pushStatusLabel}
               pullStatusToneClass={pullStatusToneClass}
               pushStatusToneClass={pushStatusToneClass}
+              pullStatus={pullActionSnapshot.status}
+              pushStatus={pushActionSnapshot.status}
               isPulling={isManualPulling}
               isPushing={isManualSyncing}
               onPull={() => {

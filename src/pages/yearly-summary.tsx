@@ -589,6 +589,8 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
             pushStatusLabel={pushStatusLabel}
             pullStatusToneClass={pullStatusToneClass}
             pushStatusToneClass={pushStatusToneClass}
+            pullStatus={pullActionSnapshot.status}
+            pushStatus={pushActionSnapshot.status}
             isPulling={isManualPulling}
             isPushing={isManualSyncing}
             onPull={() => {
