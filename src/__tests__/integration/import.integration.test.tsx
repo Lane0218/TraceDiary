@@ -1,11 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ToastCenter from '../../components/common/toast-center'
 import { ToastProvider } from '../../hooks/use-toast'
-import type { UseAuthResult } from '../../hooks/use-auth'
-import { useDiary } from '../../hooks/use-diary'
-import DiaryPage from '../../pages/diary'
+import type { AppConfig, UseAuthResult } from '../../hooks/use-auth'
+import SettingsPage from '../../pages/settings'
 
 const buildImportSourceFileMock = vi.hoisted(() => vi.fn())
 const prepareImportPreviewMock = vi.hoisted(() => vi.fn())
@@ -13,43 +12,15 @@ const applyImportCandidatesMock = vi.hoisted(() => vi.fn())
 const autoUploadImportedEntriesMock = vi.hoisted(() => vi.fn())
 const createDiaryUploadExecutorMock = vi.hoisted(() => vi.fn())
 
-vi.mock('../../hooks/use-diary', () => ({
-  useDiary: vi.fn(),
-}))
-
-vi.mock('../../components/calendar/month-calendar', () => ({
-  default: () => <div data-testid="mock-month-calendar" />,
-}))
-
-vi.mock('../../components/editor/markdown-editor', () => ({
-  default: ({ initialValue, onChange }: { initialValue: string; onChange: (value: string) => void }) => (
-    <textarea data-testid="mock-daily-editor" defaultValue={initialValue} onChange={(event) => onChange(event.target.value)} />
-  ),
-}))
-
-vi.mock('../../components/history/on-this-day-list', () => ({
-  default: () => <div data-testid="mock-on-this-day-list" />,
-}))
-
-vi.mock('../../components/stats/stats-overview-card', () => ({
-  default: () => <div data-testid="mock-stats-overview" />,
-}))
-
 vi.mock('../../components/common/app-header', () => ({
   default: () => <h1>TraceDiary</h1>,
 }))
 
-vi.mock('../../components/common/auth-modal', () => ({
-  default: () => null,
-}))
-
-vi.mock('../../components/common/conflict-dialog', () => ({
-  default: () => null,
+vi.mock('../../components/auth/auth-panel', () => ({
+  default: () => <div aria-label="settings-auth-panel" />,
 }))
 
 vi.mock('../../services/indexeddb', () => ({
-  DIARY_INDEX_TYPE: 'type',
-  listDiariesByIndex: vi.fn(async () => []),
   getDiary: vi.fn(async () => null),
   saveDiary: vi.fn(async () => {}),
   getSyncBaseline: vi.fn(async () => null),
@@ -75,32 +46,31 @@ vi.mock('../../services/sync', async () => {
   return {
     ...actual,
     createDiaryUploadExecutor: createDiaryUploadExecutorMock,
-    pullDiaryFromGitee: vi.fn(async () => ({ ok: false, conflict: false, reason: 'not_found' as const })),
   }
 })
 
-const useDiaryMock = vi.mocked(useDiary)
-
 function buildAuthResult(): UseAuthResult {
+  const config: AppConfig = {
+    giteeRepo: 'https://gitee.com/lane/diary',
+    giteeOwner: 'lane',
+    giteeRepoName: 'diary',
+    giteeBranch: 'master',
+    passwordHash: 'hash',
+    passwordExpiry: '2026-12-31T00:00:00.000Z',
+    kdfParams: {
+      algorithm: 'PBKDF2',
+      hash: 'SHA-256',
+      iterations: 300_000,
+      salt: 'salt',
+    },
+    encryptedToken: 'cipher-token',
+    tokenCipherVersion: 'v1',
+  }
+
   return {
     state: {
       stage: 'ready',
-      config: {
-        giteeRepo: 'lane/repo',
-        giteeOwner: 'lane',
-        giteeRepoName: 'repo',
-        giteeBranch: 'master',
-        passwordHash: 'hash',
-        passwordExpiry: '2026-12-30T00:00:00.000Z',
-        kdfParams: {
-          algorithm: 'PBKDF2',
-          hash: 'SHA-256',
-          iterations: 300_000,
-          salt: 'salt',
-        },
-        encryptedToken: 'cipher',
-        tokenCipherVersion: 'v1',
-      },
+      config,
       tokenInMemory: 'token',
       dataEncryptionKey: { type: 'secret' } as CryptoKey,
       isLocked: false,
@@ -119,36 +89,27 @@ function buildAuthResult(): UseAuthResult {
   }
 }
 
-function renderDiary() {
+function renderSettings() {
   return render(
     <ToastProvider>
-      <MemoryRouter initialEntries={['/diary?date=2026-02-08']}>
-        <Routes>
-          <Route path="/diary" element={<DiaryPage auth={buildAuthResult()} />} />
-        </Routes>
+      <MemoryRouter>
+        <SettingsPage auth={buildAuthResult()} />
       </MemoryRouter>
       <ToastCenter />
     </ToastProvider>,
   )
 }
 
-describe('导入流程集成', () => {
+describe('设置页导入入口', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     createDiaryUploadExecutorMock.mockImplementation(
       () => async () => ({ ok: true, conflict: false, syncedAt: '2026-02-09T00:00:00.000Z' }),
     )
-    useDiaryMock.mockReturnValue({
-      entryId: 'daily:2026-02-08',
-      content: '',
-      entry: null,
-      loadRevision: 0,
-      isLoading: false,
-      isSaving: false,
-      error: null,
-      setContent: vi.fn(),
-      waitForPersisted: vi.fn(async () => null),
-    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('无冲突时应完成导入并自动上传', async () => {
@@ -187,7 +148,7 @@ describe('导入流程集成', () => {
       failed: [],
     })
 
-    renderDiary()
+    renderSettings()
 
     const input = screen.getByTestId('import-file-input') as HTMLInputElement
     fireEvent.change(input, {
@@ -247,7 +208,7 @@ describe('导入流程集成', () => {
       failed: [],
     })
 
-    renderDiary()
+    renderSettings()
 
     const input = screen.getByTestId('import-file-input') as HTMLInputElement
     fireEvent.change(input, {

@@ -10,6 +10,11 @@ test('导入完成后应自动上传本次导入条目', async ({ page }) => {
 
   await gotoDiary(page, IMPORT_DATE)
   await ensureReadySession(page, env)
+  await expect(page.getByTestId('import-file-input')).toHaveCount(0)
+
+  await page.getByTestId('app-nav-settings').click()
+  await expect(page.getByLabel('settings-page')).toBeVisible()
+  await expect(page.getByTestId('settings-import-button')).toBeVisible()
 
   await page.getByTestId('import-file-input').setInputFiles([
     {

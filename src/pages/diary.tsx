@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
 import AppHeader from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
-import ImportConflictDialog from '../components/common/import-conflict-dialog'
-import ImportResultDialog from '../components/common/import-result-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
@@ -20,20 +18,9 @@ import {
   getDiary,
   getSyncBaseline,
   listDiariesByIndex,
-  saveDiary,
   saveSyncBaseline,
   type DiaryRecord,
 } from '../services/indexeddb'
-import {
-  applyImportCandidates,
-  buildImportResult,
-  buildImportSourceFile,
-  prepareImportPreview,
-  type ImportCandidateEntry,
-  type ImportConflictItem,
-  type ImportResult,
-} from '../services/import'
-import { autoUploadImportedEntries, type ImportAutoUploadResult } from '../services/import-sync'
 import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
@@ -66,12 +53,6 @@ interface YearlyReminder {
   message: string
 }
 
-interface ImportExecutionState {
-  importResult: ImportResult
-  uploadResult: ImportAutoUploadResult | null
-  uploadSkippedReason: string | null
-}
-
 type DiaryLeftPanelTab = 'history' | 'stats'
 
 const DIARY_LEFT_PANEL_STORAGE_KEY = 'trace-diary:diary:left-panel'
@@ -79,7 +60,6 @@ const DIARY_PANEL_HEIGHT_DESKTOP = 340
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
 const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
-const IMPORT_IDLE_HINT = '支持批量导入 .md/.txt，导入后自动上传本次条目'
 const DIARY_PANEL_HEIGHT_STYLE = {
   '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
   '--diary-panel-body-height': `${DIARY_PANEL_BODY_HEIGHT_DESKTOP}px`,
@@ -114,10 +94,6 @@ function buildDateFromYearMonthDay(year: number, monthIndex: number, day: number
 
 function shiftMonth(month: Date, offset: number): Date {
   return new Date(month.getFullYear(), month.getMonth() + offset, 1)
-}
-
-function uniqueEntryIds(entryIds: string[]): string[] {
-  return [...new Set(entryIds)]
 }
 
 function isDailySyncMetadata(value: DiarySyncMetadata): value is Extract<DiarySyncMetadata, { type: 'daily' }> {
@@ -205,17 +181,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     remote: DiarySyncMetadata | null
     remoteSha?: string
   } | null>(null)
-  const importFileInputRef = useRef<HTMLInputElement | null>(null)
-  const [isImporting, setIsImporting] = useState(false)
-  const [importProgressLabel, setImportProgressLabel] = useState<string | null>(null)
-  const [importReadyCandidates, setImportReadyCandidates] = useState<ImportCandidateEntry[]>([])
-  const [importConflictQueue, setImportConflictQueue] = useState<ImportConflictItem[]>([])
-  const [importConflictIndex, setImportConflictIndex] = useState(0)
-  const [importOverwriteEntryIds, setImportOverwriteEntryIds] = useState<string[]>([])
-  const [importSkippedEntryIds, setImportSkippedEntryIds] = useState<string[]>([])
-  const [importInvalidItems, setImportInvalidItems] = useState<Array<{ name: string; reason: string }>>([])
-  const [importFailedItems, setImportFailedItems] = useState<Array<{ name: string; reason: string }>>([])
-  const [importExecutionState, setImportExecutionState] = useState<ImportExecutionState | null>(null)
 
   const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
@@ -757,7 +722,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   const isManualSyncing = sync.status === 'syncing'
   const activeConflictState = pullConflictState ?? sync.conflictState
   const activeConflictMode = pullConflictState ? 'pull' : 'push'
-  const activeImportConflict = importConflictQueue[importConflictIndex] ?? null
   const yearlyNavHref = useMemo(() => `/yearly/${Number.parseInt(date.slice(0, 4), 10)}`, [date])
 
   useEffect(() => {
@@ -811,331 +775,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     }
     sync.dismissConflict()
   }
-
-  const resetImportSession = useCallback(() => {
-    setImportReadyCandidates([])
-    setImportConflictQueue([])
-    setImportConflictIndex(0)
-    setImportOverwriteEntryIds([])
-    setImportSkippedEntryIds([])
-    setImportInvalidItems([])
-    setImportFailedItems([])
-  }, [])
-
-  const executeImportPlan = useCallback(
-    async (input: {
-      readyCandidates: ImportCandidateEntry[]
-      conflicts: ImportConflictItem[]
-      overwriteEntryIds: string[]
-      skippedEntryIds: string[]
-      invalid: Array<{ name: string; reason: string }>
-      failed: Array<{ name: string; reason: string }>
-    }) => {
-      const overwriteSet = new Set(input.overwriteEntryIds)
-      const overwriteCandidates: ImportCandidateEntry[] = input.conflicts
-        .filter((item) => overwriteSet.has(item.entryId))
-        .map((item) => ({
-          sourceName: item.sourceName,
-          entry: item.incoming,
-        }))
-      const candidatesToPersist = [...input.readyCandidates, ...overwriteCandidates]
-
-      setIsImporting(true)
-      setImportProgressLabel('正在写入本地数据...')
-      try {
-        const applyResult = await applyImportCandidates(candidatesToPersist, {
-          loadExistingDiary: getDiary,
-          saveDiary,
-        })
-        const importResult = buildImportResult({
-          persisted: applyResult.persisted,
-          skippedEntryIds: input.skippedEntryIds,
-          overwrittenEntryIds: input.overwriteEntryIds,
-          invalid: input.invalid,
-          failed: input.failed,
-          persistFailed: applyResult.failed.map((item) => ({
-            name: item.name,
-            reason: item.reason,
-          })),
-        })
-
-        let uploadResult: ImportAutoUploadResult | null = null
-        let uploadSkippedReason: string | null = null
-
-        if (applyResult.persisted.length === 0) {
-          uploadSkippedReason = '未执行自动上传：没有可上传的导入条目。'
-        } else if (!canSyncToRemote) {
-          uploadSkippedReason = `未执行自动上传：${syncDisabledMessage}`
-          pushToast({
-            kind: 'push',
-            level: 'warning',
-            message: uploadSkippedReason,
-          })
-        } else if (!uploadMetadata) {
-          uploadSkippedReason = '未执行自动上传：上传执行器不可用。'
-          pushToast({
-            kind: 'push',
-            level: 'warning',
-            message: uploadSkippedReason,
-          })
-        } else {
-          updateSyncActionStatus('push', 'running')
-          pushToast({
-            kind: 'push',
-            level: 'info',
-            message: `导入完成，开始自动上传（${applyResult.persisted.length} 条）...`,
-            autoDismiss: false,
-          })
-          uploadResult = await autoUploadImportedEntries(applyResult.persisted, {
-            uploadDiary: uploadMetadata,
-            loadBaseline: (entryId) => getSyncBaseline(entryId),
-            saveBaseline: (baseline) => saveSyncBaseline(baseline),
-            onProgress: ({ current, total }) => {
-              setImportProgressLabel(`正在自动上传 ${current}/${total}`)
-            },
-          })
-
-          if (uploadResult.failed.length > 0) {
-            const uploadSummaryMessage = `自动上传完成：成功 ${uploadResult.success.length}，失败 ${uploadResult.failed.length}`
-            updateSyncActionStatus('push', 'error', uploadSummaryMessage)
-            pushToast({
-              kind: 'push',
-              level: 'warning',
-              message: uploadSummaryMessage,
-            })
-          } else {
-            updateSyncActionStatus('push', 'success')
-            setManualSyncError(null)
-            pushToast({
-              kind: 'push',
-              level: 'success',
-              message: `导入并自动上传完成（${uploadResult.success.length} 条）`,
-            })
-          }
-        }
-
-        setImportExecutionState({
-          importResult,
-          uploadResult,
-          uploadSkippedReason,
-        })
-        setRemotePullSignal((prev) => prev + 1)
-
-        if (importResult.success.length === 0) {
-          pushToast({
-            kind: 'system',
-            level: 'warning',
-            message: '本次未导入任何有效条目',
-          })
-        }
-      } catch (error) {
-        const reason = error instanceof Error ? error.message : '未知错误'
-        const importResult = buildImportResult({
-          persisted: [],
-          skippedEntryIds: input.skippedEntryIds,
-          overwrittenEntryIds: input.overwriteEntryIds,
-          invalid: input.invalid,
-          failed: [...input.failed, { name: '导入批次', reason: `执行失败：${reason}` }],
-        })
-        setImportExecutionState({
-          importResult,
-          uploadResult: null,
-          uploadSkippedReason: '未执行自动上传：导入流程异常终止。',
-        })
-        pushToast({
-          kind: 'system',
-          level: 'error',
-          message: `导入失败：${reason}`,
-        })
-      } finally {
-        resetImportSession()
-        setIsImporting(false)
-        setImportProgressLabel(null)
-      }
-    },
-    [
-      canSyncToRemote,
-      pushToast,
-      resetImportSession,
-      syncDisabledMessage,
-      updateSyncActionStatus,
-      uploadMetadata,
-    ],
-  )
-
-  const runImportWithPendingSelections = useCallback(
-    (overwriteEntryIds: string[], skippedEntryIds: string[]) => {
-      void executeImportPlan({
-        readyCandidates: importReadyCandidates,
-        conflicts: importConflictQueue,
-        overwriteEntryIds: uniqueEntryIds(overwriteEntryIds),
-        skippedEntryIds: uniqueEntryIds(skippedEntryIds),
-        invalid: importInvalidItems,
-        failed: importFailedItems,
-      })
-    },
-    [executeImportPlan, importConflictQueue, importFailedItems, importInvalidItems, importReadyCandidates],
-  )
-
-  const handleImportFileSelection = useCallback(
-    async (files: File[]) => {
-      setImportExecutionState(null)
-      setIsImporting(true)
-      setImportProgressLabel('正在读取导入文件...')
-
-      try {
-        const sourceResults = await Promise.all(
-          files.map(async (file) => {
-            try {
-              const source = await buildImportSourceFile(file)
-              return {
-                ok: true as const,
-                source,
-              }
-            } catch (error) {
-              return {
-                ok: false as const,
-                name: file.name,
-                reason: `读取文件失败：${error instanceof Error ? error.message : '未知错误'}`,
-              }
-            }
-          }),
-        )
-
-        const sources = sourceResults.filter((item) => item.ok).map((item) => item.source)
-        const readFailedItems = sourceResults
-          .filter((item) => !item.ok)
-          .map((item) => ({ name: item.name, reason: item.reason }))
-        const preview = await prepareImportPreview(sources, {
-          loadExistingDiary: getDiary,
-        })
-        const previewFailed = [...preview.failed, ...readFailedItems]
-
-        setImportReadyCandidates(preview.ready)
-        setImportConflictQueue(preview.conflicts)
-        setImportConflictIndex(0)
-        setImportOverwriteEntryIds([])
-        setImportSkippedEntryIds([])
-        setImportInvalidItems(preview.invalid)
-        setImportFailedItems(previewFailed)
-
-        if (preview.ready.length === 0 && preview.conflicts.length === 0) {
-          const importResult = buildImportResult({
-            persisted: [],
-            skippedEntryIds: [],
-            overwrittenEntryIds: [],
-            invalid: preview.invalid,
-            failed: previewFailed,
-          })
-          setImportExecutionState({
-            importResult,
-            uploadResult: null,
-            uploadSkippedReason: '未执行自动上传：没有可导入的有效条目。',
-          })
-          setImportProgressLabel(null)
-          setIsImporting(false)
-          return
-        }
-
-        if (preview.conflicts.length > 0) {
-          setImportProgressLabel(null)
-          setIsImporting(false)
-          pushToast({
-            kind: 'system',
-            level: 'info',
-            message: `检测到 ${preview.conflicts.length} 条冲突，请逐条确认。`,
-          })
-          return
-        }
-
-        void executeImportPlan({
-          readyCandidates: preview.ready,
-          conflicts: preview.conflicts,
-          overwriteEntryIds: [],
-          skippedEntryIds: [],
-          invalid: preview.invalid,
-          failed: previewFailed,
-        })
-      } catch (error) {
-        const reason = error instanceof Error ? error.message : '未知错误'
-        resetImportSession()
-        setImportProgressLabel(null)
-        setIsImporting(false)
-        pushToast({
-          kind: 'system',
-          level: 'error',
-          message: `读取导入文件失败：${reason}`,
-        })
-      }
-    },
-    [executeImportPlan, pushToast, resetImportSession],
-  )
-
-  const handleOpenImportPicker = useCallback(() => {
-    if (isImporting) {
-      return
-    }
-    importFileInputRef.current?.click()
-  }, [isImporting])
-
-  const handleImportInputChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const fileList = event.target.files
-      const files = fileList ? Array.from(fileList) : []
-      event.target.value = ''
-      if (files.length === 0) {
-        return
-      }
-      void handleImportFileSelection(files)
-    },
-    [handleImportFileSelection],
-  )
-
-  const handleImportConflictOverwrite = useCallback(() => {
-    if (!activeImportConflict) {
-      return
-    }
-    const nextOverwriteIds = uniqueEntryIds([...importOverwriteEntryIds, activeImportConflict.entryId])
-    if (importConflictIndex >= importConflictQueue.length - 1) {
-      runImportWithPendingSelections(nextOverwriteIds, importSkippedEntryIds)
-      return
-    }
-    setImportOverwriteEntryIds(nextOverwriteIds)
-    setImportConflictIndex((prev) => prev + 1)
-  }, [
-    activeImportConflict,
-    importConflictIndex,
-    importConflictQueue.length,
-    importOverwriteEntryIds,
-    importSkippedEntryIds,
-    runImportWithPendingSelections,
-  ])
-
-  const handleImportConflictSkip = useCallback(() => {
-    if (!activeImportConflict) {
-      return
-    }
-    const nextSkippedIds = uniqueEntryIds([...importSkippedEntryIds, activeImportConflict.entryId])
-    if (importConflictIndex >= importConflictQueue.length - 1) {
-      runImportWithPendingSelections(importOverwriteEntryIds, nextSkippedIds)
-      return
-    }
-    setImportSkippedEntryIds(nextSkippedIds)
-    setImportConflictIndex((prev) => prev + 1)
-  }, [
-    activeImportConflict,
-    importConflictIndex,
-    importConflictQueue.length,
-    importOverwriteEntryIds,
-    importSkippedEntryIds,
-    runImportWithPendingSelections,
-  ])
-
-  const handleImportConflictClose = useCallback(() => {
-    const remainingEntryIds = importConflictQueue.slice(importConflictIndex).map((item) => item.entryId)
-    const nextSkippedIds = uniqueEntryIds([...importSkippedEntryIds, ...remainingEntryIds])
-    runImportWithPendingSelections(importOverwriteEntryIds, nextSkippedIds)
-  }, [importConflictIndex, importConflictQueue, importOverwriteEntryIds, importSkippedEntryIds, runImportWithPendingSelections])
 
   return (
     <>
@@ -1238,33 +877,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
           </aside>
 
           <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
-            <section className="td-import-toolbar" aria-label="import-control-bar">
-              <div className="td-import-toolbar-main">
-                <button
-                  type="button"
-                  className="td-btn td-import-btn"
-                  onClick={handleOpenImportPicker}
-                  disabled={isImporting}
-                  data-testid="import-diary-button"
-                >
-                  导入日记
-                </button>
-                <p className="td-import-hint">{IMPORT_IDLE_HINT}</p>
-              </div>
-              <p className="td-import-progress" data-testid="import-progress-label">
-                {importProgressLabel ?? (isImporting ? '处理中...' : '导入后将自动上传本次条目')}
-              </p>
-              <input
-                ref={importFileInputRef}
-                type="file"
-                accept=".md,.txt,text/markdown,text/plain"
-                multiple
-                className="sr-only"
-                onChange={handleImportInputChange}
-                data-testid="import-file-input"
-              />
-            </section>
-
             <SyncControlBar
               statusHint={<StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />}
               pullStatusLabel={pullStatusLabel}
@@ -1342,24 +954,6 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         onKeepRemote={handleKeepRemoteConflict}
         onMerge={resolveMergeConflict}
         onClose={handleCloseConflict}
-      />
-
-      <ImportConflictDialog
-        open={Boolean(activeImportConflict)}
-        item={activeImportConflict}
-        currentIndex={activeImportConflict ? importConflictIndex + 1 : 0}
-        total={importConflictQueue.length}
-        onOverwrite={handleImportConflictOverwrite}
-        onSkip={handleImportConflictSkip}
-        onClose={handleImportConflictClose}
-      />
-
-      <ImportResultDialog
-        open={Boolean(importExecutionState)}
-        importResult={importExecutionState?.importResult ?? null}
-        uploadResult={importExecutionState?.uploadResult ?? null}
-        uploadSkippedReason={importExecutionState?.uploadSkippedReason ?? null}
-        onClose={() => setImportExecutionState(null)}
       />
     </>
   )
