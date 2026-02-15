@@ -49,6 +49,15 @@ export function MonthCalendar({
   const [draftYearInput, setDraftYearInput] = useState(String(month.getFullYear()))
   const [draftMonth, setDraftMonth] = useState(month.getMonth())
 
+  const applyDraftYear = (nextYear: number) => {
+    if (!Number.isFinite(nextYear) || nextYear < MIN_YEAR || nextYear > MAX_YEAR) {
+      return
+    }
+    setDraftYear(nextYear)
+    setDraftYearInput(String(nextYear))
+    onPickMonth(nextYear, draftMonth)
+  }
+
   const applyPickerSelection = () => {
     onPickMonth(draftYear, draftMonth)
     setIsPickerOpen(false)
@@ -97,34 +106,53 @@ export function MonthCalendar({
           <div className="absolute left-1/2 top-12 z-20 -translate-x-1/2">
             <div className="w-[244px] rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
               <div className="mb-2.5 flex items-center gap-2">
-              <label htmlFor="month-picker-year" className="text-xs text-td-muted">
-                年份
-              </label>
-                <input
-                  id="month-picker-year"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={draftYearInput}
-                  onChange={(event) => {
-                    const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
-                    setDraftYearInput(sanitized)
-                    const parsed = parseValidYearInput(sanitized)
-                    if (parsed !== null) {
-                      setDraftYear(parsed)
-                      onPickMonth(parsed, draftMonth)
-                    }
-                  }}
-                  onBlur={() => {
-                    const parsed = parseValidYearInput(draftYearInput)
-                    if (parsed === null) {
-                      setDraftYearInput(String(draftYear))
-                      return
-                    }
-                    setDraftYearInput(String(parsed))
-                  }}
-                  className="td-input h-9 w-20 rounded-[8px] border-[#d6d6d6] bg-white px-2.5 py-1.5 text-base sm:text-[15px]"
-                />
+                <label htmlFor="month-picker-year" className="text-xs text-td-muted">
+                  年份
+                </label>
+                <div className="inline-flex h-9 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
+                  <button
+                    type="button"
+                    aria-label="年份减一"
+                    disabled={draftYear <= MIN_YEAR}
+                    className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                    onClick={() => applyDraftYear(draftYear - 1)}
+                  >
+                    &#8249;
+                  </button>
+                  <input
+                    id="month-picker-year"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={draftYearInput}
+                    onChange={(event) => {
+                      const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
+                      setDraftYearInput(sanitized)
+                      const parsed = parseValidYearInput(sanitized)
+                      if (parsed !== null) {
+                        applyDraftYear(parsed)
+                      }
+                    }}
+                    onBlur={() => {
+                      const parsed = parseValidYearInput(draftYearInput)
+                      if (parsed === null) {
+                        setDraftYearInput(String(draftYear))
+                        return
+                      }
+                      setDraftYearInput(String(parsed))
+                    }}
+                    className="h-full w-[68px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[15px] text-td-text outline-none"
+                  />
+                  <button
+                    type="button"
+                    aria-label="年份加一"
+                    disabled={draftYear >= MAX_YEAR}
+                    className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                    onClick={() => applyDraftYear(draftYear + 1)}
+                  >
+                    &#8250;
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="ml-auto rounded-[8px] border border-[#d2d2d2] bg-white px-2 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
