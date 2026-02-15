@@ -77,6 +77,11 @@ function shiftDays(base: Date, offset: number): Date {
   return new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset, 12)
 }
 
+// 热力图按周一为一周起始：周一=0 ... 周日=6
+function toMondayIndex(date: Date): number {
+  return (date.getDay() + 6) % 7
+}
+
 function diffDays(left: Date, right: Date): number {
   const leftAtNoon = new Date(left.getFullYear(), left.getMonth(), left.getDate(), 12)
   const rightAtNoon = new Date(right.getFullYear(), right.getMonth(), right.getDate(), 12)
@@ -197,8 +202,8 @@ export function buildYearlyHeatmapModel(records: DiaryRecord[], year: number): Y
 
   const firstDay = new Date(year, 0, 1, 12)
   const lastDay = new Date(year, 11, 31, 12)
-  const firstGridDay = shiftDays(firstDay, -firstDay.getDay())
-  const lastGridDay = shiftDays(lastDay, 6 - lastDay.getDay())
+  const firstGridDay = shiftDays(firstDay, -toMondayIndex(firstDay))
+  const lastGridDay = shiftDays(lastDay, 6 - toMondayIndex(lastDay))
   const totalGridDays = diffDays(lastGridDay, firstGridDay) + 1
   const weekCount = Math.ceil(totalGridDays / 7)
 
