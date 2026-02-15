@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-15`
 - 总任务：`133`
-- 状态统计：`DONE=117` / `DOING=0` / `TODO=15` / `BLOCKED=1`
-- 当前进行中：`无`
+- 状态统计：`DONE=117` / `DOING=1` / `TODO=14` / `BLOCKED=1`
+- 当前进行中：`TD-IMP-001`
 
 ## 1. 任务清单（按模块）
 
@@ -178,7 +178,7 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-IMP-001` | `TODO` | 实现 md/txt 文件名解析器（`YYYY-MM-DD` 与 `YYYY-summary`） | 可正确识别 `daily`/`yearly_summary` 并产出结构化结果 | `src/services/import.ts` `src/types/diary.ts` | — | — |
+| `TD-IMP-001` | `DOING` | 实现 md/txt 文件名解析器（`YYYY-MM-DD` 与 `YYYY-summary`） | 可正确识别 `daily`/`yearly_summary` 并产出结构化结果 | `src/services/import.ts` `src/types/diary.ts` | 风险分级：高；计划执行：`npm run lint` + `npm run test:unit` + `npm run test:integration` + `npx playwright test e2e/specs/import.spec.ts --project=chromium --retries=0` | — |
 | `TD-IMP-002` | `TODO` | 实现批量导入预检（有效/冲突/无效分类） | 导入前能输出三类列表，错误文件可定位 | `src/services/import.ts` `src/pages/workspace.tsx` | — | — |
 | `TD-IMP-003` | `TODO` | 实现冲突逐条确认（覆盖/跳过）写入流程 | 同日期/同年份冲突可逐条决策并正确落库 | `src/components/common/import-conflict-dialog.tsx` `src/hooks/use-diary.ts` | — | — |
 | `TD-IMP-004` | `TODO` | 实现导入结果汇总反馈（成功/跳过/失败） | 完成后可查看汇总统计与失败明细 | `src/components/common/import-result-dialog.tsx` `src/pages/workspace.tsx` | — | — |
