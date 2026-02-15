@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-15`
-- 总任务：`130`
-- 状态统计：`DONE=114` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`131`
+- 状态统计：`DONE=115` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -170,6 +170,7 @@
 | `TD-UI-041` | `DONE` | 继续精简设置页 ready 区域：移除重复状态展示并收敛文案到必要信息 | 设置页 ready 区域不再重复出现 `READY/状态卡/状态行`；仅保留可编辑项与必要说明；文案简洁且无重复解释 | `src/components/auth/auth-panel.tsx` `e2e/specs/settings-update.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 35a06d1` |
 | `TD-UI-042` | `DONE` | 设置页进一步压缩留白并重排布局（去空占位、去无意义说明、桌面双列） | 设置页不再出现顶部/底部大空白；去除“仅保留必要项”说明；桌面端字段采用双列排布降低右侧留白，移动端保持单列可用 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `e2e/specs/settings-update.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / a98e819` |
 | `TD-UI-043` | `DONE` | 统计页升级为图表主导仪表盘（保留明细表并新增月度趋势/年度对比可视化） | 统计页首屏展示 KPI + 月度趋势主图；新增年度对比图；年度表格保留并支持明细核对；移动端保持同密度可用 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-comparison-chart.tsx` `src/components/stats/yearly-stats-table.tsx` `src/utils/stats.ts` `src/types/stats.ts` `src/__tests__/unit/stats.unit.test.ts` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 首次失败（worktree 缺少依赖，`eslint: not found`），挂载主工作区 `node_modules` 后通过；`npm run test:unit` 通过（59/59）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/insights-dashboard-svg-v1 --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_insights-dashboard-svg-v1 --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / dac12c4` |
+| `TD-UI-044` | `DONE` | 重构同步栏为“主状态 + 悬浮明细”并去除主栏 pull/push 双气泡冗余 | 主栏仅展示全局同步状态与 pull/push 按钮；pull/push 结果与时间改为 hover/focus/tap 可见明细；失败不在主栏常驻展示但可在 toast 与明细中回看；日记页与年度页复用同一同步栏组件 | `src/components/common/sync-control-bar.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过（首次失败：`eslint: not found`，已在 worktree 挂载主工作区 `node_modules` 后重跑通过）；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/syncbar-hover-details --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_syncbar-hover-details --e2e-cmd \"npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0\"` 后重跑通过（4/4）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 2773497` |
 
 ### 6.9 数据导入（v1.1）
 
