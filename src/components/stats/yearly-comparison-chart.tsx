@@ -20,6 +20,17 @@ function formatNumber(value: number): string {
   return numberFormatter.format(value)
 }
 
+function shouldRenderXAxisLabel(index: number, total: number): boolean {
+  if (total <= 8) {
+    return true
+  }
+  if (index === 0 || index === total - 1) {
+    return true
+  }
+  const step = Math.ceil(total / 8)
+  return index % step === 0
+}
+
 export default function YearlyComparisonChart({ items, isLoading = false }: YearlyComparisonChartProps) {
   if (isLoading) {
     return (
@@ -43,7 +54,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
   const wordMax = Math.max(1, ...items.map((item) => item.totalWordCount))
   const activeMax = Math.max(1, ...items.map((item) => item.activeDayCount))
   const step = items.length > 1 ? plotWidth / (items.length - 1) : 0
-  const barWidth = items.length > 1 ? Math.max(24, Math.min(56, step * 0.55)) : 56
+  const barWidth = items.length > 1 ? Math.max(8, Math.min(56, step * 0.55)) : 56
 
   const chartPoints = items.map((item, index) => {
     const x = CHART_MARGIN.left + (items.length > 1 ? index * step : plotWidth / 2)
@@ -79,10 +90,10 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-[12px] border border-td-line bg-td-surface">
+      <div className="rounded-[12px] border border-td-line bg-td-surface" data-testid="insights-yearly-chart-frame">
         <svg
           viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-          className="block min-w-[620px]"
+          className="block h-auto w-full"
           role="img"
           aria-label="年度总字数与活跃天数对比图"
         >
@@ -111,7 +122,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
             )
           })}
 
-          {chartPoints.map((point) => (
+          {chartPoints.map((point, index) => (
             <g key={point.year}>
               <rect
                 x={point.x - barWidth / 2}
@@ -128,9 +139,11 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
                 </title>
               </rect>
 
-              <text x={point.x} y={CHART_MARGIN.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill="#666666">
-                {point.year}
-              </text>
+              {shouldRenderXAxisLabel(index, chartPoints.length) ? (
+                <text x={point.x} y={CHART_MARGIN.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill="#666666">
+                  {point.year}
+                </text>
+              ) : null}
             </g>
           ))}
 
