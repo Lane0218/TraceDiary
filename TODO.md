@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-15`
 - 总任务：`130`
-- 状态统计：`DONE=113` / `DOING=1` / `TODO=15` / `BLOCKED=1`
-- 当前进行中：`TD-SYNC-034`
+- 状态统计：`DONE=114` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -94,7 +94,7 @@
 | `TD-SYNC-031` | `DONE` | 移除“云端待同步/已同步”推断展示，改为 Pull/Push 执行结果与时间展示（不显示耗时） | 工作台与年度总结页均展示 `Pull` 与 `Push` 最近执行状态（未执行/进行中/成功/失败）及绝对时间；不再展示“云端待同步/已同步”胶囊；刷新后状态可恢复；相关单元/集成/E2E 回归通过 | `src/utils/sync-presentation.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/__tests__/integration/editor.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/manual-sync-*.spec.ts` `e2e/specs/conflict-resolution.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --workers=1 --retries=1` 通过（4/4）；`npm run test:e2e:full` 通过（21/21） | `2026-02-14 / a4bee89` |
 | `TD-SYNC-032` | `DONE` | 同步工具栏 UI 升级为“仪表条 Pro”并引入去重 Toast（同类型全局唯一），新增空内容 Push 拦截 | 工作台与年度总结页同步区视觉升级且布局一致；移除按钮旁内联错误，统一为去重 Toast；空内容（trim 后为空）点击 push 不发请求并提示“当前内容为空，无需 push”；相关单元/集成/E2E 回归通过 | `src/components/common/sync-control-bar.tsx` `src/components/common/toast-center.tsx` `src/hooks/use-toast.ts` `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/index.css` `src/__tests__/integration/editor.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/manual-sync-*.spec.ts` `e2e/specs/remote-pull-sync.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:full` 首次失败（新 worktree 缺少 .env.e2e）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-toolbar-toast-empty-push-v2 --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan_sync-toolbar-toast-empty-push-v2 --e2e-cmd \"npm run test:e2e:full\"` 后，补跑定向 `npx playwright test e2e/specs/manual-sync-hang-guard.spec.ts e2e/specs/remote-pull-sync.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --workers=1 --retries=1` 通过（4/4），最终 `npm run test:e2e:full` 通过（22/22） | `2026-02-14 / f4229fe` |
 | `TD-SYNC-033` | `DONE` | 修复 StrictMode 下单次 push 被误判为 stale（前端 2-3 秒提示“当前正在上传”但远端已成功） | 单次点击 push 在开发模式（StrictMode）不再误报“当前正在上传/失败”；手动 push 成功后前端状态与远端结果一致；新增回归测试覆盖 StrictMode 生命周期 | `src/hooks/use-sync.ts` `src/hooks/__tests__/use-sync.test.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 失败（`src/__tests__/integration/app.integration.test.tsx` 3 项失败，属已知阻塞任务 `TD-TEST-013` 的导航迁移断言，不属于本次改动范围）；`npx playwright test e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --retries=0` 通过（1/1） | `2026-02-14 / abb6366` |
-| `TD-SYNC-034` | `DOING` | 优化远端 push 提交信息：为日记与 metadata commit message 增加秒级时间戳 | push 到远端时 commit message 包含秒级时间（精确到秒）；保持现有冲突处理与上传语义不变；相关单元测试通过 | `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | 风险分级：中；计划执行：`npm run lint`、`npm run test:unit`、`npm run test:integration`、`npm run test:e2e:fast` | — |
+| `TD-SYNC-034` | `DONE` | 优化远端 push 提交信息：为日记与 metadata commit message 增加秒级时间戳 | push 到远端时 commit message 包含秒级时间（精确到秒）；保持现有冲突处理与上传语义不变；相关单元测试通过 | `src/services/sync.ts` `src/services/__tests__/sync.test.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（59/59）；`npm run test:integration` 通过（62/62）；`npm run test:e2e:fast` 通过（4/4） | `2026-02-15 / 4cab9bb` |
 
 ### 6.6 PWA、部署与安全头
 
