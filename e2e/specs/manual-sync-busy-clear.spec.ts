@@ -46,7 +46,9 @@ test('手动上传进行中应禁用 pull/push，完成后恢复并提示成功'
 
   try {
     await clickManualSync(page)
-    await expect(page.getByRole('button', { name: 'pushing...' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'push' })).toBeVisible()
+    await expect(page.getByTestId('manual-sync-button')).toHaveAttribute('aria-busy', 'true')
+    await expect(page.getByTestId('manual-sync-button').locator('.td-sync-control-running-dot')).toBeVisible()
     await expect(page.getByTestId('manual-sync-button')).toBeDisabled()
     await expect(page.getByTestId('manual-pull-button')).toBeDisabled()
 

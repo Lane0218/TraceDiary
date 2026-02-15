@@ -45,18 +45,26 @@ export default function SyncControlBar({
             className="td-btn td-sync-control-btn-secondary"
             onClick={onPull}
             disabled={isActionRunning}
+            aria-busy={isPulling}
             data-testid="manual-pull-button"
           >
-            {isPulling ? 'pulling...' : 'pull'}
+            <span className={`td-sync-control-btn-label ${isPulling ? 'is-running' : ''}`}>
+              {isPulling ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+              <span>pull</span>
+            </span>
           </button>
           <button
             type="button"
             className="td-btn td-sync-control-btn-primary"
             onClick={onPush}
             disabled={isActionRunning}
+            aria-busy={isPushing}
             data-testid="manual-sync-button"
           >
-            {isPushing ? 'pushing...' : 'push'}
+            <span className={`td-sync-control-btn-label ${isPushing ? 'is-running' : ''}`}>
+              {isPushing ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+              <span>push</span>
+            </span>
           </button>
         </div>
       </div>
