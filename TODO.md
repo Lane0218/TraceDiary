@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-15`
-- 总任务：`123`
-- 状态统计：`DONE=107` / `DOING=0` / `TODO=15` / `BLOCKED=1`
+- 总任务：`124`
+- 状态统计：`DONE=108` / `DOING=0` / `TODO=15` / `BLOCKED=1`
 - 当前进行中：`—`
 
 ## 1. 任务清单（按模块）
@@ -163,6 +163,7 @@
 | `TD-UI-035` | `DONE` | 精简年月弹层文案：移除“年份”标签并将“回到本月”改为图标按钮 | 弹层中年份区域不再显示“年份”字样；回到当前月份入口改为仅图标按钮且具备可访问名称；保留年份输入与箭头步进全部功能 | `src/components/calendar/month-calendar.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（116/116，含 `.worktrees` 重复测试文件）；`npm run test:integration` 通过（114/114，含 `.worktrees` 重复测试文件）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-15 / 65445f5` |
 | `TD-UI-036` | `DONE` | 点击 pull/push 任一按钮后，两个按钮在进行中同时禁用 | 触发 pull 或 push 后，两按钮均立即进入禁用态；请求结束后恢复；不影响现有成功/失败提示与冲突流程 | `src/components/common/sync-control-bar.tsx` `src/index.css` `src/__tests__/integration/editor.integration.test.tsx` `e2e/specs/manual-sync-busy-clear.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npm run test:e2e:fast` 首次失败（新 worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/push-pull-dual-disable --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan-push-pull-dual-disable --e2e-cmd \"npm run test:e2e:fast\"` 后重跑通过（4/4） | `2026-02-15 / 28ebb5d` |
 | `TD-UI-037` | `DONE` | 重构设置页交互为页内直配（移除“配置”二次弹窗入口）并移除主动锁定按钮入口 | 进入设置页可直接完成首次配置/解锁/Token 更新；设置页不再出现“配置”按钮与二次弹窗；保留日记/统计/年度总结未解锁阻断弹窗；全局不再提供“立即锁定”按钮 | `src/pages/settings.tsx` `src/components/auth/auth-modal.tsx` `src/components/auth/auth-panel.tsx` `src/pages/welcome.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/auth-setup.spec.ts` `e2e/specs/auth-session.spec.ts` `TODO.md` | 风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-inline-auth-panel --e2e-cmd "npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0"` 后重跑通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 502a1f8` |
+| `TD-UI-038` | `DONE` | 设置页去冗余并支持 ready 状态下直接编辑仓库/分支/Token | 设置页改为单层紧凑布局，移除解释性冗余文案与二级嵌套头；ready 状态可提交仓库/分支/Token 变更并即时校验生效；继续不提供“立即锁定”按钮 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `src/components/auth/auth-form-model.ts` `src/hooks/use-auth.ts` `src/hooks/__tests__/use-auth.test.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/settings-update.spec.ts` `TODO.md` | 风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（60/60）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-page-compact-editable --e2e-cmd "npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0"` 后发现新增 settings 用例失败，修复后重跑同命令通过（7/7）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 46fadd6` |
 
 ### 6.9 数据导入（v1.1）
 
