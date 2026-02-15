@@ -41,6 +41,9 @@ describe('App 路由与日记页入口', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: '写作统计' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '近 12 个月趋势' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '年度对比' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '年度汇总' })).toBeTruthy()
     expect(screen.getByLabelText('insights-page')).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
     expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
