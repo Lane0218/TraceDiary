@@ -180,14 +180,14 @@ function MarkdownEditorInner({
   ) : null
 
   const editorBottomBar = showBottomBar ? (
-    <div className={`${modeToggleClassName ?? 'mt-2'} flex items-center justify-between gap-2`}>
-      <div>{modeToggleButton}</div>
+    <div className={`${modeToggleClassName ?? 'mt-2'} flex items-center justify-end gap-2`}>
       <div
         className="rounded-full border border-td-line bg-td-surface px-2 py-1 text-[11px] leading-none text-td-muted"
         data-testid={testId ? `${testId}-word-count` : undefined}
       >
         字数 {wordCount}
       </div>
+      {modeToggleButton}
     </div>
   ) : null
 
