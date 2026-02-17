@@ -271,12 +271,14 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   const lastMetricBottom = (monthlyLastMetricBox?.y ?? 0) + (monthlyLastMetricBox?.height ?? 0)
   expect(metricsPanelBottom - lastMetricBottom).toBeLessThanOrEqual(2)
 
-  const [heatmapGridBox, sidePanelFirstMetricBox, sidePanelLastMetricBox, heatmapBottomRowBox] = await Promise.all([
+  const [yearlyHeatmapBox, heatmapGridBox, sidePanelFirstMetricBox, sidePanelLastMetricBox, heatmapBottomRowBox] = await Promise.all([
+    page.getByTestId('insights-yearly-heatmap').boundingBox(),
     page.getByTestId('insights-yearly-heatmap-grid-frame').boundingBox(),
     page.getByTestId('insights-yearly-heatmap-metric-active-days').boundingBox(),
     page.getByTestId('insights-yearly-heatmap-metric-peak-word').boundingBox(),
     page.getByTestId('insights-yearly-heatmap-bottom-row').boundingBox(),
   ])
+  expect(yearlyHeatmapBox).not.toBeNull()
   expect(heatmapGridBox).not.toBeNull()
   expect(sidePanelFirstMetricBox).not.toBeNull()
   expect(sidePanelLastMetricBox).not.toBeNull()
@@ -284,7 +286,11 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
 
   const heatmapHorizontalGap =
     (sidePanelFirstMetricBox?.x ?? 0) - ((heatmapGridBox?.x ?? 0) + (heatmapGridBox?.width ?? 0))
-  expect(heatmapHorizontalGap).toBeLessThanOrEqual(16)
+  expect(heatmapHorizontalGap).toBeLessThanOrEqual(12)
+
+  const heatmapSectionRight = (yearlyHeatmapBox?.x ?? 0) + (yearlyHeatmapBox?.width ?? 0)
+  const sidePanelRight = (sidePanelFirstMetricBox?.x ?? 0) + (sidePanelFirstMetricBox?.width ?? 0)
+  expect(Math.abs(heatmapSectionRight - sidePanelRight)).toBeLessThanOrEqual(2)
 
   const heatmapSideBottom = (sidePanelLastMetricBox?.y ?? 0) + (sidePanelLastMetricBox?.height ?? 0)
   const heatmapBottomRowBottom = (heatmapBottomRowBox?.y ?? 0) + (heatmapBottomRowBox?.height ?? 0)

@@ -17,7 +17,7 @@ const numberFormatter = new Intl.NumberFormat('zh-CN')
 
 const DAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 const HEATMAP_COLORS = ['#e8ece8', '#c9e6cf', '#9fd4ac', '#66bc7d', '#2f8f52'] as const
-const CELL_SIZE = 12
+const CELL_SIZE = 13
 const CELL_GAP = 3
 const MIN_YEAR = 1970
 const MAX_YEAR = 9999
@@ -156,10 +156,10 @@ export default function YearlyActivityHeatmap({
         </div>
       </header>
 
-      <div className="grid gap-2 xl:grid-cols-[max-content_272px] xl:items-stretch xl:justify-start">
-        <div className="space-y-2" data-testid="insights-yearly-heatmap-main-panel">
+      <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_272px] xl:items-stretch">
+        <div className="space-y-2 xl:min-w-0" data-testid="insights-yearly-heatmap-main-panel">
           <div
-            className="w-fit max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
+            className="w-full max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
             data-testid="insights-yearly-heatmap-grid-frame"
           >
             <div className="min-w-fit">
