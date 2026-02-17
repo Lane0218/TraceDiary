@@ -148,7 +148,9 @@ describe('年度总结页面', () => {
       })
       expect(screen.getByText('保存中')).toBeTruthy()
 
+      fireEvent.click(screen.getByRole('button', { name: '选择年份' }))
       fireEvent.change(screen.getByLabelText('跳转年份'), { target: { value: '2025' } })
+      fireEvent.click(screen.getByRole('button', { name: '确定' }))
 
       expect(useDiaryMock).toHaveBeenLastCalledWith({ type: 'yearly_summary', year: 2025 })
     } finally {
@@ -185,7 +187,7 @@ describe('年度总结页面', () => {
     expect(screen.queryByText(/未提交改动：/)).toBeNull()
     expect(screen.queryByText(/分支：/)).toBeNull()
 
-    fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
+    fireEvent.change(screen.getByLabelText('写下本年度总结'), {
       target: { value: '新的年度总结内容' },
     })
 
@@ -298,7 +300,7 @@ describe('年度总结页面', () => {
 
       renderYearlyPage('/yearly/2026')
 
-      fireEvent.change(screen.getByLabelText('写下本年度总结（长文写作场景，支持 Markdown）'), {
+      fireEvent.change(screen.getByLabelText('写下本年度总结'), {
         target: { value: '手动上传超时场景' },
       })
       expect(uploadExecutor).toHaveBeenCalledTimes(0)

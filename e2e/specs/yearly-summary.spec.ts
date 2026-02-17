@@ -82,7 +82,9 @@ test('年度总结编辑后应写入 IndexedDB，并在切换年份后保持可�
   )
   await waitForYearlySummaryPersisted(page, PERSIST_YEAR, marker)
 
+  await page.getByRole('button', { name: '选择年份' }).click()
   await page.getByRole('button', { name: '年份加一' }).click()
+  await page.getByRole('button', { name: '确定' }).click()
   await expect(page).toHaveURL(new RegExp(`/yearly/${PERSIST_YEAR + 1}$`))
   await expect(page.getByRole('heading', { name: `${PERSIST_YEAR + 1} 年度总结` })).toBeVisible()
 

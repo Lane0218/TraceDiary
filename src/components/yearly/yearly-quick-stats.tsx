@@ -36,18 +36,12 @@ export default function YearlyQuickStats({ stats, isLoading = false }: YearlyQui
 
   return (
     <div data-testid="yearly-quick-stats">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-td-text">年度概览</h2>
-        <p className="text-xs text-td-muted">仅统计日记</p>
-      </div>
+      <h2 className="mb-2 text-sm font-semibold text-td-text">年度概览</h2>
       <div className="space-y-2">
         {items.map((item) => (
-          <article
-            key={item.label}
-            className="rounded-[10px] border border-[#d9d7d2] bg-[#f8f7f3] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
-          >
-            <p className="text-[11px] uppercase tracking-[0.08em] text-td-muted">{item.label}</p>
-            <p className="mt-1 text-base font-semibold text-td-text">{item.value}</p>
+          <article key={item.label} className="min-h-0 rounded-[10px] border border-td-line bg-td-surface p-2.5">
+            <p className="text-xs text-td-muted">{item.label}</p>
+            <p className="mt-0.5 font-display text-[1.72rem] leading-none text-td-text">{item.value}</p>
           </article>
         ))}
       </div>

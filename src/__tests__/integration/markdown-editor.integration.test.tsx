@@ -91,4 +91,18 @@ describe('MarkdownEditor 组件', () => {
     expect(screen.getByLabelText('开始记录今天...')).toHaveValue('新文档内容XYZ')
     expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 8')
   })
+
+  it('底部模式下应将源码按钮与字数放在编辑区底部', () => {
+    render(
+      <MarkdownEditor
+        initialValue="底部工具条"
+        onChange={() => {}}
+        testId="daily-editor"
+        modeTogglePlacement="bottom"
+      />,
+    )
+
+    expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 5')
+    expect(screen.getByTestId('daily-editor-mode-source')).toHaveAttribute('aria-pressed', 'false')
+  })
 })

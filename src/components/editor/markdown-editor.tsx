@@ -18,6 +18,7 @@ interface MarkdownEditorProps {
   enableSourceMode?: boolean
   defaultMode?: 'wysiwyg' | 'source'
   modeToggleClassName?: string
+  modeTogglePlacement?: 'top' | 'bottom'
   viewportHeight?: number
   fillHeight?: boolean
 }
@@ -120,6 +121,7 @@ function MarkdownEditorInner({
   enableSourceMode = true,
   defaultMode = 'wysiwyg',
   modeToggleClassName,
+  modeTogglePlacement = 'top',
   viewportHeight,
   fillHeight = false,
 }: MarkdownEditorInnerProps) {
@@ -134,6 +136,7 @@ function MarkdownEditorInner({
   }
 
   const showSourceMode = enableSourceMode && mode === 'source'
+  const showBottomBar = modeTogglePlacement === 'bottom'
   const sourceEditorStyle = fillHeight
     ? ({ height: '100%' } as CSSProperties)
     : typeof viewportHeight === 'number' && viewportHeight > 0
@@ -141,7 +144,7 @@ function MarkdownEditorInner({
       : undefined
   const editorShellClassName = fillHeight ? 'flex h-full min-h-0 flex-col' : ''
   const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1' : 'relative'
-  const wordCountBadge = (
+  const floatingWordCountBadge = (
     <div
       className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-td-line bg-td-surface/90 px-2 py-1 text-[11px] leading-none text-td-muted"
       data-testid={testId ? `${testId}-word-count` : undefined}
@@ -150,32 +153,48 @@ function MarkdownEditorInner({
     </div>
   )
 
-  const modeToggle = enableSourceMode ? (
+  const modeToggleButton = enableSourceMode ? (
+    <button
+      type="button"
+      className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}
+      aria-pressed={mode === 'source'}
+      onClick={() => {
+        if (mode === 'source') {
+          setMode('wysiwyg')
+          setWysiwygRevision((prev) => prev + 1)
+          return
+        }
+        setMode('source')
+      }}
+      disabled={disabled}
+      data-testid={testId ? `${testId}-mode-source` : undefined}
+    >
+      源码
+    </button>
+  ) : null
+
+  const modeToggleTop = modeToggleButton && modeTogglePlacement === 'top' ? (
     <div className={`${modeToggleClassName ?? 'mb-2'} flex items-center justify-end gap-2`}>
-      <button
-        type="button"
-        className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}
-        aria-pressed={mode === 'source'}
-        onClick={() => {
-          if (mode === 'source') {
-            setMode('wysiwyg')
-            setWysiwygRevision((prev) => prev + 1)
-            return
-          }
-          setMode('source')
-        }}
-        disabled={disabled}
-        data-testid={testId ? `${testId}-mode-source` : undefined}
+      {modeToggleButton}
+    </div>
+  ) : null
+
+  const editorBottomBar = showBottomBar ? (
+    <div className={`${modeToggleClassName ?? 'mt-2'} flex items-center justify-between gap-2`}>
+      <div>{modeToggleButton}</div>
+      <div
+        className="rounded-full border border-td-line bg-td-surface px-2 py-1 text-[11px] leading-none text-td-muted"
+        data-testid={testId ? `${testId}-word-count` : undefined}
       >
-        源码
-      </button>
+        字数 {wordCount}
+      </div>
     </div>
   ) : null
 
   if (import.meta.env.MODE === 'test') {
     return (
       <div className={editorShellClassName}>
-        {modeToggle}
+        {modeToggleTop}
         <div className={editorBodyClassName}>
           <textarea
             key={docKey}
@@ -191,8 +210,9 @@ function MarkdownEditorInner({
             }`}
             style={sourceEditorStyle}
           />
-          {wordCountBadge}
+          {showBottomBar ? null : floatingWordCountBadge}
         </div>
+        {editorBottomBar}
       </div>
     )
   }
@@ -200,7 +220,7 @@ function MarkdownEditorInner({
   if (showSourceMode) {
     return (
       <div className={editorShellClassName}>
-        {modeToggle}
+        {modeToggleTop}
         <div className={editorBodyClassName}>
           <textarea
             key={docKey}
@@ -215,15 +235,16 @@ function MarkdownEditorInner({
             }`}
             style={sourceEditorStyle}
           />
-          {wordCountBadge}
+          {showBottomBar ? null : floatingWordCountBadge}
         </div>
+        {editorBottomBar}
       </div>
     )
   }
 
   return (
     <div className={editorShellClassName}>
-      {modeToggle}
+      {modeToggleTop}
       <div className={editorBodyClassName}>
         <MilkdownProvider>
           <MilkdownRuntimeEditor
@@ -237,8 +258,9 @@ function MarkdownEditorInner({
             fillHeight={fillHeight}
           />
         </MilkdownProvider>
-        {wordCountBadge}
+        {showBottomBar ? null : floatingWordCountBadge}
       </div>
+      {editorBottomBar}
     </div>
   )
 }
