@@ -6,9 +6,9 @@
 
 ## 0. 快速看板
 
-- 更新时间：`2026-02-15`
-- 总任务：`139`
-- 状态统计：`DONE=128` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 更新时间：`2026-02-17`
+- 总任务：`140`
+- 状态统计：`DONE=129` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -178,6 +178,7 @@
 | `TD-UI-049` | `DONE` | 将导入入口从日记页迁移到设置页，并统一导入/导出为同一暖色数据管理视觉体系 | 设置页提供可用导入与导出入口；日记页不再展示导入入口；导入流程（预检/冲突/结果/自动上传）行为不回退；导入与导出卡片样式统一且与现有中性主界面分层共存 | `src/pages/diary.tsx` `src/pages/settings.tsx` `src/components/common/import-data-panel.tsx` `src/components/common/export-data-panel.tsx` `src/index.css` `src/__tests__/integration/import.integration.test.tsx` `e2e/specs/import.spec.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（75/75）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/import.spec.ts` 首次失败（worktree 缺少 `.env.e2e`），复制主工作区 `.env.e2e` 后重跑通过（1/1）；`npm run test:e2e:full` 通过（26 passed，1 flaky 重试通过）；`npx playwright test e2e/specs/stats-insights.spec.ts` 通过（1/1，修复热力图年份切换稳定性） | `2026-02-15 / dd5b3ce` |
 | `TD-UI-050` | `DONE` | 精简导入/导出相关文案，仅保留必要信息 | 设置页导入与导出面板仅保留“导入/导出”标题与按钮；进行中状态改为按钮左侧闪动圆点 + Toast（与 pull/push 反馈模式一致）；不影响导入导出行为与现有测试链路 | `src/components/common/import-data-panel.tsx` `src/components/common/export-data-panel.tsx` `src/components/common/import-conflict-dialog.tsx` `src/components/common/import-result-dialog.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0` 首次失败（并行执行导致导出“无数据”断言受污染），追加 `--workers=1` 串行重跑通过（3/3） | `2026-02-15 / ac1e1fe` |
 | `TD-UI-051` | `DONE` | 统计页信息架构重排与图表留白优化（统一层级、月度指标右置、热力图图例/选中信息下置） | 统计页标题层级清晰（避免“年度对比/年度洞察/年度热力图”并列混乱）；月度趋势指标不再位于图表上下造成大面积留白；热力图右侧仅保留年度关键指标，图例与选中日期移至热力图下方；桌面端不出现明显不合理空白块 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-activity-heatmap.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 首次失败（worktree 缺少依赖，`eslint: not found`），挂载主工作区 `node_modules` 后重跑通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/insights-ia-layout-polish --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_insights-ia-layout-polish --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 4e05f33` |
+| `TD-UI-052` | `DONE` | 同步状态胶囊圆点改造为“颜色+动效”状态编码（保留圆点、不使用勾/感叹号） | 汇总/拉取/上传三类状态圆点可区分 `idle/running/success/error`；错误态为红色语义；不引入勾号/感叹号图形；文案与交互行为不回退 | `src/components/common/sync-control-bar.tsx` `src/index.css` `src/__tests__/integration/editor.integration.test.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npm run test:e2e:fast` 首次失败（新 worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-status-dot-color-only --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_sync-status-dot-color-only --e2e-cmd \"npm run test:e2e:fast\"` 后重跑通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 待回填` |
 
 ### 6.9 数据导入（v1.1）
 

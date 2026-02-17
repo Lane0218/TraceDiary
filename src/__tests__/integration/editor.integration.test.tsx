@@ -177,6 +177,9 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
+    expect(screen.getByTestId('sync-summary-pill').getAttribute('data-status')).toBe('idle')
+    expect(screen.getByTestId('pull-status-pill').getAttribute('data-status')).toBe('idle')
+    expect(screen.getByTestId('push-status-pill').getAttribute('data-status')).toBe('idle')
     expect(screen.getByText(/Pull：未执行/)).toBeTruthy()
     expect(screen.getByText(/Push：未执行/)).toBeTruthy()
     expect(screen.queryByText(/未提交改动：/)).toBeNull()
@@ -189,6 +192,9 @@ describe('年度总结页面', () => {
     await waitFor(() => {
       expect(screen.getByText(/Pull：未执行/)).toBeTruthy()
       expect(screen.getByText(/Push：未执行/)).toBeTruthy()
+      expect(screen.getByTestId('sync-summary-pill').getAttribute('data-status')).toBe('idle')
+      expect(screen.getByTestId('pull-status-pill').getAttribute('data-status')).toBe('idle')
+      expect(screen.getByTestId('push-status-pill').getAttribute('data-status')).toBe('idle')
       expect(screen.queryByText(/未提交改动：/)).toBeNull()
       expect(screen.queryByText(/分支：/)).toBeNull()
     })
@@ -257,6 +263,8 @@ describe('年度总结页面', () => {
       expect(uploadingButton.disabled).toBe(true)
       expect(uploadingButton.getAttribute('aria-busy')).toBe('true')
       expect(uploadingButton.querySelector('.td-sync-control-running-dot')).toBeTruthy()
+      expect(screen.getByTestId('sync-summary-pill').getAttribute('data-status')).toBe('running')
+      expect(screen.getByTestId('push-status-pill').getAttribute('data-status')).toBe('running')
       expect(pullButton.disabled).toBe(true)
     })
 
@@ -306,6 +314,8 @@ describe('年度总结页面', () => {
         await vi.advanceTimersByTimeAsync(26_000)
       })
 
+      expect(screen.getByTestId('sync-summary-pill').getAttribute('data-status')).toBe('error')
+      expect(screen.getByTestId('push-status-pill').getAttribute('data-status')).toBe('error')
       expect(screen.getByText(/Push：失败/)).toBeTruthy()
       expect(screen.getByTestId('toast-push')).toHaveTextContent('同步超时，请检查网络后重试')
     } finally {

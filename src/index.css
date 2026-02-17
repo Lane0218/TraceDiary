@@ -177,6 +177,50 @@
     opacity: 0.9;
   }
 
+  .td-status-pill[data-status]::before {
+    width: 7px;
+    height: 7px;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    opacity: 1;
+  }
+
+  .td-status-pill[data-status='idle']::before {
+    border-color: #9ca3af;
+    background-color: transparent;
+  }
+
+  .td-status-pill[data-status='running']::before {
+    background-color: var(--td-warning);
+    animation: td-status-dot-pulse 1.2s ease-in-out infinite;
+  }
+
+  .td-status-pill[data-status='success']::before {
+    background-color: var(--td-success);
+  }
+
+  .td-status-pill[data-status='error']::before {
+    background-color: var(--td-danger);
+  }
+
+  @keyframes td-status-dot-pulse {
+    0%,
+    100% {
+      transform: scale(0.78);
+      opacity: 0.58;
+    }
+    50% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .td-status-pill[data-status='running']::before {
+      animation: none;
+    }
+  }
+
   .td-toolbar {
     @apply rounded-[10px] border p-3 sm:p-4;
     border-color: var(--td-line);
