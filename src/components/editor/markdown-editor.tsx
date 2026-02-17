@@ -144,9 +144,14 @@ function MarkdownEditorInner({
       : undefined
   const editorShellClassName = fillHeight ? 'flex h-full min-h-0 flex-col' : ''
   const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1' : 'relative'
+  const bubbleClassName =
+    'inline-flex h-6 items-center rounded-full border border-td-line bg-td-surface px-2.5 text-[11px] leading-none text-td-muted'
+  const sourceBubbleClassName = `${bubbleClassName} transition-colors hover:border-[#cfcac1] hover:text-td-text disabled:cursor-not-allowed disabled:opacity-50 ${
+    mode === 'source' ? 'border-[#a49d8f] bg-[#f1efe8] text-td-text' : ''
+  }`
   const floatingWordCountBadge = (
     <div
-      className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-td-line bg-td-surface/90 px-2 py-1 text-[11px] leading-none text-td-muted"
+      className={`pointer-events-none absolute bottom-3 right-3 ${bubbleClassName}`}
       data-testid={testId ? `${testId}-word-count` : undefined}
     >
       字数 {wordCount}
@@ -156,7 +161,7 @@ function MarkdownEditorInner({
   const modeToggleButton = enableSourceMode ? (
     <button
       type="button"
-      className={`td-btn px-2.5 py-1 text-xs ${mode === 'source' ? 'td-btn-primary' : ''}`}
+      className={sourceBubbleClassName}
       aria-pressed={mode === 'source'}
       onClick={() => {
         if (mode === 'source') {
@@ -182,7 +187,7 @@ function MarkdownEditorInner({
   const editorBottomBar = showBottomBar ? (
     <div className={`${modeToggleClassName ?? 'mt-2'} flex items-center justify-end gap-2`}>
       <div
-        className="rounded-full border border-td-line bg-td-surface px-2 py-1 text-[11px] leading-none text-td-muted"
+        className={bubbleClassName}
         data-testid={testId ? `${testId}-word-count` : undefined}
       >
         字数 {wordCount}
