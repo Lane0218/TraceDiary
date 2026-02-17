@@ -885,19 +885,17 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
             >
               <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
                 {!summary.isLoading ? (
-                  <div className="mx-auto h-full w-full max-w-[820px]">
-                    <MarkdownEditor
-                      key={`${summary.entryId}:${summary.loadRevision}`}
-                      docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
-                      initialValue={summary.content}
-                      onChange={handleEditorChange}
-                      placeholder="写下本年度总结"
-                      modeTogglePlacement="bottom"
-                      modeToggleClassName="mt-3"
-                      viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
-                      fillHeight
-                    />
-                  </div>
+                  <MarkdownEditor
+                    key={`${summary.entryId}:${summary.loadRevision}`}
+                    docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
+                    initialValue={summary.content}
+                    onChange={handleEditorChange}
+                    placeholder="写下本年度总结"
+                    modeTogglePlacement="bottom"
+                    modeToggleClassName="mt-3"
+                    viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
+                    fillHeight
+                  />
                 ) : null}
               </div>
             </article>
