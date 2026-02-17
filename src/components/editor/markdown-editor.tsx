@@ -139,10 +139,12 @@ function MarkdownEditorInner({
       : undefined
   const editorShellClassName = fillHeight ? 'flex h-full min-h-0 flex-col' : ''
   const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1' : 'relative'
-  const bubbleClassName =
-    'inline-flex h-6 items-center rounded-full border border-td-line bg-td-surface px-2.5 text-[11px] leading-none text-td-muted'
-  const sourceBubbleClassName = `${bubbleClassName} transition-colors hover:border-[#cfcac1] hover:text-td-text disabled:cursor-not-allowed disabled:opacity-50 ${
-    mode === 'source' ? 'border-[#3f4742] bg-[#3f4742] text-white hover:border-[#333a36] hover:bg-[#333a36] hover:text-white' : ''
+  const bubbleFrameClassName = 'inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] leading-none'
+  const bubbleClassName = `${bubbleFrameClassName} border-td-line bg-td-surface text-td-muted`
+  const sourceBubbleClassName = `${bubbleFrameClassName} transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+    mode === 'source'
+      ? 'td-btn-primary-ink'
+      : 'border-td-line bg-td-surface text-td-muted hover:border-[#cfcac1] hover:text-td-text'
   }`
   const floatingWordCountBadge = (
     <div
