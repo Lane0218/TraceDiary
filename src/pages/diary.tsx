@@ -846,7 +846,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
                     }}
                     data-testid="diary-left-tab-stats"
                   >
-                    数据统计
+                    统计概览
                   </button>
                 </div>
               </div>
