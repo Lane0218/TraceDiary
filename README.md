@@ -47,6 +47,35 @@ npm run test:e2e:fast
 4. 配置生产环境变量（如 `VITE_GITEE_API_BASE`）。
 5. 绑定自定义域名并确认 HTTPS 生效。
 
+### 1.1 一键脚本部署（推荐）
+
+仓库已提供一键生产部署脚本：`scripts/deploy-vercel-prod.sh`。
+
+```bash
+export VERCEL_TOKEN='你的新token'
+bash scripts/deploy-vercel-prod.sh
+```
+
+默认行为：
+
+1. 校验 Vercel 身份；
+2. 执行 `npm run lint`；
+3. 执行 `vercel --prod` 生产部署；
+4. 校验 `https://diary.laneljc.cn` 与 `https://tracediary.laneljc.cn` 可达。
+
+常用参数：
+
+```bash
+# 自定义 scope
+bash scripts/deploy-vercel-prod.sh --scope lanes-projects-29cb0384
+
+# 自定义校验地址（可重复 --url）
+bash scripts/deploy-vercel-prod.sh --url https://diary.laneljc.cn --url https://tracediary.laneljc.cn
+
+# 仅部署，不做 lint/验收（紧急场景）
+bash scripts/deploy-vercel-prod.sh --skip-lint --skip-verify
+```
+
 ### 2. 入口访问控制（三选一）
 
 生产环境必须启用以下三种方案之一，防止应用首页对公网匿名开放。
