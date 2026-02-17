@@ -17,9 +17,8 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
       <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
 
       <section className="mt-4 space-y-4 td-fade-in" aria-label="settings-page">
-        <header className="td-settings-hero">
-          <h1 className="font-display text-2xl text-td-text">设置</h1>
-          <p className="td-settings-hero-desc">管理仓库连接、凭证与数据操作。</p>
+        <header className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-2xl text-td-text">设置</h2>
         </header>
 
         <article className="td-card-muted td-panel space-y-4">
