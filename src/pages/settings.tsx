@@ -17,16 +17,29 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
       <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
 
       <section className="mt-4 space-y-4 td-fade-in" aria-label="settings-page">
-        <article className="td-card-muted td-panel space-y-3">
+        <header className="td-settings-hero">
+          <h1 className="font-display text-[30px] leading-tight text-td-text sm:text-[34px]">设置</h1>
+          <p className="td-settings-hero-desc">管理仓库连接、凭证与数据操作。</p>
+        </header>
+
+        <article className="td-card-muted td-panel space-y-4">
           <header>
-            <h2 className="font-display text-2xl text-td-text">设置</h2>
+            <h2 className="td-settings-section-title">连接设置</h2>
+            <p className="td-settings-section-desc">更新仓库连接与凭证，保存后会立即校验。</p>
           </header>
           <AuthPanel auth={auth} variant="embedded" />
         </article>
-        <section className="grid gap-4 xl:grid-cols-2" aria-label="settings-data-panels">
-          <ImportDataPanel auth={auth} />
-          <ExportDataPanel auth={auth} />
-        </section>
+
+        <article className="td-card-muted td-panel td-settings-data-card" aria-label="settings-data-panels">
+          <header>
+            <h2 className="td-settings-section-title">数据管理</h2>
+            <p className="td-settings-section-desc">导入 Markdown 文本或导出明文备份。</p>
+          </header>
+          <div className="td-settings-data-stack">
+            <ImportDataPanel auth={auth} variant="row" />
+            <ExportDataPanel auth={auth} variant="row" />
+          </div>
+        </article>
       </section>
     </main>
   )

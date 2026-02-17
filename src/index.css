@@ -82,6 +82,108 @@
     @apply p-4 sm:p-5;
   }
 
+  .td-settings-hero {
+    @apply rounded-[10px] border px-4 py-4 sm:px-5 sm:py-5;
+    border-color: #ddd8ce;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(206, 198, 180, 0.28), rgba(206, 198, 180, 0) 44%),
+      linear-gradient(160deg, #f7f5ef 0%, #f3f1eb 100%);
+  }
+
+  .td-settings-hero-desc {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #5c5952;
+  }
+
+  .td-settings-section-title {
+    font-family: 'Bricolage Grotesque', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 24px;
+    line-height: 1.2;
+    color: var(--td-text);
+  }
+
+  .td-settings-section-desc {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #5f5b54;
+  }
+
+  .td-settings-data-card {
+    border-color: #d8d2c4;
+  }
+
+  .td-settings-data-stack {
+    margin-top: 14px;
+    display: grid;
+    gap: 0;
+  }
+
+  .td-settings-data-row {
+    padding: 8px 0;
+  }
+
+  .td-settings-data-row + .td-settings-data-row {
+    border-top: 1px dashed #d6d0c1;
+    margin-top: 8px;
+    padding-top: 14px;
+  }
+
+  .td-settings-data-row-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .td-settings-data-row-header {
+    flex: 1 1 300px;
+    min-width: 0;
+  }
+
+  .td-settings-data-row-title {
+    font-family: 'Bricolage Grotesque', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 26px;
+    line-height: 1.12;
+    color: #26231d;
+  }
+
+  .td-settings-data-row-desc {
+    margin-top: 6px;
+    margin-bottom: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #5f5a52;
+  }
+
+  .td-settings-data-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .td-settings-data-action-btn {
+    border-color: #3f3a2f;
+    background: #3f3a2f;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(63, 58, 47, 0.18);
+  }
+
+  .td-settings-data-action-btn:hover {
+    border-color: #2c2922;
+    background: #2c2922;
+    box-shadow: 0 10px 22px rgba(44, 41, 34, 0.22);
+  }
+
+  .td-settings-data-row-note {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #6b655a;
+  }
+
   .td-btn {
     @apply rounded-[10px] border px-3 py-2 text-sm transition;
     border-color: var(--td-line);
@@ -495,6 +597,14 @@
     z-index: 1;
   }
 
+  .td-settings-data-row-result {
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid #d8d2c4;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 9px 11px;
+  }
+
   .td-export-result-title {
     margin: 0;
     font-size: 14px;
@@ -523,9 +633,19 @@
     background: rgba(240, 253, 244, 0.9);
   }
 
+  .td-settings-data-row-result.is-success {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(240, 253, 244, 0.86);
+  }
+
   .td-export-result.is-warning {
     border-color: rgba(217, 119, 6, 0.4);
     background: rgba(255, 251, 235, 0.92);
+  }
+
+  .td-settings-data-row-result.is-warning {
+    border-color: rgba(217, 119, 6, 0.35);
+    background: rgba(255, 251, 235, 0.88);
   }
 
   .td-export-result.is-danger {
@@ -533,9 +653,19 @@
     background: rgba(254, 242, 242, 0.92);
   }
 
+  .td-settings-data-row-result.is-danger {
+    border-color: rgba(220, 38, 38, 0.32);
+    background: rgba(254, 242, 242, 0.88);
+  }
+
   .td-export-result.is-muted {
     border-color: rgba(120, 113, 108, 0.35);
     background: rgba(248, 250, 252, 0.9);
+  }
+
+  .td-settings-data-row-result.is-muted {
+    border-color: rgba(120, 113, 108, 0.3);
+    background: rgba(248, 250, 252, 0.84);
   }
 
   .td-toast-center {
@@ -621,6 +751,22 @@
     background: rgba(254, 242, 242, 0.94);
     border-color: #f87171;
     color: #991b1b;
+  }
+
+  @media (max-width: 640px) {
+    .td-settings-data-row-top {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .td-settings-data-row-actions {
+      width: 100%;
+    }
+
+    .td-settings-data-action-btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   @media (min-width: 1024px) {

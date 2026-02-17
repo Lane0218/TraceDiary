@@ -45,7 +45,7 @@ function getStageTitle(stage: string): { title: string; subtitle: string; badge:
     default:
       return {
         title: '设置',
-        subtitle: '更新仓库、分支与 Token。',
+        subtitle: '更新仓库连接与凭证，保存后会立即校验。',
         badge: 'READY',
       }
   }
@@ -226,52 +226,68 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
       {state.stage === 'ready' ? (
         <form className="space-y-4" onSubmit={(event) => void submitModel.onReadyUpdateSubmit(event)}>
+          {!isModal ? (
+            <p className="text-sm text-td-muted">填写后将立即校验连接与凭证，失败时不会覆盖当前可用配置。</p>
+          ) : null}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-            <AuthFormField
-              label="仓库地址"
-              value={form.readyRepoInput}
-              onChange={(next) => setForm((prev) => ({ ...prev, readyRepoInput: next }))}
-              placeholder="owner/repo 或仓库 URL"
-              autoComplete="off"
-              testId="auth-ready-repo-input"
-              containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
-              inputClassName="td-input"
-            />
-            <AuthFormField
-              label="分支"
-              value={form.readyRepoBranch}
-              onChange={(next) => setForm((prev) => ({ ...prev, readyRepoBranch: next }))}
-              placeholder="默认 master，可填写 main/dev"
-              autoComplete="off"
-              testId="auth-ready-branch-input"
-              containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
-              inputClassName="td-input"
-            />
-            <AuthFormField
-              label="新 Token（可选）"
-              value={form.readyToken}
-              onChange={(next) => setForm((prev) => ({ ...prev, readyToken: next }))}
-              placeholder="留空则不更新 Token"
-              type="password"
-              autoComplete="off"
-              testId="auth-ready-token-input"
-              containerClassName={`flex flex-col gap-1.5 text-sm text-td-muted${showReadyPasswordInput ? '' : ' lg:col-span-2'}`}
-              inputClassName="td-input"
-            />
-            {showReadyPasswordInput ? (
+            <div className="space-y-1">
               <AuthFormField
-                label="主密码（仅更新 Token 时需要）"
-                value={form.readyMasterPassword}
-                onChange={(next) => setForm((prev) => ({ ...prev, readyMasterPassword: next }))}
-                placeholder="请输入主密码以更新 Token"
-                type="password"
-                autoComplete="current-password"
-                testId="auth-ready-password-input"
+                label="仓库地址"
+                value={form.readyRepoInput}
+                onChange={(next) => setForm((prev) => ({ ...prev, readyRepoInput: next }))}
+                placeholder="owner/repo 或仓库 URL"
+                autoComplete="off"
+                testId="auth-ready-repo-input"
                 containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
                 inputClassName="td-input"
               />
+              <p className="text-xs text-td-muted">格式 owner/repo，仅支持 gitee.com。</p>
+            </div>
+            <div className="space-y-1">
+              <AuthFormField
+                label="分支"
+                value={form.readyRepoBranch}
+                onChange={(next) => setForm((prev) => ({ ...prev, readyRepoBranch: next }))}
+                placeholder="默认 master，可填写 main/dev"
+                autoComplete="off"
+                testId="auth-ready-branch-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
+              />
+              <p className="text-xs text-td-muted">默认 master，请填写已存在分支。</p>
+            </div>
+            <div className={`space-y-1${showReadyPasswordInput ? '' : ' lg:col-span-2'}`}>
+              <AuthFormField
+                label="新 Token（可选）"
+                value={form.readyToken}
+                onChange={(next) => setForm((prev) => ({ ...prev, readyToken: next }))}
+                placeholder="留空则不更新 Token"
+                type="password"
+                autoComplete="off"
+                testId="auth-ready-token-input"
+                containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                inputClassName="td-input"
+              />
+              <p className="text-xs text-td-muted">留空则不更新 Token。</p>
+            </div>
+            {showReadyPasswordInput ? (
+              <div className="space-y-1">
+                <AuthFormField
+                  label="主密码（仅更新 Token 时需要）"
+                  value={form.readyMasterPassword}
+                  onChange={(next) => setForm((prev) => ({ ...prev, readyMasterPassword: next }))}
+                  placeholder="请输入主密码以更新 Token"
+                  type="password"
+                  autoComplete="current-password"
+                  testId="auth-ready-password-input"
+                  containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+                  inputClassName="td-input"
+                />
+                <p className="text-xs text-td-muted">仅更新 Token 时需要，用于重新加密保存。</p>
+              </div>
             ) : null}
           </div>
+          <p className="text-xs text-td-muted">提交后将立即校验；校验失败不会覆盖当前可用配置。</p>
           <div className="flex justify-end">
             <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-ready-submit">
               保存设置

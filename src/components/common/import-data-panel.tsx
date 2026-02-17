@@ -19,6 +19,7 @@ import ImportResultDialog from './import-result-dialog'
 
 interface ImportDataPanelProps {
   auth: UseAuthResult
+  variant?: 'card' | 'row'
 }
 
 interface ImportExecutionState {
@@ -31,7 +32,7 @@ function uniqueEntryIds(entryIds: string[]): string[] {
   return [...new Set(entryIds)]
 }
 
-export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
+export default function ImportDataPanel({ auth, variant = 'card' }: ImportDataPanelProps) {
   const { push: pushToast } = useToast()
   const importFileInputRef = useRef<HTMLInputElement | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -77,6 +78,7 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
     : undefined
 
   const activeImportConflict = importConflictQueue[importConflictIndex] ?? null
+  const isRow = variant === 'row'
 
   const resetImportSession = useCallback(() => {
     setImportReadyCandidates([])
@@ -401,25 +403,37 @@ export default function ImportDataPanel({ auth }: ImportDataPanelProps) {
 
   return (
     <>
-      <article className="td-card-primary td-panel td-export-panel" aria-label="settings-import-panel">
-        <header>
-          <h3 className="font-display text-2xl text-td-text">导入</h3>
-        </header>
+      <article
+        className={isRow ? 'td-settings-data-row' : 'td-card-primary td-panel td-export-panel'}
+        aria-label="settings-import-panel"
+      >
+        <div className={isRow ? 'td-settings-data-row-top' : ''}>
+          <header className={isRow ? 'td-settings-data-row-header' : ''}>
+            <h3 className={isRow ? 'td-settings-data-row-title' : 'font-display text-2xl text-td-text'}>导入</h3>
+            {isRow ? (
+              <p className="td-settings-data-row-desc">支持 .md/.txt 文件，自动预检冲突并可逐条覆盖。</p>
+            ) : null}
+          </header>
 
-        <div className="td-export-actions mt-3">
-          <button
-            type="button"
-            className="td-btn td-export-btn"
-            onClick={handleOpenImportPicker}
-            disabled={isImporting}
-            data-testid="settings-import-button"
-          >
-            <span className={`td-sync-control-btn-label ${isImporting ? 'is-running' : ''}`}>
-              {isImporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
-              <span>导入</span>
-            </span>
-          </button>
+          <div className={isRow ? 'td-settings-data-row-actions' : 'td-export-actions mt-3'}>
+            <button
+              type="button"
+              className={isRow ? 'td-btn td-settings-data-action-btn' : 'td-btn td-export-btn'}
+              onClick={handleOpenImportPicker}
+              disabled={isImporting}
+              data-testid="settings-import-button"
+            >
+              <span className={`td-sync-control-btn-label ${isImporting ? 'is-running' : ''}`}>
+                {isImporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+                <span>导入</span>
+              </span>
+            </button>
+          </div>
         </div>
+
+        {isRow ? (
+          <p className="td-settings-data-row-note">导入结果会在弹窗展示，并自动尝试上传本次导入条目。</p>
+        ) : null}
 
         <input
           ref={importFileInputRef}

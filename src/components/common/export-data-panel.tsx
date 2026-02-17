@@ -5,6 +5,7 @@ import { exportDiaryData, type ExportExecutionResult } from '../../services/expo
 
 interface ExportDataPanelProps {
   auth: UseAuthResult
+  variant?: 'card' | 'row'
 }
 
 const EXPORT_CONFIRM_MESSAGE = '将导出明文文件，确认继续？'
@@ -27,11 +28,12 @@ function getResultToneClass(result: ExportExecutionResult): string {
   return 'is-danger'
 }
 
-export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
+export default function ExportDataPanel({ auth, variant = 'card' }: ExportDataPanelProps) {
   const { push: pushToast } = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [lastResult, setLastResult] = useState<ExportExecutionResult | null>(null)
   const canExport = !isExporting
+  const isRow = variant === 'row'
 
   const summaryText = useMemo(() => {
     if (!lastResult) {
@@ -109,31 +111,43 @@ export default function ExportDataPanel({ auth }: ExportDataPanelProps) {
   }
 
   return (
-    <article className="td-card-primary td-panel td-export-panel" aria-label="settings-export-panel">
-      <header>
-        <h3 className="font-display text-2xl text-td-text">导出</h3>
-      </header>
+    <article
+      className={isRow ? 'td-settings-data-row' : 'td-card-primary td-panel td-export-panel'}
+      aria-label="settings-export-panel"
+    >
+      <div className={isRow ? 'td-settings-data-row-top' : ''}>
+        <header className={isRow ? 'td-settings-data-row-header' : ''}>
+          <h3 className={isRow ? 'td-settings-data-row-title' : 'font-display text-2xl text-td-text'}>导出</h3>
+          {isRow ? (
+            <p className="td-settings-data-row-desc">导出明文 ZIP（含 manifest），请妥善保管导出文件。</p>
+          ) : null}
+        </header>
 
-      <div className="td-export-actions mt-3">
-        <button
-          type="button"
-          className="td-btn td-export-btn"
-          onClick={() => {
-            void handleExport()
-          }}
-          disabled={!canExport}
-          data-testid="settings-export-button"
-        >
-          <span className={`td-sync-control-btn-label ${isExporting ? 'is-running' : ''}`}>
-            {isExporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
-            <span>导出</span>
-          </span>
-        </button>
+        <div className={isRow ? 'td-settings-data-row-actions' : 'td-export-actions mt-3'}>
+          <button
+            type="button"
+            className={isRow ? 'td-btn td-settings-data-action-btn' : 'td-btn td-export-btn'}
+            onClick={() => {
+              void handleExport()
+            }}
+            disabled={!canExport}
+            data-testid="settings-export-button"
+          >
+            <span className={`td-sync-control-btn-label ${isExporting ? 'is-running' : ''}`}>
+              {isExporting ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+              <span>导出</span>
+            </span>
+          </button>
+        </div>
       </div>
+
+      {isRow ? (
+        <p className="td-settings-data-row-note">导出仅在本地执行，不会触发远端上传。</p>
+      ) : null}
 
       {lastResult ? (
         <section
-          className={`td-export-result ${getResultToneClass(lastResult)}`}
+          className={`${isRow ? 'td-settings-data-row-result' : 'td-export-result'} ${getResultToneClass(lastResult)}`}
           data-testid="settings-export-result"
           aria-live="polite"
         >
