@@ -123,7 +123,6 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
                 </article>
                 <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center">
                   <p className="text-xs text-td-muted">最近月份字数环比</p>
-                  <p className="mt-0.5 text-[11px] text-td-muted/85">口径：本月字数相对上月字数变化</p>
                   <p className="mt-1 text-lg font-semibold text-td-text">
                     {formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}
                   </p>
