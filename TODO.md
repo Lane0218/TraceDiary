@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`152`
-- 状态统计：`DONE=141` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`153`
+- 状态统计：`DONE=142` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -191,6 +191,7 @@
 | `TD-UI-062` | `DONE` | 将设置页主标题区改为与数据统计页同款 header 结构 | 设置页顶部标题不再使用 `td-settings-hero` 渐变卡片；主标题采用与数据统计页一致的 header 布局与样式语义；页面功能与测试链路不回退 | `src/pages/settings.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 015e066` |
 | `TD-UI-063` | `DONE` | 设置页文案精简与统计页刷新图标修正（同步设置命名 + 去括号标签 + SVG 图标） | 设置页“连接设置”改为“同步设置”；设置项标签去除括号补充说明（如“新 Token（可选）/主密码（仅更新 Token 时需要）”）；统计页刷新按钮改为标准 SVG 图标并保持交互不回退 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `src/pages/insights.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/stats-insights.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 05b63ef` |
 | `TD-UI-064` | `DONE` | 年度总结页二次精简：年份改为点击弹层选择、删除静态描述文案、年度概览对齐日记统计风格、右侧仅保留编辑框并将源码/字数下置 | 点击年份可弹出年份选择层并确认跳转；页面不再出现静态描述性语句；年度概览卡字号与层级向日记统计栏看齐；右侧去除“本年度内容”等冗余头部，仅保留编辑器与底部源码/字数 | `src/pages/yearly-summary.tsx` `src/components/yearly/yearly-quick-stats.tsx` `src/components/yearly/yearly-toc.tsx` `src/components/editor/markdown-editor.tsx` `src/components/editor/markdown-editor.css` `src/__tests__/integration/editor.integration.test.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/yearly-summary-copy-trim --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_yearly-summary-copy-trim --e2e-cmd \"npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0\"` 后重跑通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / e7e5fd4` |
+| `TD-UI-065` | `DONE` | 年度总结页将底部“源码”按钮右移，与字数并排聚合在右下角 | 年度总结页编辑区底部工具条右侧同时显示“字数”和“源码”；源码按钮不再位于左下角；源码切换与字数显示行为不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / ac892bb` |
 
 ### 6.9 数据导入（v1.1）
 
