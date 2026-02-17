@@ -924,6 +924,44 @@ VITE_GITEE_API_BASE=https://gitee.com/api/v5
 6. 配置 DNS：CNAME 指向 Vercel
 7. 配置入口访问控制（Cloudflare Access / Vercel 访问保护 / Basic Auth）
 
+#### 8.2.3 入口访问控制三选一（可执行）
+
+生产环境必须启用且仅需启用一种入口门禁；未授权请求必须在入口层返回 `401` 或 `403`，不得返回 `200`。
+
+**方案 A：Cloudflare Access（推荐）**
+
+1. 将业务域名接入 Cloudflare，并代理到 Vercel 源站。
+2. 在 Cloudflare Zero Trust 中新增 `Self-hosted` 应用，域名设置为生产域名。
+3. 配置 `Allow` 策略（仅允许个人邮箱或指定身份组）。
+4. 保持默认拒绝其他访问并发布策略。
+
+**方案 B：Vercel 访问保护**
+
+1. 打开 `Project Settings -> Deployment Protection`。
+2. 对 `Production` 启用访问保护（账号登录或密码保护模式任选其一）。
+3. 配置允许访问的账号或密码，并应用到生产环境。
+4. 重新部署，确认保护策略生效。
+
+**方案 C：Basic Auth（网关层）**
+
+1. 在反向代理层（Nginx/Caddy/Cloudflare Worker）启用 Basic Auth。
+2. 凭证仅存放在密钥系统或环境变量，禁止写入仓库。
+3. 未携带 `Authorization` 时返回 `401`，并附带 `WWW-Authenticate`。
+4. 凭证错误返回 `401` 或 `403`，鉴权通过后才转发到 Vercel。
+
+#### 8.2.4 入口门禁验收（未授权 401/403）
+
+1. 在未登录态或无凭证条件下执行：
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<你的域名>/
+```
+
+2. 验收通过标准：
+   - 返回 `401` 或 `403`：通过
+   - 返回 `200`：失败（门禁未生效）
+3. 完成入口鉴权后再次访问，首页返回 `200`，且应用内仍要求主密码解锁数据。
+
 ### 8.3 PWA 配置
 
 #### 8.3.1 Manifest
@@ -1086,6 +1124,7 @@ src/
 - [ ] 密码验证正确（错误密码无法解密）
 - [ ] Gitee 上的文件是加密状态（无法直接阅读）
 - [ ] 公网部署已启用入口访问控制（未授权访问返回 401/403）
+- [ ] 可通过命令复核未授权状态码：`curl -s -o /dev/null -w "%{http_code}" https://<域名>/` 返回 401/403
 - [ ] Gitee Token 不以明文持久化到 LocalStorage
 - [ ] 本地仅存在 `encryptedToken`，不存在 Token 明文
 - [ ] LocalStorage 中没有明文敏感数据
