@@ -87,7 +87,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
-  const [yearInput, setYearInput] = useState(String(year))
+  const [isYearPickerOpen, setIsYearPickerOpen] = useState(false)
+  const [draftYear, setDraftYear] = useState(year)
+  const [draftYearInput, setDraftYearInput] = useState(String(year))
   const [sidebarStats, setSidebarStats] = useState<YearlySidebarStats>(() => createEmptyYearlySidebarStats())
   const [isSidebarStatsLoading, setIsSidebarStatsLoading] = useState(true)
   const [activeTocId, setActiveTocId] = useState<string | null>(null)
@@ -172,7 +174,8 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }, [canSyncToRemote, setActiveSyncMetadata, syncPayload])
 
   useEffect(() => {
-    setYearInput(String(year))
+    setDraftYear(year)
+    setDraftYearInput(String(year))
   }, [year])
 
   useEffect(() => {
@@ -356,6 +359,24 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       return
     }
     navigate(`/yearly/${nextYear}`)
+  }
+
+  const applyDraftYear = (nextYear: number) => {
+    if (!Number.isFinite(nextYear) || nextYear < MIN_YEAR || nextYear > MAX_YEAR) {
+      return
+    }
+    setDraftYear(nextYear)
+    setDraftYearInput(String(nextYear))
+  }
+
+  const handleConfirmYearPicker = () => {
+    setIsYearPickerOpen(false)
+    handleYearChange(draftYear)
+  }
+
+  const handleResetYearPicker = () => {
+    const nowYear = new Date().getFullYear()
+    applyDraftYear(nowYear)
   }
 
   const handleEditorChange = (nextContent: string) => {
@@ -724,54 +745,106 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         >
           <aside className="space-y-3 lg:flex lg:min-h-0 lg:flex-col">
             <section className="td-card-muted td-panel" data-testid="yearly-sidebar-header">
-              <h1 className="font-display text-td-text" aria-label={`${year} 年度总结`}>
-                <span className="block text-[40px] leading-none tracking-tight sm:text-[44px]">{year}</span>
-                <span className="mt-2 block text-lg font-semibold tracking-[0.02em] text-td-muted sm:text-xl">年度总结</span>
-              </h1>
-              <div className="mt-4 inline-flex h-11 items-center overflow-hidden rounded-[10px] border border-[#d6d6d6] bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
-                <button
-                  type="button"
-                  aria-label="年份减一"
-                  disabled={year <= MIN_YEAR}
-                  className="h-full w-9 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
-                  onClick={() => handleYearChange(year - 1)}
-                >
-                  &#8249;
-                </button>
-                <input
-                  id="summary-year"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  aria-label="跳转年份"
-                  value={yearInput}
-                  onChange={(event) => {
-                    const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
-                    setYearInput(sanitized)
-                    const parsed = parseValidYearInput(sanitized)
-                    if (parsed !== null) {
-                      handleYearChange(parsed)
-                    }
-                  }}
-                  onBlur={() => {
-                    const parsed = parseValidYearInput(yearInput)
-                    if (parsed === null) {
-                      setYearInput(String(year))
-                      return
-                    }
-                    setYearInput(String(parsed))
-                  }}
-                  className="h-full w-[96px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[19px] font-semibold text-td-text outline-none"
-                />
-                <button
-                  type="button"
-                  aria-label="年份加一"
-                  disabled={year >= MAX_YEAR}
-                  className="h-full w-9 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
-                  onClick={() => handleYearChange(year + 1)}
-                >
-                  &#8250;
-                </button>
+              <div className="relative">
+                <h1 className="font-display text-td-text" aria-label={`${year} 年度总结`}>
+                  <button
+                    type="button"
+                    aria-label="选择年份"
+                    className="block text-[40px] leading-none tracking-tight transition hover:text-[#333333] sm:text-[44px]"
+                    onClick={() => {
+                      setIsYearPickerOpen((prev) => {
+                        if (prev) {
+                          return false
+                        }
+                        setDraftYear(year)
+                        setDraftYearInput(String(year))
+                        return true
+                      })
+                    }}
+                  >
+                    {year}
+                  </button>
+                  <span className="mt-2 block text-lg font-semibold tracking-[0.02em] text-td-muted sm:text-xl">年度总结</span>
+                </h1>
+
+                {isYearPickerOpen ? (
+                  <div className="absolute left-0 top-[calc(100%+10px)] z-30">
+                    <div className="w-[244px] rounded-[10px] border border-td-line bg-[#f8f8f8] p-3 shadow-thin td-fade-in">
+                      <div className="mb-2.5 flex items-center gap-2">
+                        <div className="inline-flex h-9 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
+                          <button
+                            type="button"
+                            aria-label="年份减一"
+                            disabled={draftYear <= MIN_YEAR}
+                            className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                            onClick={() => applyDraftYear(draftYear - 1)}
+                          >
+                            &#8249;
+                          </button>
+                          <input
+                            id="summary-year"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            aria-label="跳转年份"
+                            value={draftYearInput}
+                            onChange={(event) => {
+                              const sanitized = event.target.value.replace(/\D+/g, '').slice(0, 4)
+                              setDraftYearInput(sanitized)
+                              const parsed = parseValidYearInput(sanitized)
+                              if (parsed !== null) {
+                                applyDraftYear(parsed)
+                              }
+                            }}
+                            onBlur={() => {
+                              const parsed = parseValidYearInput(draftYearInput)
+                              if (parsed === null) {
+                                setDraftYearInput(String(draftYear))
+                                return
+                              }
+                              applyDraftYear(parsed)
+                            }}
+                            className="h-full w-[80px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[15px] text-td-text outline-none"
+                          />
+                          <button
+                            type="button"
+                            aria-label="年份加一"
+                            disabled={draftYear >= MAX_YEAR}
+                            className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                            onClick={() => applyDraftYear(draftYear + 1)}
+                          >
+                            &#8250;
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="回到今年"
+                          className="ml-auto inline-flex h-9 items-center rounded-[8px] border border-[#d2d2d2] bg-white px-2.5 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:bg-[#fafafa] hover:text-td-text"
+                          onClick={handleResetYearPicker}
+                        >
+                          今年
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          className="rounded-[8px] border border-[#d2d2d2] bg-white px-2.5 py-1 text-xs text-td-muted transition hover:border-[#bcbcbc] hover:text-td-text"
+                          onClick={() => setIsYearPickerOpen(false)}
+                        >
+                          取消
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-[8px] border border-[#1f1f1f] bg-[#1f1f1f] px-2.5 py-1 text-xs text-white transition hover:border-black hover:bg-black"
+                          onClick={handleConfirmYearPicker}
+                        >
+                          确定
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </section>
 
@@ -810,11 +883,6 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
               className="td-card-primary td-panel flex flex-col lg:min-h-0 lg:flex-1"
               data-testid="yearly-panel"
             >
-              <header className="mb-3 flex items-baseline justify-between gap-2">
-                <h2 className="font-display text-lg text-td-text sm:text-xl">本年度内容</h2>
-                <p className="text-xs text-td-muted">长文写作 · Markdown</p>
-              </header>
-
               <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
                 {!summary.isLoading ? (
                   <div className="mx-auto h-full w-full max-w-[820px]">
@@ -823,8 +891,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                       docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
                       initialValue={summary.content}
                       onChange={handleEditorChange}
-                      placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
-                      modeToggleClassName="mb-5"
+                      placeholder="写下本年度总结"
+                      modeTogglePlacement="bottom"
+                      modeToggleClassName="mt-3"
                       viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
                       fillHeight
                     />

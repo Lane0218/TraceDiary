@@ -23,7 +23,7 @@ export default function YearlyToc({ items, activeId, onSelect }: YearlyTocProps)
 
       {items.length === 0 ? (
         <p className="mt-2 rounded-[10px] border border-dashed border-[#d9d7d2] bg-[#f8f7f3] px-3 py-3 text-xs leading-5 text-td-muted">
-          添加 #/##/### 标题后可在此快速跳转
+          暂无目录
         </p>
       ) : (
         <div className="mt-2 space-y-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
