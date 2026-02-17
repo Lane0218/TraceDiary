@@ -205,7 +205,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             inputClassName="td-input"
           />
           <AuthFormField
-            label="主密码（可选）"
+            label="主密码"
             value={form.refreshMasterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshMasterPassword: next }))}
             placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
@@ -256,7 +256,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             </div>
             <div className={`space-y-1${showReadyPasswordInput ? '' : ' lg:col-span-2'}`}>
               <AuthFormField
-                label="新 Token（可选）"
+                label="新 Token"
                 value={form.readyToken}
                 onChange={(next) => setForm((prev) => ({ ...prev, readyToken: next }))}
                 placeholder="留空则不更新 Token"
@@ -271,7 +271,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             {showReadyPasswordInput ? (
               <div className="space-y-1">
                 <AuthFormField
-                  label="主密码（仅更新 Token 时需要）"
+                  label="主密码"
                   value={form.readyMasterPassword}
                   onChange={(next) => setForm((prev) => ({ ...prev, readyMasterPassword: next }))}
                   placeholder="请输入主密码以更新 Token"

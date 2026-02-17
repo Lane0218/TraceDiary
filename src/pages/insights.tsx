@@ -77,8 +77,8 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M20 11a8 8 0 1 0 2.34 5.66" />
-                <path d="M20 4v7h-7" />
+                <path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4" />
+                <path d="M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4" />
               </svg>
             </button>
           </header>

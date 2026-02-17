@@ -23,7 +23,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
 
         <article className="td-card-muted td-panel space-y-4">
           <header>
-            <h2 className="td-settings-section-title">连接设置</h2>
+            <h2 className="td-settings-section-title">同步设置</h2>
             <p className="td-settings-section-desc">更新仓库连接与凭证，保存后会立即校验。</p>
           </header>
           <AuthPanel auth={auth} variant="embedded" />
