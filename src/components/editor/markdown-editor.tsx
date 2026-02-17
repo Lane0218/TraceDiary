@@ -71,11 +71,6 @@ function MilkdownRuntimeEditor({
             // 初始化期会触发程序化更新，不能回写到数据层，否则会覆盖真实内容。
             return
           }
-          if (!root.contains(document.activeElement)) {
-            // 仅在编辑器获得焦点时回写，避免程序化刷新误判为用户输入。
-            return
-          }
-
           onChangeRef.current(markdown)
         })
       })
