@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`157`
-- 状态统计：`DONE=146` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`158`
+- 状态统计：`DONE=147` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -197,6 +197,7 @@
 | `TD-UI-068` | `DONE` | 修复日记与年度总结页默认可视化编辑偶发不可输入（需点“源码”后才可编辑）问题 | 页面初次进入即为可视化可编辑；点击“源码”可见并可编辑 Markdown；两种模式切换不丢内容且落库正常 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（4/4）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-17 / 16cd385` |
 | `TD-UI-069` | `DONE` | 修复源码按钮激活态离开悬停后丢失底色（默认/激活样式互斥） | 点击“源码”后在非悬停状态仍保持 push 同色激活背景；日记页与年度总结页一致；源码切换与字数统计不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 1735102` |
 | `TD-UI-070` | `DONE` | 年度总结页目录仅显示一级标题（H1） | 左侧目录只展示 `#` 一级标题；`##/###` 不进入目录；目录点击与滚动高亮行为保持可用 | `src/utils/markdown-toc.ts` `src/pages/yearly-summary.tsx` `src/__tests__/unit/markdown-toc.unit.test.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 029389f` |
+| `TD-UI-071` | `DONE` | 日记页将“字数+源码”并排置于顶部，顺序与年度总结页一致 | 日记页顶部工具条显示“字数 + 源码”（字数在前）；不再在右下角浮动显示字数；年度总结页保持现状；源码切换和字数统计不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 29348c0` |
 
 ### 6.9 数据导入（v1.1）
 
