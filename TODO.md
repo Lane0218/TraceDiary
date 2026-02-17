@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`155`
-- 状态统计：`DONE=144` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`156`
+- 状态统计：`DONE=145` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -195,6 +195,7 @@
 | `TD-UI-066` | `DONE` | 统一日记页与年度总结页“源码/字数”气泡样式（高度、底色、边框一致） | 日记页与年度总结页中“源码”按钮和“字数”气泡高度一致、颜色一致；源码切换与字数统计行为不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / bd534ca` |
 | `TD-UI-067` | `DONE` | 调整编辑器“源码”按钮激活态颜色，与 push 按钮主色保持一致 | 点击“源码”进入激活态后颜色应与 push 按钮一致（含 hover 态）；日记页与年度总结页表现一致；交互不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / fb11a2f` |
 | `TD-UI-068` | `DONE` | 修复日记与年度总结页默认可视化编辑偶发不可输入（需点“源码”后才可编辑）问题 | 页面初次进入即为可视化可编辑；点击“源码”可见并可编辑 Markdown；两种模式切换不丢内容且落库正常 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（4/4）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E） | `2026-02-17 / 16cd385` |
+| `TD-UI-069` | `DONE` | 修复源码按钮激活态离开悬停后丢失底色（默认/激活样式互斥） | 点击“源码”后在非悬停状态仍保持 push 同色激活背景；日记页与年度总结页一致；源码切换与字数统计不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 1735102` |
 
 ### 6.9 数据导入（v1.1）
 
