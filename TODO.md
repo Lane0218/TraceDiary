@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-17`
 - 总任务：`159`
-- 状态统计：`DONE=148` / `DOING=0` / `TODO=10` / `BLOCKED=1`
-- 当前进行中：`无`
+- 状态统计：`DONE=148` / `DOING=1` / `TODO=9` / `BLOCKED=1`
+- 当前进行中：`TD-PWA-001`
 
 ## 1. 任务清单（按模块）
 
@@ -100,7 +100,7 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-PWA-001` | `TODO` | 配置 Vite PWA、manifest 与图标资源 | 可安装到主屏幕 | `vite.config.*` `public/manifest.json` | — | — |
+| `TD-PWA-001` | `DOING` | 配置 Vite PWA、manifest 与图标资源 | 可安装到主屏幕 | `vite.config.*` `public/manifest.json` | 风险分级：中；待执行：`npm run lint`、`npm run test:unit`、`npm run test:integration`、`npm run test:e2e:fast` | — |
 | `TD-PWA-002` | `TODO` | 配置 Service Worker 缓存策略（应用壳缓存、日记 NetworkOnly） | 离线可见壳，不缓存日记内容 | `vite.config.*` | — | — |
 | `TD-DEP-001` | `TODO` | 配置 `vercel.json` 安全响应头（CSP/HSTS/Referrer/Permissions） | 响应头符合 SPEC | `vercel.json` | — | — |
 | `TD-DEP-002` | `TODO` | 补充入口访问控制部署说明（Cloudflare Access/Vercel/Basic Auth） | 部署文档可执行 | `README.md` `SPEC.md` | — | — |
