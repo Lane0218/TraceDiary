@@ -5,7 +5,7 @@ export interface TocHeadingItem {
   line: number
 }
 
-const HEADING_PATTERN = /^(#{1,3})\s+(.+?)\s*$/
+const HEADING_PATTERN = /^(#)\s+(.+?)\s*$/
 const FENCE_PATTERN = /^(\s*)(`{3,}|~{3,})/
 
 function toSlug(text: string): string {
@@ -51,7 +51,7 @@ export function buildMarkdownToc(markdown: string): TocHeadingItem[] {
       continue
     }
 
-    const level = match[1].length as TocHeadingItem['level']
+    const level: TocHeadingItem['level'] = 1
     const title = trimClosingHashes(match[2])
     if (!title) {
       continue

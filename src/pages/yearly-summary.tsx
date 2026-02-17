@@ -44,7 +44,7 @@ const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
 const MIN_YEAR = 1970
 const MAX_YEAR = 9999
 const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
-const RENDERED_HEADING_SELECTOR = '.ProseMirror h1, .ProseMirror h2, .ProseMirror h3'
+const RENDERED_HEADING_SELECTOR = '.ProseMirror h1'
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
