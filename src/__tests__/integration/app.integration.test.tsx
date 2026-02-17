@@ -47,7 +47,7 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByTestId('insights-yearly-summary-cards')).toBeTruthy()
     expect(screen.getByTestId('insights-monthly-legend')).toBeTruthy()
     expect(screen.getByTestId('insights-monthly-metrics')).toBeTruthy()
-    expect(screen.getByTestId('insights-monthly-interpretation')).toBeTruthy()
+    expect(screen.getByTestId('insights-monthly-metric-entry-count')).toBeTruthy()
     expect(screen.getByTestId('insights-yearly-heatmap')).toBeTruthy()
     expect(screen.getByLabelText('热力图年份切换')).toBeTruthy()
     expect(screen.getByLabelText('热力图年份减一')).toBeTruthy()

@@ -32,11 +32,6 @@ function formatDeltaRatio(value: number | null): string {
   return `${sign}${percentFormatter.format(value)}`
 }
 
-function formatMonthLabel(value: string): string {
-  const [, month] = value.split('-')
-  return month ? `${month}月` : value
-}
-
 export default function InsightsPage({ auth }: InsightsPageProps) {
   const [reloadSignal, setReloadSignal] = useState(0)
   const stats = useStats({ reloadSignal })
@@ -54,59 +49,6 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             Math.min(3, chartModel.monthly.length),
         )
       : 0
-  const monthlyWordPeak = useMemo(() => {
-    if (chartModel.monthly.length === 0) {
-      return null
-    }
-    return chartModel.monthly.reduce((peak, item) => {
-      if (item.totalWordCount > peak.totalWordCount) {
-        return item
-      }
-      return peak
-    }, chartModel.monthly[0])
-  }, [chartModel.monthly])
-  const monthlyInterpretation = useMemo(() => {
-    if (!latestMonth) {
-      return ['最近 12 个月暂无可计算数据。', '继续记录后将自动生成趋势解读。']
-    }
-
-    const summary: string[] = [
-      `${formatMonthLabel(latestMonth.label)}共记录 ${formatNumber(latestMonth.totalWordCount)} 字，完成 ${formatNumber(latestMonth.entryCount)} 篇。`,
-    ]
-
-    if (latestMonth.momWordDeltaRatio === null) {
-      summary.push('缺少可对比的上月数据，环比暂不可用。')
-    } else if (latestMonth.momWordDeltaRatio > 0) {
-      summary.push(`较上月增长 ${percentFormatter.format(Math.abs(latestMonth.momWordDeltaRatio))}，写作热度上行。`)
-    } else if (latestMonth.momWordDeltaRatio < 0) {
-      summary.push(`较上月回落 ${percentFormatter.format(Math.abs(latestMonth.momWordDeltaRatio))}，可关注节奏恢复。`)
-    } else {
-      summary.push('与上月基本持平，写作节奏稳定。')
-    }
-
-    if (monthlyWordPeak) {
-      if (monthlyWordPeak.label === latestMonth.label) {
-        summary.push('当前月份达到近 12 个月字数峰值。')
-      } else {
-        summary.push(
-          `近 12 个月峰值在 ${formatMonthLabel(monthlyWordPeak.label)}，单月 ${formatNumber(monthlyWordPeak.totalWordCount)} 字。`,
-        )
-      }
-    }
-
-    if (trailingQuarterAverage > 0) {
-      const deltaToAvg = latestMonth.totalWordCount - trailingQuarterAverage
-      if (deltaToAvg > 0) {
-        summary.push(`当前高于近 3 月均值 ${formatNumber(deltaToAvg)} 字。`)
-      } else if (deltaToAvg < 0) {
-        summary.push(`当前低于近 3 月均值 ${formatNumber(Math.abs(deltaToAvg))} 字。`)
-      } else {
-        summary.push('当前与近 3 月均值持平。')
-      }
-    }
-
-    return summary
-  }, [latestMonth, monthlyWordPeak, trailingQuarterAverage])
 
   return (
     <>
@@ -155,34 +97,33 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-stretch">
               <MonthlyTrendChart items={chartModel.monthly} isLoading={stats.isLoading} showLegend={false} />
 
-              <aside className="grid gap-2 xl:h-full xl:grid-rows-[repeat(3,auto)_minmax(0,1fr)]" data-testid="insights-monthly-metrics">
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2" data-testid="insights-monthly-metric-latest">
+              <aside className="grid gap-2 xl:h-full xl:grid-rows-4" data-testid="insights-monthly-metrics">
+                <article
+                  className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center"
+                  data-testid="insights-monthly-metric-latest"
+                >
                   <p className="text-xs text-td-muted">最近月份字数</p>
                   <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(latestMonth?.totalWordCount ?? 0)}</p>
                 </article>
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                <article
+                  className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center"
+                  data-testid="insights-monthly-metric-entry-count"
+                >
+                  <p className="text-xs text-td-muted">最近月份篇数</p>
+                  <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(latestMonth?.entryCount ?? 0)}</p>
+                </article>
+                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center">
                   <p className="text-xs text-td-muted">最近月份环比</p>
                   <p className="mt-1 text-lg font-semibold text-td-text">
                     {formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}
                   </p>
                 </article>
-                <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+                <article
+                  className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center"
+                  data-testid="insights-monthly-metric-quarter-avg"
+                >
                   <p className="text-xs text-td-muted">近 3 月平均字数</p>
                   <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(trailingQuarterAverage)}</p>
-                </article>
-
-                <article
-                  className="rounded-[10px] border border-td-line bg-[linear-gradient(160deg,rgba(79,70,229,0.08)_0%,rgba(15,118,110,0.06)_56%,rgba(255,255,255,0.88)_100%)] px-3 py-3"
-                  data-testid="insights-monthly-interpretation"
-                >
-                  <p className="text-xs font-semibold tracking-[0.02em] text-td-muted">趋势解读</p>
-                  <ul className="mt-2 space-y-1.5 text-sm leading-6 text-td-text">
-                    {monthlyInterpretation.map((line) => (
-                      <li key={line} className="border-l-2 border-[#0f766e]/35 pl-2">
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
                 </article>
               </aside>
             </div>
