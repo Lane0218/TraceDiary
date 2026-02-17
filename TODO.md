@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`143`
-- 状态统计：`DONE=132` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`144`
+- 状态统计：`DONE=133` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -182,6 +182,7 @@
 | `TD-UI-053` | `DONE` | 优化统计页月度趋势右侧指标区对齐与留白填充（顶部对齐图表，新增可伸展信息卡） | 右侧指标区顶部与图表绘图区顶边对齐（非图例）；右侧下方不再出现明显空白；桌面端视觉重心平衡且移动端不回退 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 48ebfb5` |
 | `TD-UI-054` | `DONE` | 设置页视觉一致性修正（顶部设置卡改为日历同款底色 + 覆盖 autofill 蓝底） | 设置页顶部“设置”卡片背景与日历卡片一致；浏览器自动填充后输入框不再出现突兀蓝底；交互与认证流程不回退 | `src/pages/settings.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 9b0b869` |
 | `TD-UI-055` | `DONE` | 调整统计页月度与热力图布局（移除趋势解读、补齐4张统计卡、收紧热力图左右间距并拉齐右侧底边） | 月度趋势右侧改为 4 张数据卡且不再展示“趋势解读”；年度热力图左右间距收紧；右侧三卡底边与左侧下方信息卡区域底边对齐 | `src/pages/insights.tsx` `src/components/stats/yearly-activity-heatmap.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 700b2f6` |
+| `TD-UI-056` | `DONE` | 收敛年度热力图右侧空白并放大热力图主体（右栏贴右 + 左图自适应扩展） | 年度热力图右侧卡片应贴近容器右边且不留明显空白；左侧热力图较当前略放大；左右间距收敛并保持右栏底边与下方信息卡区域对齐 | `src/components/stats/yearly-activity-heatmap.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 8fbb904` |
 
 ### 6.9 数据导入（v1.1）
 
