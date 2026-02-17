@@ -141,6 +141,17 @@
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
   }
 
+  .td-input:-webkit-autofill,
+  .td-input:-webkit-autofill:hover,
+  .td-input:-webkit-autofill:focus,
+  .td-input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--td-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--td-surface) inset;
+    box-shadow: 0 0 0 1000px var(--td-surface) inset;
+    caret-color: var(--td-text);
+    transition: background-color 9999s ease-out 0s;
+  }
+
   .td-status {
     @apply text-sm;
   }

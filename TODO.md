@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`141`
-- 状态统计：`DONE=130` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`142`
+- 状态统计：`DONE=131` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -180,6 +180,7 @@
 | `TD-UI-051` | `DONE` | 统计页信息架构重排与图表留白优化（统一层级、月度指标右置、热力图图例/选中信息下置） | 统计页标题层级清晰（避免“年度对比/年度洞察/年度热力图”并列混乱）；月度趋势指标不再位于图表上下造成大面积留白；热力图右侧仅保留年度关键指标，图例与选中日期移至热力图下方；桌面端不出现明显不合理空白块 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-activity-heatmap.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 首次失败（worktree 缺少依赖，`eslint: not found`），挂载主工作区 `node_modules` 后重跑通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/insights-ia-layout-polish --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_insights-ia-layout-polish --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-15 / 4e05f33` |
 | `TD-UI-052` | `DONE` | 同步状态胶囊圆点改造为“颜色+动效”状态编码（保留圆点、不使用勾/感叹号） | 汇总/拉取/上传三类状态圆点可区分 `idle/running/success/error`；错误态为红色语义；不引入勾号/感叹号图形；文案与交互行为不回退 | `src/components/common/sync-control-bar.tsx` `src/index.css` `src/__tests__/integration/editor.integration.test.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npm run test:e2e:fast` 首次失败（新 worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-status-dot-color-only --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_sync-status-dot-color-only --e2e-cmd \"npm run test:e2e:fast\"` 后重跑通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 31bd262` |
 | `TD-UI-053` | `DONE` | 优化统计页月度趋势右侧指标区对齐与留白填充（顶部对齐图表，新增可伸展信息卡） | 右侧指标区顶部与图表绘图区顶边对齐（非图例）；右侧下方不再出现明显空白；桌面端视觉重心平衡且移动端不回退 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/__tests__/integration/app.integration.test.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 48ebfb5` |
+| `TD-UI-054` | `DONE` | 设置页视觉一致性修正（顶部设置卡改为日历同款底色 + 覆盖 autofill 蓝底） | 设置页顶部“设置”卡片背景与日历卡片一致；浏览器自动填充后输入框不再出现突兀蓝底；交互与认证流程不回退 | `src/pages/settings.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 待回填` |
 
 ### 6.9 数据导入（v1.1）
 

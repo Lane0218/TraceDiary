@@ -17,7 +17,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
       <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
 
       <section className="mt-4 space-y-4 td-fade-in" aria-label="settings-page">
-        <article className="td-card-primary td-panel space-y-3">
+        <article className="td-card-muted td-panel space-y-3">
           <header>
             <h2 className="font-display text-2xl text-td-text">设置</h2>
           </header>
