@@ -85,6 +85,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   )
   const isModal = variant === 'modal'
   const showReadyPasswordInput = form.readyToken.trim().length > 0
+  const primaryActionButtonClass = `td-btn ${isModal ? 'td-btn-primary' : 'td-btn-primary-ink'} w-full sm:w-auto`
 
   useEffect(() => {
     if (state.stage !== 'ready' || !state.config) {
@@ -165,7 +166,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             inputClassName="td-input"
           />
           {form.masterPassword ? <p className="text-xs text-td-muted">{passwordHint ?? '主密码强度满足要求'}</p> : null}
-          <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-setup-submit">
+          <button type="submit" className={primaryActionButtonClass} data-testid="auth-setup-submit">
             初始化并保存配置
           </button>
         </form>
@@ -184,7 +185,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
             inputClassName="td-input"
           />
-          <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-unlock-submit">
+          <button type="submit" className={primaryActionButtonClass} data-testid="auth-unlock-submit">
             解锁
           </button>
         </form>
@@ -216,7 +217,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
           />
           <button
             type="submit"
-            className="td-btn td-btn-primary w-full sm:w-auto"
+            className={primaryActionButtonClass}
             data-testid="auth-refresh-submit"
           >
             覆盖本地 Token 密文
@@ -285,7 +286,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             ) : null}
           </div>
           <div className="flex justify-end">
-            <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-ready-submit">
+            <button type="submit" className={primaryActionButtonClass} data-testid="auth-ready-submit">
               保存设置
             </button>
           </div>

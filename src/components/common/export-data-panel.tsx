@@ -126,7 +126,7 @@ export default function ExportDataPanel({ auth, variant = 'card' }: ExportDataPa
         <div className={isRow ? 'td-settings-data-row-actions' : 'td-export-actions mt-3'}>
           <button
             type="button"
-            className={isRow ? 'td-btn td-settings-data-action-btn' : 'td-btn td-export-btn'}
+            className="td-btn td-btn-secondary-soft"
             onClick={() => {
               void handleExport()
             }}

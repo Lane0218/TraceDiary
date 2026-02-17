@@ -164,20 +164,6 @@
     flex-shrink: 0;
   }
 
-  .td-settings-data-action-btn {
-    border-color: #3f3a2f;
-    background: #3f3a2f;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 8px 18px rgba(63, 58, 47, 0.18);
-  }
-
-  .td-settings-data-action-btn:hover {
-    border-color: #2c2922;
-    background: #2c2922;
-    box-shadow: 0 10px 22px rgba(44, 41, 34, 0.22);
-  }
-
   .td-settings-data-row-note {
     margin: 8px 0 0;
     font-size: 12px;
@@ -229,6 +215,60 @@
     border-color: #1d4ed8;
     background-color: #1d4ed8;
     box-shadow: none;
+  }
+
+  .td-btn-secondary-soft,
+  .td-sync-control-btn-secondary {
+    border-color: #d2ccc0;
+    background-color: rgba(255, 255, 255, 0.94);
+    color: #3f4742;
+  }
+
+  .td-btn-secondary-soft:hover,
+  .td-sync-control-btn-secondary:hover {
+    border-color: #b9b1a4;
+    background-color: #ffffff;
+  }
+
+  .td-btn-primary-ink,
+  .td-sync-control-btn-primary {
+    border-color: #3f4742;
+    background-color: #3f4742;
+    color: #ffffff;
+  }
+
+  .td-btn-primary-ink:hover,
+  .td-sync-control-btn-primary:hover {
+    border-color: #333a36;
+    background-color: #333a36;
+    box-shadow: 0 6px 14px rgba(51, 58, 54, 0.25);
+  }
+
+  .td-btn-icon {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .td-btn-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .td-btn-icon.is-spinning svg {
+    animation: td-icon-spin 0.7s linear infinite;
+  }
+
+  @keyframes td-icon-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .td-input {
@@ -522,27 +562,6 @@
     }
   }
 
-  .td-sync-control-btn-secondary {
-    background-color: rgba(255, 255, 255, 0.94);
-    border-color: #d2ccc0;
-  }
-
-  .td-sync-control-btn-secondary:hover {
-    border-color: #b9b1a4;
-  }
-
-  .td-sync-control-btn-primary {
-    border-color: #3f4742;
-    background-color: #3f4742;
-    color: #ffffff;
-  }
-
-  .td-sync-control-btn-primary:hover {
-    border-color: #333a36;
-    background-color: #333a36;
-    box-shadow: 0 6px 14px rgba(51, 58, 54, 0.25);
-  }
-
   .td-export-panel {
     position: relative;
     overflow: hidden;
@@ -571,20 +590,6 @@
     align-items: center;
     gap: 10px 12px;
     margin-top: 4px;
-  }
-
-  .td-export-btn {
-    border-color: #3f3a2f;
-    background: #3f3a2f;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 8px 18px rgba(63, 58, 47, 0.18);
-  }
-
-  .td-export-btn:hover {
-    border-color: #2c2922;
-    background: #2c2922;
-    box-shadow: 0 10px 22px rgba(44, 41, 34, 0.22);
   }
 
   .td-export-result {
@@ -763,7 +768,7 @@
       width: 100%;
     }
 
-    .td-settings-data-action-btn {
+    .td-settings-data-row-actions .td-btn {
       width: 100%;
       justify-content: center;
     }
@@ -786,6 +791,12 @@
     .td-sync-details-popover {
       left: 4px;
       max-width: min(520px, calc(100vw - 32px));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .td-btn-icon.is-spinning svg {
+      animation: none;
     }
   }
 

@@ -61,11 +61,25 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
             <h2 className="font-display text-2xl text-td-text">数据统计</h2>
             <button
               type="button"
-              className="td-btn"
+              className={`td-btn td-btn-icon td-btn-secondary-soft ${stats.isLoading ? 'is-spinning' : ''}`}
               onClick={() => setReloadSignal((prev) => prev + 1)}
+              disabled={stats.isLoading}
+              aria-busy={stats.isLoading}
               aria-label="刷新统计"
+              data-testid="insights-refresh-button"
             >
-              刷新统计
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20 11a8 8 0 1 0 2.34 5.66" />
+                <path d="M20 4v7h-7" />
+              </svg>
             </button>
           </header>
 
