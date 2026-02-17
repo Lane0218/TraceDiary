@@ -8,7 +8,7 @@
 
 - 更新时间：`2026-02-17`
 - 总任务：`161`
-- 状态统计：`DONE=155` / `DOING=0` / `TODO=5` / `BLOCKED=1`
+- 状态统计：`DONE=156` / `DOING=0` / `TODO=4` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -115,7 +115,7 @@
 | `TD-TEST-002` | `TODO` | 同步与冲突（CAS/sha mismatch）单元测试 | 冲突分支断言完整 | `src/services/__tests__/*` | — | — |
 | `TD-TEST-003` | `TODO` | 认证流程集成测试（首次/7天内/过期/Token失效） | 4 条流程均通过 | `src/hooks/__tests__/*` | — | — |
 | `TD-TEST-004` | `DONE` | 关键用户流程 E2E（创建、编辑、同步、冲突） | 核心链路自动化通过 | `e2e/*` | `npm run lint` 通过；`npm run test:unit` 通过（39/39）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过（7/7） | `2026-02-09 / f474348` |
-| `TD-TEST-005` | `TODO` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` | — | — |
+| `TD-TEST-005` | `DONE` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` `e2e/specs/performance-acceptance.spec.ts` `src/services/__tests__/import.performance.test.ts` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86，含 `import.performance`）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/performance-acceptance.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | — |
 | `TD-TEST-006` | `DONE` | 兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS） | 验收清单全部勾选 | `docs/compatibility-report.md` | 风险分级：低（验收文档回填）；`npx playwright test --config=scripts/compatibility-check.mjs --grep @smoke --workers=1 --retries=0 --reporter=line` 执行结果：Chrome/Edge/Firefox/安卓通过；Safari/iOS 按用户授权“这两个环境就不跑了，不做测试了”跳过并不纳入门禁；仅文档回填，未追加自动化测试 | `2026-02-17 / 7ec1e94` |
 | `TD-TEST-007` | `DONE` | 补齐 Playwright 端到端关键验收场景（冲突三分支与再冲突、自动重试、年度总结、认证后续、日历导航、安全关键项） | 新增/改造 E2E 用例并通过完整测试（单元/集成/E2E） | `e2e/specs/*` `e2e/fixtures/*` `e2e/helpers/*` | `npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（17/17）；`npm run lint` 通过 | `2026-02-09 / a58cc80` |
 | `TD-TEST-008` | `DONE` | 修复 E2E 假阳性与冲突时序风险（metadata 应用链路断言 + 手动上传使用持久化快照） | metadata 加密断言基于应用真实上传链路；手动上传与冲突流程在快速输入场景下保持一致性并通过完整测试 | `src/services/sync.ts` `src/hooks/use-diary.ts` `src/pages/workspace.tsx` `src/pages/yearly-summary.tsx` `src/hooks/__tests__/*` `src/__tests__/integration/*` `e2e/specs/*` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium` 通过（4/4） | `2026-02-09 / 165cd5f` |
