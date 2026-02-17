@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`146`
-- 状态统计：`DONE=135` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`147`
+- 状态统计：`DONE=136` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -185,6 +185,7 @@
 | `TD-UI-056` | `DONE` | 收敛年度热力图右侧空白并放大热力图主体（右栏贴右 + 左图自适应扩展） | 年度热力图右侧卡片应贴近容器右边且不留明显空白；左侧热力图较当前略放大；左右间距收敛并保持右栏底边与下方信息卡区域对齐 | `src/components/stats/yearly-activity-heatmap.tsx` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 8fbb904` |
 | `TD-UI-057` | `DONE` | 重构设置页信息架构为“连接设置 + 数据管理单卡双动作”，补齐防误操作短文案 | 设置页包含顶部简介、连接设置区与数据管理区；导入/导出合并在同一卡片两行展示；主任务区字段具备简短约束说明；现有导入/导出/设置更新链路不回退 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `src/components/common/import-data-panel.tsx` `src/components/common/export-data-panel.tsx` `src/index.css` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0 --workers=1` 首次失败（worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-ia-data-management --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan-settings-ia-data-management --e2e-cmd \"npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0 --workers=1\"` 后重跑通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / cb538bb` |
 | `TD-UI-058` | `DONE` | 明确月度环比口径并统一统计页三图青绿配色（文案可读 + 主题一致） | “最近月份字数环比”明确为字数口径；月度趋势/年度对比/年度热力图采用统一青绿系颜色；图例与图形颜色一致且可读 | `src/pages/insights.tsx` `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-comparison-chart.tsx` `src/components/stats/yearly-activity-heatmap.tsx` `src/components/stats/stats-chart-theme.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 271a868` |
+| `TD-UI-059` | `DONE` | 对齐设置页主标题样式并移除重复校验说明文案 | 设置页主标题视觉样式与“数据统计”页一致；移除“填写后将立即校验连接与凭证…”与“提交后将立即校验…”两条重复提示；设置更新链路不回退 | `src/pages/settings.tsx` `src/components/auth/auth-panel.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 待回填` |
 
 ### 6.9 数据导入（v1.1）
 

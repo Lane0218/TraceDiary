@@ -226,9 +226,6 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
       {state.stage === 'ready' ? (
         <form className="space-y-4" onSubmit={(event) => void submitModel.onReadyUpdateSubmit(event)}>
-          {!isModal ? (
-            <p className="text-sm text-td-muted">填写后将立即校验连接与凭证，失败时不会覆盖当前可用配置。</p>
-          ) : null}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
             <div className="space-y-1">
               <AuthFormField
@@ -287,7 +284,6 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
               </div>
             ) : null}
           </div>
-          <p className="text-xs text-td-muted">提交后将立即校验；校验失败不会覆盖当前可用配置。</p>
           <div className="flex justify-end">
             <button type="submit" className="td-btn td-btn-primary w-full sm:w-auto" data-testid="auth-ready-submit">
               保存设置

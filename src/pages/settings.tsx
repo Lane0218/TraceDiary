@@ -18,7 +18,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
 
       <section className="mt-4 space-y-4 td-fade-in" aria-label="settings-page">
         <header className="td-settings-hero">
-          <h1 className="font-display text-[30px] leading-tight text-td-text sm:text-[34px]">设置</h1>
+          <h1 className="font-display text-2xl text-td-text">设置</h1>
           <p className="td-settings-hero-desc">管理仓库连接、凭证与数据操作。</p>
         </header>
 
