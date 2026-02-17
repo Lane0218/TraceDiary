@@ -6,7 +6,12 @@ describe('MarkdownEditor 组件', () => {
   it('默认应进入可视化模式', () => {
     render(<MarkdownEditor initialValue="初始内容" onChange={() => {}} testId="daily-editor" />)
 
-    expect(screen.getByTestId('daily-editor-mode-source')).toHaveAttribute('aria-pressed', 'false')
+    const sourceButton = screen.getByTestId('daily-editor-mode-source')
+    const wordCountBadges = screen.getAllByTestId('daily-editor-word-count')
+
+    expect(wordCountBadges).toHaveLength(1)
+    expect(wordCountBadges[0].compareDocumentPosition(sourceButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(sourceButton).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByLabelText('开始记录今天...')).toHaveValue('初始内容')
     expect(screen.getByTestId('daily-editor-word-count')).toHaveTextContent('字数 4')
   })

@@ -131,7 +131,9 @@ function MarkdownEditorInner({
   }
 
   const showSourceMode = enableSourceMode && mode === 'source'
+  const showTopBar = modeTogglePlacement === 'top'
   const showBottomBar = modeTogglePlacement === 'bottom'
+  const showToolbarWordCount = showTopBar || showBottomBar
   const sourceEditorStyle = fillHeight
     ? ({ height: '100%' } as CSSProperties)
     : typeof viewportHeight === 'number' && viewportHeight > 0
@@ -146,6 +148,14 @@ function MarkdownEditorInner({
       ? 'td-btn-primary-ink'
       : 'border-td-line bg-td-surface text-td-muted hover:border-[#cfcac1] hover:text-td-text'
   }`
+  const renderWordCountBadge = () => (
+    <div
+      className={bubbleClassName}
+      data-testid={testId ? `${testId}-word-count` : undefined}
+    >
+      字数 {wordCount}
+    </div>
+  )
   const floatingWordCountBadge = (
     <div
       className={`pointer-events-none absolute bottom-3 right-3 ${bubbleClassName}`}
@@ -175,20 +185,16 @@ function MarkdownEditorInner({
     </button>
   ) : null
 
-  const modeToggleTop = modeToggleButton && modeTogglePlacement === 'top' ? (
+  const editorTopBar = showTopBar ? (
     <div className={`${modeToggleClassName ?? 'mb-2'} flex items-center justify-end gap-2`}>
+      {renderWordCountBadge()}
       {modeToggleButton}
     </div>
   ) : null
 
   const editorBottomBar = showBottomBar ? (
     <div className={`${modeToggleClassName ?? 'mt-2'} flex items-center justify-end gap-2`}>
-      <div
-        className={bubbleClassName}
-        data-testid={testId ? `${testId}-word-count` : undefined}
-      >
-        字数 {wordCount}
-      </div>
+      {renderWordCountBadge()}
       {modeToggleButton}
     </div>
   ) : null
@@ -196,7 +202,7 @@ function MarkdownEditorInner({
   if (import.meta.env.MODE === 'test') {
     return (
       <div className={editorShellClassName}>
-        {modeToggleTop}
+        {editorTopBar}
         <div className={editorBodyClassName}>
           <textarea
             key={docKey}
@@ -212,7 +218,7 @@ function MarkdownEditorInner({
             }`}
             style={sourceEditorStyle}
           />
-          {showBottomBar ? null : floatingWordCountBadge}
+          {showToolbarWordCount ? null : floatingWordCountBadge}
         </div>
         {editorBottomBar}
       </div>
@@ -222,7 +228,7 @@ function MarkdownEditorInner({
   if (showSourceMode) {
     return (
       <div className={editorShellClassName}>
-        {modeToggleTop}
+        {editorTopBar}
         <div className={editorBodyClassName}>
           <textarea
             key={docKey}
@@ -237,7 +243,7 @@ function MarkdownEditorInner({
             }`}
             style={sourceEditorStyle}
           />
-          {showBottomBar ? null : floatingWordCountBadge}
+          {showToolbarWordCount ? null : floatingWordCountBadge}
         </div>
         {editorBottomBar}
       </div>
@@ -246,7 +252,7 @@ function MarkdownEditorInner({
 
   return (
     <div className={editorShellClassName}>
-      {modeToggleTop}
+      {editorTopBar}
       <div className={editorBodyClassName}>
         <MilkdownProvider>
           <MilkdownRuntimeEditor
@@ -260,7 +266,7 @@ function MarkdownEditorInner({
             fillHeight={fillHeight}
           />
         </MilkdownProvider>
-        {showBottomBar ? null : floatingWordCountBadge}
+        {showToolbarWordCount ? null : floatingWordCountBadge}
       </div>
       {editorBottomBar}
     </div>
