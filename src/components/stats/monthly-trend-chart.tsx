@@ -3,6 +3,7 @@ import type { MonthlyTrendPoint } from '../../types/stats'
 interface MonthlyTrendChartProps {
   items: MonthlyTrendPoint[]
   isLoading?: boolean
+  showLegend?: boolean
 }
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
@@ -38,7 +39,7 @@ function formatMomLabel(ratio: number | null): string {
   return `环比 ${sign}${percentFormatter.format(ratio)}`
 }
 
-export default function MonthlyTrendChart({ items, isLoading = false }: MonthlyTrendChartProps) {
+export default function MonthlyTrendChart({ items, isLoading = false, showLegend = true }: MonthlyTrendChartProps) {
   if (isLoading) {
     return (
       <div className="rounded-[12px] border border-dashed border-td-line bg-td-surface p-5 text-sm text-td-muted">
@@ -85,17 +86,19 @@ export default function MonthlyTrendChart({ items, isLoading = false }: MonthlyT
   const yTicks = [0, 0.25, 0.5, 0.75, 1]
 
   return (
-    <div className="space-y-3" data-testid="insights-monthly-chart" aria-label="月度趋势图">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-td-muted">
-        <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-          <i className="inline-block h-2 w-2 rounded-[2px] bg-[#4f46e5]" aria-hidden="true" />
-          字数柱
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-          <i className="inline-block h-[2px] w-3 bg-[#0f766e]" aria-hidden="true" />
-          篇数线
-        </span>
-      </div>
+    <div className={showLegend ? 'space-y-3' : undefined} data-testid="insights-monthly-chart" aria-label="月度趋势图">
+      {showLegend ? (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-td-muted" aria-label="月度趋势图例">
+          <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
+            <i className="inline-block h-2 w-2 rounded-[2px] bg-[#4f46e5]" aria-hidden="true" />
+            字数柱
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
+            <i className="inline-block h-[2px] w-3 bg-[#0f766e]" aria-hidden="true" />
+            篇数线
+          </span>
+        </div>
+      ) : null}
 
       <div className="rounded-[12px] border border-td-line bg-td-surface" data-testid="insights-monthly-chart-frame">
         <svg
