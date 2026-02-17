@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`158`
-- 状态统计：`DONE=147` / `DOING=0` / `TODO=10` / `BLOCKED=1`
+- 总任务：`159`
+- 状态统计：`DONE=148` / `DOING=0` / `TODO=10` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -198,6 +198,7 @@
 | `TD-UI-069` | `DONE` | 修复源码按钮激活态离开悬停后丢失底色（默认/激活样式互斥） | 点击“源码”后在非悬停状态仍保持 push 同色激活背景；日记页与年度总结页一致；源码切换与字数统计不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 1735102` |
 | `TD-UI-070` | `DONE` | 年度总结页目录仅显示一级标题（H1） | 左侧目录只展示 `#` 一级标题；`##/###` 不进入目录；目录点击与滚动高亮行为保持可用 | `src/utils/markdown-toc.ts` `src/pages/yearly-summary.tsx` `src/__tests__/unit/markdown-toc.unit.test.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 029389f` |
 | `TD-UI-071` | `DONE` | 日记页将“字数+源码”并排置于顶部，顺序与年度总结页一致 | 日记页顶部工具条显示“字数 + 源码”（字数在前）；不再在右下角浮动显示字数；年度总结页保持现状；源码切换和字数统计不回退 | `src/components/editor/markdown-editor.tsx` `src/__tests__/integration/markdown-editor.integration.test.tsx` `e2e/specs/daily-edit.spec.ts` `e2e/specs/yearly-summary.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 29348c0` |
+| `TD-UI-072` | `DONE` | 统一日记页与年度总结页编辑区宽度策略（采用日记页自适应宽度） | 年度总结页移除固定 `max-w` 限制并与日记页同宽度策略；编辑区内外框间隔保持当前 `td-panel` 风格；桌面与移动端自适应正常 | `src/pages/yearly-summary.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 19cebfc` |
 
 ### 6.9 数据导入（v1.1）
 
