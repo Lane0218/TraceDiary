@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import AppHeader from '../components/common/app-header'
@@ -6,14 +6,22 @@ import ConflictDialog from '../components/common/conflict-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
+import YearlyQuickStats from '../components/yearly/yearly-quick-stats'
+import YearlyToc from '../components/yearly/yearly-toc'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { useToast } from '../hooks/use-toast'
-import { getDiary, getSyncBaseline, saveSyncBaseline } from '../services/indexeddb'
+import { DIARY_INDEX_TYPE, getDiary, getSyncBaseline, listDiariesByIndex, saveSyncBaseline } from '../services/indexeddb'
 import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
+import { buildMarkdownToc, type TocHeadingItem } from '../utils/markdown-toc'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
+import {
+  buildYearlySidebarStats,
+  createEmptyYearlySidebarStats,
+  type YearlySidebarStats,
+} from '../utils/yearly-sidebar-stats'
 import {
   MANUAL_PULL_BUSY_MESSAGE,
   MANUAL_PULL_PENDING_MESSAGE,
@@ -36,6 +44,7 @@ const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
 const MIN_YEAR = 1970
 const MAX_YEAR = 9999
 const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
+const RENDERED_HEADING_SELECTOR = '.ProseMirror h1, .ProseMirror h2, .ProseMirror h3'
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
@@ -60,6 +69,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const params = useParams<{ year?: string }>()
+  const yearlyEditorPanelRef = useRef<HTMLElement | null>(null)
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
   const [isManualPulling, setIsManualPulling] = useState(false)
@@ -78,6 +88,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
   const [yearInput, setYearInput] = useState(String(year))
+  const [sidebarStats, setSidebarStats] = useState<YearlySidebarStats>(() => createEmptyYearlySidebarStats())
+  const [isSidebarStatsLoading, setIsSidebarStatsLoading] = useState(true)
+  const [activeTocId, setActiveTocId] = useState<string | null>(null)
   const summary = useDiary({ type: 'yearly_summary', year })
   const syncPayload = useMemo<DiarySyncMetadata>(
     () => ({
@@ -163,6 +176,35 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }, [year])
 
   useEffect(() => {
+    let mounted = true
+    setIsSidebarStatsLoading(true)
+
+    void listDiariesByIndex(DIARY_INDEX_TYPE, 'daily')
+      .then((dailyRecords) => {
+        if (!mounted) {
+          return
+        }
+        setSidebarStats(buildYearlySidebarStats(dailyRecords, year))
+      })
+      .catch(() => {
+        if (!mounted) {
+          return
+        }
+        setSidebarStats(createEmptyYearlySidebarStats())
+      })
+      .finally(() => {
+        if (!mounted) {
+          return
+        }
+        setIsSidebarStatsLoading(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [year])
+
+  useEffect(() => {
     setPullActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'pull'))
     setPushActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'push'))
   }, [summary.entryId])
@@ -176,6 +218,137 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   const pushStatusToneClass = useMemo(
     () => getSyncActionToneClass(pushActionSnapshot.status),
     [pushActionSnapshot.status],
+  )
+  const tocItems = useMemo(() => buildMarkdownToc(summary.content), [summary.content])
+
+  const collectRenderedHeadings = useCallback((): HTMLElement[] => {
+    const panel = yearlyEditorPanelRef.current
+    if (!panel) {
+      return []
+    }
+    return [...panel.querySelectorAll(RENDERED_HEADING_SELECTOR)] as HTMLElement[]
+  }, [])
+
+  const resolveTocIdFromRenderedHeading = useCallback(
+    (target: HTMLElement, renderedHeadings: HTMLElement[]): string | null => {
+      const headingTagText = target.tagName.trim().toUpperCase()
+      const level = Number.parseInt(headingTagText.replace('H', ''), 10)
+      if (!Number.isFinite(level) || level < 1 || level > 3) {
+        return null
+      }
+      const headingText = target.textContent?.trim() ?? ''
+      if (!headingText) {
+        return null
+      }
+
+      let headingOccurrence = 0
+      for (const renderedHeading of renderedHeadings) {
+        const renderedTagText = renderedHeading.tagName.trim().toUpperCase()
+        const renderedLevel = Number.parseInt(renderedTagText.replace('H', ''), 10)
+        const renderedText = renderedHeading.textContent?.trim() ?? ''
+        if (renderedLevel === level && renderedText === headingText) {
+          headingOccurrence += 1
+        }
+        if (renderedHeading === target) {
+          break
+        }
+      }
+      if (headingOccurrence === 0) {
+        return null
+      }
+
+      let modelOccurrence = 0
+      for (const item of tocItems) {
+        if (item.level === level && item.text === headingText) {
+          modelOccurrence += 1
+          if (modelOccurrence === headingOccurrence) {
+            return item.id
+          }
+        }
+      }
+
+      return null
+    },
+    [tocItems],
+  )
+
+  useEffect(() => {
+    setActiveTocId(tocItems[0]?.id ?? null)
+  }, [tocItems])
+
+  useEffect(() => {
+    if (tocItems.length === 0) {
+      setActiveTocId(null)
+      return
+    }
+    const panel = yearlyEditorPanelRef.current
+    if (!panel) {
+      return
+    }
+
+    let rafHandle = 0
+    const updateActiveTocIdByViewport = () => {
+      const renderedHeadings = collectRenderedHeadings()
+      if (renderedHeadings.length === 0) {
+        return
+      }
+
+      const panelTop = panel.getBoundingClientRect().top
+      const anchorTop = panelTop + 112
+
+      let candidate = renderedHeadings[0]
+      for (const heading of renderedHeadings) {
+        if (heading.getBoundingClientRect().top <= anchorTop) {
+          candidate = heading
+          continue
+        }
+        break
+      }
+
+      const nextActiveId = resolveTocIdFromRenderedHeading(candidate, renderedHeadings)
+      if (nextActiveId) {
+        setActiveTocId(nextActiveId)
+      }
+    }
+
+    const scheduleUpdate = () => {
+      if (rafHandle) {
+        cancelAnimationFrame(rafHandle)
+      }
+      rafHandle = requestAnimationFrame(updateActiveTocIdByViewport)
+    }
+
+    scheduleUpdate()
+    panel.addEventListener('scroll', scheduleUpdate, true)
+    window.addEventListener('resize', scheduleUpdate)
+    const observer = new MutationObserver(scheduleUpdate)
+    observer.observe(panel, { childList: true, subtree: true })
+
+    return () => {
+      if (rafHandle) {
+        cancelAnimationFrame(rafHandle)
+      }
+      panel.removeEventListener('scroll', scheduleUpdate, true)
+      window.removeEventListener('resize', scheduleUpdate)
+      observer.disconnect()
+    }
+  }, [collectRenderedHeadings, resolveTocIdFromRenderedHeading, tocItems])
+
+  const handleSelectTocItem = useCallback(
+    (item: TocHeadingItem) => {
+      const renderedHeadings = collectRenderedHeadings()
+      if (renderedHeadings.length === 0) {
+        return
+      }
+
+      const match = renderedHeadings.find((heading) => resolveTocIdFromRenderedHeading(heading, renderedHeadings) === item.id)
+      if (!match) {
+        return
+      }
+      setActiveTocId(item.id)
+      match.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    },
+    [collectRenderedHeadings, resolveTocIdFromRenderedHeading],
   )
 
   const handleYearChange = (nextYear: number) => {
@@ -546,38 +719,21 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         <AppHeader currentPage="yearly" yearlyHref={`/yearly/${year}`} />
 
         <section
-          className="mt-4 space-y-3 td-fade-in lg:flex lg:min-h-[calc(100vh-150px)] lg:flex-col"
+          className="mt-4 grid gap-4 td-fade-in lg:min-h-[calc(100vh-150px)] lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:items-stretch"
           aria-label="yearly-summary-page"
         >
-          <SyncControlBar
-            statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
-            pullStatusLabel={pullStatusLabel}
-            pushStatusLabel={pushStatusLabel}
-            pullStatusToneClass={pullStatusToneClass}
-            pushStatusToneClass={pushStatusToneClass}
-            pullStatus={pullActionSnapshot.status}
-            pushStatus={pushActionSnapshot.status}
-            pullFailureReason={pullActionSnapshot.reason}
-            pushFailureReason={pushActionSnapshot.reason}
-            isPulling={isManualPulling}
-            isPushing={isManualSyncing}
-            onPull={() => {
-              void pullNow()
-            }}
-            onPush={() => {
-              void saveNow()
-            }}
-          />
-
-          <article className="td-card-primary td-panel flex flex-col lg:min-h-0 lg:flex-1" data-testid="yearly-panel">
-            <header className="mb-3 flex flex-wrap items-center gap-2">
-              <h2 className="font-display text-2xl text-td-text sm:text-3xl">{year} 年度总结</h2>
-              <div className="inline-flex h-10 items-center overflow-hidden rounded-[8px] border border-[#d6d6d6] bg-white">
+          <aside className="space-y-3 lg:flex lg:min-h-0 lg:flex-col">
+            <section className="td-card-muted td-panel" data-testid="yearly-sidebar-header">
+              <h1 className="font-display text-td-text" aria-label={`${year} 年度总结`}>
+                <span className="block text-[40px] leading-none tracking-tight sm:text-[44px]">{year}</span>
+                <span className="mt-2 block text-lg font-semibold tracking-[0.02em] text-td-muted sm:text-xl">年度总结</span>
+              </h1>
+              <div className="mt-4 inline-flex h-11 items-center overflow-hidden rounded-[10px] border border-[#d6d6d6] bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
                 <button
                   type="button"
                   aria-label="年份减一"
                   disabled={year <= MIN_YEAR}
-                  className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                  className="h-full w-9 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
                   onClick={() => handleYearChange(year - 1)}
                 >
                   &#8249;
@@ -605,35 +761,78 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
                     }
                     setYearInput(String(parsed))
                   }}
-                  className="h-full w-[92px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[18px] font-semibold text-td-text outline-none"
+                  className="h-full w-[96px] border-x border-[#e1e1e1] bg-white px-1.5 text-center text-[19px] font-semibold text-td-text outline-none"
                 />
                 <button
                   type="button"
                   aria-label="年份加一"
                   disabled={year >= MAX_YEAR}
-                  className="h-full w-8 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
+                  className="h-full w-9 text-sm text-td-muted transition hover:bg-[#f5f5f5] hover:text-td-text disabled:cursor-not-allowed disabled:text-[#c5c5c5] disabled:hover:bg-white"
                   onClick={() => handleYearChange(year + 1)}
                 >
                   &#8250;
                 </button>
               </div>
-            </header>
+            </section>
 
-            <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
-              {!summary.isLoading ? (
-                <MarkdownEditor
-                  key={`${summary.entryId}:${summary.loadRevision}`}
-                  docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
-                  initialValue={summary.content}
-                  onChange={handleEditorChange}
-                  placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
-                  modeToggleClassName="mb-5"
-                  viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
-                  fillHeight
-                />
-              ) : null}
-            </div>
-          </article>
+            <section className="td-card-muted td-panel" data-testid="yearly-sidebar-stats">
+              <YearlyQuickStats stats={sidebarStats} isLoading={isSidebarStatsLoading} />
+            </section>
+
+            <section className="td-card-muted td-panel lg:min-h-0 lg:flex-1" data-testid="yearly-sidebar-toc">
+              <YearlyToc items={tocItems} activeId={activeTocId} onSelect={handleSelectTocItem} />
+            </section>
+          </aside>
+
+          <section className="space-y-3 lg:flex lg:min-h-0 lg:flex-col">
+            <SyncControlBar
+              statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
+              pullStatusLabel={pullStatusLabel}
+              pushStatusLabel={pushStatusLabel}
+              pullStatusToneClass={pullStatusToneClass}
+              pushStatusToneClass={pushStatusToneClass}
+              pullStatus={pullActionSnapshot.status}
+              pushStatus={pushActionSnapshot.status}
+              pullFailureReason={pullActionSnapshot.reason}
+              pushFailureReason={pushActionSnapshot.reason}
+              isPulling={isManualPulling}
+              isPushing={isManualSyncing}
+              onPull={() => {
+                void pullNow()
+              }}
+              onPush={() => {
+                void saveNow()
+              }}
+            />
+
+            <article
+              ref={yearlyEditorPanelRef}
+              className="td-card-primary td-panel flex flex-col lg:min-h-0 lg:flex-1"
+              data-testid="yearly-panel"
+            >
+              <header className="mb-3 flex items-baseline justify-between gap-2">
+                <h2 className="font-display text-lg text-td-text sm:text-xl">本年度内容</h2>
+                <p className="text-xs text-td-muted">长文写作 · Markdown</p>
+              </header>
+
+              <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
+                {!summary.isLoading ? (
+                  <div className="mx-auto h-full w-full max-w-[820px]">
+                    <MarkdownEditor
+                      key={`${summary.entryId}:${summary.loadRevision}`}
+                      docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
+                      initialValue={summary.content}
+                      onChange={handleEditorChange}
+                      placeholder="写下本年度总结（长文写作场景，支持 Markdown）"
+                      modeToggleClassName="mb-5"
+                      viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
+                      fillHeight
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </article>
+          </section>
         </section>
       </main>
 
