@@ -8,7 +8,7 @@
 
 - 更新时间：`2026-02-17`
 - 总任务：`161`
-- 状态统计：`DONE=156` / `DOING=0` / `TODO=4` / `BLOCKED=1`
+- 状态统计：`DONE=161` / `DOING=0` / `TODO=0` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -111,9 +111,9 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-TEST-001` | `TODO` | 加密与 KDF 参数升级单元测试 | 核心分支覆盖并通过 | `src/services/__tests__/*` | — | — |
-| `TD-TEST-002` | `TODO` | 同步与冲突（CAS/sha mismatch）单元测试 | 冲突分支断言完整 | `src/services/__tests__/*` | — | — |
-| `TD-TEST-003` | `TODO` | 认证流程集成测试（首次/7天内/过期/Token失效） | 4 条流程均通过 | `src/hooks/__tests__/*` | — | — |
+| `TD-TEST-001` | `DONE` | 加密与 KDF 参数升级单元测试 | 核心分支覆盖并通过 | `src/services/__tests__/*` | 风险分级：中；`npm run lint` 通过；`npx vitest run src/services/__tests__/crypto.test.ts` 通过（5/5）；`npm run test:unit` 通过（86/86） | — |
+| `TD-TEST-002` | `DONE` | 同步与冲突（CAS/sha mismatch）单元测试 | 冲突分支断言完整 | `src/services/__tests__/*` | 风险分级：中；`npm run lint` 通过；`npx vitest run src/services/__tests__/sync.test.ts` 通过（26/26）；`npm run test:unit` 通过（86/86） | — |
+| `TD-TEST-003` | `DONE` | 认证流程集成测试（首次/7天内/过期/Token失效） | 4 条流程均通过 | `src/hooks/__tests__/*` | 风险分级：中；`npm run lint` 通过；`npx vitest run --environment jsdom src/hooks/__tests__/use-auth.test.tsx` 通过（10/10）；`npm run test:integration` 通过（68/68） | — |
 | `TD-TEST-004` | `DONE` | 关键用户流程 E2E（创建、编辑、同步、冲突） | 核心链路自动化通过 | `e2e/*` | `npm run lint` 通过；`npm run test:unit` 通过（39/39）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过（7/7） | `2026-02-09 / f474348` |
 | `TD-TEST-005` | `DONE` | 性能验收（加载、切换日期、往年今日、输入延迟） | 满足 SPEC 指标 | `test-report/*` `e2e/specs/performance-acceptance.spec.ts` `src/services/__tests__/import.performance.test.ts` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86，含 `import.performance`）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/performance-acceptance.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 543bd41` |
 | `TD-TEST-006` | `DONE` | 兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS） | 验收清单全部勾选 | `docs/compatibility-report.md` | 风险分级：低（验收文档回填）；`npx playwright test --config=scripts/compatibility-check.mjs --grep @smoke --workers=1 --retries=0 --reporter=line` 执行结果：Chrome/Edge/Firefox/安卓通过；Safari/iOS 按用户授权“这两个环境就不跑了，不做测试了”跳过并不纳入门禁；仅文档回填，未追加自动化测试 | `2026-02-17 / 7ec1e94` |
@@ -122,8 +122,8 @@
 | `TD-TEST-009` | `DONE` | 修复冲突 E2E 长跑不稳定（认证重试 + 同步状态收敛 + 冲突注入可观测性） | `conflict-resolution` 在高重复执行下不再因认证抖动或同步状态长期卡住导致失败；日志可区分预写失败与目标请求未触发 | `e2e/fixtures/app.ts` `e2e/specs/conflict-resolution.spec.ts` `e2e/helpers/conflict.ts` `src/hooks/use-sync.ts` | `npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=3 --retries=0` 通过（12/12）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --repeat-each=10 --retries=0` 通过（40/40） | `2026-02-10 / 769aa47` |
 | `TD-TEST-010` | `DONE` | 修复 lint 报错 `e2e/helpers/conflict.ts` 中 `no-unsafe-finally` 违规并恢复 lint 全绿 | `npm run lint` 不再报 `no-unsafe-finally`；并通过必要回归（单元/集成 + 冲突相关 E2E） | `e2e/helpers/conflict.ts` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --retries=0` 通过（4/4） | `2026-02-10 / 8c9ec50` |
 | `TD-TEST-011` | `DONE` | 移除冗余 E2E 冒烟脚本与 npm 入口 | 仓库不再保留 `test:e2e:smoke` 与 `scripts/e2e-smoke.sh`；无遗留运行入口 | `package.json` `scripts/e2e-smoke.sh` `TODO.md` | `npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；按用户授权采用必要测试策略，未执行全量 E2E | `2026-02-10 / 6e7d886` |
-| `TD-TEST-012` | `TODO` | 落地本地高效测试分层策略（Playwright 并发/分片脚本、用例标签、AGENTS 默认执行规范） | 新增 `test:e2e:fast/changed/last-failed/full/slow/remote/local-shard:*` 脚本；关键 E2E 完成 `@smoke/@slow/@remote` 标签；`AGENTS.md` 明确“默认分层 + 全量门禁”；新增测试策略文档可直接执行 | `playwright.config.ts` `package.json` `e2e/specs/*.spec.ts` `AGENTS.md` `docs/testing-strategy.md` `TODO.md` | — | — |
-| `TD-TEST-013` | `BLOCKED` | 测试迁移与断言更新（适配新信息架构与统一导航） | 集成/E2E 不再依赖“会话：已解锁”；导航断言迁移为统一入口并覆盖 `/settings` 可访问；`stats-insights` 跳转断言改为新导航结构并稳定通过 | `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 失败（`app.integration` 3 项失败：当前实现仍为旧导航、无 `/settings` 页面）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 失败（未找到统一导航“统计”入口）；阻塞原因：依赖实现层先合入统一导航（含“设置”）与 `/settings` 路由 | — |
+| `TD-TEST-012` | `DONE` | 落地本地高效测试分层策略（Playwright 并发/分片脚本、用例标签、AGENTS 默认执行规范） | 新增 `test:e2e:fast/changed/last-failed/full/slow/remote/local-shard:*` 脚本；关键 E2E 完成 `@smoke/@slow/@remote` 标签；`AGENTS.md` 明确“默认分层 + 全量门禁”；新增测试策略文档可直接执行 | `playwright.config.ts` `package.json` `e2e/specs/*.spec.ts` `AGENTS.md` `docs/testing-strategy.md` `TODO.md` `scripts/compatibility-check.mjs` | 风险分级：中；`git show --name-only --oneline 42faaba` 校验通过（已包含策略落地文件）；`rg` 复核 `package.json` E2E 分层脚本、`e2e/specs/*.spec.ts` 标签、`AGENTS.md` 全量门禁、`docs/testing-strategy.md` 可执行指引均存在 | `2026-02-11 / 42faaba` |
+| `TD-TEST-013` | `DONE` | 测试迁移与断言更新（适配新信息架构与统一导航） | 集成/E2E 不再依赖“会话：已解锁”；导航断言迁移为统一入口并覆盖 `/settings` 可访问；`stats-insights` 跳转断言改为新导航结构并稳定通过 | `src/__tests__/integration/app.integration.test.tsx` `e2e/fixtures/app.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含 `app.integration`）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1） | — |
 
 ### 6.8 UI 体验优化
 
