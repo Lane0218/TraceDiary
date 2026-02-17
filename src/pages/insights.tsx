@@ -5,6 +5,7 @@ import MonthlyTrendChart from '../components/stats/monthly-trend-chart'
 import YearlyActivityHeatmap from '../components/stats/yearly-activity-heatmap'
 import YearlyComparisonChart from '../components/stats/yearly-comparison-chart'
 import YearlySummaryCards from '../components/stats/yearly-summary-cards'
+import { STATS_CHART_THEME } from '../components/stats/stats-chart-theme'
 import type { UseAuthResult } from '../hooks/use-auth'
 import { useStats } from '../hooks/use-stats'
 import { buildStatsChartModel } from '../utils/stats'
@@ -85,11 +86,19 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
               data-testid="insights-monthly-legend"
             >
               <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-                <i className="inline-block h-2 w-2 rounded-[2px] bg-[#4f46e5]" aria-hidden="true" />
+                <i
+                  className="inline-block h-2 w-2 rounded-[2px]"
+                  style={{ backgroundColor: STATS_CHART_THEME.primary500 }}
+                  aria-hidden="true"
+                />
                 字数柱
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-                <i className="inline-block h-[2px] w-3 bg-[#0f766e]" aria-hidden="true" />
+                <i
+                  className="inline-block h-[2px] w-3"
+                  style={{ backgroundColor: STATS_CHART_THEME.primary600 }}
+                  aria-hidden="true"
+                />
                 篇数线
               </span>
             </div>
@@ -113,7 +122,8 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
                   <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(latestMonth?.entryCount ?? 0)}</p>
                 </article>
                 <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center">
-                  <p className="text-xs text-td-muted">最近月份环比</p>
+                  <p className="text-xs text-td-muted">最近月份字数环比</p>
+                  <p className="mt-0.5 text-[11px] text-td-muted/85">口径：本月字数相对上月字数变化</p>
                   <p className="mt-1 text-lg font-semibold text-td-text">
                     {formatDeltaRatio(latestMonth?.momWordDeltaRatio ?? null)}
                   </p>

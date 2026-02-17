@@ -1,4 +1,5 @@
 import type { MonthlyTrendPoint } from '../../types/stats'
+import { STATS_CHART_THEME } from './stats-chart-theme'
 
 interface MonthlyTrendChartProps {
   items: MonthlyTrendPoint[]
@@ -90,11 +91,19 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
       {showLegend ? (
         <div className="flex flex-wrap items-center gap-2 text-xs text-td-muted" aria-label="月度趋势图例">
           <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-            <i className="inline-block h-2 w-2 rounded-[2px] bg-[#4f46e5]" aria-hidden="true" />
+            <i
+              className="inline-block h-2 w-2 rounded-[2px]"
+              style={{ backgroundColor: STATS_CHART_THEME.primary500 }}
+              aria-hidden="true"
+            />
             字数柱
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-            <i className="inline-block h-[2px] w-3 bg-[#0f766e]" aria-hidden="true" />
+            <i
+              className="inline-block h-[2px] w-3"
+              style={{ backgroundColor: STATS_CHART_THEME.primary600 }}
+              aria-hidden="true"
+            />
             篇数线
           </span>
         </div>
@@ -119,13 +128,13 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
                   y1={y}
                   x2={CHART_MARGIN.left + plotWidth}
                   y2={y}
-                  stroke="rgba(17,17,17,0.12)"
+                  stroke={STATS_CHART_THEME.gridLine}
                   strokeDasharray="3 4"
                 />
-                <text x={CHART_MARGIN.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#666666">
+                <text x={CHART_MARGIN.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill={STATS_CHART_THEME.axisText}>
                   {formatNumber(wordValue)}
                 </text>
-                <text x={CHART_MARGIN.left + plotWidth + 8} y={y + 4} fontSize="11" fill="#666666">
+                <text x={CHART_MARGIN.left + plotWidth + 8} y={y + 4} fontSize="11" fill={STATS_CHART_THEME.axisText}>
                   {formatNumber(entryValue)}
                 </text>
               </g>
@@ -140,7 +149,7 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
                 width={barWidth}
                 height={point.barHeight}
                 rx={6}
-                fill="#4f46e5"
+                fill={STATS_CHART_THEME.primary500}
                 fillOpacity={0.88}
               >
                 <title>
@@ -149,16 +158,37 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
                 </title>
               </rect>
 
-              <text x={point.x} y={CHART_MARGIN.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill="#666666">
+              <text
+                x={point.x}
+                y={CHART_MARGIN.top + plotHeight + 20}
+                textAnchor="middle"
+                fontSize="11"
+                fill={STATS_CHART_THEME.axisText}
+              >
                 {formatMonthLabel(point.label)}
               </text>
             </g>
           ))}
 
-          <path d={linePath} fill="none" stroke="#0f766e" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke={STATS_CHART_THEME.primary600}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
           {chartPoints.map((point) => (
-            <circle key={`${point.label}-point`} cx={point.x} cy={point.lineY} r={4} fill="#0f766e" stroke="#ffffff" strokeWidth={2}>
+            <circle
+              key={`${point.label}-point`}
+              cx={point.x}
+              cy={point.lineY}
+              r={4}
+              fill={STATS_CHART_THEME.primary600}
+              stroke={STATS_CHART_THEME.pointStroke}
+              strokeWidth={2}
+            >
               <title>
                 {point.label} 篇数 {formatNumber(point.entryCount)}，字数 {formatNumber(point.totalWordCount)}
               </title>

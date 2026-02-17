@@ -1,4 +1,5 @@
 import type { YearlyTrendPoint } from '../../types/stats'
+import { STATS_CHART_THEME } from './stats-chart-theme'
 
 interface YearlyComparisonChartProps {
   items: YearlyTrendPoint[]
@@ -81,11 +82,19 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
     <div className="space-y-3" data-testid="insights-yearly-chart" aria-label="年度对比图">
       <div className="flex flex-wrap items-center gap-2 text-sm text-td-muted">
         <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-          <i className="inline-block h-2 w-2 rounded-[2px] bg-[#0ea5e9]" aria-hidden="true" />
+          <i
+            className="inline-block h-2 w-2 rounded-[2px]"
+            style={{ backgroundColor: STATS_CHART_THEME.primary500 }}
+            aria-hidden="true"
+          />
           年度字数
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-td-line bg-td-surface px-2 py-1">
-          <i className="inline-block h-[2px] w-3 bg-[#ea580c]" aria-hidden="true" />
+          <i
+            className="inline-block h-[2px] w-3"
+            style={{ backgroundColor: STATS_CHART_THEME.primary600 }}
+            aria-hidden="true"
+          />
           活跃天数
         </span>
       </div>
@@ -109,13 +118,13 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
                   y1={y}
                   x2={CHART_MARGIN.left + plotWidth}
                   y2={y}
-                  stroke="rgba(17,17,17,0.12)"
+                  stroke={STATS_CHART_THEME.gridLine}
                   strokeDasharray="3 4"
                 />
-                <text x={CHART_MARGIN.left - 10} y={y + 4} textAnchor="end" fontSize="12" fill="#666666">
+                <text x={CHART_MARGIN.left - 10} y={y + 4} textAnchor="end" fontSize="12" fill={STATS_CHART_THEME.axisText}>
                   {formatNumber(wordValue)}
                 </text>
-                <text x={CHART_MARGIN.left + plotWidth + 10} y={y + 4} fontSize="12" fill="#666666">
+                <text x={CHART_MARGIN.left + plotWidth + 10} y={y + 4} fontSize="12" fill={STATS_CHART_THEME.axisText}>
                   {formatNumber(activeValue)}
                 </text>
               </g>
@@ -130,7 +139,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
                 width={barWidth}
                 height={point.barHeight}
                 rx={8}
-                fill="#0ea5e9"
+                fill={STATS_CHART_THEME.primary500}
                 fillOpacity={0.86}
               >
                 <title>
@@ -140,7 +149,13 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
               </rect>
 
               {shouldRenderXAxisLabel(index, chartPoints.length) ? (
-                <text x={point.x} y={CHART_MARGIN.top + plotHeight + 24} textAnchor="middle" fontSize="12" fill="#666666">
+                <text
+                  x={point.x}
+                  y={CHART_MARGIN.top + plotHeight + 24}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill={STATS_CHART_THEME.axisText}
+                >
                   {point.year}
                 </text>
               ) : null}
@@ -150,7 +165,7 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
           <path
             d={activePath}
             fill="none"
-            stroke="#ea580c"
+            stroke={STATS_CHART_THEME.primary600}
             strokeWidth={3}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -162,8 +177,8 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
               cx={point.x}
               cy={point.activeY}
               r={4}
-              fill="#ea580c"
-              stroke="#ffffff"
+              fill={STATS_CHART_THEME.primary600}
+              stroke={STATS_CHART_THEME.pointStroke}
               strokeWidth={2}
             >
               <title>

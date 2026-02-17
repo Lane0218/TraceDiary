@@ -6,6 +6,7 @@ import {
   buildYearlyHeatmapModel,
   type YearlyHeatmapCell,
 } from '../../utils/stats-heatmap'
+import { STATS_HEATMAP_COLORS } from './stats-chart-theme'
 
 interface YearlyActivityHeatmapProps {
   records: DiaryRecord[]
@@ -16,7 +17,6 @@ interface YearlyActivityHeatmapProps {
 const numberFormatter = new Intl.NumberFormat('zh-CN')
 
 const DAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
-const HEATMAP_COLORS = ['#e8ece8', '#c9e6cf', '#9fd4ac', '#66bc7d', '#2f8f52'] as const
 const CELL_SIZE = 13
 const CELL_GAP = 3
 const MIN_YEAR = 1970
@@ -215,7 +215,7 @@ export default function YearlyActivityHeatmap({
                                 ? 'border-[#111111] shadow-[0_0_0_1px_rgba(17,17,17,0.12)]'
                                 : 'border-transparent hover:border-[#111111]/45'
                             }`}
-                            style={{ backgroundColor: HEATMAP_COLORS[cell.intensity] }}
+                            style={{ backgroundColor: STATS_HEATMAP_COLORS[cell.intensity] }}
                             title={description}
                             aria-label={description}
                             onClick={() => setSelectedDateKey(cell.dateKey)}
@@ -236,7 +236,7 @@ export default function YearlyActivityHeatmap({
             <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
               <p className="text-xs text-td-muted">字数图例</p>
               <div className="mt-1 flex flex-wrap items-center gap-2" aria-label="热力图图例">
-                {HEATMAP_COLORS.map((color, index) => (
+                {STATS_HEATMAP_COLORS.map((color, index) => (
                   <span
                     key={color}
                     className="inline-block h-[10px] w-[20px] rounded-[2px] border border-black/5"
