@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-17`
-- 总任务：`160`
-- 状态统计：`DONE=153` / `DOING=0` / `TODO=6` / `BLOCKED=1`
+- 总任务：`161`
+- 状态统计：`DONE=154` / `DOING=0` / `TODO=6` / `BLOCKED=1`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -105,6 +105,7 @@
 | `TD-DEP-001` | `DONE` | 配置 `vercel.json` 安全响应头（CSP/HSTS/Referrer/Permissions） | 响应头符合 SPEC | `vercel.json` | 风险分级：中；`node -e \"const fs=require('fs'); JSON.parse(fs.readFileSync('vercel.json','utf8'));\"` 通过；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 5031be6` |
 | `TD-DEP-002` | `DONE` | 补充入口访问控制部署说明（Cloudflare Access/Vercel/Basic Auth） | 部署文档可执行 | `README.md` `SPEC.md` | 风险分级：低（仅文档）；仅文档改动，无功能行为变化；未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-17 / a03d3fc` |
 | `TD-DEP-003` | `DONE` | 执行 Vercel 生产部署并回传可访问地址 | 成功产出生产部署 URL 且可访问 | `TODO.md` `.gitignore` | 风险分级：低（部署与配置记录）；`npm run lint` 通过；`npx vercel whoami --token ***` 通过（账号：`lane0218`）；`npx vercel --prod --yes --name tracediary --token ***` 通过（Production: `https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app`，Alias: `https://tracediary.vercel.app`）；`curl -I https://tracediary.vercel.app` 返回 `HTTP/2 200` 且安全响应头生效；`curl -I https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app` 返回 `HTTP/2 401`（部署保护） | `2026-02-17 / 232ca05` |
+| `TD-DEP-004` | `DONE` | 绑定 TraceDiary 到自定义二级域名（`tracediary.laneljc.cn` 与 `diary.laneljc.cn`） | 目标域名完成 Vercel 绑定并可通过 HTTPS 访问应用首页 | `TODO.md` | 风险分级：低（部署配置）；`npx vercel domains add tracediary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`npx vercel domains add diary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`curl -I https://tracediary.laneljc.cn` 返回 `HTTP/2 200`；`curl -I https://diary.laneljc.cn` 返回 `HTTP/2 200`；`npm run lint` 通过；未执行 `unit/integration/e2e`（本任务为部署配置低风险，不涉及运行时代码变更） | `2026-02-17 / 待回填` |
 
 ### 6.7 测试与验收
 
