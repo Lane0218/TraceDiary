@@ -38,14 +38,16 @@ export default function SyncControlBar({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const hasSuccess = pullStatus === 'success' || pushStatus === 'success'
   const hasError = pullStatus === 'error' || pushStatus === 'error'
-  const summaryLabel = isActionRunning ? '同步中' : hasSuccess ? '已同步' : '未同步'
-  const summaryToneClass = isActionRunning
-    ? 'td-status-warning'
-    : hasSuccess
-      ? 'td-status-success'
-      : hasError
-        ? 'td-status-warning'
-        : 'td-status-muted'
+  const summaryStatus: SyncActionStatus = isActionRunning ? 'running' : hasError ? 'error' : hasSuccess ? 'success' : 'idle'
+  const summaryLabel = summaryStatus === 'running' ? '同步中' : summaryStatus === 'success' ? '已同步' : '未同步'
+  const summaryToneClass =
+    summaryStatus === 'running'
+      ? 'td-status-warning'
+      : summaryStatus === 'success'
+        ? 'td-status-success'
+        : summaryStatus === 'error'
+          ? 'td-status-danger'
+          : 'td-status-muted'
 
   useEffect(() => {
     if (!isDetailsOpen) {
@@ -91,7 +93,11 @@ export default function SyncControlBar({
             aria-expanded={isDetailsOpen}
             onClick={() => setIsDetailsOpen((prev) => !prev)}
           >
-            <span className={`td-status-pill ${summaryToneClass}`} data-testid="sync-summary-pill">
+            <span
+              className={`td-status-pill ${summaryToneClass}`}
+              data-status={summaryStatus}
+              data-testid="sync-summary-pill"
+            >
               {summaryLabel}
             </span>
             <span className={`td-sync-summary-chevron ${isDetailsOpen ? 'is-open' : ''}`} aria-hidden="true">
@@ -136,7 +142,7 @@ export default function SyncControlBar({
         data-testid="sync-details-popover"
       >
         <div className="td-sync-details-row">
-          <span className={`td-status-pill ${pullStatusToneClass}`} data-testid="pull-status-pill">
+          <span className={`td-status-pill ${pullStatusToneClass}`} data-status={pullStatus} data-testid="pull-status-pill">
             {pullStatusLabel}
           </span>
           {pullStatus === 'error' && pullFailureReason ? (
@@ -146,7 +152,7 @@ export default function SyncControlBar({
           ) : null}
         </div>
         <div className="td-sync-details-row">
-          <span className={`td-status-pill ${pushStatusToneClass}`} data-testid="push-status-pill">
+          <span className={`td-status-pill ${pushStatusToneClass}`} data-status={pushStatus} data-testid="push-status-pill">
             {pushStatusLabel}
           </span>
           {pushStatus === 'error' && pushFailureReason ? (
