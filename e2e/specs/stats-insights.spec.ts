@@ -241,6 +241,8 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByLabel('insights-page')).toBeVisible()
   await expect(page.getByRole('heading', { name: '数据统计' })).toBeVisible()
   await expect(page.getByTestId('insights-monthly-chart')).toBeVisible()
+  await expect(page.getByTestId('insights-monthly-legend')).toBeVisible()
+  await expect(page.getByTestId('insights-monthly-interpretation')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-summary-cards')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap')).toBeVisible()
@@ -249,6 +251,26 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByLabel('热力图年份加一')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap-side-panel')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap-weekday-axis').locator('span').first()).toHaveText('一')
+
+  const [monthlyChartFrameBox, firstMonthlyMetricBox, monthlyMetricsPanelBox, monthlyInterpretationBox] = await Promise.all([
+    page.getByTestId('insights-monthly-chart-frame').boundingBox(),
+    page.getByTestId('insights-monthly-metric-latest').boundingBox(),
+    page.getByTestId('insights-monthly-metrics').boundingBox(),
+    page.getByTestId('insights-monthly-interpretation').boundingBox(),
+  ])
+  expect(monthlyChartFrameBox).not.toBeNull()
+  expect(firstMonthlyMetricBox).not.toBeNull()
+  expect(monthlyMetricsPanelBox).not.toBeNull()
+  expect(monthlyInterpretationBox).not.toBeNull()
+
+  const chartTop = monthlyChartFrameBox?.y ?? 0
+  const firstMetricTop = firstMonthlyMetricBox?.y ?? 0
+  expect(Math.abs(chartTop - firstMetricTop)).toBeLessThanOrEqual(2)
+
+  const metricsPanelBottom = (monthlyMetricsPanelBox?.y ?? 0) + (monthlyMetricsPanelBox?.height ?? 0)
+  const interpretationBottom = (monthlyInterpretationBox?.y ?? 0) + (monthlyInterpretationBox?.height ?? 0)
+  expect(metricsPanelBottom - interpretationBottom).toBeLessThanOrEqual(2)
+
   const monthlyChartOverflow = await page.getByTestId('insights-monthly-chart-frame').evaluate((element) => {
     return element.scrollWidth - element.clientWidth
   })
