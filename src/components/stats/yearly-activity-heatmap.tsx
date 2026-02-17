@@ -156,8 +156,8 @@ export default function YearlyActivityHeatmap({
         </div>
       </header>
 
-      <div className="grid gap-3 xl:grid-cols-[auto_240px] xl:items-start xl:justify-between">
-        <div className="space-y-2">
+      <div className="grid gap-2 xl:grid-cols-[max-content_272px] xl:items-stretch xl:justify-start">
+        <div className="space-y-2" data-testid="insights-yearly-heatmap-main-panel">
           <div
             className="w-fit max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
             data-testid="insights-yearly-heatmap-grid-frame"
@@ -229,7 +229,10 @@ export default function YearlyActivityHeatmap({
             </div>
           </div>
 
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center">
+          <div
+            className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center"
+            data-testid="insights-yearly-heatmap-bottom-row"
+          >
             <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
               <p className="text-xs text-td-muted">字数图例</p>
               <div className="mt-1 flex flex-wrap items-center gap-2" aria-label="热力图图例">
@@ -256,16 +259,22 @@ export default function YearlyActivityHeatmap({
           </div>
         </div>
 
-        <aside className="grid content-start gap-2" data-testid="insights-yearly-heatmap-side-panel">
-          <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+        <aside className="grid content-start gap-2 xl:h-full xl:grid-rows-3" data-testid="insights-yearly-heatmap-side-panel">
+          <article
+            className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center"
+            data-testid="insights-yearly-heatmap-metric-active-days"
+          >
             <p className="text-xs text-td-muted">活跃天数</p>
             <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(heatmapModel.activeDayCount)}</p>
           </article>
-          <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+          <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center">
             <p className="text-xs text-td-muted">年度总字数</p>
             <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(heatmapModel.totalWordCount)}</p>
           </article>
-          <article className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2">
+          <article
+            className="rounded-[10px] border border-td-line bg-td-surface px-3 py-2 xl:flex xl:h-full xl:flex-col xl:justify-center"
+            data-testid="insights-yearly-heatmap-metric-peak-word"
+          >
             <p className="text-xs text-td-muted">单日峰值字数</p>
             <p className="mt-1 text-lg font-semibold text-td-text">{formatNumber(heatmapModel.maxWordCount)}</p>
           </article>

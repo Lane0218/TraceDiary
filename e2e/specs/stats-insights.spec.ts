@@ -242,7 +242,7 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByRole('heading', { name: '数据统计' })).toBeVisible()
   await expect(page.getByTestId('insights-monthly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-monthly-legend')).toBeVisible()
-  await expect(page.getByTestId('insights-monthly-interpretation')).toBeVisible()
+  await expect(page.getByTestId('insights-monthly-metric-entry-count')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-chart')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-summary-cards')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap')).toBeVisible()
@@ -252,24 +252,43 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('insights-yearly-heatmap-side-panel')).toBeVisible()
   await expect(page.getByTestId('insights-yearly-heatmap-weekday-axis').locator('span').first()).toHaveText('一')
 
-  const [monthlyChartFrameBox, firstMonthlyMetricBox, monthlyMetricsPanelBox, monthlyInterpretationBox] = await Promise.all([
+  const [monthlyChartFrameBox, firstMonthlyMetricBox, monthlyMetricsPanelBox, monthlyLastMetricBox] = await Promise.all([
     page.getByTestId('insights-monthly-chart-frame').boundingBox(),
     page.getByTestId('insights-monthly-metric-latest').boundingBox(),
     page.getByTestId('insights-monthly-metrics').boundingBox(),
-    page.getByTestId('insights-monthly-interpretation').boundingBox(),
+    page.getByTestId('insights-monthly-metric-quarter-avg').boundingBox(),
   ])
   expect(monthlyChartFrameBox).not.toBeNull()
   expect(firstMonthlyMetricBox).not.toBeNull()
   expect(monthlyMetricsPanelBox).not.toBeNull()
-  expect(monthlyInterpretationBox).not.toBeNull()
+  expect(monthlyLastMetricBox).not.toBeNull()
 
   const chartTop = monthlyChartFrameBox?.y ?? 0
   const firstMetricTop = firstMonthlyMetricBox?.y ?? 0
   expect(Math.abs(chartTop - firstMetricTop)).toBeLessThanOrEqual(2)
 
   const metricsPanelBottom = (monthlyMetricsPanelBox?.y ?? 0) + (monthlyMetricsPanelBox?.height ?? 0)
-  const interpretationBottom = (monthlyInterpretationBox?.y ?? 0) + (monthlyInterpretationBox?.height ?? 0)
-  expect(metricsPanelBottom - interpretationBottom).toBeLessThanOrEqual(2)
+  const lastMetricBottom = (monthlyLastMetricBox?.y ?? 0) + (monthlyLastMetricBox?.height ?? 0)
+  expect(metricsPanelBottom - lastMetricBottom).toBeLessThanOrEqual(2)
+
+  const [heatmapGridBox, sidePanelFirstMetricBox, sidePanelLastMetricBox, heatmapBottomRowBox] = await Promise.all([
+    page.getByTestId('insights-yearly-heatmap-grid-frame').boundingBox(),
+    page.getByTestId('insights-yearly-heatmap-metric-active-days').boundingBox(),
+    page.getByTestId('insights-yearly-heatmap-metric-peak-word').boundingBox(),
+    page.getByTestId('insights-yearly-heatmap-bottom-row').boundingBox(),
+  ])
+  expect(heatmapGridBox).not.toBeNull()
+  expect(sidePanelFirstMetricBox).not.toBeNull()
+  expect(sidePanelLastMetricBox).not.toBeNull()
+  expect(heatmapBottomRowBox).not.toBeNull()
+
+  const heatmapHorizontalGap =
+    (sidePanelFirstMetricBox?.x ?? 0) - ((heatmapGridBox?.x ?? 0) + (heatmapGridBox?.width ?? 0))
+  expect(heatmapHorizontalGap).toBeLessThanOrEqual(16)
+
+  const heatmapSideBottom = (sidePanelLastMetricBox?.y ?? 0) + (sidePanelLastMetricBox?.height ?? 0)
+  const heatmapBottomRowBottom = (heatmapBottomRowBox?.y ?? 0) + (heatmapBottomRowBox?.height ?? 0)
+  expect(Math.abs(heatmapSideBottom - heatmapBottomRowBottom)).toBeLessThanOrEqual(2)
 
   const monthlyChartOverflow = await page.getByTestId('insights-monthly-chart-frame').evaluate((element) => {
     return element.scrollWidth - element.clientWidth
