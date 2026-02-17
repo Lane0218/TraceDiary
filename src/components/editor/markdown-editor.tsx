@@ -147,7 +147,7 @@ function MarkdownEditorInner({
   const bubbleClassName =
     'inline-flex h-6 items-center rounded-full border border-td-line bg-td-surface px-2.5 text-[11px] leading-none text-td-muted'
   const sourceBubbleClassName = `${bubbleClassName} transition-colors hover:border-[#cfcac1] hover:text-td-text disabled:cursor-not-allowed disabled:opacity-50 ${
-    mode === 'source' ? 'border-[#a49d8f] bg-[#f1efe8] text-td-text' : ''
+    mode === 'source' ? 'border-[#3f4742] bg-[#3f4742] text-white hover:border-[#333a36] hover:bg-[#333a36] hover:text-white' : ''
   }`
   const floatingWordCountBadge = (
     <div
