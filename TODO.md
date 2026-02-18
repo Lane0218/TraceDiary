@@ -7,9 +7,9 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-18`
-- 总任务：`163`
-- 状态统计：`DONE=163` / `DOING=0` / `TODO=0` / `BLOCKED=0`
-- 当前进行中：`无`
+- 总任务：`174`
+- 状态统计：`DONE=163` / `DOING=1` / `TODO=10` / `BLOCKED=0`
+- 当前进行中：`TD-DOC-009`
 
 ## 1. 任务清单（按模块）
 
@@ -232,9 +232,35 @@
 | `TD-DOC-006` | `DONE` | 在 AGENTS 补充 pane 定位与复用规范（`pane_index`、`session/window`、同任务不重复改名） | AGENTS 明确使用 `pane_index`（纯数字）而非 `%pane_id`；重命名命令必须显式绑定 `session:window.pane_index`；同一任务连续微调无需重复改名，仅任务语义切换时改名 | `AGENTS.md` `TODO.md` | `npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-13 / 2700d07` |
 | `TD-DOC-007` | `DONE` | 压缩 AGENTS 的 pane 重命名说明并改为基于 `TMUX_PANE` 定位当前 Codex pane | AGENTS 第 3 节以最少步骤明确：通过 `TMUX_PANE` 反查 `session:window.pane_index` 后重命名并回读；禁止用不带 `-t` 的 `#S:#I.#P` 判定当前 pane | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-14 / 9d87dea` |
 | `TD-DOC-008` | `DONE` | 调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint） | AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述 | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；按用户授权本任务未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-14 / 4f1280e` |
+| `TD-DOC-009` | `DOING` | 新增“游客模式 + 登录注册 + 免费部署”任务拆分清单 | `TODO.md` 新增可执行拆分（含游客模式、账号体系、云端配置、测试验收），并明确免费方案边界与验收标准 | `TODO.md` | 风险分级：低（仅文档）；进行中 |  |
 
 ### 6.11 开发效率与工具
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `TD-DEV-001` | `DONE` | 新增 WezTerm + tmux 四窗格 Codex 启动脚本（默认命名且支持后续手动重命名） | 一条命令可创建/附着 `2x2` 四窗格并在每个 pane 启动 `codex`；初始 pane 名称可见；可通过 `tmux select-pane -T` 手动改名 | `scripts/start-codex4.sh` `docs/codex-parallel.md` `TODO.md` | `bash -n scripts/start-codex4.sh` 通过；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；用户明确要求“这个就不用测试了”，未继续执行 `npm run test:integration` 与 E2E | `2026-02-12 / 0fb306a` |
+
+### 6.13 游客模式与账号体系（v1.2）
+
+| ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TD-AUTH-001` | `TODO` | 接入 Supabase 客户端与会话上下文（仅使用 `anon key`） | 前端可初始化 Supabase client；会话状态可在全局读取；禁止将 `service_role` 暴露到前端 | `src/main.tsx` `src/hooks/*` `src/services/*` `README.md` |  |  |
+| `TD-AUTH-002` | `TODO` | 实现邮箱 OTP 登录/注册一体化入口 | 用户输入邮箱后可接收验证码并登录；未注册邮箱可按配置自动注册；登录失败有可读错误反馈 | `src/pages/settings.tsx` `src/components/auth/*` `src/__tests__/integration/*` `e2e/specs/*` |  |  |
+| `TD-AUTH-003` | `TODO` | 新增默认游客模式入口与“开始使用我的数据”转化路径 | 首次访问默认进入游客体验；游客态可浏览 Demo 日记但不可写入远端；可一键跳转登录/注册 | `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/components/common/*` |  |  |
+| `TD-AUTH-004` | `TODO` | 重构首次绑定流程：登录后再配置仓库与主密码 | 登录用户在首次绑定时完成 Repo/Branch/Token + 主密码配置；已绑定用户跳过重复配置并直接进入解锁或使用 | `src/hooks/use-auth.ts` `src/pages/settings.tsx` `src/components/auth/*` |  |  |
+
+### 6.14 云端配置存储与权限（v1.2）
+
+| ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TD-CLOUD-001` | `TODO` | 建立 `user_sync_configs` 表与迁移脚本（存密文配置） | 表结构可存储 `encryptedToken/kdfParams/tokenCipherVersion/giteeRepo*`；迁移脚本可重复执行且幂等 | `supabase/migrations/*` `src/types/config.ts` `docs/*` |  |  |
+| `TD-CLOUD-002` | `TODO` | 配置并验证 RLS 策略（仅本人可读写） | `select/insert/update` 均满足 `auth.uid() = user_id`；越权访问被拒绝 | `supabase/migrations/*` `scripts/*` `src/services/*` |  |  |
+| `TD-CLOUD-003` | `TODO` | 实现云端配置读写服务与新设备恢复链路 | 登录后可读取云端配置；新设备可恢复 repo/branch/token 密文并进入主密码解锁流程；失败路径可回退本地手动配置 | `src/services/*` `src/hooks/use-auth.ts` `src/pages/settings.tsx` `e2e/specs/*` |  |  |
+
+### 6.15 演示链路与验收（v1.2）
+
+| ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TD-DEMO-001` | `TODO` | 实现 Demo 数据源与只读保护（默认游客体验） | 游客可读取 Demo 数据（本地静态或服务端代理）；游客态禁止 push/pull 与配置写入；UI 明确标识“演示模式” | `src/services/*` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/components/common/*` |  |  |
+| `TD-DEMO-002` | `TODO` | 补齐 Vercel 部署配置与 CSP 放行（Supabase + 可选 Demo API） | `vercel.json` 的 `connect-src` 放行 Supabase 域名；若使用 `/api/demo/*` 代理，服务端 Token 仅存环境变量；部署后游客与登录链路可用 | `vercel.json` `api/*` `README.md` `.env.example` |  |  |
+| `TD-TEST-014` | `TODO` | 新增游客/登录/恢复链路分层测试（unit/integration/E2E） | 至少覆盖：游客进入与转化、OTP 登录、首次绑定、跨设备恢复、未授权写入拦截；分层测试命令可稳定通过 | `src/services/__tests__/*` `src/__tests__/integration/*` `e2e/specs/*` `TODO.md` |  |  |
