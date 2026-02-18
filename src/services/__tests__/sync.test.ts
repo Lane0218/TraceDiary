@@ -214,6 +214,38 @@ describe('pullRemoteDiariesToIndexedDb', () => {
     })
   })
 
+  it('metadata 无法解密时应抛出明确错误信息', async () => {
+    const localKey = await createDataEncryptionKey('pull-metadata-local-key')
+    const remoteKey = await createDataEncryptionKey('pull-metadata-remote-key')
+    const encryptedMetadata = await encryptWithAesGcm(
+      JSON.stringify({
+        version: '1',
+        lastSync: '2100-01-04T00:00:00.000Z',
+        entries: [],
+      }),
+      remoteKey,
+    )
+
+    await expect(() =>
+      pullRemoteDiariesToIndexedDb(
+        {
+          token: 'test-token',
+          owner: 'owner',
+          repo: 'repo',
+          branch: 'master',
+          dataEncryptionKey: localKey,
+        },
+        {
+          readRemoteMetadata: async () => ({
+            missing: false,
+            encryptedContent: encryptedMetadata,
+            sha: 'sha-metadata',
+          }),
+        },
+      ),
+    ).rejects.toThrow('云端内容解密失败，请确认主密码是否与该仓库数据一致')
+  })
+
   it('应按 modifiedAt 决策插入/覆盖/跳过本地记录', async () => {
     const dataEncryptionKey = await createDataEncryptionKey('pull-upsert')
     const remoteMetadata = {
@@ -711,6 +743,40 @@ describe('pullDiaryFromGitee', () => {
       conflict: false,
       reason: 'not_found',
     })
+  })
+
+  it('远端内容无法解密时应抛出明确错误信息', async () => {
+    const localKey = await createDataEncryptionKey('pull-diary-local-key')
+    const remoteKey = await createDataEncryptionKey('pull-diary-remote-key')
+    const encryptedRemoteContent = await encryptWithAesGcm('remote-content', remoteKey)
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: btoa(encryptedRemoteContent),
+          encoding: 'base64',
+          sha: 'sha-remote',
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+
+    await expect(() =>
+      pullDiaryFromGitee({
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'master',
+        dataEncryptionKey: localKey,
+        fetchImpl: fetchMock as unknown as typeof fetch,
+        metadata: {
+          type: 'daily',
+          entryId: 'daily:2100-02-13',
+          date: '2100-02-13',
+          content: 'local-content',
+          modifiedAt: '2100-02-13T09:00:00.000Z',
+        },
+      }),
+    ).rejects.toThrow('云端内容解密失败，请确认主密码是否与该仓库数据一致')
   })
 })
 

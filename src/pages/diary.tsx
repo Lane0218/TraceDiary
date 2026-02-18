@@ -643,7 +643,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       await applyRemotePullPayload(result.pulledMetadata, result.remoteSha)
       setManualPullError(null)
     } catch (error) {
-      const message = error instanceof Error ? error.message : '拉取失败，请稍后重试'
+      const message = error instanceof Error && error.message.trim() ? error.message : '拉取失败，请稍后重试'
       updateSyncActionStatus('pull', 'error', message)
       setManualPullError(message)
       pushToast({
@@ -711,7 +711,10 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
 
       const summaryMessage = `全量 pull 完成：新增 ${result.inserted}，更新 ${result.updated}，跳过 ${result.skipped}，冲突 ${result.conflicted}，失败 ${result.failed}`
       if (result.failed > 0) {
-        const failedMessage = `全量 pull 部分失败（${result.failed} 条）`
+        const firstFailureReason = result.failedItems[0]?.reason?.trim()
+        const failedMessage = firstFailureReason
+          ? `全量 pull 部分失败（${result.failed} 条）：${firstFailureReason}`
+          : `全量 pull 部分失败（${result.failed} 条）`
         updateSyncActionStatus('pull', 'error', failedMessage)
         setManualPullError(failedMessage)
         pushToast({
@@ -730,7 +733,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         message: summaryMessage,
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : '全量拉取失败，请稍后重试'
+      const message =
+        error instanceof Error && error.message.trim() ? error.message : '全量拉取失败，请稍后重试'
       updateSyncActionStatus('pull', 'error', message)
       setManualPullError(message)
       pushToast({

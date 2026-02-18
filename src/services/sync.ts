@@ -943,10 +943,15 @@ export async function pullDiaryFromGitee(
       }
     }
 
-    const remoteContent = await decryptWithAesGcm(
-      normalizeEncryptedContent(remoteFile.content),
-      params.dataEncryptionKey,
-    )
+    let remoteContent: string
+    try {
+      remoteContent = await decryptWithAesGcm(
+        normalizeEncryptedContent(remoteFile.content),
+        params.dataEncryptionKey,
+      )
+    } catch (error) {
+      throw new Error(toPullErrorMessage(error, '拉取失败，请稍后重试'))
+    }
     const pulledMetadata = toRemoteDiaryMetadata(localMetadata, remoteContent, now)
     const normalizedLocal = normalizeDiaryContentForCompare(localMetadata.content)
     const normalizedRemote = normalizeDiaryContentForCompare(remoteContent)
@@ -1005,7 +1010,7 @@ export async function pullDiaryFromGitee(
       }
     }
 
-    throw error
+    throw new Error(toPullErrorMessage(error, '拉取失败，请稍后重试'))
   }
 }
 
@@ -1203,6 +1208,45 @@ function hasLocalUnsyncedChanges(localRecord: DiaryRecord, baseline: SyncBaselin
   return getDiarySyncFingerprint(localMetadata) !== baseline.fingerprint
 }
 
+function isDecryptLikeFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  if (error.name === 'OperationError' || error.name === 'InvalidAccessError') {
+    return true
+  }
+
+  const normalized = error.message.trim().toLowerCase()
+  if (!normalized) {
+    return false
+  }
+
+  if (normalized.includes('密文格式无效')) {
+    return true
+  }
+
+  if (normalized.includes('decrypt') || normalized.includes('decryption')) {
+    return true
+  }
+
+  if (normalized.includes('operation-specific reason')) {
+    return true
+  }
+
+  return false
+}
+
+function toPullErrorMessage(error: unknown, fallback: string): string {
+  if (isDecryptLikeFailure(error)) {
+    return '云端内容解密失败，请确认主密码是否与该仓库数据一致'
+  }
+  if (error instanceof Error && error.message.trim()) {
+    return error.message
+  }
+  return fallback
+}
+
 export async function pullRemoteDiariesToIndexedDb(
   params: PullRemoteDiariesToIndexedDbParams,
   options: PullRemoteDiariesToIndexedDbOptions = {},
@@ -1261,12 +1305,17 @@ export async function pullRemoteDiariesToIndexedDb(
     return result
   }
 
-  const decryptedMetadata = await decryptWithAesGcm(
-    normalizeEncryptedContent(remoteMetadata.encryptedContent),
-    params.dataEncryptionKey,
-  )
-  const parsedMetadata = defaultParseMetadata<unknown>(decryptedMetadata)
-  const metadata = normalizeMetadata(parsedMetadata, nowIsoString())
+  let metadata: Metadata
+  try {
+    const decryptedMetadata = await decryptWithAesGcm(
+      normalizeEncryptedContent(remoteMetadata.encryptedContent),
+      params.dataEncryptionKey,
+    )
+    const parsedMetadata = defaultParseMetadata<unknown>(decryptedMetadata)
+    metadata = normalizeMetadata(parsedMetadata, nowIsoString())
+  } catch (error) {
+    throw new Error(toPullErrorMessage(error, '全量拉取失败，请稍后重试'))
+  }
   result.total = metadata.entries.length
 
   for (const entry of metadata.entries) {
@@ -1355,7 +1404,7 @@ export async function pullRemoteDiariesToIndexedDb(
       result.failed += 1
       result.failedItems.push({
         entryId: buildEntryIdFromMetadataEntry(entry),
-        reason: error instanceof Error && error.message ? error.message : '读取或解密远端文件失败',
+        reason: toPullErrorMessage(error, '读取或解密远端文件失败'),
       })
     }
   }
