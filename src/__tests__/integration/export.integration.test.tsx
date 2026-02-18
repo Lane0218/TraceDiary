@@ -45,6 +45,7 @@ function buildAuthResult(stage: UseAuthResult['state']['stage'] = 'ready'): UseA
     },
     getMasterPasswordError: vi.fn(() => null),
     initializeFirstTime: vi.fn(async () => {}),
+    restoreConfigFromCloud: vi.fn(async () => {}),
     unlockWithMasterPassword: vi.fn(async () => {}),
     updateTokenCiphertext: vi.fn(async () => {}),
     updateConnectionSettings: vi.fn(async () => {}),

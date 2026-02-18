@@ -83,6 +83,7 @@ export async function ensureReadySession(
   env: E2EEnv,
   options: EnsureReadySessionOptions = {},
 ): Promise<void> {
+  const initialUrl = page.url()
   const totalTimeoutMs = Math.max(30_000, options.totalTimeoutMs ?? 90_000)
   const retryIntervalMs = Math.max(250, options.retryIntervalMs ?? 300)
   const authModal = page.getByLabel('auth-modal')
@@ -98,11 +99,50 @@ export async function ensureReadySession(
     const headerVisible = await appHeader.isVisible().catch(() => false)
     const modalVisible = await authModal.isVisible().catch(() => false)
     if (isUnlocked && headerVisible && !modalVisible) {
+      if (page.url() !== initialUrl) {
+        await page.goto(initialUrl)
+      }
       await expect(authModal).toBeHidden({ timeout: 15_000 })
       return
     }
 
     if (!modalVisible) {
+      if (await page.getByTestId('auth-setup-submit').isVisible().catch(() => false)) {
+        await fillSetupForm(page, env)
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
+      const guestHeaderButton = page.getByTestId('guest-start-button').first()
+      if (await guestHeaderButton.isVisible().catch(() => false)) {
+        await guestHeaderButton.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
+      const guestPanelButton = page.getByTestId('guest-go-settings-btn').first()
+      if (await guestPanelButton.isVisible().catch(() => false)) {
+        await guestPanelButton.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
+      const yearlyGuestPanelButton = page.getByTestId('guest-go-settings-btn-yearly').first()
+      if (await yearlyGuestPanelButton.isVisible().catch(() => false)) {
+        await yearlyGuestPanelButton.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
+      const isSettingsPage = await page
+        .evaluate(() => window.location.pathname === '/settings')
+        .catch(() => false)
+      if (!isSettingsPage) {
+        await page.goto('/settings')
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
       await page.waitForTimeout(retryIntervalMs)
       continue
     }

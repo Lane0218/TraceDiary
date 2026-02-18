@@ -16,6 +16,18 @@ TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + G
 
 - Node.js 20+
 - npm 10+
+- 可选：Supabase（用于登录注册与云端配置同步）
+
+### 环境变量（可选）
+
+复制 `.env.example` 为 `.env`，按需填写：
+
+```bash
+cp .env.example .env
+```
+
+- `VITE_SUPABASE_URL`：Supabase 项目 URL
+- `VITE_SUPABASE_ANON_KEY`：Supabase `anon` 公钥（禁止使用 `service_role`）
 
 ### 快速启动
 
@@ -46,6 +58,8 @@ npm run test:e2e:fast
 3. 输出目录设置为 `dist`。
 4. 配置生产环境变量（如 `VITE_GITEE_API_BASE`）。
 5. 绑定自定义域名并确认 HTTPS 生效。
+
+> 若启用 Supabase 登录，请确认 `vercel.json` 的 CSP `connect-src` 已放行 `https://*.supabase.co` 与 `wss://*.supabase.co`。
 
 ### 1.1 一键脚本部署（推荐）
 

@@ -246,7 +246,7 @@
 
 | ID | 状态 | 任务 | 验收标准 | 关联文件 | 测试记录 | 完成记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `TD-AUTH-001` | `TODO` | 接入 Supabase 客户端与会话上下文（仅使用 `anon key`） | 前端可初始化 Supabase client；会话状态可在全局读取；禁止将 `service_role` 暴露到前端 | `src/main.tsx` `src/hooks/*` `src/services/*` `README.md` |  |  |
+| `TD-AUTH-001` | `DONE` | 接入 Supabase 客户端与会话上下文（仅使用 `anon key`） | 前端可初始化 Supabase client；会话状态可在全局读取；禁止将 `service_role` 暴露到前端 | `src/main.tsx` `src/hooks/*` `src/services/*` `README.md` | 风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:full` 首次失败（缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（28/28，含 2 项 flaky 经 retry 通过）；定向 `npx playwright test --project=chromium e2e/specs/export-data.spec.ts e2e/specs/upload-encryption.spec.ts --workers=2 --retries=1` 通过（3/3） | `2026-02-18 / a302c23` |
 | `TD-AUTH-002` | `TODO` | 实现邮箱 OTP 登录/注册一体化入口 | 用户输入邮箱后可接收验证码并登录；未注册邮箱可按配置自动注册；登录失败有可读错误反馈 | `src/pages/settings.tsx` `src/components/auth/*` `src/__tests__/integration/*` `e2e/specs/*` |  |  |
 | `TD-AUTH-003` | `TODO` | 新增默认游客模式入口与“开始使用我的数据”转化路径 | 首次访问默认进入游客体验；游客态可浏览 Demo 日记但不可写入远端；可一键跳转登录/注册 | `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/components/common/*` |  |  |
 | `TD-AUTH-004` | `DOING` | 重构首次绑定流程：登录后再配置仓库与主密码 | 登录用户在首次绑定时完成 Repo/Branch/Token + 主密码配置；已绑定用户跳过重复配置并直接进入解锁或使用 | `src/hooks/use-auth.ts` `src/pages/settings.tsx` `src/components/auth/*` |  |  |

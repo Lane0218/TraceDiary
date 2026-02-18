@@ -21,6 +21,12 @@ import {
   saveSyncBaseline,
   type DiaryRecord,
 } from '../services/indexeddb'
+import {
+  GUEST_MODE_READ_ONLY_MESSAGE,
+  getDemoDailyEntry,
+  listDemoDailyRecords,
+  listDemoYearlySummaries,
+} from '../services/demo-data'
 import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
@@ -60,6 +66,7 @@ const DIARY_PANEL_HEIGHT_DESKTOP = 340
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
 const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
+const GUEST_MODE_HINT = '当前处于演示模式，内容为只读。点击“开始使用我的数据”完成登录与配置后可编辑。'
 const DIARY_PANEL_HEIGHT_STYLE = {
   '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
   '--diary-panel-body-height': `${DIARY_PANEL_BODY_HEIGHT_DESKTOP}px`,
@@ -190,6 +197,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
 
   const baseMonth = useMemo(() => toMonthStartFromDateKey(date), [date])
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
+  const isGuestMode = auth.state.stage === 'needs-setup'
+  const demoDiaryEntry = useMemo(() => getDemoDailyEntry(date), [date])
 
   const diary = useDiary(
     { type: 'daily', date },
@@ -227,8 +236,8 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       dataEncryptionKey,
     ],
   )
-  const canSyncToRemote = syncAvailability.canSyncToRemote
-  const syncDisabledMessage = syncAvailability.disabledMessage
+  const canSyncToRemote = !isGuestMode && syncAvailability.canSyncToRemote
+  const syncDisabledMessage = isGuestMode ? GUEST_MODE_READ_ONLY_MESSAGE : syncAvailability.disabledMessage
   const uploadMetadata = canSyncToRemote
     ? createDiaryUploadExecutor({
         token: auth.state.tokenInMemory as string,
@@ -279,7 +288,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     return new Set(diaries.filter((record) => record.type === 'daily').map((record) => record.date))
   }, [diaries])
 
-  const forceOpenAuthModal = auth.state.stage !== 'ready'
+  const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
   const authModalOpen = forceOpenAuthModal
 
   useEffect(() => {
@@ -316,6 +325,16 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
       setIsLoadingDiaries(true)
       setDiaryLoadError(null)
 
+      if (isGuestMode) {
+        if (!mounted) {
+          return
+        }
+        setDiaries(listDemoDailyRecords(date))
+        setYearlySummaries(listDemoYearlySummaries(Number.parseInt(date.slice(0, 4), 10)))
+        setIsLoadingDiaries(false)
+        return
+      }
+
       try {
         const [dailyRecords, yearlySummaryRecords] = await Promise.all([
           listDiariesByIndex(DIARY_INDEX_TYPE, 'daily'),
@@ -343,7 +362,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     return () => {
       mounted = false
     }
-  }, [remotePullSignal])
+  }, [date, isGuestMode, remotePullSignal])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -400,6 +419,9 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     [date, navigate],
   )
   const handleEditorChange = (nextContent: string) => {
+    if (isGuestMode) {
+      return
+    }
     diary.setContent(nextContent)
 
     const payload: DiarySyncMetadata = {
@@ -779,7 +801,37 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <AppHeader currentPage="diary" yearlyHref={yearlyNavHref} />
+        <AppHeader
+          currentPage="diary"
+          yearlyHref={yearlyNavHref}
+          guestMode={
+            isGuestMode
+              ? {
+                  enabled: true,
+                  description: '可浏览演示数据',
+                  ctaHref: '/settings',
+                  ctaLabel: '开始使用我的数据',
+                }
+              : undefined
+          }
+        />
+
+        {isGuestMode ? (
+          <section className="td-guest-banner mt-4" aria-label="guest-mode-banner">
+            <div className="td-guest-banner-body">
+              <p className="td-guest-banner-title">演示模式已开启</p>
+              <p className="td-guest-banner-copy">{GUEST_MODE_HINT}</p>
+            </div>
+            <button
+              type="button"
+              className="td-btn td-btn-primary-ink"
+              onClick={() => navigate('/settings')}
+              data-testid="guest-go-settings-btn"
+            >
+              去设置页配置
+            </button>
+          </section>
+        ) : null}
 
         {yearlyReminder.show ? (
           <section className="mt-4 td-toolbar" aria-label="yearly-reminder">
@@ -878,7 +930,13 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
 
           <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
             <SyncControlBar
-              statusHint={<StatusHint isLoading={diary.isLoading} isSaving={diary.isSaving} error={diary.error} />}
+              statusHint={
+                <StatusHint
+                  isLoading={isGuestMode ? false : diary.isLoading}
+                  isSaving={isGuestMode ? false : diary.isSaving}
+                  error={isGuestMode ? null : diary.error}
+                />
+              }
               pullStatusLabel={pullStatusLabel}
               pushStatusLabel={pushStatusLabel}
               pullStatusToneClass={pullStatusToneClass}
@@ -903,17 +961,22 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
               <div className="min-h-0 flex-1" data-testid="diary-editor-slot">
-                {!diary.isLoading ? (
+                {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
-                    key={`${diary.entryId}:${diary.loadRevision}`}
-                    docKey={`${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}:${diary.loadRevision}`}
-                    initialValue={diary.content}
+                    key={isGuestMode ? `guest:${date}` : `${diary.entryId}:${diary.loadRevision}`}
+                    docKey={
+                      isGuestMode
+                        ? `guest:${date}`
+                        : `${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}:${diary.loadRevision}`
+                    }
+                    initialValue={isGuestMode ? (demoDiaryEntry.content ?? '') : diary.content}
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
                     modeToggleClassName="-mt-8 mb-5"
                     viewportHeight={DIARY_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
+                    disabled={isGuestMode}
                   />
                 ) : null}
               </div>

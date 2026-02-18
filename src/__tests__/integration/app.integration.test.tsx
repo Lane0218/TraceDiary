@@ -10,14 +10,15 @@ describe('App 路由与日记页入口', () => {
     localStorage.clear()
   })
 
-  it('应默认进入单页日记并显示认证弹层', async () => {
+  it('应默认进入单页日记并展示游客模式入口', async () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
     expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
-    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
-    expect(screen.getByText(/^状态：/)).toBeTruthy()
+    expect(await screen.findByTestId('guest-mode-pill')).toBeTruthy()
+    expect(screen.getByTestId('guest-start-button')).toBeTruthy()
+    expect(screen.queryByLabelText('auth-modal')).toBeNull()
   })
 
   it('未知路由应回退到日记页', async () => {
@@ -80,7 +81,7 @@ describe('App 路由与日记页入口', () => {
     fireEvent.click(screen.getByTestId('diary-left-tab-stats'))
 
     expect(screen.getByTestId('diary-left-tab-stats')).toBeTruthy()
-    expect(await screen.findByText(/正在汇总统计数据|统计读取失败/u)).toBeTruthy()
+    expect(await screen.findByLabelText('stats-overview-card')).toBeTruthy()
   })
 
   it('往年今日列表不应展示字数文案', () => {
