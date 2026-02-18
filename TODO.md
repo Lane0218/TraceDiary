@@ -8,8 +8,8 @@
 
 - 更新时间：`2026-02-18`
 - 总任务：`174`
-- 状态统计：`DONE=163` / `DOING=1` / `TODO=10` / `BLOCKED=0`
-- 当前进行中：`TD-DOC-009`
+- 状态统计：`DONE=164` / `DOING=0` / `TODO=10` / `BLOCKED=0`
+- 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
 
@@ -232,7 +232,7 @@
 | `TD-DOC-006` | `DONE` | 在 AGENTS 补充 pane 定位与复用规范（`pane_index`、`session/window`、同任务不重复改名） | AGENTS 明确使用 `pane_index`（纯数字）而非 `%pane_id`；重命名命令必须显式绑定 `session:window.pane_index`；同一任务连续微调无需重复改名，仅任务语义切换时改名 | `AGENTS.md` `TODO.md` | `npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-13 / 2700d07` |
 | `TD-DOC-007` | `DONE` | 压缩 AGENTS 的 pane 重命名说明并改为基于 `TMUX_PANE` 定位当前 Codex pane | AGENTS 第 3 节以最少步骤明确：通过 `TMUX_PANE` 反查 `session:window.pane_index` 后重命名并回读；禁止用不带 `-t` 的 `#S:#I.#P` 判定当前 pane | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-14 / 9d87dea` |
 | `TD-DOC-008` | `DONE` | 调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint） | AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述 | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；按用户授权本任务未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-14 / 4f1280e` |
-| `TD-DOC-009` | `DOING` | 新增“游客模式 + 登录注册 + 免费部署”任务拆分清单 | `TODO.md` 新增可执行拆分（含游客模式、账号体系、云端配置、测试验收），并明确免费方案边界与验收标准 | `TODO.md` | 风险分级：低（仅文档）；进行中 |  |
+| `TD-DOC-009` | `DONE` | 新增“游客模式 + 登录注册 + 免费部署”任务拆分清单 | `TODO.md` 新增可执行拆分（含游客模式、账号体系、云端配置、测试验收），并明确免费方案边界与验收标准 | `TODO.md` | 风险分级：低（仅文档）；仅文档改动，无功能行为变化，未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-18 / 1e57198` |
 
 ### 6.11 开发效率与工具
 
