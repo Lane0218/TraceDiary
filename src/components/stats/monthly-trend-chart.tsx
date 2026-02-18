@@ -1,4 +1,5 @@
 import type { MonthlyTrendPoint } from '../../types/stats'
+import { createChartLayout } from './chart-layout'
 import { STATS_CHART_THEME } from './stats-chart-theme'
 
 interface MonthlyTrendChartProps {
@@ -22,6 +23,11 @@ const CHART_MARGIN = {
   bottom: 46,
   left: 56,
 }
+const AXIS_GUTTER = {
+  left: 28,
+  right: 28,
+}
+const CLIP_PATH_ID = 'insights-monthly-plot-clip'
 
 function formatNumber(value: number): string {
   return numberFormatter.format(value)
@@ -58,15 +64,27 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
     )
   }
 
-  const plotWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right
+  const layout = createChartLayout({
+    chartWidth: CHART_WIDTH,
+    marginLeft: CHART_MARGIN.left,
+    marginRight: CHART_MARGIN.right,
+    axisGutterLeft: AXIS_GUTTER.left,
+    axisGutterRight: AXIS_GUTTER.right,
+    pointCount: items.length,
+    barMinWidth: 14,
+    barMaxWidth: 34,
+    barWidthRatio: 0.5,
+    edgeGap: 4,
+  })
+
+  const plotWidth = layout.plotWidth
   const plotHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom
   const wordMax = Math.max(1, ...items.map((item) => item.totalWordCount))
   const entryMax = Math.max(1, ...items.map((item) => item.entryCount))
-  const step = items.length > 1 ? plotWidth / (items.length - 1) : 0
-  const barWidth = items.length > 1 ? Math.max(14, Math.min(34, step * 0.5)) : 28
+  const barWidth = layout.barWidth
 
   const chartPoints = items.map((item, index) => {
-    const x = CHART_MARGIN.left + (items.length > 1 ? index * step : plotWidth / 2)
+    const x = layout.getPointX(index)
     const barHeight = Math.round((item.totalWordCount / wordMax) * plotHeight)
     const barY = CHART_MARGIN.top + plotHeight - barHeight
     const lineY = CHART_MARGIN.top + plotHeight - Math.round((item.entryCount / entryMax) * plotHeight)
@@ -124,26 +142,46 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
             return (
               <g key={tick}>
                 <line
-                  x1={CHART_MARGIN.left}
+                  x1={layout.plotStartX}
                   y1={y}
-                  x2={CHART_MARGIN.left + plotWidth}
+                  x2={layout.plotEndX}
                   y2={y}
                   stroke={STATS_CHART_THEME.gridLine}
                   strokeDasharray="3 4"
                 />
-                <text x={CHART_MARGIN.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill={STATS_CHART_THEME.axisText}>
+                <text
+                  x={layout.plotStartX - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill={STATS_CHART_THEME.axisText}
+                  data-chart-role="y-axis-label-left"
+                >
                   {formatNumber(wordValue)}
                 </text>
-                <text x={CHART_MARGIN.left + plotWidth + 8} y={y + 4} fontSize="11" fill={STATS_CHART_THEME.axisText}>
+                <text
+                  x={layout.plotEndX + 8}
+                  y={y + 4}
+                  fontSize="11"
+                  fill={STATS_CHART_THEME.axisText}
+                  data-chart-role="y-axis-label-right"
+                >
                   {formatNumber(entryValue)}
                 </text>
               </g>
             )
           })}
 
-          {chartPoints.map((point) => (
-            <g key={point.label}>
+          <defs>
+            <clipPath id={CLIP_PATH_ID}>
+              <rect x={layout.plotStartX} y={CHART_MARGIN.top} width={plotWidth} height={plotHeight} />
+            </clipPath>
+          </defs>
+
+          <g clipPath={`url(#${CLIP_PATH_ID})`}>
+            {chartPoints.map((point) => (
               <rect
+                key={point.label}
                 x={point.x - barWidth / 2}
                 y={point.barY}
                 width={barWidth}
@@ -151,48 +189,52 @@ export default function MonthlyTrendChart({ items, isLoading = false, showLegend
                 rx={6}
                 fill={STATS_CHART_THEME.primary500}
                 fillOpacity={0.88}
+                data-chart-role="bar"
               >
                 <title>
                   {point.label} 字数 {formatNumber(point.totalWordCount)}，篇数 {formatNumber(point.entryCount)}，
                   {formatMomLabel(point.momWordDeltaRatio)}
                 </title>
               </rect>
+            ))}
 
-              <text
-                x={point.x}
-                y={CHART_MARGIN.top + plotHeight + 20}
-                textAnchor="middle"
-                fontSize="11"
-                fill={STATS_CHART_THEME.axisText}
+            <path
+              d={linePath}
+              fill="none"
+              stroke={STATS_CHART_THEME.primary600}
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {chartPoints.map((point) => (
+              <circle
+                key={`${point.label}-point`}
+                cx={point.x}
+                cy={point.lineY}
+                r={4}
+                fill={STATS_CHART_THEME.primary600}
+                stroke={STATS_CHART_THEME.pointStroke}
+                strokeWidth={2}
               >
-                {formatMonthLabel(point.label)}
-              </text>
-            </g>
-          ))}
-
-          <path
-            d={linePath}
-            fill="none"
-            stroke={STATS_CHART_THEME.primary600}
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+                <title>
+                  {point.label} 篇数 {formatNumber(point.entryCount)}，字数 {formatNumber(point.totalWordCount)}
+                </title>
+              </circle>
+            ))}
+          </g>
 
           {chartPoints.map((point) => (
-            <circle
-              key={`${point.label}-point`}
-              cx={point.x}
-              cy={point.lineY}
-              r={4}
-              fill={STATS_CHART_THEME.primary600}
-              stroke={STATS_CHART_THEME.pointStroke}
-              strokeWidth={2}
+            <text
+              key={`${point.label}-x-axis`}
+              x={point.x}
+              y={CHART_MARGIN.top + plotHeight + 20}
+              textAnchor="middle"
+              fontSize="11"
+              fill={STATS_CHART_THEME.axisText}
             >
-              <title>
-                {point.label} 篇数 {formatNumber(point.entryCount)}，字数 {formatNumber(point.totalWordCount)}
-              </title>
-            </circle>
+              {formatMonthLabel(point.label)}
+            </text>
           ))}
         </svg>
       </div>
