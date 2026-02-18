@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-18`
-- 总任务：`175`
-- 状态统计：`DONE=165` / `DOING=0` / `TODO=10` / `BLOCKED=0`
+- 总任务：`176`
+- 状态统计：`DONE=166` / `DOING=0` / `TODO=10` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -204,6 +204,7 @@
 | `TD-UI-073` | `DONE` | 将站点图标替换为用户提供的 SVG 图标 | 浏览器页签图标与 PWA manifest 图标入口均指向新 SVG；构建与基础测试通过 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `index.html` `public/manifest.json` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-18 / 18bfbc7` |
 | `TD-UI-074` | `DONE` | 重设计站点图标以提升小尺寸可读性并替换现有图标资源 | 16/24/32px 下轮廓可辨识；浏览器页签与 PWA 图标资源更新为新设计；构建与分层测试通过 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-18 / 4238c3b` |
 | `TD-UI-075` | `DONE` | 修复统计页年度对比图与月度趋势图的轴标签被柱体遮挡问题，并补齐防回归测试 | 年度对比图与月度趋势图左右轴标签不再被柱体覆盖；两图在不同数据量下无视觉遮挡；新增测试可稳定拦截同类回归 | `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-comparison-chart.tsx` `src/components/stats/chart-layout.ts` `src/__tests__/unit/chart-layout.unit.test.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（89/89）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/stats-chart-occlusion-fix --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_stats-chart-occlusion-fix --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1） | `2026-02-18 / 12503db` |
+| `TD-UI-076` | `DONE` | 以当前 SVG 为准重生成图标 PNG，并收紧 SVG 四周留白 | `icon-192.png` 与 `icon-512.png` 均由最新 `icon.svg` 导出；SVG 视觉留白明显收紧且主图形更贴近画布边缘 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（179/179）；`npm run test:integration` 失败（`src/__tests__/integration/app.integration.test.tsx` 2 例失败，属于当前分支既有“演示模式”改动冲突，非本任务图标改动导致）；用户明确授权“不要继续测试，直接提交”，因此未继续修复失败用例，且未执行 `npm run test:e2e:fast` / `npm run test:e2e:full` |  |
 
 ### 6.9 数据导入（v1.1）
 
@@ -248,7 +249,7 @@
 | `TD-AUTH-001` | `TODO` | 接入 Supabase 客户端与会话上下文（仅使用 `anon key`） | 前端可初始化 Supabase client；会话状态可在全局读取；禁止将 `service_role` 暴露到前端 | `src/main.tsx` `src/hooks/*` `src/services/*` `README.md` |  |  |
 | `TD-AUTH-002` | `TODO` | 实现邮箱 OTP 登录/注册一体化入口 | 用户输入邮箱后可接收验证码并登录；未注册邮箱可按配置自动注册；登录失败有可读错误反馈 | `src/pages/settings.tsx` `src/components/auth/*` `src/__tests__/integration/*` `e2e/specs/*` |  |  |
 | `TD-AUTH-003` | `TODO` | 新增默认游客模式入口与“开始使用我的数据”转化路径 | 首次访问默认进入游客体验；游客态可浏览 Demo 日记但不可写入远端；可一键跳转登录/注册 | `src/App.tsx` `src/pages/diary.tsx` `src/pages/yearly-summary.tsx` `src/components/common/*` |  |  |
-| `TD-AUTH-004` | `TODO` | 重构首次绑定流程：登录后再配置仓库与主密码 | 登录用户在首次绑定时完成 Repo/Branch/Token + 主密码配置；已绑定用户跳过重复配置并直接进入解锁或使用 | `src/hooks/use-auth.ts` `src/pages/settings.tsx` `src/components/auth/*` |  |  |
+| `TD-AUTH-004` | `DOING` | 重构首次绑定流程：登录后再配置仓库与主密码 | 登录用户在首次绑定时完成 Repo/Branch/Token + 主密码配置；已绑定用户跳过重复配置并直接进入解锁或使用 | `src/hooks/use-auth.ts` `src/pages/settings.tsx` `src/components/auth/*` |  |  |
 
 ### 6.14 云端配置存储与权限（v1.2）
 
