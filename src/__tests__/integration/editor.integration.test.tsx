@@ -8,6 +8,8 @@ import type { AppConfig, UseAuthResult } from '../../hooks/use-auth'
 import { useDiary, type UseDiaryResult } from '../../hooks/use-diary'
 
 const createDiaryUploadExecutorMock = vi.hoisted(() => vi.fn())
+const pullRemoteDiariesToIndexedDbMock = vi.hoisted(() => vi.fn())
+const pullDiaryFromGiteeMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../hooks/use-diary', () => ({
   useDiary: vi.fn(),
@@ -18,6 +20,8 @@ vi.mock('../../services/sync', async () => {
   return {
     ...actual,
     createDiaryUploadExecutor: createDiaryUploadExecutorMock,
+    pullRemoteDiariesToIndexedDb: pullRemoteDiariesToIndexedDbMock,
+    pullDiaryFromGitee: pullDiaryFromGiteeMock,
   }
 })
 
@@ -43,6 +47,33 @@ vi.mock('../../components/editor/markdown-editor', () => ({
 }))
 
 const useDiaryMock = vi.mocked(useDiary)
+
+function buildPullResult(overrides?: Partial<{
+  total: number
+  inserted: number
+  updated: number
+  skipped: number
+  conflicted: number
+  failed: number
+  downloaded: number
+  metadataMissing: boolean
+  conflicts: Array<{ entryId: string; reason: string }>
+  failedItems: Array<{ entryId: string; reason: string }>
+}>) {
+  return {
+    total: 3,
+    inserted: 1,
+    updated: 1,
+    skipped: 1,
+    conflicted: 0,
+    failed: 0,
+    downloaded: 2,
+    metadataMissing: false,
+    conflicts: [],
+    failedItems: [],
+    ...overrides,
+  }
+}
 
 function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
   return render(
@@ -121,9 +152,25 @@ describe('年度总结页面', () => {
     vi.clearAllMocks()
     window.localStorage.clear()
     createDiaryUploadExecutorMock.mockReset()
+    pullRemoteDiariesToIndexedDbMock.mockReset()
+    pullDiaryFromGiteeMock.mockReset()
     createDiaryUploadExecutorMock.mockImplementation(
       () => async () => ({ ok: true, conflict: false, syncedAt: '2026-02-09T00:00:00.000Z' }),
     )
+    pullRemoteDiariesToIndexedDbMock.mockResolvedValue(buildPullResult())
+    pullDiaryFromGiteeMock.mockResolvedValue({
+      ok: true,
+      conflict: false,
+      pulledMetadata: {
+        type: 'yearly_summary',
+        entryId: 'summary:2026',
+        year: 2026,
+        content: '远端年度内容',
+        modifiedAt: '2026-02-09T00:00:00.000Z',
+      },
+      remoteSha: 'sha-remote',
+      syncedAt: '2026-02-09T00:00:00.000Z',
+    })
   })
 
   it('年度总结页应在慢保存时展示保存中状态并响应年份切换', async () => {
@@ -203,6 +250,60 @@ describe('年度总结页面', () => {
     })
   })
 
+  it('点击 pull 主按钮应触发全量拉取并展示结果弹窗', async () => {
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByTestId('manual-pull-button'))
+
+    await waitFor(() => {
+      expect(pullRemoteDiariesToIndexedDbMock).toHaveBeenCalledTimes(1)
+    })
+    expect(screen.getByTestId('pull-result-dialog')).toBeTruthy()
+    expect(screen.getByText('全量拉取汇总')).toBeTruthy()
+
+    fireEvent.click(screen.getByTestId('pull-result-close'))
+    await waitFor(() => {
+      expect(screen.queryByTestId('pull-result-dialog')).toBeNull()
+    })
+  })
+
+  it('pull 下拉菜单可触发当前条目拉取', async () => {
+    const setContent = vi.fn()
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+        content: '本地内容',
+        setContent,
+        waitForPersisted: vi.fn(async (): Promise<UseDiaryResult['entry']> => ({
+          type: 'yearly_summary',
+          id: 'summary:2026',
+          year: 2026,
+          date: '2026-12-31',
+          filename: '2026-summary.md.enc',
+          content: '本地内容',
+          wordCount: 4,
+          createdAt: '2026-02-09T00:00:00.000Z',
+          modifiedAt: '2026-02-09T00:10:00.000Z',
+        })),
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    fireEvent.click(screen.getByTestId('manual-pull-menu-trigger'))
+    fireEvent.click(screen.getByTestId('manual-pull-current-button'))
+
+    await waitFor(() => {
+      expect(pullDiaryFromGiteeMock).toHaveBeenCalledTimes(1)
+    })
+    expect(pullRemoteDiariesToIndexedDbMock).toHaveBeenCalledTimes(0)
+    expect(setContent).toHaveBeenCalledWith('远端年度内容')
+  })
+
   it('云端未就绪时点击手动上传应展示明确提示', () => {
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({
@@ -262,7 +363,7 @@ describe('年度总结页面', () => {
     await waitFor(() => {
       expect(screen.getByTestId('toast-push')).toHaveTextContent('手动上传已触发，正在等待结果...')
       const uploadingButton = screen.getByRole('button', { name: 'push' }) as HTMLButtonElement
-      const pullButton = screen.getByRole('button', { name: 'pull' }) as HTMLButtonElement
+      const pullButton = screen.getByTestId('manual-pull-button') as HTMLButtonElement
       expect(uploadingButton.disabled).toBe(true)
       expect(uploadingButton.getAttribute('aria-busy')).toBe('true')
       expect(uploadingButton.querySelector('.td-sync-control-running-dot')).toBeTruthy()
@@ -275,7 +376,7 @@ describe('年度总结页面', () => {
 
     await waitFor(() => {
       const pushButton = screen.getByRole('button', { name: 'push' }) as HTMLButtonElement
-      const pullButton = screen.getByRole('button', { name: 'pull' }) as HTMLButtonElement
+      const pullButton = screen.getByTestId('manual-pull-button') as HTMLButtonElement
       expect(pushButton.disabled).toBe(false)
       expect(pullButton.disabled).toBe(false)
       expect(screen.getByTestId('toast-push')).toHaveTextContent('push 已完成，同步成功')

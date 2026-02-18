@@ -205,7 +205,11 @@ describe('pullRemoteDiariesToIndexedDb', () => {
       inserted: 0,
       updated: 0,
       skipped: 0,
+      conflicted: 0,
       failed: 0,
+      downloaded: 0,
+      conflicts: [],
+      failedItems: [],
       metadataMissing: true,
     })
   })
@@ -314,6 +318,11 @@ describe('pullRemoteDiariesToIndexedDb', () => {
       }
     })
 
+    const readRemoteDiaryFile = vi.fn(async (path: string) => ({
+      exists: true,
+      content: encryptedDiaryByPath[path as keyof typeof encryptedDiaryByPath],
+    }))
+
     const result = await pullRemoteDiariesToIndexedDb(
       {
         token: 'test-token',
@@ -328,10 +337,7 @@ describe('pullRemoteDiariesToIndexedDb', () => {
           encryptedContent: encryptedMetadata,
           sha: 'sha-metadata',
         }),
-        readRemoteDiaryFile: async (path) => ({
-          exists: true,
-          content: encryptedDiaryByPath[path as keyof typeof encryptedDiaryByPath],
-        }),
+        readRemoteDiaryFile,
         loadLocalDiary: async (entryId) => localStore.get(entryId) ?? null,
         saveLocalDiary,
       },
@@ -342,15 +348,102 @@ describe('pullRemoteDiariesToIndexedDb', () => {
       inserted: 1,
       updated: 1,
       skipped: 1,
+      conflicted: 0,
       failed: 0,
+      downloaded: 2,
+      conflicts: [],
+      failedItems: [],
       metadataMissing: false,
     })
+    expect(readRemoteDiaryFile).toHaveBeenCalledTimes(2)
     expect(saveLocalDiary).toHaveBeenCalledTimes(2)
     expect(localStore.get('daily:2100-01-01')?.content).toBe('remote-new-1')
     expect(localStore.get('daily:2100-01-02')?.content).toBe('remote-new-2')
     expect(localStore.get('daily:2100-01-03')?.content).toBe('local-newer-3')
     expect(localStore.get('daily:2100-01-01')?.wordCount).toBe(12)
     expect(localStore.get('daily:2100-01-02')?.wordCount).toBe(12)
+  })
+
+  it('本地存在未同步改动时应标记冲突并跳过覆盖', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('pull-conflicted')
+    const remoteMetadata = {
+      version: '1',
+      lastSync: '2100-02-02T00:00:00.000Z',
+      entries: [
+        {
+          type: 'daily' as const,
+          date: '2100-02-01',
+          filename: '2100-02-01.md.enc',
+          wordCount: 3,
+          createdAt: '2100-02-01T00:00:00.000Z',
+          modifiedAt: '2100-02-01T02:00:00.000Z',
+        },
+      ],
+    }
+    const encryptedMetadata = await encryptWithAesGcm(
+      JSON.stringify(remoteMetadata),
+      dataEncryptionKey,
+    )
+    const readRemoteDiaryFile = vi.fn(async () => ({
+      exists: true,
+      content: await encryptWithAesGcm('remote-new', dataEncryptionKey),
+    }))
+    const saveLocalDiary = vi.fn(async () => undefined)
+
+    const result = await pullRemoteDiariesToIndexedDb(
+      {
+        token: 'test-token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'master',
+        dataEncryptionKey,
+      },
+      {
+        readRemoteMetadata: async () => ({
+          missing: false,
+          encryptedContent: encryptedMetadata,
+          sha: 'sha-metadata',
+        }),
+        readRemoteDiaryFile,
+        loadLocalDiary: async () => ({
+          id: 'daily:2100-02-01',
+          type: 'daily',
+          date: '2100-02-01',
+          content: 'local-dirty',
+          createdAt: '2100-02-01T00:00:00.000Z',
+          modifiedAt: '2100-02-01T01:30:00.000Z',
+          wordCount: 3,
+          filename: '2100-02-01.md.enc',
+        }),
+        loadBaseline: async () => ({
+          entryId: 'daily:2100-02-01',
+          fingerprint: 'baseline-fingerprint',
+          syncedAt: '2100-02-01T01:00:00.000Z',
+          remoteSha: 'sha-old',
+        }),
+        saveLocalDiary,
+      },
+    )
+
+    expect(result).toEqual({
+      total: 1,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      conflicted: 1,
+      failed: 0,
+      downloaded: 0,
+      conflicts: [
+        {
+          entryId: 'daily:2100-02-01',
+          reason: '本地存在未同步改动，已跳过覆盖',
+        },
+      ],
+      failedItems: [],
+      metadataMissing: false,
+    })
+    expect(readRemoteDiaryFile).not.toHaveBeenCalled()
+    expect(saveLocalDiary).not.toHaveBeenCalled()
   })
 
 })
