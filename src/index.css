@@ -784,10 +784,128 @@
     .td-btn-icon.is-spinning svg {
       animation: none;
     }
+
+    .td-guest-pill-dot {
+      animation: none;
+    }
+
+    .td-guest-banner::before {
+      animation: none;
+    }
+  }
+
+  .td-guest-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #d6cec1;
+    background: linear-gradient(135deg, #f6efe3, #f4f1e7);
+    font-size: 12px;
+    color: #5b5145;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .td-guest-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #c66a2b;
+    animation: td-guest-pulse 1.6s ease-in-out infinite;
+  }
+
+  .td-guest-pill-sep {
+    color: #9f9282;
+  }
+
+  .td-guest-pill-desc {
+    color: #736657;
+  }
+
+  .td-guest-pill-cta {
+    border: none;
+    background: transparent;
+    color: #34465e;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 0 0 2px;
+  }
+
+  .td-guest-pill-cta:hover {
+    color: #1f3249;
+  }
+
+  .td-guest-banner {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #d7cfc1;
+    background: linear-gradient(130deg, rgba(252, 245, 232, 0.96), rgba(247, 243, 234, 0.92));
+    overflow: hidden;
+  }
+
+  .td-guest-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.26) 50%, transparent 80%);
+    transform: translateX(-100%);
+    animation: td-guest-shimmer 4.6s linear infinite;
+    pointer-events: none;
+  }
+
+  .td-guest-banner-body {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+  }
+
+  .td-guest-banner-title {
+    margin: 0;
+    font-family: 'Bricolage Grotesque', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    line-height: 1.2;
+    color: #2a2f2a;
+  }
+
+  .td-guest-banner-copy {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #5d594f;
   }
 
   .td-fade-in {
     animation: td-fade-in 0.18s ease;
+  }
+}
+
+@keyframes td-guest-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes td-guest-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
   }
 }
 

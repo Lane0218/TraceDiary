@@ -37,6 +37,8 @@ function buildDependencies(overrides?: Partial<AuthDependencies>): AuthDependenc
   return {
     loadConfig: vi.fn(async () => null),
     saveConfig: vi.fn(async () => undefined),
+    loadCloudConfig: vi.fn(async () => null),
+    saveCloudConfig: vi.fn(async () => undefined),
     validateGiteeRepoAccess: vi.fn(async () => undefined),
     generateKdfParams: vi.fn(async () => sampleKdf),
     hashMasterPassword: vi.fn(async ({ masterPassword }) => `hash:${masterPassword}`),

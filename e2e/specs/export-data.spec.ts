@@ -142,10 +142,10 @@ test('设置页无可导出数据时不应生成下载文件', async ({ page }) 
 
   await gotoDiary(page, '2100-01-09')
   await ensureReadySession(page, env)
-  await clearDiaryStore(page)
 
   await page.getByTestId('app-nav-settings').click()
   await expect(page.getByLabel('settings-page')).toBeVisible()
+  await clearDiaryStore(page)
 
   page.once('dialog', (dialog) => {
     void dialog.accept()

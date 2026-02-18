@@ -6,6 +6,10 @@ import {
   encryptToken as encryptTokenWithPassword,
   hashMasterPassword as hashMasterPasswordWithKdf,
 } from '../services/crypto'
+import {
+  loadCloudConfigForCurrentUser,
+  saveCloudConfigForCurrentUser,
+} from '../services/cloud-config'
 import { validateGiteeRepoAccess as validateGiteeRepoAccessService } from '../services/gitee'
 import { saveSyncBaseline } from '../services/indexeddb'
 import { pullRemoteDiariesToIndexedDb } from '../services/sync'
@@ -42,6 +46,8 @@ export interface PullRemoteDiariesPayload {
 export interface AuthDependencies {
   loadConfig: () => Promise<AppConfig | null>
   saveConfig: (config: AppConfig) => Promise<void>
+  loadCloudConfig: () => Promise<AppConfig | null>
+  saveCloudConfig: (config: AppConfig) => Promise<void>
   validateGiteeRepoAccess: (payload: { owner: string; repoName: string; token: string }) => Promise<void>
   generateKdfParams: (masterPassword: string) => Promise<KdfParams>
   hashMasterPassword: (payload: { masterPassword: string; kdfParams: KdfParams }) => Promise<string>
@@ -94,6 +100,7 @@ export interface UseAuthResult {
   state: AuthState
   getMasterPasswordError: (masterPassword: string) => string | null
   initializeFirstTime: (payload: InitializeAuthPayload) => Promise<void>
+  restoreConfigFromCloud: () => Promise<void>
   unlockWithMasterPassword: (payload: UnlockPayload) => Promise<void>
   updateTokenCiphertext: (payload: RefreshTokenPayload) => Promise<void>
   updateConnectionSettings: (payload: UpdateConnectionSettingsPayload) => Promise<void>
@@ -335,6 +342,12 @@ function createDefaultDependencies(): AuthDependencies {
     saveConfig: async (config) => {
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
     },
+    loadCloudConfig: async () => {
+      return loadCloudConfigForCurrentUser()
+    },
+    saveCloudConfig: async (config) => {
+      await saveCloudConfigForCurrentUser(config)
+    },
     validateGiteeRepoAccess: async ({ owner, repoName, token }) => {
       const result = await validateGiteeRepoAccessService({
         token,
@@ -432,10 +445,32 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     setState((prev) => ({ ...prev, errorMessage: null }))
   }, [])
 
+  const syncCloudConfigBestEffort = useCallback(
+    async (config: AppConfig) => {
+      try {
+        await dependencies.saveCloudConfig(config)
+      } catch {
+        // 云端回写失败不应阻断本地可用性，保留后续手动重试能力。
+      }
+    },
+    [dependencies],
+  )
+
   const bootstrap = useCallback(async () => {
     setState(createInitialState())
 
-    const rawConfig = await dependencies.loadConfig()
+    let rawConfig = await dependencies.loadConfig()
+    if (!rawConfig) {
+      try {
+        const cloudConfig = await dependencies.loadCloudConfig()
+        if (cloudConfig) {
+          rawConfig = normalizeAppConfig(cloudConfig)
+          await dependencies.saveConfig(rawConfig)
+        }
+      } catch {
+        // 云端配置读取失败时回退本地初始化流程，不阻断游客体验。
+      }
+    }
     if (!rawConfig) {
       writeLockState(true)
       clearUnlockStateCache()
@@ -456,6 +491,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     if (rawConfig.giteeBranch !== config.giteeBranch) {
       try {
         await dependencies.saveConfig(config)
+        await syncCloudConfigBestEffort(config)
       } catch {
         // 配置迁移失败不应阻断认证流程，后续仍可继续使用默认分支。
       }
@@ -575,7 +611,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         errorMessage: 'Token 恢复失败，请补输 Token 覆盖本地密文',
       })
     }
-  }, [dependencies])
+  }, [dependencies, syncCloudConfigBestEffort])
 
   useEffect(() => {
     void bootstrap()
@@ -781,6 +817,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
 
         if (!state.config.encryptedToken) {
           await dependencies.saveConfig(nextConfig)
+          await syncCloudConfigBestEffort(nextConfig)
           clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
@@ -809,6 +846,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             passwordExpiry: expiry.iso,
           }
           await dependencies.saveConfig(nextConfig)
+          await syncCloudConfigBestEffort(nextConfig)
           clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
@@ -836,6 +874,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
             passwordExpiry: expiry.iso,
           }
           await dependencies.saveConfig(nextConfig)
+          await syncCloudConfigBestEffort(nextConfig)
           clearUnlockStateCache()
           setState({
             stage: 'needs-token-refresh',
@@ -857,6 +896,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           passwordExpiry: expiry.iso,
         }
         await dependencies.saveConfig(nextConfig)
+        await syncCloudConfigBestEffort(nextConfig)
         try {
           await cacheUnlockedToken(token)
           await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
@@ -883,7 +923,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }))
       }
     },
-    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config],
+    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config, syncCloudConfigBestEffort],
   )
 
   const updateTokenCiphertext = useCallback(
@@ -941,6 +981,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(nextConfig)
+        await syncCloudConfigBestEffort(nextConfig)
         try {
           await cacheUnlockedToken(token)
           await cacheUnlockedDataEncryptionKey(dataEncryptionKey)
@@ -969,7 +1010,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }))
       }
     },
-    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config],
+    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config, syncCloudConfigBestEffort],
   )
 
   const updateConnectionSettings = useCallback(
@@ -1048,6 +1089,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(nextConfig)
+        await syncCloudConfigBestEffort(nextConfig)
 
         if (hasTokenUpdate && nextTokenInMemory && nextDataEncryptionKey) {
           try {
@@ -1083,8 +1125,55 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }))
       }
     },
-    [clearError, dependencies, markUnlockedWithFreshExpiry, state.config, state.dataEncryptionKey, state.stage, state.tokenInMemory],
+    [
+      clearError,
+      dependencies,
+      markUnlockedWithFreshExpiry,
+      state.config,
+      state.dataEncryptionKey,
+      state.stage,
+      state.tokenInMemory,
+      syncCloudConfigBestEffort,
+    ],
   )
+
+  const restoreConfigFromCloud = useCallback(async () => {
+    clearError()
+    setState((prev) => ({ ...prev, stage: 'checking' }))
+
+    try {
+      const cloudConfig = await dependencies.loadCloudConfig()
+      if (!cloudConfig) {
+        throw new Error('云端尚无可恢复的配置，请先在当前设备完成初始化并保存。')
+      }
+
+      const normalized = normalizeAppConfig(cloudConfig)
+      await dependencies.saveConfig(normalized)
+      writeLockState(true)
+      clearUnlockStateCache()
+      masterPasswordRef.current = null
+
+      setState({
+        stage: 'needs-unlock',
+        config: normalized,
+        tokenInMemory: null,
+        dataEncryptionKey: null,
+        isLocked: true,
+        passwordExpired: false,
+        needsMasterPasswordForTokenRefresh: true,
+        tokenRefreshReason: null,
+        errorMessage: null,
+        initialPullStatus: 'idle',
+        initialPullError: null,
+      })
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        stage: prev.config ? prev.stage : 'needs-setup',
+        errorMessage: error instanceof Error ? error.message : '云端恢复失败，请稍后重试',
+      }))
+    }
+  }, [clearError, dependencies])
 
   const lockNow = useCallback(() => {
     writeLockState(true)
@@ -1108,6 +1197,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
     state,
     getMasterPasswordError,
     initializeFirstTime,
+    restoreConfigFromCloud,
     unlockWithMasterPassword,
     updateTokenCiphertext,
     updateConnectionSettings,

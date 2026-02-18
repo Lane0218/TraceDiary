@@ -13,6 +13,11 @@ import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { useToast } from '../hooks/use-toast'
 import { DIARY_INDEX_TYPE, getDiary, getSyncBaseline, listDiariesByIndex, saveSyncBaseline } from '../services/indexeddb'
+import {
+  GUEST_MODE_READ_ONLY_MESSAGE,
+  getDemoYearlySummary,
+  listDemoDailyRecords,
+} from '../services/demo-data'
 import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
 import { buildMarkdownToc, type TocHeadingItem } from '../utils/markdown-toc'
 import { getSyncAvailability } from '../utils/sync-availability'
@@ -45,6 +50,7 @@ const MIN_YEAR = 1970
 const MAX_YEAR = 9999
 const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
 const RENDERED_HEADING_SELECTOR = '.ProseMirror h1'
+const GUEST_MODE_HINT = '演示模式下可浏览示例年度总结，编辑与同步已禁用。'
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
@@ -87,12 +93,14 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
+  const isGuestMode = auth.state.stage === 'needs-setup'
   const [isYearPickerOpen, setIsYearPickerOpen] = useState(false)
   const [draftYear, setDraftYear] = useState(year)
   const [draftYearInput, setDraftYearInput] = useState(String(year))
   const [sidebarStats, setSidebarStats] = useState<YearlySidebarStats>(() => createEmptyYearlySidebarStats())
   const [isSidebarStatsLoading, setIsSidebarStatsLoading] = useState(true)
   const [activeTocId, setActiveTocId] = useState<string | null>(null)
+  const demoSummaryEntry = useMemo(() => getDemoYearlySummary(year), [year])
   const summary = useDiary({ type: 'yearly_summary', year })
   const syncPayload = useMemo<DiarySyncMetadata>(
     () => ({
@@ -124,8 +132,8 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
       dataEncryptionKey,
     ],
   )
-  const canSyncToRemote = syncAvailability.canSyncToRemote
-  const syncDisabledMessage = syncAvailability.disabledMessage
+  const canSyncToRemote = !isGuestMode && syncAvailability.canSyncToRemote
+  const syncDisabledMessage = isGuestMode ? GUEST_MODE_READ_ONLY_MESSAGE : syncAvailability.disabledMessage
   const uploadMetadata = canSyncToRemote
     ? createDiaryUploadExecutor({
         token: auth.state.tokenInMemory as string,
@@ -163,7 +171,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }
   const lastSyncNotifyMessageRef = useRef<string | null>(null)
 
-  const forceOpenAuthModal = auth.state.stage !== 'ready'
+  const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
   const authModalOpen = forceOpenAuthModal
 
   useEffect(() => {
@@ -181,6 +189,15 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   useEffect(() => {
     let mounted = true
     setIsSidebarStatsLoading(true)
+
+    if (isGuestMode) {
+      const demoDate = `${year}-12-31` as `${number}-${number}-${number}`
+      setSidebarStats(buildYearlySidebarStats(listDemoDailyRecords(demoDate), year))
+      setIsSidebarStatsLoading(false)
+      return () => {
+        mounted = false
+      }
+    }
 
     void listDiariesByIndex(DIARY_INDEX_TYPE, 'daily')
       .then((dailyRecords) => {
@@ -205,7 +222,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     return () => {
       mounted = false
     }
-  }, [year])
+  }, [isGuestMode, year])
 
   useEffect(() => {
     setPullActionSnapshot(loadSyncActionSnapshot('yearly', summary.entryId, 'pull'))
@@ -222,7 +239,10 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     () => getSyncActionToneClass(pushActionSnapshot.status),
     [pushActionSnapshot.status],
   )
-  const tocItems = useMemo(() => buildMarkdownToc(summary.content), [summary.content])
+  const tocItems = useMemo(
+    () => buildMarkdownToc(isGuestMode ? demoSummaryEntry.content ?? '' : summary.content),
+    [demoSummaryEntry.content, isGuestMode, summary.content],
+  )
 
   const collectRenderedHeadings = useCallback((): HTMLElement[] => {
     const panel = yearlyEditorPanelRef.current
@@ -380,6 +400,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   }
 
   const handleEditorChange = (nextContent: string) => {
+    if (isGuestMode) {
+      return
+    }
     summary.setContent(nextContent)
     if (canSyncToRemote) {
       sync.onInputChange({
@@ -737,7 +760,37 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <AppHeader currentPage="yearly" yearlyHref={`/yearly/${year}`} />
+        <AppHeader
+          currentPage="yearly"
+          yearlyHref={`/yearly/${year}`}
+          guestMode={
+            isGuestMode
+              ? {
+                  enabled: true,
+                  description: '演示年度总结',
+                  ctaHref: '/settings',
+                  ctaLabel: '开始使用我的数据',
+                }
+              : undefined
+          }
+        />
+
+        {isGuestMode ? (
+          <section className="td-guest-banner mt-4" aria-label="guest-mode-banner-yearly">
+            <div className="td-guest-banner-body">
+              <p className="td-guest-banner-title">演示模式已开启</p>
+              <p className="td-guest-banner-copy">{GUEST_MODE_HINT}</p>
+            </div>
+            <button
+              type="button"
+              className="td-btn td-btn-primary-ink"
+              onClick={() => navigate('/settings')}
+              data-testid="guest-go-settings-btn-yearly"
+            >
+              去设置页配置
+            </button>
+          </section>
+        ) : null}
 
         <section
           className="mt-4 grid gap-4 td-fade-in lg:min-h-[calc(100vh-150px)] lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:items-stretch"
@@ -859,7 +912,13 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
 
           <section className="space-y-3 lg:flex lg:min-h-0 lg:flex-col">
             <SyncControlBar
-              statusHint={<StatusHint isLoading={summary.isLoading} isSaving={summary.isSaving} error={summary.error} />}
+              statusHint={
+                <StatusHint
+                  isLoading={isGuestMode ? false : summary.isLoading}
+                  isSaving={isGuestMode ? false : summary.isSaving}
+                  error={isGuestMode ? null : summary.error}
+                />
+              }
               pullStatusLabel={pullStatusLabel}
               pushStatusLabel={pushStatusLabel}
               pullStatusToneClass={pullStatusToneClass}
@@ -884,17 +943,22 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
               data-testid="yearly-panel"
             >
               <div className="min-h-0 flex-1" data-testid="yearly-editor-slot">
-                {!summary.isLoading ? (
+                {isGuestMode || !summary.isLoading ? (
                   <MarkdownEditor
-                    key={`${summary.entryId}:${summary.loadRevision}`}
-                    docKey={`${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`}
-                    initialValue={summary.content}
+                    key={isGuestMode ? `guest-yearly:${year}` : `${summary.entryId}:${summary.loadRevision}`}
+                    docKey={
+                      isGuestMode
+                        ? `guest-yearly:${year}`
+                        : `${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`
+                    }
+                    initialValue={isGuestMode ? demoSummaryEntry.content ?? '' : summary.content}
                     onChange={handleEditorChange}
                     placeholder="写下本年度总结"
                     modeTogglePlacement="bottom"
                     modeToggleClassName="mt-3"
                     viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
+                    disabled={isGuestMode}
                   />
                 ) : null}
               </div>

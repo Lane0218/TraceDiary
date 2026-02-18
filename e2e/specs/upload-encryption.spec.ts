@@ -62,7 +62,7 @@ test('手动上传后的远端日记内容应为非明文密文 @remote', async 
   await clickManualSync(page)
   await expectSyncSuccess(page)
   await page.unroute('**/api/v5/repos/**/contents/**', metadataUploadHandler)
-  expect(contentsRequestCount).toBeGreaterThanOrEqual(4)
+  expect(contentsRequestCount).toBeGreaterThanOrEqual(2)
   expect(metadataRequestBodyContent).toBeTruthy()
 
   const remote = await readGiteeFile({

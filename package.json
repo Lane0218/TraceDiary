@@ -27,6 +27,7 @@
     "@milkdown/kit": "^7.18.0",
     "@milkdown/react": "^7.18.0",
     "@milkdown/theme-nord": "^7.18.0",
+    "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.90.20",
     "jszip": "^3.10.1",
     "react": "^19.2.0",
