@@ -1,4 +1,12 @@
-import { getDiary, getMetadata, saveDiary, saveMetadata, type DiaryRecord } from './indexeddb'
+import {
+  getDiary,
+  getMetadata,
+  getSyncBaseline,
+  saveDiary,
+  saveMetadata,
+  type DiaryRecord,
+  type SyncBaselineRecord,
+} from './indexeddb'
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
@@ -119,6 +127,7 @@ export interface PullRemoteDiariesToIndexedDbOptions {
   readRemoteMetadata?: () => Promise<RemoteMetadataFile>
   readRemoteDiaryFile?: (path: string) => Promise<{ exists: boolean; content?: string; sha?: string }>
   loadLocalDiary?: (entryId: string) => Promise<DiaryRecord | null>
+  loadBaseline?: (entryId: string) => Promise<SyncBaselineRecord | null>
   saveLocalDiary?: (record: DiaryRecord) => Promise<void>
   saveBaseline?: (record: {
     entryId: string
@@ -133,7 +142,11 @@ export interface PullRemoteDiariesToIndexedDbResult {
   inserted: number
   updated: number
   skipped: number
+  conflicted: number
   failed: number
+  downloaded: number
+  conflicts: Array<{ entryId: string; reason: string }>
+  failedItems: Array<{ entryId: string; reason: string }>
   metadataMissing: boolean
 }
 
@@ -1100,10 +1113,10 @@ function parseTimeToMs(value: string | undefined): number | null {
 
 function shouldOverwriteLocalDiary(
   local: DiaryRecord,
-  remote: DiaryRecord,
+  remoteModifiedAt: string,
 ): boolean {
   const localMs = parseTimeToMs(local.modifiedAt)
-  const remoteMs = parseTimeToMs(remote.modifiedAt)
+  const remoteMs = parseTimeToMs(remoteModifiedAt)
 
   if (remoteMs !== null && localMs !== null) {
     return remoteMs > localMs
@@ -1114,6 +1127,80 @@ function shouldOverwriteLocalDiary(
   }
 
   return false
+}
+
+function resolveDirtyByTimestamp(localModifiedAt: string | null, syncedAt: string): boolean | null {
+  const localTs = parseTimeToMs(localModifiedAt ?? undefined)
+  const syncedTs = parseTimeToMs(syncedAt)
+  if (localTs === null || syncedTs === null) {
+    return null
+  }
+  return localTs > syncedTs
+}
+
+function buildEntryIdFromMetadataEntry(entry: Metadata['entries'][number]): string {
+  if (entry.type === 'daily') {
+    return `daily:${entry.date}`
+  }
+  return `summary:${entry.year}`
+}
+
+function resolveYearFromSummaryRecord(record: DiaryRecord): number | null {
+  if (typeof record.year === 'number' && Number.isFinite(record.year)) {
+    return record.year
+  }
+  const matched = record.id.match(/^summary:(\d{4})$/)
+  if (!matched) {
+    return null
+  }
+  const year = Number.parseInt(matched[1], 10)
+  return Number.isFinite(year) ? year : null
+}
+
+function toLocalSyncMetadata(record: DiaryRecord): DiarySyncMetadata | null {
+  const content = typeof record.content === 'string' ? record.content : null
+  if (content === null) {
+    return null
+  }
+
+  if (record.type === 'daily') {
+    return {
+      type: 'daily',
+      entryId: record.id,
+      date: record.date,
+      content,
+      modifiedAt: record.modifiedAt,
+    }
+  }
+
+  const year = resolveYearFromSummaryRecord(record)
+  if (year === null) {
+    return null
+  }
+  return {
+    type: 'yearly_summary',
+    entryId: record.id,
+    year,
+    content,
+    modifiedAt: record.modifiedAt,
+  }
+}
+
+function hasLocalUnsyncedChanges(localRecord: DiaryRecord, baseline: SyncBaselineRecord | null): boolean {
+  if (!baseline) {
+    return false
+  }
+
+  const timestampDirty = resolveDirtyByTimestamp(localRecord.modifiedAt, baseline.syncedAt)
+  if (timestampDirty !== null) {
+    return timestampDirty
+  }
+
+  const localMetadata = toLocalSyncMetadata(localRecord)
+  if (!localMetadata) {
+    return false
+  }
+  return getDiarySyncFingerprint(localMetadata) !== baseline.fingerprint
 }
 
 export async function pullRemoteDiariesToIndexedDb(
@@ -1127,7 +1214,11 @@ export async function pullRemoteDiariesToIndexedDb(
     inserted: 0,
     updated: 0,
     skipped: 0,
+    conflicted: 0,
     failed: 0,
+    downloaded: 0,
+    conflicts: [],
+    failedItems: [],
     metadataMissing: false,
   }
 
@@ -1154,6 +1245,13 @@ export async function pullRemoteDiariesToIndexedDb(
     }))
 
   const loadLocalDiary = options.loadLocalDiary ?? ((entryId: string) => getDiary(entryId))
+  const loadBaseline = options.loadBaseline ?? (async (entryId: string) => {
+    try {
+      return await getSyncBaseline(entryId)
+    } catch {
+      return null
+    }
+  })
   const saveLocalDiary = options.saveLocalDiary ?? ((record: DiaryRecord) => saveDiary(record))
   const saveBaseline = options.saveBaseline
 
@@ -1173,9 +1271,32 @@ export async function pullRemoteDiariesToIndexedDb(
 
   for (const entry of metadata.entries) {
     try {
+      const entryId = buildEntryIdFromMetadataEntry(entry)
+      const localRecord = await loadLocalDiary(entryId)
+      if (localRecord && !shouldOverwriteLocalDiary(localRecord, entry.modifiedAt)) {
+        result.skipped += 1
+        continue
+      }
+
+      if (localRecord) {
+        const baseline = await loadBaseline(entryId)
+        if (hasLocalUnsyncedChanges(localRecord, baseline)) {
+          result.conflicted += 1
+          result.conflicts.push({
+            entryId,
+            reason: '本地存在未同步改动，已跳过覆盖',
+          })
+          continue
+        }
+      }
+
       const remoteDiary = await readRemoteDiaryFile(entry.filename)
       if (!remoteDiary.exists || typeof remoteDiary.content !== 'string' || !remoteDiary.content.trim()) {
         result.failed += 1
+        result.failedItems.push({
+          entryId,
+          reason: '远端文件不存在或内容为空',
+        })
         continue
       }
 
@@ -1183,6 +1304,7 @@ export async function pullRemoteDiariesToIndexedDb(
         normalizeEncryptedContent(remoteDiary.content),
         params.dataEncryptionKey,
       )
+      result.downloaded += 1
       const remoteRecord = toDiaryRecordFromMetadataEntry(entry, decryptedDiaryContent)
       const remoteSyncMetadata: DiarySyncMetadata =
         entry.type === 'daily'
@@ -1216,22 +1338,10 @@ export async function pullRemoteDiariesToIndexedDb(
           // baseline 持久化失败不应影响远端下拉主流程。
         }
       }
-      const localRecord = await loadLocalDiary(remoteRecord.id)
-
       if (!localRecord) {
         await saveLocalDiary(remoteRecord)
         await persistBaseline()
         result.inserted += 1
-        continue
-      }
-
-      if (!shouldOverwriteLocalDiary(localRecord, remoteRecord)) {
-        const normalizedLocal = normalizeDiaryContentForCompare(localRecord.content ?? '')
-        const normalizedRemote = normalizeDiaryContentForCompare(remoteRecord.content ?? '')
-        if (normalizedLocal === normalizedRemote) {
-          await persistBaseline()
-        }
-        result.skipped += 1
         continue
       }
 
@@ -1241,8 +1351,12 @@ export async function pullRemoteDiariesToIndexedDb(
       })
       await persistBaseline()
       result.updated += 1
-    } catch {
+    } catch (error) {
       result.failed += 1
+      result.failedItems.push({
+        entryId: buildEntryIdFromMetadataEntry(entry),
+        reason: error instanceof Error && error.message ? error.message : '读取或解密远端文件失败',
+      })
     }
   }
 

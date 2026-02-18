@@ -4,6 +4,7 @@ import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
 import AppHeader from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
+import PullResultDialog from '../components/common/pull-result-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
@@ -21,7 +22,13 @@ import {
   saveSyncBaseline,
   type DiaryRecord,
 } from '../services/indexeddb'
-import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
+import {
+  createDiaryUploadExecutor,
+  pullDiaryFromGitee,
+  pullRemoteDiariesToIndexedDb,
+  type DiarySyncMetadata,
+  type PullRemoteDiariesToIndexedDbResult,
+} from '../services/sync'
 import type { DateString } from '../types/diary'
 import { formatDateKey } from '../utils/date'
 import { buildStatsSummary } from '../utils/stats'
@@ -41,7 +48,7 @@ import {
   saveSyncActionSnapshot,
   type SyncActionSnapshot,
 } from '../utils/sync-presentation'
-import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
+import { emitRemotePullCompletedEvent, REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 
 interface DiaryPageProps {
   auth: UseAuthResult
@@ -181,6 +188,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     remote: DiarySyncMetadata | null
     remoteSha?: string
   } | null>(null)
+  const [pullExecutionResult, setPullExecutionResult] = useState<PullRemoteDiariesToIndexedDbResult | null>(null)
 
   const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
@@ -626,6 +634,93 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
     }
   }
 
+  const pullAllNow = async () => {
+    if (isManualPulling) {
+      setManualPullError(MANUAL_PULL_BUSY_MESSAGE)
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: MANUAL_PULL_BUSY_MESSAGE,
+      })
+      return
+    }
+    if (!canSyncToRemote) {
+      setManualPullError(syncDisabledMessage)
+      updateSyncActionStatus('pull', 'error', syncDisabledMessage)
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: syncDisabledMessage,
+      })
+      return
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
+    }
+
+    setIsManualPulling(true)
+    setPullExecutionResult(null)
+    updateSyncActionStatus('pull', 'running')
+    setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
+    pushToast({
+      kind: 'pull',
+      level: 'info',
+      message: MANUAL_PULL_PENDING_MESSAGE,
+      autoDismiss: false,
+    })
+
+    try {
+      const result = await pullRemoteDiariesToIndexedDb(
+        {
+          token: auth.state.tokenInMemory as string,
+          owner: auth.state.config?.giteeOwner as string,
+          repo: auth.state.config?.giteeRepoName as string,
+          branch: giteeBranch,
+          dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        },
+        {
+          loadBaseline: (entryId) => getSyncBaseline(entryId),
+          saveBaseline: (baseline) => saveSyncBaseline(baseline),
+        },
+      )
+
+      setPullExecutionResult(result)
+      emitRemotePullCompletedEvent()
+
+      const summaryMessage = `全量 pull 完成：新增 ${result.inserted}，更新 ${result.updated}，跳过 ${result.skipped}，冲突 ${result.conflicted}，失败 ${result.failed}`
+      if (result.failed > 0) {
+        const failedMessage = `全量 pull 部分失败（${result.failed} 条）`
+        updateSyncActionStatus('pull', 'error', failedMessage)
+        setManualPullError(failedMessage)
+        pushToast({
+          kind: 'pull',
+          level: 'warning',
+          message: summaryMessage,
+        })
+        return
+      }
+
+      updateSyncActionStatus('pull', 'success')
+      setManualPullError(null)
+      pushToast({
+        kind: 'pull',
+        level: result.conflicted > 0 ? 'warning' : 'success',
+        message: summaryMessage,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '全量拉取失败，请稍后重试'
+      updateSyncActionStatus('pull', 'error', message)
+      setManualPullError(message)
+      pushToast({
+        kind: 'pull',
+        level: 'error',
+        message,
+      })
+    } finally {
+      setIsManualPulling(false)
+    }
+  }
+
   const resolvePushConflict = (choice: 'local' | 'remote' | 'merged', mergedPayload?: DiarySyncMetadata) => {
     updateSyncActionStatus('push', 'running')
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
@@ -890,6 +985,9 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
               isPulling={isManualPulling}
               isPushing={isManualSyncing}
               onPull={() => {
+                void pullAllNow()
+              }}
+              onPullCurrent={() => {
                 void pullNow()
               }}
               onPush={() => {
@@ -927,6 +1025,12 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => undefined}
+      />
+
+      <PullResultDialog
+        open={Boolean(pullExecutionResult)}
+        result={pullExecutionResult}
+        onClose={() => setPullExecutionResult(null)}
       />
 
       <ConflictDialog

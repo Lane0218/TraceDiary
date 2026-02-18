@@ -15,6 +15,7 @@ interface SyncControlBarProps {
   isPulling: boolean
   isPushing: boolean
   onPull: () => void
+  onPullCurrent?: () => void
   onPush: () => void
 }
 
@@ -31,14 +32,17 @@ export default function SyncControlBar({
   isPulling,
   isPushing,
   onPull,
+  onPullCurrent,
   onPush,
 }: SyncControlBarProps) {
   const isActionRunning = isPulling || isPushing
   const rootRef = useRef<HTMLElement | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [isPullMenuOpen, setIsPullMenuOpen] = useState(false)
   const hasSuccess = pullStatus === 'success' || pushStatus === 'success'
   const hasError = pullStatus === 'error' || pushStatus === 'error'
   const summaryStatus: SyncActionStatus = isActionRunning ? 'running' : hasError ? 'error' : hasSuccess ? 'success' : 'idle'
+  const isPullMenuVisible = isPullMenuOpen && !isActionRunning
   const summaryLabel = summaryStatus === 'running' ? '同步中' : summaryStatus === 'success' ? '已同步' : '未同步'
   const summaryToneClass =
     summaryStatus === 'running'
@@ -64,12 +68,14 @@ export default function SyncControlBar({
       }
       if (!rootRef.current.contains(target)) {
         setIsDetailsOpen(false)
+        setIsPullMenuOpen(false)
       }
     }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsDetailsOpen(false)
+        setIsPullMenuOpen(false)
       }
     }
 
@@ -107,19 +113,66 @@ export default function SyncControlBar({
         </div>
 
         <div className="td-sync-control-actions">
-          <button
-            type="button"
-            className="td-btn td-sync-control-btn-secondary"
-            onClick={onPull}
-            disabled={isActionRunning}
-            aria-busy={isPulling}
-            data-testid="manual-pull-button"
-          >
-            <span className={`td-sync-control-btn-label ${isPulling ? 'is-running' : ''}`}>
-              {isPulling ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
-              <span>pull</span>
-            </span>
-          </button>
+          {onPullCurrent ? (
+            <div className="td-sync-pull-split">
+              <button
+                type="button"
+                className="td-btn td-sync-control-btn-secondary td-sync-pull-main-btn"
+                onClick={onPull}
+                disabled={isActionRunning}
+                aria-busy={isPulling}
+                data-testid="manual-pull-button"
+              >
+                <span className={`td-sync-control-btn-label ${isPulling ? 'is-running' : ''}`}>
+                  {isPulling ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+                  <span>pull 全部</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="td-btn td-sync-control-btn-secondary td-sync-pull-menu-btn"
+                aria-label="拉取动作菜单"
+                aria-expanded={isPullMenuVisible}
+                onClick={() => setIsPullMenuOpen((prev) => !prev)}
+                disabled={isActionRunning}
+                data-testid="manual-pull-menu-trigger"
+              >
+                ▾
+              </button>
+              <div
+                className={`td-sync-pull-menu ${isPullMenuVisible ? 'is-open' : ''}`}
+                aria-hidden={!isPullMenuVisible}
+                data-testid="manual-pull-menu"
+              >
+                <button
+                  type="button"
+                  className="td-sync-pull-menu-item"
+                  onClick={() => {
+                    setIsPullMenuOpen(false)
+                    onPullCurrent()
+                  }}
+                  disabled={isActionRunning}
+                  data-testid="manual-pull-current-button"
+                >
+                  pull 当前条目
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="td-btn td-sync-control-btn-secondary"
+              onClick={onPull}
+              disabled={isActionRunning}
+              aria-busy={isPulling}
+              data-testid="manual-pull-button"
+            >
+              <span className={`td-sync-control-btn-label ${isPulling ? 'is-running' : ''}`}>
+                {isPulling ? <span className="td-sync-control-running-dot" aria-hidden="true" /> : null}
+                <span>pull</span>
+              </span>
+            </button>
+          )}
           <button
             type="button"
             className="td-btn td-sync-control-btn-primary"

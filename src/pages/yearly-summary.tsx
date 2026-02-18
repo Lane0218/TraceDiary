@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import AppHeader from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
+import PullResultDialog from '../components/common/pull-result-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
@@ -13,8 +14,15 @@ import { useDiary } from '../hooks/use-diary'
 import { useSync } from '../hooks/use-sync'
 import { useToast } from '../hooks/use-toast'
 import { DIARY_INDEX_TYPE, getDiary, getSyncBaseline, listDiariesByIndex, saveSyncBaseline } from '../services/indexeddb'
-import { createDiaryUploadExecutor, pullDiaryFromGitee, type DiarySyncMetadata } from '../services/sync'
+import {
+  createDiaryUploadExecutor,
+  pullDiaryFromGitee,
+  pullRemoteDiariesToIndexedDb,
+  type DiarySyncMetadata,
+  type PullRemoteDiariesToIndexedDbResult,
+} from '../services/sync'
 import { buildMarkdownToc, type TocHeadingItem } from '../utils/markdown-toc'
+import { emitRemotePullCompletedEvent } from '../utils/remote-sync-events'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import {
@@ -84,6 +92,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     remote: DiarySyncMetadata | null
     remoteSha?: string
   } | null>(null)
+  const [pullExecutionResult, setPullExecutionResult] = useState<PullRemoteDiariesToIndexedDbResult | null>(null)
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
@@ -598,6 +607,93 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
     }
   }
 
+  const pullAllNow = async () => {
+    if (isManualPulling) {
+      setManualPullError(MANUAL_PULL_BUSY_MESSAGE)
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: MANUAL_PULL_BUSY_MESSAGE,
+      })
+      return
+    }
+    if (!canSyncToRemote) {
+      setManualPullError(syncDisabledMessage)
+      updateSyncActionStatus('pull', 'error', syncDisabledMessage)
+      pushToast({
+        kind: 'pull',
+        level: 'warning',
+        message: syncDisabledMessage,
+      })
+      return
+    }
+    if (manualSyncError) {
+      setManualSyncError(null)
+    }
+
+    setIsManualPulling(true)
+    setPullExecutionResult(null)
+    updateSyncActionStatus('pull', 'running')
+    setManualPullError(MANUAL_PULL_PENDING_MESSAGE)
+    pushToast({
+      kind: 'pull',
+      level: 'info',
+      message: MANUAL_PULL_PENDING_MESSAGE,
+      autoDismiss: false,
+    })
+
+    try {
+      const result = await pullRemoteDiariesToIndexedDb(
+        {
+          token: auth.state.tokenInMemory as string,
+          owner: auth.state.config?.giteeOwner as string,
+          repo: auth.state.config?.giteeRepoName as string,
+          branch: giteeBranch,
+          dataEncryptionKey: dataEncryptionKey as CryptoKey,
+        },
+        {
+          loadBaseline: (entryId) => getSyncBaseline(entryId),
+          saveBaseline: (baseline) => saveSyncBaseline(baseline),
+        },
+      )
+
+      setPullExecutionResult(result)
+      emitRemotePullCompletedEvent()
+
+      const summaryMessage = `全量 pull 完成：新增 ${result.inserted}，更新 ${result.updated}，跳过 ${result.skipped}，冲突 ${result.conflicted}，失败 ${result.failed}`
+      if (result.failed > 0) {
+        const failedMessage = `全量 pull 部分失败（${result.failed} 条）`
+        updateSyncActionStatus('pull', 'error', failedMessage)
+        setManualPullError(failedMessage)
+        pushToast({
+          kind: 'pull',
+          level: 'warning',
+          message: summaryMessage,
+        })
+        return
+      }
+
+      updateSyncActionStatus('pull', 'success')
+      setManualPullError(null)
+      pushToast({
+        kind: 'pull',
+        level: result.conflicted > 0 ? 'warning' : 'success',
+        message: summaryMessage,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '全量拉取失败，请稍后重试'
+      updateSyncActionStatus('pull', 'error', message)
+      setManualPullError(message)
+      pushToast({
+        kind: 'pull',
+        level: 'error',
+        message,
+      })
+    } finally {
+      setIsManualPulling(false)
+    }
+  }
+
   const resolvePushConflict = (choice: 'local' | 'remote' | 'merged', mergedPayload?: DiarySyncMetadata) => {
     updateSyncActionStatus('push', 'running')
     setManualSyncError(MANUAL_SYNC_PENDING_MESSAGE)
@@ -871,6 +967,9 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
               isPulling={isManualPulling}
               isPushing={isManualSyncing}
               onPull={() => {
+                void pullAllNow()
+              }}
+              onPullCurrent={() => {
                 void pullNow()
               }}
               onPush={() => {
@@ -908,6 +1007,12 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => undefined}
+      />
+
+      <PullResultDialog
+        open={Boolean(pullExecutionResult)}
+        result={pullExecutionResult}
+        onClose={() => setPullExecutionResult(null)}
       />
 
       <ConflictDialog
