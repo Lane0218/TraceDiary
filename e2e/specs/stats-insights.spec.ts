@@ -206,6 +206,73 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
     await expect(historyTab).toHaveCSS('color', 'rgb(79, 87, 81)')
   }
 
+  const assertChartBarsAvoidAxisLabels = async (chartFrameTestId: string) => {
+    const overlap = await page.getByTestId(chartFrameTestId).evaluate((element) => {
+      const svg = element.querySelector('svg')
+      if (!svg) {
+        return {
+          leftOverlap: true,
+          rightOverlap: true,
+          leftGap: Number.NaN,
+          rightGap: Number.NaN,
+        }
+      }
+
+      const toRect = (target: Element) => {
+        const rect = target.getBoundingClientRect()
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+        }
+      }
+
+      const bars = Array.from(svg.querySelectorAll('[data-chart-role="bar"]'))
+        .map((item) => toRect(item))
+        .filter((item) => item.width > 0 && item.height > 0)
+      const leftLabels = Array.from(svg.querySelectorAll('[data-chart-role="y-axis-label-left"]'))
+        .map((item) => toRect(item))
+        .filter((item) => item.width > 0 && item.height > 0)
+      const rightLabels = Array.from(svg.querySelectorAll('[data-chart-role="y-axis-label-right"]'))
+        .map((item) => toRect(item))
+        .filter((item) => item.width > 0 && item.height > 0)
+
+      const intersects = (
+        left: { left: number; right: number; top: number; bottom: number },
+        right: { left: number; right: number; top: number; bottom: number },
+      ) =>
+        !(
+          left.right <= right.left ||
+          left.left >= right.right ||
+          left.bottom <= right.top ||
+          left.top >= right.bottom
+        )
+
+      const leftOverlap = bars.some((bar) => leftLabels.some((label) => intersects(bar, label)))
+      const rightOverlap = bars.some((bar) => rightLabels.some((label) => intersects(bar, label)))
+
+      const barLeft = bars.length > 0 ? Math.min(...bars.map((item) => item.left)) : Number.NaN
+      const barRight = bars.length > 0 ? Math.max(...bars.map((item) => item.right)) : Number.NaN
+      const labelLeftRight = leftLabels.length > 0 ? Math.max(...leftLabels.map((item) => item.right)) : Number.NaN
+      const labelRightLeft = rightLabels.length > 0 ? Math.min(...rightLabels.map((item) => item.left)) : Number.NaN
+
+      return {
+        leftOverlap,
+        rightOverlap,
+        leftGap: barLeft - labelLeftRight,
+        rightGap: labelRightLeft - barRight,
+      }
+    })
+
+    expect(overlap.leftOverlap).toBeFalsy()
+    expect(overlap.rightOverlap).toBeFalsy()
+    expect(overlap.leftGap).toBeGreaterThan(0)
+    expect(overlap.rightGap).toBeGreaterThan(0)
+  }
+
   await expect(page.getByTestId('diary-left-tab-history')).toBeVisible()
   await assertEditorNotVisiblyTooShort()
   await assertEditorPanelHasNoLargeBottomGap()
@@ -308,6 +375,8 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   expect(monthlyChartOverflow).toBeLessThanOrEqual(1)
   expect(yearlyChartOverflow).toBeLessThanOrEqual(1)
   expect(yearlyHeatmapOverflow).toBeLessThanOrEqual(1)
+  await assertChartBarsAvoidAxisLabels('insights-monthly-chart-frame')
+  await assertChartBarsAvoidAxisLabels('insights-yearly-chart-frame')
 
   const heatmapYearInput = page.getByRole('textbox', { name: '热力图年份' })
   await heatmapYearInput.fill(String(currentYear))

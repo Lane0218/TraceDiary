@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-18`
-- 总任务：`174`
-- 状态统计：`DONE=164` / `DOING=0` / `TODO=10` / `BLOCKED=0`
+- 总任务：`175`
+- 状态统计：`DONE=165` / `DOING=0` / `TODO=10` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -203,6 +203,7 @@
 | `TD-UI-072` | `DONE` | 统一日记页与年度总结页编辑区宽度策略（采用日记页自适应宽度） | 年度总结页移除固定 `max-w` 限制并与日记页同宽度策略；编辑区内外框间隔保持当前 `td-panel` 风格；桌面与移动端自适应正常 | `src/pages/yearly-summary.tsx` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁） | `2026-02-17 / 19cebfc` |
 | `TD-UI-073` | `DONE` | 将站点图标替换为用户提供的 SVG 图标 | 浏览器页签图标与 PWA manifest 图标入口均指向新 SVG；构建与基础测试通过 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `index.html` `public/manifest.json` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-18 / 18bfbc7` |
 | `TD-UI-074` | `DONE` | 重设计站点图标以提升小尺寸可读性并替换现有图标资源 | 16/24/32px 下轮廓可辨识；浏览器页签与 PWA 图标资源更新为新设计；构建与分层测试通过 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-18 / 4238c3b` |
+| `TD-UI-075` | `DONE` | 修复统计页年度对比图与月度趋势图的轴标签被柱体遮挡问题，并补齐防回归测试 | 年度对比图与月度趋势图左右轴标签不再被柱体覆盖；两图在不同数据量下无视觉遮挡；新增测试可稳定拦截同类回归 | `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-comparison-chart.tsx` `src/components/stats/chart-layout.ts` `src/__tests__/unit/chart-layout.unit.test.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（89/89）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/stats-chart-occlusion-fix --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_stats-chart-occlusion-fix --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1） | `2026-02-18 / 12503db` |
 
 ### 6.9 数据导入（v1.1）
 

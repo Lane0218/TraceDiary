@@ -1,4 +1,5 @@
 import type { YearlyTrendPoint } from '../../types/stats'
+import { createChartLayout } from './chart-layout'
 import { STATS_CHART_THEME } from './stats-chart-theme'
 
 interface YearlyComparisonChartProps {
@@ -16,6 +17,11 @@ const CHART_MARGIN = {
   bottom: 52,
   left: 64,
 }
+const AXIS_GUTTER = {
+  left: 30,
+  right: 30,
+}
+const CLIP_PATH_ID = 'insights-yearly-plot-clip'
 
 function formatNumber(value: number): string {
   return numberFormatter.format(value)
@@ -50,15 +56,27 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
     )
   }
 
-  const plotWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right
+  const layout = createChartLayout({
+    chartWidth: CHART_WIDTH,
+    marginLeft: CHART_MARGIN.left,
+    marginRight: CHART_MARGIN.right,
+    axisGutterLeft: AXIS_GUTTER.left,
+    axisGutterRight: AXIS_GUTTER.right,
+    pointCount: items.length,
+    barMinWidth: 12,
+    barMaxWidth: 72,
+    barWidthRatio: 0.58,
+    edgeGap: 4,
+  })
+
+  const plotWidth = layout.plotWidth
   const plotHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom
   const wordMax = Math.max(1, ...items.map((item) => item.totalWordCount))
   const activeMax = Math.max(1, ...items.map((item) => item.activeDayCount))
-  const step = items.length > 1 ? plotWidth / (items.length - 1) : 0
-  const barWidth = items.length > 1 ? Math.max(12, Math.min(72, step * 0.58)) : 64
+  const barWidth = layout.barWidth
 
   const chartPoints = items.map((item, index) => {
-    const x = CHART_MARGIN.left + (items.length > 1 ? index * step : plotWidth / 2)
+    const x = layout.getPointX(index)
     const barHeight = Math.round((item.totalWordCount / wordMax) * plotHeight)
     const barY = CHART_MARGIN.top + plotHeight - barHeight
     const activeY = CHART_MARGIN.top + plotHeight - Math.round((item.activeDayCount / activeMax) * plotHeight)
@@ -114,26 +132,46 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
             return (
               <g key={tick}>
                 <line
-                  x1={CHART_MARGIN.left}
+                  x1={layout.plotStartX}
                   y1={y}
-                  x2={CHART_MARGIN.left + plotWidth}
+                  x2={layout.plotEndX}
                   y2={y}
                   stroke={STATS_CHART_THEME.gridLine}
                   strokeDasharray="3 4"
                 />
-                <text x={CHART_MARGIN.left - 10} y={y + 4} textAnchor="end" fontSize="12" fill={STATS_CHART_THEME.axisText}>
+                <text
+                  x={layout.plotStartX - 10}
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="12"
+                  fill={STATS_CHART_THEME.axisText}
+                  data-chart-role="y-axis-label-left"
+                >
                   {formatNumber(wordValue)}
                 </text>
-                <text x={CHART_MARGIN.left + plotWidth + 10} y={y + 4} fontSize="12" fill={STATS_CHART_THEME.axisText}>
+                <text
+                  x={layout.plotEndX + 10}
+                  y={y + 4}
+                  fontSize="12"
+                  fill={STATS_CHART_THEME.axisText}
+                  data-chart-role="y-axis-label-right"
+                >
                   {formatNumber(activeValue)}
                 </text>
               </g>
             )
           })}
 
-          {chartPoints.map((point, index) => (
-            <g key={point.year}>
+          <defs>
+            <clipPath id={CLIP_PATH_ID}>
+              <rect x={layout.plotStartX} y={CHART_MARGIN.top} width={plotWidth} height={plotHeight} />
+            </clipPath>
+          </defs>
+
+          <g clipPath={`url(#${CLIP_PATH_ID})`}>
+            {chartPoints.map((point) => (
               <rect
+                key={point.year}
                 x={point.x - barWidth / 2}
                 y={point.barY}
                 width={barWidth}
@@ -141,51 +179,55 @@ export default function YearlyComparisonChart({ items, isLoading = false }: Year
                 rx={8}
                 fill={STATS_CHART_THEME.primary500}
                 fillOpacity={0.86}
+                data-chart-role="bar"
               >
                 <title>
                   {point.year} 年：总字数 {formatNumber(point.totalWordCount)}，活跃天数 {formatNumber(point.activeDayCount)}，
                   总篇数 {formatNumber(point.entryCount)}
                 </title>
               </rect>
+            ))}
 
-              {shouldRenderXAxisLabel(index, chartPoints.length) ? (
-                <text
-                  x={point.x}
-                  y={CHART_MARGIN.top + plotHeight + 24}
-                  textAnchor="middle"
-                  fontSize="12"
-                  fill={STATS_CHART_THEME.axisText}
-                >
-                  {point.year}
-                </text>
-              ) : null}
-            </g>
-          ))}
+            <path
+              d={activePath}
+              fill="none"
+              stroke={STATS_CHART_THEME.primary600}
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
-          <path
-            d={activePath}
-            fill="none"
-            stroke={STATS_CHART_THEME.primary600}
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+            {chartPoints.map((point) => (
+              <circle
+                key={`${point.year}-active`}
+                cx={point.x}
+                cy={point.activeY}
+                r={4}
+                fill={STATS_CHART_THEME.primary600}
+                stroke={STATS_CHART_THEME.pointStroke}
+                strokeWidth={2}
+              >
+                <title>
+                  {point.year} 年活跃天数 {formatNumber(point.activeDayCount)}
+                </title>
+              </circle>
+            ))}
+          </g>
 
-          {chartPoints.map((point) => (
-            <circle
-              key={`${point.year}-active`}
-              cx={point.x}
-              cy={point.activeY}
-              r={4}
-              fill={STATS_CHART_THEME.primary600}
-              stroke={STATS_CHART_THEME.pointStroke}
-              strokeWidth={2}
-            >
-              <title>
-                {point.year} 年活跃天数 {formatNumber(point.activeDayCount)}
-              </title>
-            </circle>
-          ))}
+          {chartPoints.map((point, index) =>
+            shouldRenderXAxisLabel(index, chartPoints.length) ? (
+              <text
+                key={`${point.year}-x-axis`}
+                x={point.x}
+                y={CHART_MARGIN.top + plotHeight + 24}
+                textAnchor="middle"
+                fontSize="12"
+                fill={STATS_CHART_THEME.axisText}
+              >
+                {point.year}
+              </text>
+            ) : null,
+          )}
         </svg>
       </div>
     </div>
