@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../App'
 import OnThisDayList from '../../components/history/on-this-day-list'
@@ -10,9 +10,18 @@ describe('App 路由与日记页入口', () => {
     localStorage.clear()
   })
 
+  async function enterGuestFromEntryModal(): Promise<void> {
+    expect(await screen.findByLabelText('entry-auth-modal')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('entry-auth-guest-btn'))
+    await waitFor(() => {
+      expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
+    })
+  }
+
   it('应默认进入单页日记并展示游客模式入口', async () => {
     render(<App />)
 
+    await enterGuestFromEntryModal()
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
     expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
@@ -21,10 +30,19 @@ describe('App 路由与日记页入口', () => {
     expect(screen.queryByLabelText('auth-modal')).toBeNull()
   })
 
+  it('首屏弹窗应支持跳转到设置页继续登录与配置', async () => {
+    render(<App />)
+
+    expect(await screen.findByLabelText('entry-auth-modal')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('entry-auth-go-settings-btn'))
+    expect(await screen.findByLabelText('settings-page')).toBeTruthy()
+  })
+
   it('未知路由应回退到日记页', async () => {
     window.history.replaceState({}, '', '/editor?date=2026-02-20')
     render(<App />)
 
+    await enterGuestFromEntryModal()
     expect(await screen.findByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
@@ -33,6 +51,7 @@ describe('App 路由与日记页入口', () => {
     window.history.replaceState({}, '', '/yearly-summary?year=2025')
     render(<App />)
 
+    await enterGuestFromEntryModal()
     expect(await screen.findByRole('heading', { name: '2025 年度总结' })).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
   })
@@ -77,6 +96,7 @@ describe('App 路由与日记页入口', () => {
     window.history.replaceState({}, '', '/diary')
     render(<App />)
 
+    await enterGuestFromEntryModal()
     expect(await screen.findByTestId('diary-left-tab-history')).toBeTruthy()
     fireEvent.click(screen.getByTestId('diary-left-tab-stats'))
 

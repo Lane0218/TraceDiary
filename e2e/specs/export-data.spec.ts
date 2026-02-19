@@ -85,6 +85,30 @@ async function clearDiaryStore(page: Page): Promise<void> {
   )
 }
 
+async function getDiaryCount(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const request = indexedDB.open('TraceDiary', 1)
+        request.onerror = () => {
+          reject(request.error ?? new Error('open indexeddb failed'))
+        }
+        request.onsuccess = () => {
+          const db = request.result
+          const tx = db.transaction('diaries', 'readonly')
+          const store = tx.objectStore('diaries')
+          const countRequest = store.count()
+          countRequest.onerror = () => {
+            reject(countRequest.error ?? new Error('count diaries failed'))
+          }
+          countRequest.onsuccess = () => {
+            resolve(Number(countRequest.result ?? 0))
+          }
+        }
+      }),
+  )
+}
+
 test('设置页可导出明文 zip（含 manifest 与可回导命名） @smoke', async ({ page }) => {
   const env = getE2EEnv()
   const marker = `export-${Date.now().toString(36)}`
@@ -139,13 +163,18 @@ test('设置页可导出明文 zip（含 manifest 与可回导命名） @smoke',
 
 test('设置页无可导出数据时不应生成下载文件', async ({ page }) => {
   const env = getE2EEnv()
+  const isolatedEnv = {
+    ...env,
+    branch: `e2e-export-empty-${Date.now().toString(36)}`,
+  }
 
   await gotoDiary(page, '2100-01-09')
-  await ensureReadySession(page, env)
+  await ensureReadySession(page, isolatedEnv)
 
   await page.getByTestId('app-nav-settings').click()
   await expect(page.getByLabel('settings-page')).toBeVisible()
   await clearDiaryStore(page)
+  await expect.poll(async () => getDiaryCount(page), { timeout: 15_000 }).toBe(0)
 
   page.once('dialog', (dialog) => {
     void dialog.accept()

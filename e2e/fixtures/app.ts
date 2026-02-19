@@ -75,6 +75,7 @@ export async function expectAuthStage(page: Page, expected: AuthStage | RegExp):
 export async function expectSessionReady(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'TraceDiary' })).toBeVisible({ timeout: 30_000 })
   await expect(page.getByRole('navigation', { name: '应用主导航' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByLabel('entry-auth-modal')).toHaveCount(0)
   await expect(page.getByLabel('auth-modal')).toHaveCount(0)
 }
 
@@ -87,6 +88,7 @@ export async function ensureReadySession(
   const totalTimeoutMs = Math.max(30_000, options.totalTimeoutMs ?? 90_000)
   const retryIntervalMs = Math.max(250, options.retryIntervalMs ?? 300)
   const authModal = page.getByLabel('auth-modal')
+  const entryAuthModal = page.getByLabel('entry-auth-modal')
   const appHeader = page.getByRole('heading', { name: 'TraceDiary' }).first()
   const deadline = Date.now() + totalTimeoutMs
   let lastStage = 'unknown'
@@ -98,12 +100,25 @@ export async function ensureReadySession(
       .catch(() => false)
     const headerVisible = await appHeader.isVisible().catch(() => false)
     const modalVisible = await authModal.isVisible().catch(() => false)
-    if (isUnlocked && headerVisible && !modalVisible) {
+    const entryModalVisible = await entryAuthModal.isVisible().catch(() => false)
+    if (isUnlocked && headerVisible && !modalVisible && !entryModalVisible) {
       if (page.url() !== initialUrl) {
         await page.goto(initialUrl)
+        await page.waitForTimeout(retryIntervalMs)
+        continue
       }
-      await expect(authModal).toBeHidden({ timeout: 15_000 })
       return
+    }
+
+    if (entryModalVisible) {
+      const goSettingsFromEntry = page.getByTestId('entry-auth-go-settings-btn').first()
+      if (await goSettingsFromEntry.isVisible().catch(() => false)) {
+        await goSettingsFromEntry.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+      await page.waitForTimeout(retryIntervalMs)
+      continue
     }
 
     if (!modalVisible) {
