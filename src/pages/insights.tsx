@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import AuthModal from '../components/auth/auth-modal'
-import AppHeader from '../components/common/app-header'
+import AppHeader, { type AppHeaderAuthEntry } from '../components/common/app-header'
 import MonthlyTrendChart from '../components/stats/monthly-trend-chart'
 import YearlyActivityHeatmap from '../components/stats/yearly-activity-heatmap'
 import YearlyComparisonChart from '../components/stats/yearly-comparison-chart'
@@ -12,6 +12,7 @@ import { buildStatsChartModel } from '../utils/stats'
 
 interface InsightsPageProps {
   auth: UseAuthResult
+  headerAuthEntry?: AppHeaderAuthEntry
 }
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
@@ -33,12 +34,13 @@ function formatDeltaRatio(value: number | null): string {
   return `${sign}${percentFormatter.format(value)}`
 }
 
-export default function InsightsPage({ auth }: InsightsPageProps) {
+export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProps) {
   const [reloadSignal, setReloadSignal] = useState(0)
   const stats = useStats({ reloadSignal })
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
-  const forceOpenAuthModal = auth.state.stage !== 'ready'
+  const isGuestMode = auth.state.stage === 'needs-setup'
+  const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
   const authModalOpen = forceOpenAuthModal
 
   const chartModel = useMemo(() => buildStatsChartModel(stats.summary), [stats.summary])
@@ -54,7 +56,21 @@ export default function InsightsPage({ auth }: InsightsPageProps) {
   return (
     <>
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-8 sm:px-6">
-        <AppHeader currentPage="insights" yearlyHref={`/yearly/${currentYear}`} />
+        <AppHeader
+          currentPage="insights"
+          yearlyHref={`/yearly/${currentYear}`}
+          authEntry={headerAuthEntry}
+          guestMode={
+            isGuestMode
+              ? {
+                  enabled: true,
+                  description: '演示统计视图',
+                  ctaHref: '/settings',
+                  ctaLabel: '开始使用我的数据',
+                }
+              : undefined
+          }
+        />
 
         <section className="mt-4 space-y-4 td-fade-in" aria-label="insights-page">
           <header className="flex flex-wrap items-center justify-between gap-2">

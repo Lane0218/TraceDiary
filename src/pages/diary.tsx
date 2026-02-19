@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
-import AppHeader from '../components/common/app-header'
+import AppHeader, { type AppHeaderAuthEntry } from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
 import PullResultDialog from '../components/common/pull-result-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
@@ -58,6 +58,7 @@ import { emitRemotePullCompletedEvent, REMOTE_PULL_COMPLETED_EVENT } from '../ut
 
 interface DiaryPageProps {
   auth: UseAuthResult
+  headerAuthEntry?: AppHeaderAuthEntry
 }
 
 interface YearlyReminder {
@@ -170,7 +171,7 @@ function getYearlyReminder(now: Date): YearlyReminder {
   }
 }
 
-export default function DiaryPage({ auth }: DiaryPageProps) {
+export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -903,6 +904,7 @@ export default function DiaryPage({ auth }: DiaryPageProps) {
         <AppHeader
           currentPage="diary"
           yearlyHref={yearlyNavHref}
+          authEntry={headerAuthEntry}
           guestMode={
             isGuestMode
               ? {

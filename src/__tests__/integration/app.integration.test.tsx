@@ -21,6 +21,8 @@ describe('App 路由与日记页入口', () => {
   it('应默认进入单页日记并展示游客模式入口', async () => {
     render(<App />)
 
+    expect(await screen.findByTestId('entry-auth-guest-btn')).toBeTruthy()
+    expect(screen.getByTestId('entry-auth-go-settings-btn')).toBeTruthy()
     await enterGuestFromEntryModal()
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
@@ -34,8 +36,12 @@ describe('App 路由与日记页入口', () => {
     render(<App />)
 
     expect(await screen.findByLabelText('entry-auth-modal')).toBeTruthy()
+    expect(screen.getByTestId('entry-auth-go-settings-btn')).toBeTruthy()
     fireEvent.click(screen.getByTestId('entry-auth-go-settings-btn'))
     expect(await screen.findByLabelText('settings-page')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
+    })
   })
 
   it('未知路由应回退到日记页', async () => {
@@ -90,6 +96,10 @@ describe('App 路由与日记页入口', () => {
     expect(screen.queryByText('认证与安全')).toBeNull()
     expect(screen.queryByRole('button', { name: '配置' })).toBeNull()
     expect(screen.queryByRole('button', { name: '锁定' })).toBeNull()
+    expect(screen.queryByTestId('cloud-auth-email-input')).toBeNull()
+    expect(screen.queryByTestId('cloud-auth-otp-input')).toBeNull()
+    expect(screen.queryByTestId('cloud-auth-send-otp-btn')).toBeNull()
+    expect(screen.queryByTestId('cloud-auth-verify-otp-btn')).toBeNull()
   })
 
   it('日记页左侧应支持往年今日与统计分段切换', async () => {
