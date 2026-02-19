@@ -36,7 +36,7 @@ import {
   type PullRemoteDiariesToIndexedDbResult,
 } from '../services/sync'
 import type { DateString } from '../types/diary'
-import { formatDateKey } from '../utils/date'
+import { formatDateKey, getDiaryDateKey } from '../utils/date'
 import { buildStatsSummary } from '../utils/stats'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
@@ -206,7 +206,7 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
   } | null>(null)
   const [pullExecutionResult, setPullExecutionResult] = useState<PullRemoteDiariesToIndexedDbResult | null>(null)
 
-  const today = useMemo(() => formatDateKey(new Date()) as DateString, [])
+  const today = useMemo(() => getDiaryDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
     const queryDate = searchParams.get('date')
     return isValidDateString(queryDate) ? queryDate : today
