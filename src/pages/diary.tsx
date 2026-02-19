@@ -115,8 +115,16 @@ function isDailySyncMetadata(value: DiarySyncMetadata): value is Extract<DiarySy
   return value.type === 'daily'
 }
 
+function hasDiaryContent(content: string): boolean {
+  return countVisibleChars(content) > 0
+}
+
 function upsertDailyRecord(records: DiaryRecord[], date: DateString, content: string): DiaryRecord[] {
   const id = `daily:${date}`
+  if (!hasDiaryContent(content)) {
+    return records.filter((record) => record.id !== id)
+  }
+
   const now = new Date().toISOString()
   const nextRecord: DiaryRecord = {
     id,
@@ -294,7 +302,11 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
   const statsSummary = useMemo(() => buildStatsSummary([...diaries, ...yearlySummaries]), [diaries, yearlySummaries])
 
   const diaryDateSet = useMemo(() => {
-    return new Set(diaries.filter((record) => record.type === 'daily').map((record) => record.date))
+    return new Set(
+      diaries
+        .filter((record) => record.type === 'daily' && hasDiaryContent(record.content ?? ''))
+        .map((record) => record.date),
+    )
   }, [diaries])
 
   const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
@@ -352,7 +364,9 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
         if (!mounted) {
           return
         }
-        setDiaries(dailyRecords.filter((record) => record.type === 'daily'))
+        setDiaries(
+          dailyRecords.filter((record) => record.type === 'daily' && hasDiaryContent(record.content ?? '')),
+        )
         setYearlySummaries(yearlySummaryRecords.filter((record) => record.type === 'yearly_summary'))
       } catch (error) {
         if (!mounted) {

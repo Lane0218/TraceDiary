@@ -3,12 +3,14 @@ import {
   buildRunMarker,
   ensureReadySession,
   gotoDiary,
+  waitForDailyDiaryPersisted,
 } from '../fixtures/app'
 import { getE2EEnv } from '../fixtures/env'
 
 const HISTORY_SOURCE_DATE = '2099-03-15'
 const TARGET_DATE = '2100-03-15'
 const PICK_MONTH_RESULT_DATE = '2100-12-15'
+const EMPTY_CONTENT_DATE = '2101-04-18'
 
 test('同月同日历史应展示并可跳转，且支持上/下月和选择年月跳转', async ({ page }) => {
   const env = getE2EEnv()
@@ -88,4 +90,54 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
   await expect(page).toHaveURL(new RegExp(`date=${PICK_MONTH_RESULT_DATE}$`))
   await expect(page.getByRole('heading', { name: `${PICK_MONTH_RESULT_DATE} 日记` })).toBeVisible()
   await expect(pickMonthButton).toContainText('2100年12月')
+})
+
+test('清空当日内容后，月历不应继续显示记录点', async ({ page }) => {
+  const env = getE2EEnv()
+  const marker = buildRunMarker('calendar-empty-content')
+  const sourceButton = page.getByTestId('daily-editor-mode-source')
+  const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+
+  await gotoDiary(page, EMPTY_CONTENT_DATE)
+  await ensureReadySession(page, env)
+
+  await expect(sourceButton).toHaveAttribute('aria-pressed', 'false')
+  await sourceButton.click()
+  await expect(sourceEditor).toBeVisible()
+  await sourceEditor.fill(`临时内容 ${marker}`)
+  await waitForDailyDiaryPersisted(page, EMPTY_CONTENT_DATE, marker)
+  await expect(page.getByLabel(`${EMPTY_CONTENT_DATE} 已记录`)).toBeVisible()
+
+  await sourceEditor.fill('   ')
+  await page.waitForFunction(
+    async ({ date }) => {
+      const content = await new Promise<string | null>((resolve, reject) => {
+        const request = indexedDB.open('TraceDiary', 1)
+
+        request.onerror = () => {
+          reject(request.error ?? new Error('open indexeddb failed'))
+        }
+
+        request.onsuccess = () => {
+          const db = request.result
+          const tx = db.transaction('diaries', 'readonly')
+          const store = tx.objectStore('diaries')
+          const getRequest = store.get(`daily:${date}`)
+
+          getRequest.onerror = () => {
+            reject(getRequest.error ?? new Error('get daily failed'))
+          }
+          getRequest.onsuccess = () => {
+            const record = getRequest.result as { content?: unknown } | undefined
+            resolve(typeof record?.content === 'string' ? record.content : null)
+          }
+        }
+      })
+
+      return typeof content === 'string' && content.trim().length === 0
+    },
+    { date: EMPTY_CONTENT_DATE },
+    { timeout: 15_000 },
+  )
+  await expect(page.getByLabel(`${EMPTY_CONTENT_DATE} 已记录`)).toHaveCount(0)
 })

@@ -7,8 +7,8 @@
 ## 0. 快速看板
 
 - 更新时间：`2026-02-19`
-- 总任务：`176`
-- 状态统计：`DONE=168` / `DOING=0` / `TODO=9` / `BLOCKED=0`
+- 总任务：`181`
+- 状态统计：`DONE=174` / `DOING=0` / `TODO=7` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -206,6 +206,7 @@
 | `TD-UI-074` | `DONE` | 重设计站点图标以提升小尺寸可读性并替换现有图标资源 | 16/24/32px 下轮廓可辨识；浏览器页签与 PWA 图标资源更新为新设计；构建与分层测试通过 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-18 / 4238c3b` |
 | `TD-UI-075` | `DONE` | 修复统计页年度对比图与月度趋势图的轴标签被柱体遮挡问题，并补齐防回归测试 | 年度对比图与月度趋势图左右轴标签不再被柱体覆盖；两图在不同数据量下无视觉遮挡；新增测试可稳定拦截同类回归 | `src/components/stats/monthly-trend-chart.tsx` `src/components/stats/yearly-comparison-chart.tsx` `src/components/stats/chart-layout.ts` `src/__tests__/unit/chart-layout.unit.test.ts` `e2e/specs/stats-insights.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（89/89）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/stats-chart-occlusion-fix --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_stats-chart-occlusion-fix --e2e-cmd \"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\"` 后重跑通过（1/1） | `2026-02-18 / 12503db` |
 | `TD-UI-076` | `DONE` | 以当前 SVG 为准重生成图标 PNG，并收紧 SVG 四周留白 | `icon-192.png` 与 `icon-512.png` 均由最新 `icon.svg` 导出；SVG 视觉留白明显收紧且主图形更贴近画布边缘 | `public/icons/icon.svg` `public/icons/icon-192.png` `public/icons/icon-512.png` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（179/179）；`npm run test:integration` 失败（`src/__tests__/integration/app.integration.test.tsx` 2 例失败，属于当前分支既有“演示模式”改动冲突，非本任务图标改动导致）；用户明确授权“不要继续测试，直接提交”，因此未继续修复失败用例，且未执行 `npm run test:e2e:fast` / `npm run test:e2e:full` | `2026-02-18 / c89fe86` |
+| `TD-UI-077` | `DONE` | 修复日记内容清空后仍被判定为“有内容”并在日历继续打点的问题 | 当某日内容清空（含仅空白字符）后，该日期不应被视为“有内容”，月历不再显示记录点 | `src/pages/diary.tsx` `e2e/specs/calendar-history.spec.ts` `TODO.md` | 风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（92/92）；`npm run test:integration` 通过（71/71，含既有 `act(...)` 警告）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），补齐后重跑因 `4173` 端口被旧 worktree 占用导致访问 `404`，释放端口后再次重跑通过（2/2）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁） | `2026-02-19 / e0467f6` |
 
 ### 6.9 数据导入（v1.1）
 
