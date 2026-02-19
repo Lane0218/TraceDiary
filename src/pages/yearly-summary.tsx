@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
-import AppHeader from '../components/common/app-header'
+import AppHeader, { type AppHeaderAuthEntry } from '../components/common/app-header'
 import ConflictDialog from '../components/common/conflict-dialog'
 import PullResultDialog from '../components/common/pull-result-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
@@ -51,6 +51,7 @@ import {
 
 interface YearlySummaryPageProps {
   auth: UseAuthResult
+  headerAuthEntry?: AppHeaderAuthEntry
 }
 
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
@@ -79,7 +80,7 @@ function parseValidYearInput(value: string): number | null {
   return parsed
 }
 
-export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
+export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const params = useParams<{ year?: string }>()
@@ -863,6 +864,7 @@ export default function YearlySummaryPage({ auth }: YearlySummaryPageProps) {
         <AppHeader
           currentPage="yearly"
           yearlyHref={`/yearly/${year}`}
+          authEntry={headerAuthEntry}
           guestMode={
             isGuestMode
               ? {

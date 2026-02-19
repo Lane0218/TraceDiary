@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import AuthPanel from '../components/auth/auth-panel'
-import AppHeader from '../components/common/app-header'
+import AppHeader, { type AppHeaderAuthEntry } from '../components/common/app-header'
 import ExportDataPanel from '../components/common/export-data-panel'
 import ImportDataPanel from '../components/common/import-data-panel'
 import type { UseAuthResult } from '../hooks/use-auth'
@@ -8,25 +8,20 @@ import {
   getSupabaseSession,
   isSupabaseConfigured,
   onSupabaseAuthStateChange,
-  sendEmailOtp,
   signOutSupabase,
-  verifyEmailOtp,
 } from '../services/supabase'
 import type { Session } from '@supabase/supabase-js'
 
 interface SettingsPageProps {
   auth: UseAuthResult
+  headerAuthEntry?: AppHeaderAuthEntry
 }
 
-export default function SettingsPage({ auth }: SettingsPageProps) {
+export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProps) {
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const [session, setSession] = useState<Session | null>(null)
-  const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
   const [cloudNotice, setCloudNotice] = useState<string | null>(null)
   const [cloudError, setCloudError] = useState<string | null>(null)
-  const [isSendingOtp, setIsSendingOtp] = useState(false)
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isRestoringConfig, setIsRestoringConfig] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const cloudAuthEnabled = isSupabaseConfigured()
@@ -59,35 +54,6 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
     }
   }, [cloudAuthEnabled])
 
-  const handleSendOtp = async () => {
-    setCloudError(null)
-    setCloudNotice(null)
-    setIsSendingOtp(true)
-    try {
-      await sendEmailOtp(email)
-      setCloudNotice('验证码已发送，请检查邮箱并输入 6 位验证码完成登录。')
-    } catch (error) {
-      setCloudError(error instanceof Error ? error.message : '验证码发送失败，请稍后重试')
-    } finally {
-      setIsSendingOtp(false)
-    }
-  }
-
-  const handleVerifyOtp = async () => {
-    setCloudError(null)
-    setCloudNotice(null)
-    setIsVerifyingOtp(true)
-    try {
-      await verifyEmailOtp(email, otp)
-      setCloudNotice('登录成功，可在当前设备恢复或同步你的配置。')
-      setOtp('')
-    } catch (error) {
-      setCloudError(error instanceof Error ? error.message : '验证码校验失败，请重试')
-    } finally {
-      setIsVerifyingOtp(false)
-    }
-  }
-
   const handleRestoreCloudConfig = async () => {
     setCloudError(null)
     setCloudNotice(null)
@@ -119,7 +85,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6">
-      <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} />
+      <AppHeader currentPage="settings" yearlyHref={`/yearly/${currentYear}`} authEntry={headerAuthEntry} />
 
       <section className="mt-4 space-y-4 td-fade-in" aria-label="settings-page">
         <header className="flex flex-wrap items-center justify-between gap-2">
@@ -130,7 +96,7 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
           <header>
             <h2 className="td-settings-section-title">账号（可选）</h2>
             <p className="td-settings-section-desc">
-              先体验游客模式；若需要跨设备恢复配置，再登录邮箱账号。
+              登录入口已移动到首屏弹窗；本区仅展示账号状态与恢复/退出操作。
             </p>
           </header>
 
@@ -167,52 +133,9 @@ export default function SettingsPage({ auth }: SettingsPageProps) {
               </div>
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-td-muted">
-                邮箱
-                <input
-                  type="email"
-                  className="td-input"
-                  placeholder="name@example.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  data-testid="cloud-auth-email-input"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-td-muted">
-                验证码
-                <input
-                  type="text"
-                  className="td-input"
-                  placeholder="6 位验证码"
-                  autoComplete="one-time-code"
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value)}
-                  data-testid="cloud-auth-otp-input"
-                />
-              </label>
-              <div className="sm:col-span-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="td-btn td-btn-primary-ink"
-                  onClick={() => void handleSendOtp()}
-                  disabled={isSendingOtp}
-                  data-testid="cloud-auth-send-otp-btn"
-                >
-                  {isSendingOtp ? '发送中...' : '发送验证码'}
-                </button>
-                <button
-                  type="button"
-                  className="td-btn"
-                  onClick={() => void handleVerifyOtp()}
-                  disabled={isVerifyingOtp}
-                  data-testid="cloud-auth-verify-otp-btn"
-                >
-                  {isVerifyingOtp ? '校验中...' : '登录 / 注册'}
-                </button>
-              </div>
-            </div>
+            <p className="text-sm text-td-muted">
+              当前未登录。请返回首屏弹窗输入邮箱与 6 位验证码完成登录；登录后可在此恢复云端配置。
+            </p>
           )}
 
           {cloudNotice ? <p className="text-sm text-emerald-700">{cloudNotice}</p> : null}
