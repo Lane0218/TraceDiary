@@ -7,17 +7,19 @@
   "module_label": "6.10 文档维护",
   "order": 171,
   "status": "DONE",
-  "title": "补充 AGENTS 任务创建规范并整体精简消歧（位置/命名/模板/并行写入）",
-  "acceptance": "`AGENTS.md` 明确任务创建位置、文件名、ID 生成规则、JSON 模板、时间格式与并行写入边界；文档无冗余和模糊冲突",
+  "title": "移除 TODO 迁移脚本并微调看板时间文案，明确看板更新机制",
+  "acceptance": "删除 `scripts/migrate-todo-md-to-task-board-once.mjs` 与对应 npm 脚本；`todo/board.html` 时间文案移除“北京时间”字样；向用户明确看板是否自动更新及更新方式",
   "related_files": [
-    "AGENTS.md"
+    "scripts/migrate-todo-md-to-task-board-once.mjs",
+    "package.json",
+    "todo/board.html"
   ],
-  "test_record": "仅文档改动，无功能行为变化；未执行 lint/unit/integration/E2E。",
-  "done_record": "2026-02-21 / 47c3500",
+  "test_record": "仅文档与静态看板文案改动，无功能行为变化；未执行 lint/unit/integration/E2E。",
+  "done_record": "2026-02-21 / pending",
   "source": {
     "file": "AGENTS.md",
     "line": 1
   },
   "version": 1,
-  "updated_at": "2026-02-21T15:15:30.000Z"
+  "updated_at": "2026-02-21T15:25:08.000Z"
 }
