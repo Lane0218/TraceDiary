@@ -16,11 +16,11 @@
     "AGENTS.md"
   ],
   "test_record": "`npm run lint` 通过；`node scripts/todo-board-server.mjs` + `curl /healthz` 与 `curl /api/tasks` 验证通过；未执行 unit/integration/E2E（未涉及业务功能改动）。",
-  "done_record": "2026-02-21 / pending",
+  "done_record": "2026-02-21 / 0433501",
   "source": {
     "file": "AGENTS.md",
     "line": 1
   },
   "version": 1,
-  "updated_at": "2026-02-21T15:33:07.000Z"
+  "updated_at": "2026-02-21T15:34:08.000Z"
 }
