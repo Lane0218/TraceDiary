@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_fd31c56326707251234d",
+  "display_id": "TD-DOC-009",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 170,
+  "status": "DONE",
+  "title": "新增“游客模式 + 登录注册 + 免费部署”任务拆分清单",
+  "acceptance": "`TODO.md` 新增可执行拆分（含游客模式、账号体系、云端配置、测试验收），并明确免费方案边界与验收标准",
+  "related_files": [
+    "TODO.md"
+  ],
+  "test_record": "风险分级：低（仅文档）；仅文档改动，无功能行为变化，未执行自动化测试（`lint/unit/integration/E2E`）",
+  "done_record": "2026-02-18 / 1e57198",
+  "source": {
+    "file": "TODO.md",
+    "line": 239
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

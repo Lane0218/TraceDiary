@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_a9d50e8f3c93a3d77903",
+  "display_id": "TD-UI-069",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 147,
+  "status": "DONE",
+  "title": "修复源码按钮激活态离开悬停后丢失底色（默认/激活样式互斥）",
+  "acceptance": "点击“源码”后在非悬停状态仍保持 push 同色激活背景；日记页与年度总结页一致；源码切换与字数统计不回退",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "e2e/specs/daily-edit.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / 1735102",
+  "source": {
+    "file": "TODO.md",
+    "line": 201
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

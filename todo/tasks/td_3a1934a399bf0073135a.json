@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_3a1934a399bf0073135a",
+  "display_id": "TD-SYNC-034",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 58,
+  "status": "DONE",
+  "title": "优化远端 push 提交信息：去除“手动同步”冗余文案并改为北京时间秒级时间戳",
+  "acceptance": "push 到远端时 commit message 不含“手动同步”字样；时间戳为北京时间（`+08:00`）且精确到秒；保持现有冲突处理与上传语义不变；相关测试通过",
+  "related_files": [
+    "src/services/sync.ts",
+    "src/services/__tests__/sync.test.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（59/59）；`npm run test:integration` 通过（62/62）；`npm run test:e2e:fast` 通过（4/4）",
+  "done_record": "2026-02-15 / 4cab9bb, 98af599",
+  "source": {
+    "file": "TODO.md",
+    "line": 97
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

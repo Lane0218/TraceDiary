@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_0ee6432b401cd6467fcf",
+  "display_id": "TD-UI-049",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 127,
+  "status": "DONE",
+  "title": "将导入入口从日记页迁移到设置页，并统一导入/导出为同一暖色数据管理视觉体系",
+  "acceptance": "设置页提供可用导入与导出入口；日记页不再展示导入入口；导入流程（预检/冲突/结果/自动上传）行为不回退；导入与导出卡片样式统一且与现有中性主界面分层共存",
+  "related_files": [
+    "src/pages/diary.tsx",
+    "src/pages/settings.tsx",
+    "src/components/common/import-data-panel.tsx",
+    "src/components/common/export-data-panel.tsx",
+    "src/index.css",
+    "src/__tests__/integration/import.integration.test.tsx",
+    "e2e/specs/import.spec.ts",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（75/75）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/import.spec.ts` 首次失败（worktree 缺少 `.env.e2e`），复制主工作区 `.env.e2e` 后重跑通过（1/1）；`npm run test:e2e:full` 通过（26 passed，1 flaky 重试通过）；`npx playwright test e2e/specs/stats-insights.spec.ts` 通过（1/1，修复热力图年份切换稳定性）",
+  "done_record": "2026-02-15 / dd5b3ce",
+  "source": {
+    "file": "TODO.md",
+    "line": 181
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

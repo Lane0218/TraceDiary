@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_cc5af7c7c514b6216bd7",
+  "display_id": "TD-FUNC-004",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 19,
+  "status": "DONE",
+  "title": "实现编辑实时写入 IndexedDB",
+  "acceptance": "刷新后本地内容不丢失",
+  "related_files": [
+    "src/hooks/use-diary.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / a71bf95",
+  "source": {
+    "file": "TODO.md",
+    "line": 53
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_e036432f7c9cccef95c1",
+  "display_id": "TD-DOC-002",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 163,
+  "status": "DONE",
+  "title": "在 AGENTS 增加“大工作量任务默认并行多 agents 执行”规范",
+  "acceptance": "`AGENTS.md` 明确要求 AI 对重任务主动采用并行多 agents，不依赖用户显式指定",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "`npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（14 passed，3 flaky 重试通过）",
+  "done_record": "2026-02-09 / 6c99c2c",
+  "source": {
+    "file": "TODO.md",
+    "line": 232
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

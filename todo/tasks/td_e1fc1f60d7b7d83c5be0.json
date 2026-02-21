@@ -1,0 +1,35 @@
+{
+  "task_uid": "td_e1fc1f60d7b7d83c5be0",
+  "display_id": "TD-SYNC-032",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 56,
+  "status": "DONE",
+  "title": "同步工具栏 UI 升级为“仪表条 Pro”并引入去重 Toast（同类型全局唯一），新增空内容 Push 拦截",
+  "acceptance": "工作台与年度总结页同步区视觉升级且布局一致；移除按钮旁内联错误，统一为去重 Toast；空内容（trim 后为空）点击 push 不发请求并提示“当前内容为空，无需 push”；相关单元/集成/E2E 回归通过",
+  "related_files": [
+    "src/components/common/sync-control-bar.tsx",
+    "src/components/common/toast-center.tsx",
+    "src/hooks/use-toast.ts",
+    "src/App.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/index.css",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/manual-sync-*.spec.ts",
+    "e2e/specs/remote-pull-sync.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:full` 首次失败（新 worktree 缺少 .env.e2e）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-toolbar-toast-empty-push-v2 --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan_sync-toolbar-toast-empty-push-v2 --e2e-cmd \\\"npm run test:e2e:full\\\"` 后，补跑定向 `npx playwright test e2e/specs/manual-sync-hang-guard.spec.ts e2e/specs/remote-pull-sync.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --workers=1 --retries=1` 通过（4/4），最终 `npm run test:e2e:full` 通过（22/22）",
+  "done_record": "2026-02-14 / f4229fe",
+  "source": {
+    "file": "TODO.md",
+    "line": 95
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

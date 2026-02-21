@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_d9e3704fafa9469cc759",
+  "display_id": "TD-DOC-010",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 171,
+  "status": "DOING",
+  "title": "调整 AGENTS 任务流程（移除 tmux pane 强制）并制定并行多 agent 的 TODO 冲突治理规则",
+  "acceptance": "`AGENTS.md` 不再要求接任务先改 tmux pane；新增并行场景下 TODO 冲突规避与回填流程（主 agent 串行写入、子 agent 仅回传状态）",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 240
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

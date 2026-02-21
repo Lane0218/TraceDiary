@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_1696f889d32cba469b99",
+  "display_id": "TD-TEST-012",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 77,
+  "status": "DONE",
+  "title": "落地本地高效测试分层策略（Playwright 并发/分片脚本、用例标签、AGENTS 默认执行规范）",
+  "acceptance": "新增 `test:e2e:fast/changed/last-failed/full/slow/remote/local-shard:*` 脚本；关键 E2E 完成 `@smoke/@slow/@remote` 标签；`AGENTS.md` 明确“默认分层 + 全量门禁”；新增测试策略文档可直接执行",
+  "related_files": [
+    "playwright.config.ts",
+    "package.json",
+    "e2e/specs/*.spec.ts",
+    "AGENTS.md",
+    "docs/testing-strategy.md",
+    "TODO.md",
+    "scripts/compatibility-check.mjs"
+  ],
+  "test_record": "风险分级：中；`git show --name-only --oneline 42faaba` 校验通过（已包含策略落地文件）；`rg` 复核 `package.json` E2E 分层脚本、`e2e/specs/*.spec.ts` 标签、`AGENTS.md` 全量门禁、`docs/testing-strategy.md` 可执行指引均存在",
+  "done_record": "2026-02-11 / 42faaba",
+  "source": {
+    "file": "TODO.md",
+    "line": 126
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

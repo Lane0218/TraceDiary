@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_8b697daa07d57d655fc1",
+  "display_id": "TD-CLOUD-001",
+  "id_prefix": "CLOUD",
+  "module_key": "6.14",
+  "module_name": "云端配置存储与权限（v1.2）",
+  "module_label": "6.14 云端配置存储与权限（v1.2）",
+  "order": 177,
+  "status": "TODO",
+  "title": "建立 `user_sync_configs` 表与迁移脚本（存密文配置）",
+  "acceptance": "表结构可存储 `encryptedToken/kdfParams/tokenCipherVersion/giteeRepo*`；迁移脚本可重复执行且幂等",
+  "related_files": [
+    "supabase/migrations/*",
+    "src/types/config.ts",
+    "docs/*"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 261
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

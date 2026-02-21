@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_4bf50424dd56b8cdf108",
+  "display_id": "TD-DOC-006",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 167,
+  "status": "DONE",
+  "title": "在 AGENTS 补充 pane 定位与复用规范（`pane_index`、`session/window`、同任务不重复改名）",
+  "acceptance": "AGENTS 明确使用 `pane_index`（纯数字）而非 `%pane_id`；重命名命令必须显式绑定 `session:window.pane_index`；同一任务连续微调无需重复改名，仅任务语义切换时改名",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E",
+  "done_record": "2026-02-13 / 2700d07",
+  "source": {
+    "file": "TODO.md",
+    "line": 236
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

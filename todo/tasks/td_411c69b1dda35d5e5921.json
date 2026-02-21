@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_411c69b1dda35d5e5921",
+  "display_id": "TD-UI-006",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 84,
+  "status": "DONE",
+  "title": "优化工作台信息简化与左侧结构（移除条目ID/冗余描述，分离往年今日卡片，缩小日历日期格）",
+  "acceptance": "不显示条目ID；“往年今日”无附加解释文案；往年今日独立于日历卡片；日期格尺寸更紧凑",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/calendar/month-calendar.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / 6f2fe9a",
+  "source": {
+    "file": "TODO.md",
+    "line": 138
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

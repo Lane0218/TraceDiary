@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_03630c72e5fdae8d6413",
+  "display_id": "TD-BASE-005",
+  "id_prefix": "BASE",
+  "module_key": "6.1",
+  "module_name": "基础工程与项目骨架",
+  "module_label": "6.1 基础工程与项目骨架",
+  "order": 5,
+  "status": "DONE",
+  "title": "接入 TanStack Query 并提供全局 QueryClient",
+  "acceptance": "页面可使用 query/mutation",
+  "related_files": [
+    "src/main.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（2/2）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / 4613379",
+  "source": {
+    "file": "TODO.md",
+    "line": 24
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

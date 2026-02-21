@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_897573f518437609c7f0",
+  "display_id": "TD-DOC-001",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 162,
+  "status": "DONE",
+  "title": "补充导入功能规格与 TODO 拆解（md/txt 文件名识别 + 系统自动生成 metadata）",
+  "acceptance": "`SPEC.md` 明确导入输入格式、识别规则、冲突策略、验收标准；`TODO.md` 新增导入任务组",
+  "related_files": [
+    "SPEC.md",
+    "TODO.md"
+  ],
+  "test_record": "`npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过（冒烟）",
+  "done_record": "2026-02-09 / 05c0fb7",
+  "source": {
+    "file": "TODO.md",
+    "line": 231
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_39ee370b5537e0bc4230",
+  "display_id": "TD-UI-022",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 100,
+  "status": "DONE",
+  "title": "统一工作台“往年今日/统计/今日日记”内容区高度并补齐回归测试",
+  "acceptance": "桌面端三块内容区高度一致；移动端保持自适应；新增高度相关集成与 E2E 断言通过",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/history/on-this-day-list.tsx",
+    "src/components/stats/stats-overview-card.tsx",
+    "src/components/editor/markdown-editor.tsx",
+    "src/components/editor/markdown-editor.css",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（52/52）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含高度对齐断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-12 / 78290c3",
+  "source": {
+    "file": "TODO.md",
+    "line": 154
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

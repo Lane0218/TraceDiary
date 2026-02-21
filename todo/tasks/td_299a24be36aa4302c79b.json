@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_299a24be36aa4302c79b",
+  "display_id": "TD-TEST-006",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 71,
+  "status": "DONE",
+  "title": "兼容性验收（Chrome/Edge/Safari/Firefox/安卓/iOS）",
+  "acceptance": "验收清单全部勾选",
+  "related_files": [
+    "docs/compatibility-report.md"
+  ],
+  "test_record": "风险分级：低（验收文档回填）；`npx playwright test --config=scripts/compatibility-check.mjs --grep @smoke --workers=1 --retries=0 --reporter=line` 执行结果：Chrome/Edge/Firefox/安卓通过；Safari/iOS 按用户授权“这两个环境就不跑了，不做测试了”跳过并不纳入门禁；仅文档回填，未追加自动化测试",
+  "done_record": "2026-02-17 / 7ec1e94",
+  "source": {
+    "file": "TODO.md",
+    "line": 120
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

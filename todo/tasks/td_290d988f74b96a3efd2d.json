@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_290d988f74b96a3efd2d",
+  "display_id": "TD-UI-054",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 132,
+  "status": "DONE",
+  "title": "设置页视觉一致性修正（顶部设置卡改为日历同款底色 + 覆盖 autofill 蓝底）",
+  "acceptance": "设置页顶部“设置”卡片背景与日历卡片一致；浏览器自动填充后输入框不再出现突兀蓝底；交互与认证流程不回退",
+  "related_files": [
+    "src/pages/settings.tsx",
+    "src/index.css",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / 9b0b869",
+  "source": {
+    "file": "TODO.md",
+    "line": 186
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,32 @@
+{
+  "task_uid": "td_af82d9ca79a3829594ba",
+  "display_id": "TD-SYNC-035",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 59,
+  "status": "DONE",
+  "title": "新增“Pull 全部”与结果汇总弹窗，拉取流程改为 metadata 单次读取 + 差异下载（冲突跳过并汇总）",
+  "acceptance": "同步条默认支持一键 Pull 全部；Pull 结束弹窗对齐导入结果展示；metadata 仅拉取一次；冲突不覆盖本地并可见汇总",
+  "related_files": [
+    "src/components/common/sync-control-bar.tsx",
+    "src/components/common/pull-result-dialog.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/services/sync.ts",
+    "src/services/__tests__/sync.test.ts",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/specs/bulk-pull-result-dialog.spec.ts",
+    "e2e/specs/upload-encryption.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（90/90）；`npm run test:integration` 通过（70/70，含既有 `act(...)` 警告）；`npm run test:e2e:full` 通过（26 passed，3 flaky：`conflict-resolution` 2 条、`yearly-summary` 1 条，重试后通过）",
+  "done_record": "2026-02-18 / 68ae89e",
+  "source": {
+    "file": "TODO.md",
+    "line": 98
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_8989c7926038f2b79d58",
+  "display_id": "TD-TEST-010",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 75,
+  "status": "DONE",
+  "title": "修复 lint 报错 `e2e/helpers/conflict.ts` 中 `no-unsafe-finally` 违规并恢复 lint 全绿",
+  "acceptance": "`npm run lint` 不再报 `no-unsafe-finally`；并通过必要回归（单元/集成 + 冲突相关 E2E）",
+  "related_files": [
+    "e2e/helpers/conflict.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --retries=0` 通过（4/4）",
+  "done_record": "2026-02-10 / 8c9ec50",
+  "source": {
+    "file": "TODO.md",
+    "line": 124
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

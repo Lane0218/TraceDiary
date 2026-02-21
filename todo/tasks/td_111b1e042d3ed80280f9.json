@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_111b1e042d3ed80280f9",
+  "display_id": "TD-IMP-004",
+  "id_prefix": "IMP",
+  "module_key": "6.9",
+  "module_name": "数据导入（v1.1）",
+  "module_label": "6.9 数据导入（v1.1）",
+  "order": 159,
+  "status": "DONE",
+  "title": "实现导入结果汇总反馈（成功/跳过/失败）",
+  "acceptance": "完成后可查看汇总统计与失败明细",
+  "related_files": [
+    "src/components/common/import-result-dialog.tsx",
+    "src/pages/diary.tsx"
+  ],
+  "test_record": "风险分级：高；同 `TD-IMP-001` 测试集全部通过",
+  "done_record": "2026-02-15 / 8bf65d2",
+  "source": {
+    "file": "TODO.md",
+    "line": 218
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

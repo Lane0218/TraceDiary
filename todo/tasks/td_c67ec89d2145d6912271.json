@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_c67ec89d2145d6912271",
+  "display_id": "TD-UI-018",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 96,
+  "status": "DONE",
+  "title": "精简统计卡片信息层级（仅保留 3x2 指标）并重排“统计详情”入口到分段切换行",
+  "acceptance": "统计卡片仅保留 6 个指标，无底部说明文案与底部详情按钮；分段切换两项始终可见并有明确选中态；“统计详情”入口仅在选中统计时显示于切换行右侧",
+  "related_files": [
+    "src/components/stats/stats-overview-card.tsx",
+    "src/pages/workspace.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-11 / 3f06350",
+  "source": {
+    "file": "TODO.md",
+    "line": 150
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

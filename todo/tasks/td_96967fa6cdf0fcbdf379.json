@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_96967fa6cdf0fcbdf379",
+  "display_id": "TD-UI-005",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 83,
+  "status": "DONE",
+  "title": "收敛日期入口：移除双日期输入框并新增“月标题点击年月选择”",
+  "acceptance": "删除指定文案；无“当前日期/查询日期”输入框；可通过月标题弹层选择年月并联动编辑与往年今日",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/calendar/month-calendar.tsx",
+    "src/pages/calendar.tsx",
+    "src/__tests__/integration/app.integration.test.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / 9ae8d0e",
+  "source": {
+    "file": "TODO.md",
+    "line": 137
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

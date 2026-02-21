@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_fba78c7748d27ee3f711",
+  "display_id": "TD-SYNC-031",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 55,
+  "status": "DONE",
+  "title": "移除“云端待同步/已同步”推断展示，改为 Pull/Push 执行结果与时间展示（不显示耗时）",
+  "acceptance": "工作台与年度总结页均展示 `Pull` 与 `Push` 最近执行状态（未执行/进行中/成功/失败）及绝对时间；不再展示“云端待同步/已同步”胶囊；刷新后状态可恢复；相关单元/集成/E2E 回归通过",
+  "related_files": [
+    "src/utils/sync-presentation.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/manual-sync-*.spec.ts",
+    "e2e/specs/conflict-resolution.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium --workers=1 --retries=1` 通过（4/4）；`npm run test:e2e:full` 通过（21/21）",
+  "done_record": "2026-02-14 / a4bee89",
+  "source": {
+    "file": "TODO.md",
+    "line": 94
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

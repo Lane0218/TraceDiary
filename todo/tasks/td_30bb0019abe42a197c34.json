@@ -1,0 +1,33 @@
+{
+  "task_uid": "td_30bb0019abe42a197c34",
+  "display_id": "TD-UI-030",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 108,
+  "status": "DONE",
+  "title": "全仓去除“Workspace/工作台”命名并统一为“日记/diary”（不做兼容）",
+  "acceptance": "用户可见与代码层（路由、页面名、测试标识、E2E helper、文档）不再使用 workspace 术语；默认入口为 `/diary`；不保留 `/workspace` 兼容路由；`TODO.md` 历史记录保持原样",
+  "related_files": [
+    "src/App.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/pages/insights.tsx",
+    "src/components/auth/auth-modal.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/*.spec.ts",
+    "SPEC.md",
+    "docs/ui-layout-prototype.html",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（54/54）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/stats-insights.spec.ts e2e/specs/calendar-history.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；复制主工作区 `.env.e2e` 后重跑通过（9/9）；`rg -n -i \"workspace|工作台\" --glob '!.git' --glob '!.worktrees/**' --glob '!TODO.md'` 无命中",
+  "done_record": "2026-02-14 / 5c0b76e",
+  "source": {
+    "file": "TODO.md",
+    "line": 162
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

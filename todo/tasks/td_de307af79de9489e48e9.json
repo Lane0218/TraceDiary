@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_de307af79de9489e48e9",
+  "display_id": "TD-SYNC-006",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 30,
+  "status": "DONE",
+  "title": "修复日期切换内容错位并提升云端上传可用性反馈（不含加密改造）",
+  "acceptance": "标题日期与编辑器内容一致；未解锁/未配置时给出明确不可上传提示；手动上传失败可读",
+  "related_files": [
+    "src/hooks/use-diary.ts",
+    "src/components/editor/markdown-editor.tsx",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/hooks/use-sync.ts",
+    "src/__tests__/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（28/28）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / cb7823e",
+  "source": {
+    "file": "TODO.md",
+    "line": 69
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

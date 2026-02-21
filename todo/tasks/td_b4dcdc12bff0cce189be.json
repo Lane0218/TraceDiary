@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_b4dcdc12bff0cce189be",
+  "display_id": "TD-UI-002",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 80,
+  "status": "DONE",
+  "title": "调整原型为“欢迎弹层 + 单页工作台（日历与日记/年度总结同屏）”",
+  "acceptance": "欢迎流程以弹层演示，主页面仅保留一个工作台并可切换日记/年度总结",
+  "related_files": [
+    "docs/ui-layout-prototype.html",
+    "src/hooks/use-diary.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过",
+  "done_record": "2026-02-08 / 4a4ff1c",
+  "source": {
+    "file": "TODO.md",
+    "line": 134
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

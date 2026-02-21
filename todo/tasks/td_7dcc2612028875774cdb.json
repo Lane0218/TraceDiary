@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_7dcc2612028875774cdb",
+  "display_id": "TD-UI-040",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 118,
+  "status": "DONE",
+  "title": "优化同步按钮进行中视觉与 Toast 生命周期（移除 `...`、进行中常驻到结束后被结果顶替）",
+  "acceptance": "按钮进行中不再显示 `pulling.../pushing...`，改为 `pull/push + 小圆点脉冲`；`pull/push` 进行中提示不自动消失，成功/失败结束提示到达后顶替进行中提示并按原时长自动消失",
+  "related_files": [
+    "src/components/common/sync-control-bar.tsx",
+    "src/index.css",
+    "src/hooks/use-toast.ts",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/hooks/__tests__/use-toast.test.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/specs/manual-sync-busy-clear.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 首次失败（worktree 缺少依赖，`eslint: not found`），挂载主工作区 `node_modules` 后通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（59/59）；`npm run test:e2e:fast` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/sync-toast-motion-polish --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_sync-toast-motion-polish --e2e-cmd \"npm run test:e2e:fast\"` 后重跑通过（4/4）；`npx playwright test e2e/specs/manual-sync-busy-clear.spec.ts --project=chromium --retries=0` 通过（1/1）",
+  "done_record": "2026-02-15 / 36b519e",
+  "source": {
+    "file": "TODO.md",
+    "line": 172
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

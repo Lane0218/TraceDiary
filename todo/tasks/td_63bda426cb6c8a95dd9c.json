@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_63bda426cb6c8a95dd9c",
+  "display_id": "TD-CLOUD-002",
+  "id_prefix": "CLOUD",
+  "module_key": "6.14",
+  "module_name": "云端配置存储与权限（v1.2）",
+  "module_label": "6.14 云端配置存储与权限（v1.2）",
+  "order": 178,
+  "status": "TODO",
+  "title": "配置并验证 RLS 策略（仅本人可读写）",
+  "acceptance": "`select/insert/update` 均满足 `auth.uid() = user_id`；越权访问被拒绝",
+  "related_files": [
+    "supabase/migrations/*",
+    "scripts/*",
+    "src/services/*"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 262
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

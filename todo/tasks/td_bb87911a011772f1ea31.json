@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_bb87911a011772f1ea31",
+  "display_id": "TD-UI-050",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 128,
+  "status": "DONE",
+  "title": "精简导入/导出相关文案，仅保留必要信息",
+  "acceptance": "设置页导入与导出面板仅保留“导入/导出”标题与按钮；进行中状态改为按钮左侧闪动圆点 + Toast（与 pull/push 反馈模式一致）；不影响导入导出行为与现有测试链路",
+  "related_files": [
+    "src/components/common/import-data-panel.tsx",
+    "src/components/common/export-data-panel.tsx",
+    "src/components/common/import-conflict-dialog.tsx",
+    "src/components/common/import-result-dialog.tsx",
+    "src/index.css",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0` 首次失败（并行执行导致导出“无数据”断言受污染），追加 `--workers=1` 串行重跑通过（3/3）",
+  "done_record": "2026-02-15 / ac1e1fe",
+  "source": {
+    "file": "TODO.md",
+    "line": 182
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

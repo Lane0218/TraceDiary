@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_bdc1c2c8afd6d692830b",
+  "display_id": "TD-UI-027",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 105,
+  "status": "DONE",
+  "title": "微调工作台左栏分段控件（移除左栏“统计详情”按钮、分段去蓝）并修正编辑区标题与源码按钮对齐/间距",
+  "acceptance": "左栏不再出现“统计详情”冗余按钮；分段控件在选中/未选中态均具备清晰可读对比且不使用蓝色；“日记”标题与“源码”按钮视觉对齐且标题与编辑框间距更舒展",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含分段对比度与入口回归断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-13 / f458fd5",
+  "source": {
+    "file": "TODO.md",
+    "line": 159
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

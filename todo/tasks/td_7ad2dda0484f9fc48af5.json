@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_7ad2dda0484f9fc48af5",
+  "display_id": "TD-BASE-001",
+  "id_prefix": "BASE",
+  "module_key": "6.1",
+  "module_name": "基础工程与项目骨架",
+  "module_label": "6.1 基础工程与项目骨架",
+  "order": 1,
+  "status": "DONE",
+  "title": "初始化 React + TypeScript + Vite 工程骨架",
+  "acceptance": "可本地启动并渲染首页",
+  "related_files": [
+    "package.json",
+    "src/main.tsx",
+    "src/App.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`timeout 10s npm run dev -- --host 127.0.0.1 --port 4174 --strictPort` 启动成功（Vite ready）",
+  "done_record": "2026-02-08 / 74e583b",
+  "source": {
+    "file": "TODO.md",
+    "line": 20
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

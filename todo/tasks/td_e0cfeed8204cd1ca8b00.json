@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_e0cfeed8204cd1ca8b00",
+  "display_id": "TD-SYNC-005",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 29,
+  "status": "DONE",
+  "title": "实现离线检测与网络恢复自动重试",
+  "acceptance": "断网有提示，恢复后自动同步",
+  "related_files": [
+    "src/hooks/use-sync.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / c991e44",
+  "source": {
+    "file": "TODO.md",
+    "line": 68
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

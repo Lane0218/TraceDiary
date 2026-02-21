@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_7568230d7783fedebff1",
+  "display_id": "TD-UI-001",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 79,
+  "status": "DONE",
+  "title": "提供极简专业风的布局与交互原型 HTML",
+  "acceptance": "可在浏览器中演示导航切换、月份切换与状态反馈逻辑",
+  "related_files": [
+    "docs/ui-layout-prototype.html"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过",
+  "done_record": "2026-02-08 / c45592a",
+  "source": {
+    "file": "TODO.md",
+    "line": 133
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

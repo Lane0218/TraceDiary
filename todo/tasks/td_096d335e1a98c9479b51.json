@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_096d335e1a98c9479b51",
+  "display_id": "TD-SYNC-022",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 46,
+  "status": "DONE",
+  "title": "重构未提交改动判定为“按 entry 基线 + 内容指纹”，修复手动上传点击即从“无”变“有”与跨日期脏状态污染",
+  "acceptance": "未提交改动仅在“从未提交”或“提交后内容变化”时显示“有”；手动上传点击不应无条件变脏；切换其他日期不应继承脏状态",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/services/indexeddb.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/utils/sync-dirty.ts",
+    "src/hooks/__tests__/use-sync.test.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（45/45）；`npm run test:e2e` 通过（20/20）；`npm run build` 通过",
+  "done_record": "2026-02-10 / 70ad5b8",
+  "source": {
+    "file": "TODO.md",
+    "line": 85
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

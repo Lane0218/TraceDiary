@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_1abcae207c67b9da3506",
+  "display_id": "TD-FUNC-007",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 22,
+  "status": "DONE",
+  "title": "实现“往年今日”查询与预览",
+  "acceptance": "显示同月同日历史记录",
+  "related_files": [
+    "src/components/history/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / a71bf95",
+  "source": {
+    "file": "TODO.md",
+    "line": 56
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

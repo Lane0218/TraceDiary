@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_2fbec8b98f075359963a",
+  "display_id": "TD-DOC-008",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 169,
+  "status": "DONE",
+  "title": "调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint）",
+  "acceptance": "AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：低（仅文档）；按用户授权本任务未执行自动化测试（`lint/unit/integration/E2E`）",
+  "done_record": "2026-02-14 / 4f1280e",
+  "source": {
+    "file": "TODO.md",
+    "line": 238
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

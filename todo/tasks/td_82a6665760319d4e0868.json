@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_82a6665760319d4e0868",
+  "display_id": "TD-TEST-008",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 73,
+  "status": "DONE",
+  "title": "修复 E2E 假阳性与冲突时序风险（metadata 应用链路断言 + 手动上传使用持久化快照）",
+  "acceptance": "metadata 加密断言基于应用真实上传链路；手动上传与冲突流程在快速输入场景下保持一致性并通过完整测试",
+  "related_files": [
+    "src/services/sync.ts",
+    "src/hooks/use-diary.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/hooks/__tests__/*",
+    "src/__tests__/integration/*",
+    "e2e/specs/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（43/43）；`npm run test:integration` 通过（36/36）；`npm run test:e2e` 通过（17/17）；`npx playwright test e2e/specs/conflict-resolution.spec.ts --project=chromium` 通过（4/4）",
+  "done_record": "2026-02-09 / 165cd5f",
+  "source": {
+    "file": "TODO.md",
+    "line": 122
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

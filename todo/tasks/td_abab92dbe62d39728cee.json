@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_abab92dbe62d39728cee",
+  "display_id": "TD-UI-068",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 146,
+  "status": "DONE",
+  "title": "修复日记与年度总结页默认可视化编辑偶发不可输入（需点“源码”后才可编辑）问题",
+  "acceptance": "页面初次进入即为可视化可编辑；点击“源码”可见并可编辑 Markdown；两种模式切换不丢内容且落库正常",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "e2e/specs/daily-edit.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（4/4）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-17 / 16cd385",
+  "source": {
+    "file": "TODO.md",
+    "line": 200
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

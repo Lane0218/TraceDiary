@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_6b1f80b5823877ce4483",
+  "display_id": "TD-AUTH-003",
+  "id_prefix": "AUTH",
+  "module_key": "6.13",
+  "module_name": "游客模式与账号体系（v1.2）",
+  "module_label": "6.13 游客模式与账号体系（v1.2）",
+  "order": 175,
+  "status": "DONE",
+  "title": "新增默认游客模式入口与“开始使用我的数据”转化路径",
+  "acceptance": "首次访问默认进入游客体验；游客态可浏览 Demo 日记但不可写入远端；可一键跳转登录/注册",
+  "related_files": [
+    "src/App.tsx",
+    "src/components/auth/entry-auth-modal.tsx",
+    "src/pages/settings.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/export-data.spec.ts"
+  ],
+  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（92/92）；`npm run test:integration` 通过（71/71，含既有 `act(...)` 警告）；`npm run test:e2e:full` 通过（29 项执行，27 passed + 2 flaky 经 retry 通过）",
+  "done_record": "2026-02-19 / 6ce2dfd",
+  "source": {
+    "file": "TODO.md",
+    "line": 254
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

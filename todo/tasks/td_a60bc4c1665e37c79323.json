@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_a60bc4c1665e37c79323",
+  "display_id": "TD-PWA-001",
+  "id_prefix": "PWA",
+  "module_key": "6.6",
+  "module_name": "PWA、部署与安全头",
+  "module_label": "6.6 PWA、部署与安全头",
+  "order": 60,
+  "status": "DONE",
+  "title": "配置 Vite PWA、manifest 与图标资源",
+  "acceptance": "可安装到主屏幕",
+  "related_files": [
+    "vite.config.*",
+    "public/manifest.json"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / e6e8994",
+  "source": {
+    "file": "TODO.md",
+    "line": 104
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

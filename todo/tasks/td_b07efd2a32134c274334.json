@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_b07efd2a32134c274334",
+  "display_id": "TD-UI-076",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 154,
+  "status": "DONE",
+  "title": "以当前 SVG 为准重生成图标 PNG，并收紧 SVG 四周留白",
+  "acceptance": "`icon-192.png` 与 `icon-512.png` 均由最新 `icon.svg` 导出；SVG 视觉留白明显收紧且主图形更贴近画布边缘",
+  "related_files": [
+    "public/icons/icon.svg",
+    "public/icons/icon-192.png",
+    "public/icons/icon-512.png",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（179/179）；`npm run test:integration` 失败（`src/__tests__/integration/app.integration.test.tsx` 2 例失败，属于当前分支既有“演示模式”改动冲突，非本任务图标改动导致）；用户明确授权“不要继续测试，直接提交”，因此未继续修复失败用例，且未执行 `npm run test:e2e:fast` / `npm run test:e2e:full`",
+  "done_record": "2026-02-18 / c89fe86",
+  "source": {
+    "file": "TODO.md",
+    "line": 208
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

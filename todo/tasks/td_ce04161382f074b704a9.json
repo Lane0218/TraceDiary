@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_ce04161382f074b704a9",
+  "display_id": "TD-BASE-004",
+  "id_prefix": "BASE",
+  "module_key": "6.1",
+  "module_name": "基础工程与项目骨架",
+  "module_label": "6.1 基础工程与项目骨架",
+  "order": 4,
+  "status": "DONE",
+  "title": "配置 React Router 基础路由（welcome/calendar/editor/yearly-summary）",
+  "acceptance": "页面可路由跳转",
+  "related_files": [
+    "src/App.tsx",
+    "src/pages/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / 252a896",
+  "source": {
+    "file": "TODO.md",
+    "line": 23
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

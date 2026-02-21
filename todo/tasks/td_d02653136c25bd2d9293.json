@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_d02653136c25bd2d9293",
+  "display_id": "TD-UI-048",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 126,
+  "status": "DONE",
+  "title": "统计页热力图改造为“年份箭头输入 + 周一开头 + 右侧信息区”，消除右侧大面积留白",
+  "acceptance": "热力图年份选择采用与日历体系一致的箭头+输入；周起始改为周一；右侧空白改为信息区（图例+选中日期+年度摘要）；整体视觉更均衡且无明显大块空白",
+  "related_files": [
+    "src/components/stats/yearly-activity-heatmap.tsx",
+    "src/utils/stats-heatmap.ts",
+    "src/__tests__/unit/stats-heatmap.unit.test.ts",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/insights-heatmap-monday-picker --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_insights-heatmap-monday-picker --e2e-cmd \\\"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\\\"` 后发现选择器断言冲突，修正断言并重跑同命令通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-15 / c9dc785",
+  "source": {
+    "file": "TODO.md",
+    "line": 180
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

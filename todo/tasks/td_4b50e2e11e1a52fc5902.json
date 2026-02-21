@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_4b50e2e11e1a52fc5902",
+  "display_id": "TD-UI-044",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 122,
+  "status": "DONE",
+  "title": "重构同步栏为“主状态 + 悬浮明细”并去除主栏 pull/push 双气泡冗余",
+  "acceptance": "主栏仅展示全局同步状态与 pull/push 按钮；pull/push 结果与时间改为 hover/focus/tap 可见明细；失败不在主栏常驻展示但可在 toast 与明细中回看；日记页与年度页复用同一同步栏组件",
+  "related_files": [
+    "src/components/common/sync-control-bar.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/index.css",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过（首次失败：`eslint: not found`，已在 worktree 挂载主工作区 `node_modules` 后重跑通过）；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（62/62）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/syncbar-hover-details --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_syncbar-hover-details --e2e-cmd \\\"npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts e2e/specs/manual-sync-busy-clear.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0\\\"` 后重跑通过（4/4）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-15 / 2773497",
+  "source": {
+    "file": "TODO.md",
+    "line": 176
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_1410da3ee3cba2626995",
+  "display_id": "TD-SYNC-033",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 57,
+  "status": "DONE",
+  "title": "修复 StrictMode 下单次 push 被误判为 stale（前端 2-3 秒提示“当前正在上传”但远端已成功）",
+  "acceptance": "单次点击 push 在开发模式（StrictMode）不再误报“当前正在上传/失败”；手动 push 成功后前端状态与远端结果一致；新增回归测试覆盖 StrictMode 生命周期",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/hooks/__tests__/use-sync.test.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 失败（`src/__tests__/integration/app.integration.test.tsx` 3 项失败，属已知阻塞任务 `TD-TEST-013` 的导航迁移断言，不属于本次改动范围）；`npx playwright test e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/manual-sync-state-consistency.spec.ts --project=chromium --retries=0` 通过（1/1）",
+  "done_record": "2026-02-14 / abb6366",
+  "source": {
+    "file": "TODO.md",
+    "line": 96
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

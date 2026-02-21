@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_66a5c2fe2fc038fff396",
+  "display_id": "TD-SYNC-026",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 50,
+  "status": "DONE",
+  "title": "清空 `.env.e2e` 指向测试仓库并按主密码密钥重建测试密文数据",
+  "acceptance": "远端旧密文被清空；重建后的 `metadata.json.enc` 与示例日记文件可被主密码成功解密且内容可读",
+  "related_files": [
+    "TODO.md"
+  ],
+  "test_record": "已执行远端清空与重建脚本并校验通过：清理后文件数 `0`，重建后文件数 `4`（`2100-01-01.md.enc`、`2100-06-06.md.enc`、`2100-summary.md.enc`、`metadata.json.enc`）；回读后使用 `E2E_MASTER_PASSWORD` 可成功解密 `metadata.json.enc` 与 `2100-01-01.md.enc`，内容可读",
+  "done_record": "2026-02-11 / 1be61cb",
+  "source": {
+    "file": "TODO.md",
+    "line": 89
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -6,9 +6,9 @@
 
 ## 0. 快速看板
 
-- 更新时间：`2026-02-19`
-- 总任务：`181`
-- 状态统计：`DONE=174` / `DOING=0` / `TODO=7` / `BLOCKED=0`
+- 更新时间：`2026-02-21`
+- 总任务：`182`
+- 状态统计：`DONE=175` / `DOING=0` / `TODO=7` / `BLOCKED=0`
 - 当前进行中：`无`
 
 ## 1. 任务清单（按模块）
@@ -237,6 +237,7 @@
 | `TD-DOC-007` | `DONE` | 压缩 AGENTS 的 pane 重命名说明并改为基于 `TMUX_PANE` 定位当前 Codex pane | AGENTS 第 3 节以最少步骤明确：通过 `TMUX_PANE` 反查 `session:window.pane_index` 后重命名并回读；禁止用不带 `-t` 的 `#S:#I.#P` 判定当前 pane | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E | `2026-02-14 / 9d87dea` |
 | `TD-DOC-008` | `DONE` | 调整 AGENTS 测试策略：仅文档改动可不执行任何测试（含 lint） | AGENTS 明确“仅文档改动且无功能行为变化”时可不执行自动化测试；相关条目无互相冲突描述 | `AGENTS.md` `TODO.md` | 风险分级：低（仅文档）；按用户授权本任务未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-14 / 4f1280e` |
 | `TD-DOC-009` | `DONE` | 新增“游客模式 + 登录注册 + 免费部署”任务拆分清单 | `TODO.md` 新增可执行拆分（含游客模式、账号体系、云端配置、测试验收），并明确免费方案边界与验收标准 | `TODO.md` | 风险分级：低（仅文档）；仅文档改动，无功能行为变化，未执行自动化测试（`lint/unit/integration/E2E`） | `2026-02-18 / 1e57198` |
+| `TD-DOC-010` | `DONE` | 一次性将 `TODO.md` 迁移为按任务文件存储并生成分类看板展示 | 产出 `todo/tasks/*.json`（每任务一文件，含分类字段）与 `todo/board.html`（可直接打开查看）；迁移脚本可一键从当前 `TODO.md` 生成上述结果 | `scripts/migrate-todo-md-to-task-board-once.mjs` `package.json` `todo/tasks/*.json` `todo/board.html` `TODO.md` | 风险分级：低（辅助脚本与静态看板）；`npm run todo:migrate-once` 通过（生成 182 条任务）；`npm run lint` 通过；`npm run test:unit` 通过（92/92）；`npm run test:integration` 通过（71/71，含既有 `act(...)` 警告）；未执行 E2E（本次改动未触达运行时业务链路） | `2026-02-21 / 43f3bac` |
 
 ### 6.11 开发效率与工具
 

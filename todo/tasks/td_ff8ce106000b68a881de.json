@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_ff8ce106000b68a881de",
+  "display_id": "TD-UI-003",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 81,
+  "status": "DONE",
+  "title": "落地 blog 同源风格并重构为单页工作台（欢迎弹层 + 日历/日记/年度总结同屏）",
+  "acceptance": "默认进入工作台；认证以弹层呈现；视觉风格与 blog 一致；旧路由可兼容跳转",
+  "related_files": [
+    "src/App.tsx",
+    "src/index.css",
+    "tailwind.config.js",
+    "src/pages/workspace.tsx",
+    "src/components/auth/*",
+    "src/components/calendar/*",
+    "src/components/history/*",
+    "src/components/editor/*",
+    "src/__tests__/integration/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-08 / 661051b",
+  "source": {
+    "file": "TODO.md",
+    "line": 135
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

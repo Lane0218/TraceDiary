@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_566065b893bf871c50ce",
+  "display_id": "TD-UI-031",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 109,
+  "status": "DONE",
+  "title": "同步工具栏与同步提示回退为中性灰风格（去蓝色强调）",
+  "acceptance": "日记页与年度总结页同步工具栏不使用蓝色背景/按钮/信息态强调，整体回归中性灰风格且不影响 pull/push/Toast 行为",
+  "related_files": [
+    "src/index.css",
+    "src/components/common/sync-control-bar.tsx",
+    "src/components/common/toast-center.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:fast` 通过（4/4）",
+  "done_record": "2026-02-14 / 994e551",
+  "source": {
+    "file": "TODO.md",
+    "line": 163
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

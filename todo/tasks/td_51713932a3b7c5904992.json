@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_51713932a3b7c5904992",
+  "display_id": "TD-UI-010",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 88,
+  "status": "DONE",
+  "title": "新增编辑器右下角字数角标、修复往年今日渐隐截断并清理历史日历冗余组件",
+  "acceptance": "日记与年度总结编辑器右下角显示字数（非空白字符）；往年今日长内容不溢出且底部渐隐自然；移除不再使用的 `calendar` 页面与路由",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "src/components/history/on-this-day-list.tsx",
+    "src/App.tsx",
+    "src/pages/calendar.tsx",
+    "src/__tests__/integration/calendar.integration.test.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（42/42）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”）",
+  "done_record": "2026-02-11 / 3f9e8d4",
+  "source": {
+    "file": "TODO.md",
+    "line": 142
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

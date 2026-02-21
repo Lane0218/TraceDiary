@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_99d08f0b39eb8b131625",
+  "display_id": "TD-UI-055",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 133,
+  "status": "DONE",
+  "title": "调整统计页月度与热力图布局（移除趋势解读、补齐4张统计卡、收紧热力图左右间距并拉齐右侧底边）",
+  "acceptance": "月度趋势右侧改为 4 张数据卡且不再展示“趋势解读”；年度热力图左右间距收紧；右侧三卡底边与左侧下方信息卡区域底边对齐",
+  "related_files": [
+    "src/pages/insights.tsx",
+    "src/components/stats/yearly-activity-heatmap.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / 700b2f6",
+  "source": {
+    "file": "TODO.md",
+    "line": 187
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

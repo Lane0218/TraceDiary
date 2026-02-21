@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_e904efbede4ff904945a",
+  "display_id": "TD-DATA-003",
+  "id_prefix": "DATA",
+  "module_key": "6.3",
+  "module_name": "数据层与本地缓存",
+  "module_label": "6.3 数据层与本地缓存",
+  "order": 15,
+  "status": "DONE",
+  "title": "实现 metadata 本地解密缓存与远端 `metadata.json.enc` 同步",
+  "acceptance": "首次加载可拉取并解密",
+  "related_files": [
+    "src/services/sync.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / f4ddb11",
+  "source": {
+    "file": "TODO.md",
+    "line": 44
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

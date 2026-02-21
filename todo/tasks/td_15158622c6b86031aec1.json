@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_15158622c6b86031aec1",
+  "display_id": "TD-DEMO-001",
+  "id_prefix": "DEMO",
+  "module_key": "6.15",
+  "module_name": "演示链路与验收（v1.2）",
+  "module_label": "6.15 演示链路与验收（v1.2）",
+  "order": 180,
+  "status": "TODO",
+  "title": "实现 Demo 数据源与只读保护（默认游客体验）",
+  "acceptance": "游客可读取 Demo 数据（本地静态或服务端代理）；游客态禁止 push/pull 与配置写入；UI 明确标识“演示模式”",
+  "related_files": [
+    "src/services/*",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/components/common/*"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 269
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

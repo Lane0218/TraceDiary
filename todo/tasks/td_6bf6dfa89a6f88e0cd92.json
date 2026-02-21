@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_6bf6dfa89a6f88e0cd92",
+  "display_id": "TD-IMP-005",
+  "id_prefix": "IMP",
+  "module_key": "6.9",
+  "module_name": "数据导入（v1.1）",
+  "module_label": "6.9 数据导入（v1.1）",
+  "order": 160,
+  "status": "DONE",
+  "title": "补齐导入单元/集成/E2E 测试",
+  "acceptance": "覆盖命名识别、冲突处理、异常跳过、部分失败容错",
+  "related_files": [
+    "src/services/__tests__/import.test.ts",
+    "src/services/__tests__/import-sync.test.ts",
+    "src/__tests__/integration/import.integration.test.tsx",
+    "e2e/specs/import.spec.ts"
+  ],
+  "test_record": "风险分级：高；同 `TD-IMP-001` 测试集全部通过",
+  "done_record": "2026-02-15 / 8bf65d2",
+  "source": {
+    "file": "TODO.md",
+    "line": 219
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

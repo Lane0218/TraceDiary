@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_d53533af3e7981eb8860",
+  "display_id": "TD-TEST-004",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 69,
+  "status": "DONE",
+  "title": "关键用户流程 E2E（创建、编辑、同步、冲突）",
+  "acceptance": "核心链路自动化通过",
+  "related_files": [
+    "e2e/*"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（39/39）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过（7/7）",
+  "done_record": "2026-02-09 / f474348",
+  "source": {
+    "file": "TODO.md",
+    "line": 118
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

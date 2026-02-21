@@ -1,0 +1,30 @@
+{
+  "task_uid": "td_cd7f09abbe666208cf94",
+  "display_id": "TD-UI-060",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 138,
+  "status": "DONE",
+  "title": "年度总结页改造为“左侧弱统计+目录 / 右侧写作主区”双栏布局，并增强年份标题层级与阅读宽度",
+  "acceptance": "年度页桌面端为双栏结构且左栏包含年份锚点、弱统计、目录；移动端可折叠回单列；右侧编辑区保持写作主场并限制可读宽度；不影响 pull/push、年份切换、冲突处理",
+  "related_files": [
+    "src/pages/yearly-summary.tsx",
+    "src/components/yearly/*",
+    "src/utils/yearly-sidebar-stats.ts",
+    "src/utils/markdown-toc.ts",
+    "src/__tests__/unit/*",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / a65b0c4",
+  "source": {
+    "file": "TODO.md",
+    "line": 192
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

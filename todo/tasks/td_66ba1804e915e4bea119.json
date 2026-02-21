@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_66ba1804e915e4bea119",
+  "display_id": "TD-BASE-002",
+  "id_prefix": "BASE",
+  "module_key": "6.1",
+  "module_name": "基础工程与项目骨架",
+  "module_label": "6.1 基础工程与项目骨架",
+  "order": 2,
+  "status": "DONE",
+  "title": "接入 Tailwind CSS 并配置基础样式",
+  "acceptance": "工具类生效且构建通过",
+  "related_files": [
+    "tailwind.config.*",
+    "src/index.css"
+  ],
+  "test_record": "`npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`npm run build` 通过",
+  "done_record": "2026-02-08 / 064c39d",
+  "source": {
+    "file": "TODO.md",
+    "line": 21
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,31 @@
+{
+  "task_uid": "td_536d776276d1ce109f1d",
+  "display_id": "TD-SYNC-023",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 47,
+  "status": "DONE",
+  "title": "修复下载同步缺失导致云端日记无法落本地（解锁后自动拉取并按 `modifiedAt` 决策覆盖）",
+  "acceptance": "解锁后自动从远端拉取 metadata 与对应日记并写入 IndexedDB；云端已有 `2100-01-01` 时页面可见；同条目仅在远端 `modifiedAt` 更新时覆盖本地",
+  "related_files": [
+    "src/services/sync.ts",
+    "src/hooks/use-auth.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/services/__tests__/sync.test.ts",
+    "src/hooks/__tests__/use-auth.test.tsx",
+    "src/__tests__/integration/*",
+    "e2e/specs/*",
+    "TODO.md"
+  ],
+  "test_record": "`npm run test:unit` 通过（50/50）；`npm run test:integration` 通过（46/46）；`npm run test:e2e` 通过（21/21）",
+  "done_record": "2026-02-11 / 42008cc",
+  "source": {
+    "file": "TODO.md",
+    "line": 86
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

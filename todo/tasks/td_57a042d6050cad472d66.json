@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_57a042d6050cad472d66",
+  "display_id": "TD-UI-067",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 145,
+  "status": "DONE",
+  "title": "调整编辑器“源码”按钮激活态颜色，与 push 按钮主色保持一致",
+  "acceptance": "点击“源码”进入激活态后颜色应与 push 按钮一致（含 hover 态）；日记页与年度总结页表现一致；交互不回退",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "e2e/specs/daily-edit.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（68/68）；`npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / fb11a2f",
+  "source": {
+    "file": "TODO.md",
+    "line": 199
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_3a3289ad748f94b91358",
+  "display_id": "TD-UI-032",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 110,
+  "status": "DONE",
+  "title": "同步工具栏背景色与日历背景保持一致（去除偏色叠加）",
+  "acceptance": "同步工具栏背景与日历卡片背景完全一致（同色值来源）；视觉上不再偏暖/偏蓝；不影响 pull/push/Toast 功能与状态展示",
+  "related_files": [
+    "src/index.css",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（55/55）；`npm run test:e2e:fast` 首次失败（`manual-sync-success` 出现 push 失败）；重跑 `npx playwright test e2e/specs/manual-sync-success.spec.ts --project=chromium --retries=0` 通过（1/1）；复跑 `npm run test:e2e:fast` 通过（4/4）",
+  "done_record": "2026-02-14 / 5a4295b",
+  "source": {
+    "file": "TODO.md",
+    "line": 164
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

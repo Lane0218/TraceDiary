@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20f6c57450e7f546f212",
+  "display_id": "TD-UI-063",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 141,
+  "status": "DONE",
+  "title": "设置页文案精简与统计页刷新图标修正（同步设置命名 + 去括号标签 + SVG 图标）",
+  "acceptance": "设置页“连接设置”改为“同步设置”；设置项标签去除括号补充说明（如“新 Token（可选）/主密码（仅更新 Token 时需要）”）；统计页刷新按钮改为标准 SVG 图标并保持交互不回退",
+  "related_files": [
+    "src/pages/settings.tsx",
+    "src/components/auth/auth-panel.tsx",
+    "src/pages/insights.tsx",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/stats-insights.spec.ts --project=chromium --retries=0 --workers=1` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / 05b63ef",
+  "source": {
+    "file": "TODO.md",
+    "line": 195
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

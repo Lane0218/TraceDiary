@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_2c9128014306e56da869",
+  "display_id": "TD-FUNC-003",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 18,
+  "status": "DONE",
+  "title": "实现日记创建/读取/编辑流程",
+  "acceptance": "按日期保存并可回显",
+  "related_files": [
+    "src/pages/editor.tsx",
+    "src/hooks/use-diary.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / a71bf95",
+  "source": {
+    "file": "TODO.md",
+    "line": 52
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

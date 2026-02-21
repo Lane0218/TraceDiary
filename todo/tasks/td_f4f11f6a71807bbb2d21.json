@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_f4f11f6a71807bbb2d21",
+  "display_id": "TD-UI-020",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 98,
+  "status": "DONE",
+  "title": "重构左栏视觉语言（分段控件/往年今日/统计卡片）以提升整体质感",
+  "acceptance": "左栏分段控件、往年今日、统计卡片在色彩/边界/间距上形成统一设计语言；去除廉价感与拼接感；移动端与桌面端均可正常显示",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/history/on-this-day-list.tsx",
+    "src/components/stats/stats-overview-card.tsx",
+    "TODO.md"
+  ],
+  "test_record": "用户已明确要求“这次不用跑测试”，本任务未执行 `lint/unit/integration/E2E` 自动化测试",
+  "done_record": "2026-02-11 / 594b1fc",
+  "source": {
+    "file": "TODO.md",
+    "line": 152
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

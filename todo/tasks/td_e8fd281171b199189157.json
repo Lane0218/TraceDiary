@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_e8fd281171b199189157",
+  "display_id": "TD-UI-034",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 112,
+  "status": "DONE",
+  "title": "优化月历年份步进控件为“箭头按钮 + 输入框”并保留直输跳转",
+  "acceptance": "年份选择器支持点击左右箭头按年增减；保留输入合法年份即时跳转；边界年份按钮禁用且样式清晰；整体视觉与现有中性风格一致",
+  "related_files": [
+    "src/components/calendar/month-calendar.tsx",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-15 / 81550f7",
+  "source": {
+    "file": "TODO.md",
+    "line": 166
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

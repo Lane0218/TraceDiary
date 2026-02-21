@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_ee22f037fee7395977dd",
+  "display_id": "TD-UI-023",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 101,
+  "status": "DONE",
+  "title": "优化工作台左右视觉长度与统计卡片密度（避免编辑区偏短与统计单卡过高）",
+  "acceptance": "编辑区在桌面端视觉上不再显著短于左栏；统计卡片高度与密度更紧凑；历史与统计切换体验保持稳定",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/stats/stats-overview-card.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（52/52）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1，含编辑区长度与统计卡片高度断言）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-12 / 900c3a7",
+  "source": {
+    "file": "TODO.md",
+    "line": 155
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

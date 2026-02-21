@@ -1,0 +1,30 @@
+{
+  "task_uid": "td_a67e658adc8d55171571",
+  "display_id": "TD-FUNC-009",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 24,
+  "status": "DONE",
+  "title": "修复基础 Markdown 标题/列表视觉差异并新增可编辑源码模式",
+  "acceptance": "标题（`#`）在可视化模式具备明显层级样式；无序/有序列表样式可见；支持“可视化/源码”双模式切换且内容双向同步、不丢失",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/components/editor/markdown-editor.css",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "e2e/specs/daily-edit.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "e2e/specs/calendar-history.spec.ts",
+    "e2e/specs/manual-sync-hang-guard.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（50/50）；`npm run test:e2e` 通过（21/21）",
+  "done_record": "2026-02-11 / e465517",
+  "source": {
+    "file": "TODO.md",
+    "line": 58
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

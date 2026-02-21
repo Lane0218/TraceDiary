@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_25c74a5b6374efd90fb9",
+  "display_id": "TD-UI-007",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 85,
+  "status": "DONE",
+  "title": "重构“日记主页面 + 年度总结独立页”信息架构（移除同级 Tab，新增 `/yearly/:year` 长时写作页与年终提示）",
+  "acceptance": "工作台仅保留日记编辑；可从按钮和年终提示进入年度总结独立页；年度总结支持按自然年切换与保存；返回日记不丢失上下文",
+  "related_files": [
+    "src/App.tsx",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/pages/calendar.tsx",
+    "src/__tests__/integration/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / 8d66a0b",
+  "source": {
+    "file": "TODO.md",
+    "line": 139
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_56256e0f394c81548c99",
+  "display_id": "TD-UI-038",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 116,
+  "status": "DONE",
+  "title": "年度总结页对齐日记页编辑布局并统一年份切换控件",
+  "acceptance": "年度总结页使用与日记页一致的“同步栏在上 + 编辑卡片在下”结构；年份切换交互与日历弹层一致（箭头步进+输入跳转）；编辑区在桌面端明显加长并接近铺满页面",
+  "related_files": [
+    "src/pages/yearly-summary.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npx playwright test e2e/specs/yearly-summary.spec.ts e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-15 / c4172c6",
+  "source": {
+    "file": "TODO.md",
+    "line": 170
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_db7bd2f6252841ad51e2",
+  "display_id": "TD-BASE-003",
+  "id_prefix": "BASE",
+  "module_key": "6.1",
+  "module_name": "基础工程与项目骨架",
+  "module_label": "6.1 基础工程与项目骨架",
+  "order": 3,
+  "status": "DONE",
+  "title": "建立目录结构（components/pages/hooks/services/types/utils）",
+  "acceptance": "目录与 SPEC 对齐",
+  "related_files": [
+    "src/"
+  ],
+  "test_record": "`npm run test:unit` 通过（1/1）；`npm run test:integration` 通过（1/1）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过",
+  "done_record": "2026-02-08 / 94001ac",
+  "source": {
+    "file": "TODO.md",
+    "line": 22
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

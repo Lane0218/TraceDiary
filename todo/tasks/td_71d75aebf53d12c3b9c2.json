@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_71d75aebf53d12c3b9c2",
+  "display_id": "TD-UI-021",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 99,
+  "status": "DONE",
+  "title": "回退左栏为原中性色并移除“往年今日/统计”内容区外层边框",
+  "acceptance": "左栏恢复非彩色设计；往年今日与统计内容区不再存在额外外层边框，仅保留必要卡片边界；分段切换与详情入口行为不变",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/history/on-this-day-list.tsx",
+    "src/components/stats/stats-overview-card.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（51/51）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-11 / e921d52",
+  "source": {
+    "file": "TODO.md",
+    "line": 153
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

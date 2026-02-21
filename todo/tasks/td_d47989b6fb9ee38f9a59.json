@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_d47989b6fb9ee38f9a59",
+  "display_id": "TD-UI-057",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 135,
+  "status": "DONE",
+  "title": "重构设置页信息架构为“连接设置 + 数据管理单卡双动作”，补齐防误操作短文案",
+  "acceptance": "设置页包含顶部简介、连接设置区与数据管理区；导入/导出合并在同一卡片两行展示；主任务区字段具备简短约束说明；现有导入/导出/设置更新链路不回退",
+  "related_files": [
+    "src/pages/settings.tsx",
+    "src/components/auth/auth-panel.tsx",
+    "src/components/common/import-data-panel.tsx",
+    "src/components/common/export-data-panel.tsx",
+    "src/index.css",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（76/76）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0 --workers=1` 首次失败（worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-ia-data-management --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan-settings-ia-data-management --e2e-cmd \\\"npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts --project=chromium --retries=0 --workers=1\\\"` 后重跑通过（5/5）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / cb538bb",
+  "source": {
+    "file": "TODO.md",
+    "line": 189
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

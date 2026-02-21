@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_40910f814273d1927097",
+  "display_id": "TD-DOC-003",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 164,
+  "status": "DONE",
+  "title": "在 AGENTS 增加“用户明确授权时可采用必要测试策略”的执行规范",
+  "acceptance": "AGENTS 明确必要测试策略的触发条件、最小测试集合、结果披露要求；不影响默认完整测试红线",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "仅文档改动，无功能行为变化；未执行单元/集成/E2E",
+  "done_record": "2026-02-10 / a72056b",
+  "source": {
+    "file": "TODO.md",
+    "line": 233
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_bf9db0dca439a00ab2bf",
+  "display_id": "TD-IMP-001",
+  "id_prefix": "IMP",
+  "module_key": "6.9",
+  "module_name": "数据导入（v1.1）",
+  "module_label": "6.9 数据导入（v1.1）",
+  "order": 156,
+  "status": "DONE",
+  "title": "实现 md/txt 文件名解析器（`YYYY-MM-DD` 与 `YYYY-summary`）",
+  "acceptance": "可正确识别 `daily`/`yearly_summary` 并产出结构化结果",
+  "related_files": [
+    "src/services/import.ts",
+    "src/types/diary.ts"
+  ],
+  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（67/67）；`npm run test:integration` 通过（64/64）；`npx playwright test e2e/specs/import.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/import-auto-batch-push --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_import-auto-batch-push --e2e-cmd \\\"npx playwright test e2e/specs/import.spec.ts --project=chromium --retries=0\\\"` 后重跑通过（1/1）",
+  "done_record": "2026-02-15 / 8bf65d2",
+  "source": {
+    "file": "TODO.md",
+    "line": 215
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

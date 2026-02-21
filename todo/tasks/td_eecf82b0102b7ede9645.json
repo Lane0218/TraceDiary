@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_eecf82b0102b7ede9645",
+  "display_id": "TD-FUNC-006",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 21,
+  "status": "DONE",
+  "title": "实现年度总结创建/编辑（`YYYY-summary.md.enc`）",
+  "acceptance": "可按年份管理总结",
+  "related_files": [
+    "src/pages/yearly-summary.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / a71bf95",
+  "source": {
+    "file": "TODO.md",
+    "line": 55
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

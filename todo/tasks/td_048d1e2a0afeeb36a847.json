@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_048d1e2a0afeeb36a847",
+  "display_id": "TD-DATA-002",
+  "id_prefix": "DATA",
+  "module_key": "6.3",
+  "module_name": "数据层与本地缓存",
+  "module_label": "6.3 数据层与本地缓存",
+  "order": 14,
+  "status": "DONE",
+  "title": "实现 `DiaryEntry` 与 `MetadataEntry` 类型（含 yearly `year + date`）",
+  "acceptance": "类型与 SPEC 一致",
+  "related_files": [
+    "src/types/diary.ts",
+    "src/types/metadata.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / f4ddb11",
+  "source": {
+    "file": "TODO.md",
+    "line": 43
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

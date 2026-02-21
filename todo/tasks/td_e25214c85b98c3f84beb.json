@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_e25214c85b98c3f84beb",
+  "display_id": "TD-DEP-004",
+  "id_prefix": "DEP",
+  "module_key": "6.6",
+  "module_name": "PWA、部署与安全头",
+  "module_label": "6.6 PWA、部署与安全头",
+  "order": 65,
+  "status": "DONE",
+  "title": "绑定 TraceDiary 到自定义二级域名（`tracediary.laneljc.cn` 与 `diary.laneljc.cn`）",
+  "acceptance": "目标域名完成 Vercel 绑定并可通过 HTTPS 访问应用首页",
+  "related_files": [
+    "TODO.md"
+  ],
+  "test_record": "风险分级：低（部署配置）；`npx vercel domains add tracediary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`npx vercel domains add diary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`curl -I https://tracediary.laneljc.cn` 返回 `HTTP/2 200`；`curl -I https://diary.laneljc.cn` 返回 `HTTP/2 200`；`npm run lint` 通过；未执行 `unit/integration/e2e`（本任务为部署配置低风险，不涉及运行时代码变更）",
+  "done_record": "2026-02-17 / bc46def",
+  "source": {
+    "file": "TODO.md",
+    "line": 109
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

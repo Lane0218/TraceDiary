@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_23799562c2de99892338",
+  "display_id": "TD-DOC-005",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 166,
+  "status": "DONE",
+  "title": "在 AGENTS 增加“接任务后先重命名 tmux pane”的执行规范",
+  "acceptance": "`AGENTS.md` 明确要求每次接收任务先查看 pane 编号，再按任务语义重命名 pane，且提供命令示例",
+  "related_files": [
+    "AGENTS.md",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；仅文档改动，无功能行为变化，未执行 `npm run test:unit` / `npm run test:integration` / E2E",
+  "done_record": "2026-02-12 / b5ac147",
+  "source": {
+    "file": "TODO.md",
+    "line": 235
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_0f158555aa5d632b7917",
+  "display_id": "TD-UI-061",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 139,
+  "status": "DONE",
+  "title": "统一设置页按钮风格并将统计页刷新改为仅图标按钮",
+  "acceptance": "设置页提交按钮采用深灰主按钮、导入导出采用次级按钮并与 pull/push 视觉一致；统计页刷新按钮仅显示图标且加载时旋转反馈；不回退现有交互与可访问性",
+  "related_files": [
+    "src/index.css",
+    "src/components/auth/auth-panel.tsx",
+    "src/components/common/import-data-panel.tsx",
+    "src/components/common/export-data-panel.tsx",
+    "src/pages/insights.tsx",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（85/85）；`npm run test:integration` 通过（67/67）；`npx playwright test e2e/specs/settings-update.spec.ts e2e/specs/import.spec.ts e2e/specs/export-data.spec.ts e2e/specs/stats-insights.spec.ts --project=chromium --retries=0 --workers=1` 首次失败（`export-data` 无数据场景偶发检测到下载），同命令重跑通过（6/6）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / df7432d",
+  "source": {
+    "file": "TODO.md",
+    "line": 193
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

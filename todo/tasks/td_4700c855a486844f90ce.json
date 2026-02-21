@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_4700c855a486844f90ce",
+  "display_id": "TD-SYNC-029",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 53,
+  "status": "DONE",
+  "title": "修复“push 成功后仍显示云端待同步”状态不收敛问题（覆盖刷新后状态恢复）",
+  "acceptance": "push 成功后状态应收敛为“云端已同步”；刷新/重进页面后仍保持“云端已同步”；新增回归测试可稳定覆盖该链路",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/hooks/__tests__/use-sync.test.ts",
+    "e2e/specs/manual-sync-state-consistency.spec.ts",
+    "e2e/specs/yearly-summary.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（53/53）；`npm run test:e2e:full` 首次失败（新 worktree 缺少 `.env.e2e`）；复制主工作区 `.env.e2e` 后重跑 `npm run test:e2e:full` 通过（21/21）",
+  "done_record": "2026-02-13 / 517ef81",
+  "source": {
+    "file": "TODO.md",
+    "line": 92
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

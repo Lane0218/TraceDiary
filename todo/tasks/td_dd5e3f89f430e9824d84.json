@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_dd5e3f89f430e9824d84",
+  "display_id": "TD-DEP-003",
+  "id_prefix": "DEP",
+  "module_key": "6.6",
+  "module_name": "PWA、部署与安全头",
+  "module_label": "6.6 PWA、部署与安全头",
+  "order": 64,
+  "status": "DONE",
+  "title": "执行 Vercel 生产部署并回传可访问地址",
+  "acceptance": "成功产出生产部署 URL 且可访问",
+  "related_files": [
+    "TODO.md",
+    ".gitignore"
+  ],
+  "test_record": "风险分级：低（部署与配置记录）；`npm run lint` 通过；`npx vercel whoami --token ***` 通过（账号：`lane0218`）；`npx vercel --prod --yes --name tracediary --token ***` 通过（Production: `https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app`，Alias: `https://tracediary.vercel.app`）；`curl -I https://tracediary.vercel.app` 返回 `HTTP/2 200` 且安全响应头生效；`curl -I https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app` 返回 `HTTP/2 401`（部署保护）",
+  "done_record": "2026-02-17 / 232ca05",
+  "source": {
+    "file": "TODO.md",
+    "line": 108
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_562a00924641223e94ce",
+  "display_id": "TD-UI-075",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 153,
+  "status": "DONE",
+  "title": "修复统计页年度对比图与月度趋势图的轴标签被柱体遮挡问题，并补齐防回归测试",
+  "acceptance": "年度对比图与月度趋势图左右轴标签不再被柱体覆盖；两图在不同数据量下无视觉遮挡；新增测试可稳定拦截同类回归",
+  "related_files": [
+    "src/components/stats/monthly-trend-chart.tsx",
+    "src/components/stats/yearly-comparison-chart.tsx",
+    "src/components/stats/chart-layout.ts",
+    "src/__tests__/unit/chart-layout.unit.test.ts",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（89/89）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/stats-chart-occlusion-fix --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_stats-chart-occlusion-fix --e2e-cmd \\\"npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0\\\"` 后重跑通过（1/1）",
+  "done_record": "2026-02-18 / 12503db",
+  "source": {
+    "file": "TODO.md",
+    "line": 207
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_ef3cf281e6d11fc504d0",
+  "display_id": "TD-DATA-001",
+  "id_prefix": "DATA",
+  "module_key": "6.3",
+  "module_name": "数据层与本地缓存",
+  "module_label": "6.3 数据层与本地缓存",
+  "order": 13,
+  "status": "DONE",
+  "title": "实现 IndexedDB 数据库与对象仓库（diaries/metadata/config）",
+  "acceptance": "可读写并按索引查询",
+  "related_files": [
+    "src/services/indexeddb.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / f4ddb11",
+  "source": {
+    "file": "TODO.md",
+    "line": 42
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

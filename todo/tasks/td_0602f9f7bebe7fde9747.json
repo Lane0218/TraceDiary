@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_0602f9f7bebe7fde9747",
+  "display_id": "TD-SYNC-008",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 32,
+  "status": "DONE",
+  "title": "手动上传失败原因改为按钮旁内联提示，并返回可消费的手动上传结果",
+  "acceptance": "手动点击失败时在按钮旁显示具体原因；自动上传失败不占用该提示位；日记与年度总结页行为一致",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/hooks/__tests__/use-sync.test.ts",
+    "src/__tests__/integration/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（37/37）；`npm run test:integration` 通过（30/30）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / 932ab2c",
+  "source": {
+    "file": "TODO.md",
+    "line": 71
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

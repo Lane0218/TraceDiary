@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_5c5a0479a5e37bb7e14c",
+  "display_id": "TD-SYNC-012",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 36,
+  "status": "DONE",
+  "title": "修复失败后排队任务持续重入导致同步长时间不退出的问题",
+  "acceptance": "上传失败/超时后不应立刻重启下一轮上传；busy 提示在退出 syncing 后自动清理；状态可恢复到可重试",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/hooks/__tests__/use-sync.test.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-09 / 07de517",
+  "source": {
+    "file": "TODO.md",
+    "line": 75
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

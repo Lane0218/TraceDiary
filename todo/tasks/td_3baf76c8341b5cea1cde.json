@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_3baf76c8341b5cea1cde",
+  "display_id": "TD-CLOUD-003",
+  "id_prefix": "CLOUD",
+  "module_key": "6.14",
+  "module_name": "云端配置存储与权限（v1.2）",
+  "module_label": "6.14 云端配置存储与权限（v1.2）",
+  "order": 179,
+  "status": "TODO",
+  "title": "实现云端配置读写服务与新设备恢复链路",
+  "acceptance": "登录后可读取云端配置；新设备可恢复 repo/branch/token 密文并进入主密码解锁流程；失败路径可回退本地手动配置",
+  "related_files": [
+    "src/services/*",
+    "src/hooks/use-auth.ts",
+    "src/pages/settings.tsx",
+    "e2e/specs/*"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 263
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

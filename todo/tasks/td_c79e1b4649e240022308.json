@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_c79e1b4649e240022308",
+  "display_id": "TD-TEST-013",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 78,
+  "status": "DONE",
+  "title": "测试迁移与断言更新（适配新信息架构与统一导航）",
+  "acceptance": "集成/E2E 不再依赖“会话：已解锁”；导航断言迁移为统一入口并覆盖 `/settings` 可访问；`stats-insights` 跳转断言改为新导航结构并稳定通过",
+  "related_files": [
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含 `app.integration`）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）",
+  "done_record": "2026-02-17 / cc21f03",
+  "source": {
+    "file": "TODO.md",
+    "line": 127
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

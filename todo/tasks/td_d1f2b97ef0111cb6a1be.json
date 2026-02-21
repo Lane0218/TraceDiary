@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_d1f2b97ef0111cb6a1be",
+  "display_id": "TD-SYNC-020",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 44,
+  "status": "DONE",
+  "title": "落地服务层最小重构（收敛 Base64/UTF-8、统一 metadata 走 Gitee 网关、固化 sync/gitee 职责边界，并统一测试入口）",
+  "acceptance": "`sync.ts` 不再维护重复文本 Base64 实现且 metadata 读写不直接发起 contents API；`gitee.ts` 作为唯一 Gitee 网关；测试入口统一为 `src/__tests__/` 且单元/集成/E2E 全部通过",
+  "related_files": [
+    "src/services/sync.ts",
+    "src/services/gitee.ts",
+    "src/services/__tests__/sync.test.ts",
+    "src/test/setup.ts",
+    "src/__tests__/setup.ts",
+    "vitest.config.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run test:unit` 通过（48/48）；`npm run test:integration` 通过（43/43）；`npm run test:e2e` 通过（19 passed，1 flaky 重试通过，网络超时后重试成功）；`npm run lint` 失败（仓库既有问题：`e2e/helpers/conflict.ts:247 no-unsafe-finally`）；`npm run build` 通过",
+  "done_record": "2026-02-10 / 9733c4e",
+  "source": {
+    "file": "TODO.md",
+    "line": 83
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

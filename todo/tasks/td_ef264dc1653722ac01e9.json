@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_ef264dc1653722ac01e9",
+  "display_id": "TD-UI-008",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 86,
+  "status": "DONE",
+  "title": "编辑器模式切换收敛为单“源码”按钮并对齐既有按钮样式",
+  "acceptance": "默认未点击“源码”时展示可视化编辑；点击“源码”后进入源码编辑；按钮样式与站内 `td-btn` 体系一致",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/pages/workspace.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`E2E` 未执行（用户在本任务中明确要求“修改完后不用进行端到端测试”）",
+  "done_record": "2026-02-11 / b53bd69",
+  "source": {
+    "file": "TODO.md",
+    "line": 140
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

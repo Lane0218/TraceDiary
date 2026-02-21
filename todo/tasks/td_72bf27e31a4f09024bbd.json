@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_72bf27e31a4f09024bbd",
+  "display_id": "TD-UI-036",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 114,
+  "status": "DONE",
+  "title": "点击 pull/push 任一按钮后，两个按钮在进行中同时禁用",
+  "acceptance": "触发 pull 或 push 后，两按钮均立即进入禁用态；请求结束后恢复；不影响现有成功/失败提示与冲突流程",
+  "related_files": [
+    "src/components/common/sync-control-bar.tsx",
+    "src/index.css",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "e2e/specs/manual-sync-busy-clear.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（57/57）；`npm run test:e2e:fast` 首次失败（新 worktree 缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/push-pull-dual-disable --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary/.worktrees/plan-push-pull-dual-disable --e2e-cmd \\\"npm run test:e2e:fast\\\"` 后重跑通过（4/4）",
+  "done_record": "2026-02-15 / 28ebb5d",
+  "source": {
+    "file": "TODO.md",
+    "line": 168
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

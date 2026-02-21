@@ -1,0 +1,33 @@
+{
+  "task_uid": "td_e1fb7a0cf80018cb10e3",
+  "display_id": "TD-EXP-001",
+  "id_prefix": "EXP",
+  "module_key": "6.12",
+  "module_name": "数据导出（v1.1）",
+  "module_label": "6.12 数据导出（v1.1）",
+  "order": 161,
+  "status": "DONE",
+  "title": "实现设置页明文导出入口与 ZIP 导出流程（含 manifest）并补齐分层测试",
+  "acceptance": "设置页可触发明文导出并下载 `trace-diary-export-YYYYMMDD-HHmmss.zip`；产物包含 `diaries/*.md`、`summaries/*-summary.md` 与 `manifest.json`；未解锁/无数据/部分失败反馈符合 SPEC 4.8；导出过程不触发 Push/Pull",
+  "related_files": [
+    "src/pages/settings.tsx",
+    "src/components/common/export-data-panel.tsx",
+    "src/services/export.ts",
+    "src/types/export.ts",
+    "src/index.css",
+    "src/services/__tests__/export.test.ts",
+    "src/__tests__/integration/export.integration.test.tsx",
+    "e2e/specs/export-data.spec.ts",
+    "package.json",
+    "package-lock.json",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（63/63）；`npm run test:integration` 通过（65/65）；`npx playwright test e2e/specs/export-data.spec.ts --project=chromium --retries=0` 首次失败（worktree 缺少 `.env.e2e`）；执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --branch plan/export-settings-only --repo /home/ljcwsl/0-code/TraceDiary --worktree /home/ljcwsl/0-code/TraceDiary-wt-plan_export-settings-only --e2e-cmd \\\"npx playwright test e2e/specs/export-data.spec.ts --project=chromium --retries=0\\\"` 后重跑通过（2/2）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-15 / 961dbee",
+  "source": {
+    "file": "TODO.md",
+    "line": 225
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

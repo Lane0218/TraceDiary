@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_c30e21ee4a97c72d6019",
+  "display_id": "TD-UI-004",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 82,
+  "status": "DONE",
+  "title": "精修工作台视觉层级、工具条编排、状态反馈与弹层细节",
+  "acceptance": "主次区域更清晰；工具条分层；状态可感知；弹层模式切换和错误区更稳定；移动端布局更稳",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/components/auth/auth-modal.tsx",
+    "src/components/calendar/month-calendar.tsx",
+    "src/components/history/on-this-day-list.tsx",
+    "src/index.css"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（23/23）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / b426bbd",
+  "source": {
+    "file": "TODO.md",
+    "line": 136
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

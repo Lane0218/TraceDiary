@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_cdeb8bbdcaf2c10c5d17",
+  "display_id": "TD-TEST-014",
+  "id_prefix": "TEST",
+  "module_key": "6.15",
+  "module_name": "演示链路与验收（v1.2）",
+  "module_label": "6.15 演示链路与验收（v1.2）",
+  "order": 182,
+  "status": "TODO",
+  "title": "新增游客/登录/恢复链路分层测试（unit/integration/E2E）",
+  "acceptance": "至少覆盖：游客进入与转化、OTP 登录、首次绑定、跨设备恢复、未授权写入拦截；分层测试命令可稳定通过",
+  "related_files": [
+    "src/services/__tests__/*",
+    "src/__tests__/integration/*",
+    "e2e/specs/*",
+    "TODO.md"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 271
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

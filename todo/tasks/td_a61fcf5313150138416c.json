@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_a61fcf5313150138416c",
+  "display_id": "TD-UI-056",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 134,
+  "status": "DONE",
+  "title": "收敛年度热力图右侧空白并放大热力图主体（右栏贴右 + 左图自适应扩展）",
+  "acceptance": "年度热力图右侧卡片应贴近容器右边且不留明显空白；左侧热力图较当前略放大；左右间距收敛并保持右栏底边与下方信息卡区域对齐",
+  "related_files": [
+    "src/components/stats/yearly-activity-heatmap.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（152/152）；`npm run test:integration` 通过（134/134）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
+  "done_record": "2026-02-17 / 8fbb904",
+  "source": {
+    "file": "TODO.md",
+    "line": 188
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

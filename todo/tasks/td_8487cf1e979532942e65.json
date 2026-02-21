@@ -1,0 +1,33 @@
+{
+  "task_uid": "td_8487cf1e979532942e65",
+  "display_id": "TD-UI-015",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 93,
+  "status": "DONE",
+  "title": "新增写作统计视图（侧栏“往年今日/统计”分段切换 + 统计详情页）并提供累计字数/篇数/连续天数等指标",
+  "acceptance": "工作台左侧支持“往年今日/统计”切换且默认不影响往年今日首屏可见；统计口径正确（总日记、总年度总结、累计字数、当前连续、最长连续、本年字数）；新增 `/insights` 页面可查看年度汇总与近12月趋势",
+  "related_files": [
+    "src/App.tsx",
+    "src/pages/workspace.tsx",
+    "src/pages/insights.tsx",
+    "src/components/stats/stats-overview-card.tsx",
+    "src/hooks/use-stats.ts",
+    "src/utils/stats.ts",
+    "src/types/stats.ts",
+    "src/__tests__/unit/stats.unit.test.ts",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "e2e/specs/stats-insights.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（55/55）；`npm run test:integration` 通过（50/50）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/stats-insights.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-11 / 1c6f8e3",
+  "source": {
+    "file": "TODO.md",
+    "line": 147
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_f5274671d10839f9380e",
+  "display_id": "TD-TEST-007",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 72,
+  "status": "DONE",
+  "title": "补齐 Playwright 端到端关键验收场景（冲突三分支与再冲突、自动重试、年度总结、认证后续、日历导航、安全关键项）",
+  "acceptance": "新增/改造 E2E 用例并通过完整测试（单元/集成/E2E）",
+  "related_files": [
+    "e2e/specs/*",
+    "e2e/fixtures/*",
+    "e2e/helpers/*"
+  ],
+  "test_record": "`npm run test:unit` 通过（42/42）；`npm run test:integration` 通过（35/35）；`npm run test:e2e` 通过（17/17）；`npm run lint` 通过",
+  "done_record": "2026-02-09 / a58cc80",
+  "source": {
+    "file": "TODO.md",
+    "line": 121
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

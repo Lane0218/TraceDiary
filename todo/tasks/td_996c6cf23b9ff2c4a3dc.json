@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_996c6cf23b9ff2c4a3dc",
+  "display_id": "TD-UI-074",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 152,
+  "status": "DONE",
+  "title": "重设计站点图标以提升小尺寸可读性并替换现有图标资源",
+  "acceptance": "16/24/32px 下轮廓可辨识；浏览器页签与 PWA 图标资源更新为新设计；构建与分层测试通过",
+  "related_files": [
+    "public/icons/icon.svg",
+    "public/icons/icon-192.png",
+    "public/icons/icon-512.png",
+    "TODO.md"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:fast` 通过（5/5）；未执行全量 `npm run test:e2e:full`（本任务未命中全量门禁）",
+  "done_record": "2026-02-18 / 4238c3b",
+  "source": {
+    "file": "TODO.md",
+    "line": 206
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

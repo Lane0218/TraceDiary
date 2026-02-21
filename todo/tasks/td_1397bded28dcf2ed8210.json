@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_1397bded28dcf2ed8210",
+  "display_id": "TD-AUTH-004",
+  "id_prefix": "AUTH",
+  "module_key": "6.13",
+  "module_name": "游客模式与账号体系（v1.2）",
+  "module_label": "6.13 游客模式与账号体系（v1.2）",
+  "order": 176,
+  "status": "TODO",
+  "title": "重构首次绑定流程：登录后再配置仓库与主密码",
+  "acceptance": "登录用户在首次绑定时完成 Repo/Branch/Token + 主密码配置；已绑定用户跳过重复配置并直接进入解锁或使用",
+  "related_files": [
+    "src/hooks/use-auth.ts",
+    "src/pages/settings.tsx",
+    "src/components/auth/*"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "TODO.md",
+    "line": 255
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

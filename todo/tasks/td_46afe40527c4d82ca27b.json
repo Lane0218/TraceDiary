@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_46afe40527c4d82ca27b",
+  "display_id": "TD-SYNC-013",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 37,
+  "status": "DONE",
+  "title": "修复同步中手动上传按钮无响应（移除 disabled 并保留忙碌反馈）",
+  "acceptance": "同步中按钮可点击；点击后立刻提示“当前正在上传，请稍候重试”；不再出现无响应体感",
+  "related_files": [
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-09 / 87ed64f",
+  "source": {
+    "file": "TODO.md",
+    "line": 76
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

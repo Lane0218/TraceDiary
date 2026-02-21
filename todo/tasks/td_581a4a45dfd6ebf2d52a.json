@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_581a4a45dfd6ebf2d52a",
+  "display_id": "TD-FUNC-005",
+  "id_prefix": "FUNC",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 20,
+  "status": "DONE",
+  "title": "实现 30 秒防抖上传与手动保存立即上传",
+  "acceptance": "符合触发时机定义",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/services/sync.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（22/22）；`npm run test:integration` 通过（21/21）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / a71bf95",
+  "source": {
+    "file": "TODO.md",
+    "line": 54
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

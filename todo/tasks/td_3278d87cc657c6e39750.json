@@ -1,0 +1,32 @@
+{
+  "task_uid": "td_3278d87cc657c6e39750",
+  "display_id": "TD-UI-013",
+  "id_prefix": "UI",
+  "module_key": "6.8",
+  "module_name": "UI 体验优化",
+  "module_label": "6.8 UI 体验优化",
+  "order": 91,
+  "status": "DONE",
+  "title": "移除往年今日字数展示并统一编辑器与metadata字数口径（去空白字符数）",
+  "acceptance": "往年今日不再显示字数；编辑器右下角字数与新写入 metadata `wordCount` 口径一致（去空白字符数）",
+  "related_files": [
+    "src/components/history/on-this-day-list.tsx",
+    "src/components/history/on-this-day-utils.ts",
+    "src/components/editor/markdown-editor.tsx",
+    "src/hooks/use-diary.ts",
+    "src/pages/workspace.tsx",
+    "src/services/sync.ts",
+    "src/utils/word-count.ts",
+    "src/__tests__/integration/markdown-editor.integration.test.tsx",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（44/44）；`npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行与改动直接相关目标 E2E）",
+  "done_record": "2026-02-11 / 8fd5bab",
+  "source": {
+    "file": "TODO.md",
+    "line": 145
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

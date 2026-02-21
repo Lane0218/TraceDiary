@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_68dc60dc3a75f8cc2c41",
+  "display_id": "TD-TEST-002",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 67,
+  "status": "DONE",
+  "title": "同步与冲突（CAS/sha mismatch）单元测试",
+  "acceptance": "冲突分支断言完整",
+  "related_files": [
+    "src/services/__tests__/*"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npx vitest run src/services/__tests__/sync.test.ts` 通过（26/26）；`npm run test:unit` 通过（86/86）",
+  "done_record": "2026-02-17 / cc21f03",
+  "source": {
+    "file": "TODO.md",
+    "line": 116
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

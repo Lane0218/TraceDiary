@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_11c40cbd2f271b163416",
+  "display_id": "TD-IMP-003",
+  "id_prefix": "IMP",
+  "module_key": "6.9",
+  "module_name": "数据导入（v1.1）",
+  "module_label": "6.9 数据导入（v1.1）",
+  "order": 158,
+  "status": "DONE",
+  "title": "实现冲突逐条确认（覆盖/跳过）写入流程",
+  "acceptance": "同日期/同年份冲突可逐条决策并正确落库",
+  "related_files": [
+    "src/components/common/import-conflict-dialog.tsx",
+    "src/pages/diary.tsx"
+  ],
+  "test_record": "风险分级：高；同 `TD-IMP-001` 测试集全部通过",
+  "done_record": "2026-02-15 / 8bf65d2",
+  "source": {
+    "file": "TODO.md",
+    "line": 217
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

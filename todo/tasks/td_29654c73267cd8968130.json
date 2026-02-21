@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_29654c73267cd8968130",
+  "display_id": "TD-DEV-001",
+  "id_prefix": "DEV",
+  "module_key": "6.11",
+  "module_name": "开发效率与工具",
+  "module_label": "6.11 开发效率与工具",
+  "order": 172,
+  "status": "DONE",
+  "title": "新增 WezTerm + tmux 四窗格 Codex 启动脚本（默认命名且支持后续手动重命名）",
+  "acceptance": "一条命令可创建/附着 `2x2` 四窗格并在每个 pane 启动 `codex`；初始 pane 名称可见；可通过 `tmux select-pane -T` 手动改名",
+  "related_files": [
+    "scripts/start-codex4.sh",
+    "docs/codex-parallel.md",
+    "TODO.md"
+  ],
+  "test_record": "`bash -n scripts/start-codex4.sh` 通过；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；用户明确要求“这个就不用测试了”，未继续执行 `npm run test:integration` 与 E2E",
+  "done_record": "2026-02-12 / 0fb306a",
+  "source": {
+    "file": "TODO.md",
+    "line": 246
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

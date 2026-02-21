@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_f21b1a4a99176420fa11",
+  "display_id": "TD-IMP-002",
+  "id_prefix": "IMP",
+  "module_key": "6.9",
+  "module_name": "数据导入（v1.1）",
+  "module_label": "6.9 数据导入（v1.1）",
+  "order": 157,
+  "status": "DONE",
+  "title": "实现批量导入预检（有效/冲突/无效分类）",
+  "acceptance": "导入前能输出三类列表，错误文件可定位",
+  "related_files": [
+    "src/services/import.ts",
+    "src/pages/diary.tsx"
+  ],
+  "test_record": "风险分级：高；同 `TD-IMP-001` 测试集全部通过",
+  "done_record": "2026-02-15 / 8bf65d2",
+  "source": {
+    "file": "TODO.md",
+    "line": 216
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

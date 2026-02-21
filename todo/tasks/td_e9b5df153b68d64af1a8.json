@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_e9b5df153b68d64af1a8",
+  "display_id": "TD-SYNC-003",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 27,
+  "status": "DONE",
+  "title": "实现 `sha mismatch` 冲突识别",
+  "acceptance": "冲突可被稳定检测",
+  "related_files": [
+    "src/services/sync.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（35/35）；`npm run test:integration` 通过（26/26）；`npm run test:e2e` 通过；`npm run lint` 通过",
+  "done_record": "2026-02-09 / 247234f",
+  "source": {
+    "file": "TODO.md",
+    "line": 66
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

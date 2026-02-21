@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_db5d80007e0928fe1a13",
+  "display_id": "TD-DEP-002",
+  "id_prefix": "DEP",
+  "module_key": "6.6",
+  "module_name": "PWA、部署与安全头",
+  "module_label": "6.6 PWA、部署与安全头",
+  "order": 63,
+  "status": "DONE",
+  "title": "补充入口访问控制部署说明（Cloudflare Access/Vercel/Basic Auth）",
+  "acceptance": "部署文档可执行",
+  "related_files": [
+    "README.md",
+    "SPEC.md"
+  ],
+  "test_record": "风险分级：低（仅文档）；仅文档改动，无功能行为变化；未执行自动化测试（`lint/unit/integration/E2E`）",
+  "done_record": "2026-02-17 / a03d3fc",
+  "source": {
+    "file": "TODO.md",
+    "line": 107
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

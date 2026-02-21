@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_1179699f95ef69d3c952",
+  "display_id": "TD-AUTH-001",
+  "id_prefix": "AUTH",
+  "module_key": "6.13",
+  "module_name": "游客模式与账号体系（v1.2）",
+  "module_label": "6.13 游客模式与账号体系（v1.2）",
+  "order": 173,
+  "status": "DONE",
+  "title": "接入 Supabase 客户端与会话上下文（仅使用 `anon key`）",
+  "acceptance": "前端可初始化 Supabase client；会话状态可在全局读取；禁止将 `service_role` 暴露到前端",
+  "related_files": [
+    "src/main.tsx",
+    "src/hooks/*",
+    "src/services/*",
+    "README.md"
+  ],
+  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（86/86）；`npm run test:integration` 通过（68/68，含既有 `act(...)` 警告）；`npm run test:e2e:full` 首次失败（缺少 `.env.e2e`），从主工作区复制 `.env.e2e` 后重跑通过（28/28，含 2 项 flaky 经 retry 通过）；定向 `npx playwright test --project=chromium e2e/specs/export-data.spec.ts e2e/specs/upload-encryption.spec.ts --workers=2 --retries=1` 通过（3/3）",
+  "done_record": "2026-02-18 / a302c23",
+  "source": {
+    "file": "TODO.md",
+    "line": 252
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

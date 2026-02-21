@@ -1,0 +1,25 @@
+{
+  "task_uid": "td_8167abb44456296de623",
+  "display_id": "TD-DOC-004",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 165,
+  "status": "DONE",
+  "title": "更新 SPEC 同步策略为“仅手动 pull/push”，并移除自动上传相关 E2E 用例",
+  "acceptance": "`SPEC.md` 明确不再自动上传；仅保留手动 push 与手动/解锁触发 pull 的描述；自动上传专属 E2E 用例已移除",
+  "related_files": [
+    "SPEC.md",
+    "e2e/specs/auto-sync-last-synced.spec.ts",
+    "TODO.md"
+  ],
+  "test_record": "`npm run lint` 通过；`npm run test:unit` 通过（51/51）；`npm run test:integration` 通过（45/45）；`npx playwright test e2e/specs/manual-sync-success.spec.ts e2e/specs/remote-pull-sync.spec.ts --project=chromium --retries=0` 通过（2/2）；`npx playwright test --list --project=chromium` 显示总计 `20 tests in 13 files`（已移除自动上传专属 E2E）",
+  "done_record": "2026-02-11 / 5afde94",
+  "source": {
+    "file": "TODO.md",
+    "line": 234
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

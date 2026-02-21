@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_3c69b9709c804165f87e",
+  "display_id": "TD-SYNC-010",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 34,
+  "status": "DONE",
+  "title": "修复上传分支不匹配导致的持续失败并增强失败可观测性",
+  "acceptance": "配置分支不存在时可自动回退到可用分支并上传成功；手动与自动失败原因可见且不被静默覆盖",
+  "related_files": [
+    "src/services/sync.ts",
+    "src/pages/workspace.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/services/__tests__/sync.test.ts",
+    "src/__tests__/integration/editor.integration.test.tsx"
+  ],
+  "test_record": "`npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（32/32）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-09 / 996b21d",
+  "source": {
+    "file": "TODO.md",
+    "line": 73
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

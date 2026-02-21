@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_f9912f126a1acc98ac28",
+  "display_id": "TD-SYNC-011",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 35,
+  "status": "DONE",
+  "title": "修复上传请求卡死导致长期处于 syncing 的问题（增加超时保护）",
+  "acceptance": "上传请求超时后应自动结束 syncing 并给出明确错误；后续手动上传可继续触发；不再长期显示“正在上传”",
+  "related_files": [
+    "src/hooks/use-sync.ts",
+    "src/hooks/__tests__/use-sync.test.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（38/38）；`npm run test:integration` 通过（33/33）；`npm run test:e2e` 通过；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-09 / 78152db",
+  "source": {
+    "file": "TODO.md",
+    "line": 74
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

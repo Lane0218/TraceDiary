@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_9939ec2a12d2bdcad70b",
+  "display_id": "TD-SEC-005",
+  "id_prefix": "SEC",
+  "module_key": "6.2",
+  "module_name": "认证、安全与密钥管理",
+  "module_label": "6.2 认证、安全与密钥管理",
+  "order": 10,
+  "status": "DONE",
+  "title": "实现 `encryptedToken` 存储与恢复",
+  "acceptance": "本地无 Token 明文",
+  "related_files": [
+    "src/services/crypto.ts",
+    "src/hooks/use-auth.ts"
+  ],
+  "test_record": "`npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
+  "done_record": "2026-02-08 / cb09c7f",
+  "source": {
+    "file": "TODO.md",
+    "line": 34
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}

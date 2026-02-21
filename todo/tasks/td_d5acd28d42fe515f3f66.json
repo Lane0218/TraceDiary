@@ -1,0 +1,23 @@
+{
+  "task_uid": "td_d5acd28d42fe515f3f66",
+  "display_id": "TD-TEST-003",
+  "id_prefix": "TEST",
+  "module_key": "6.7",
+  "module_name": "测试与验收",
+  "module_label": "6.7 测试与验收",
+  "order": 68,
+  "status": "DONE",
+  "title": "认证流程集成测试（首次/7天内/过期/Token失效）",
+  "acceptance": "4 条流程均通过",
+  "related_files": [
+    "src/hooks/__tests__/*"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npx vitest run --environment jsdom src/hooks/__tests__/use-auth.test.tsx` 通过（10/10）；`npm run test:integration` 通过（68/68）",
+  "done_record": "2026-02-17 / cc21f03",
+  "source": {
+    "file": "TODO.md",
+    "line": 117
+  },
+  "version": 1,
+  "updated_at": "2026-02-21T14:31:06.652Z"
+}
