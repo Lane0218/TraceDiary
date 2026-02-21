@@ -1,0 +1,28 @@
+{
+  "task_uid": "td_20260221160033_338aa9ca",
+  "display_id": "TD-OPS-20260221-160033-0332",
+  "id_prefix": "OPS",
+  "module_key": "6.11",
+  "module_name": "仓库运维",
+  "module_label": "6.11 仓库运维",
+  "order": 20260221160033,
+  "status": "DONE",
+  "title": "将 vk/842a-2-2-2 合并回 main 并清理冗余分支/worktree",
+  "acceptance": "main 合并 vk/842a-2-2-2 的变更且可推送；冗余本地分支与无效 worktree 已清理；任务记录完整",
+  "related_files": [
+    "e2e/fixtures/app.ts",
+    "src/__tests__/integration/app.integration.test.tsx",
+    "src/__tests__/unit/date.unit.test.ts",
+    "src/pages/diary.tsx",
+    "src/utils/date.ts",
+    "todo/tasks/td_20260221160033_338aa9ca.json"
+  ],
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（72/72，含既有 act 警告）；`npx playwright test e2e/specs/daily-edit.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 E2E（本任务未命中全量门禁）。",
+  "done_record": "2026-02-22 / pending",
+  "source": {
+    "file": "AGENTS.md",
+    "line": 1
+  },
+  "version": 3,
+  "updated_at": "2026-02-21T16:03:29.000Z"
+}

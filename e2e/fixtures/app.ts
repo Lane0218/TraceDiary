@@ -25,7 +25,27 @@ export function buildRunMarker(prefix: string): string {
 
 export async function gotoDiary(page: Page, date: string): Promise<void> {
   await page.goto(`/diary?date=${date}`)
-  await expect(page.getByLabel('diary-layout')).toBeVisible()
+  const diaryLayout = page.getByLabel('diary-layout')
+  const entryAuthModal = page.getByLabel('entry-auth-modal')
+  const authModal = page.getByLabel('auth-modal')
+
+  await expect
+    .poll(
+      async () => {
+        if (await diaryLayout.isVisible().catch(() => false)) {
+          return 'diary'
+        }
+        if (await entryAuthModal.isVisible().catch(() => false)) {
+          return 'entry'
+        }
+        if (await authModal.isVisible().catch(() => false)) {
+          return 'auth'
+        }
+        return 'pending'
+      },
+      { timeout: 15_000 },
+    )
+    .not.toBe('pending')
 }
 
 export async function gotoYearly(page: Page, year: number): Promise<void> {

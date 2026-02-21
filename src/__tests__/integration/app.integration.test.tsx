@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import OnThisDayList from '../../components/history/on-this-day-list'
 import type { DiaryRecord } from '../../services/indexeddb'
@@ -8,6 +8,7 @@ describe('App 路由与日记页入口', () => {
   afterEach(() => {
     window.history.replaceState({}, '', '/')
     localStorage.clear()
+    vi.useRealTimers()
   })
 
   async function enterGuestFromEntryModal(): Promise<void> {
@@ -112,6 +113,16 @@ describe('App 路由与日记页入口', () => {
 
     expect(screen.getByTestId('diary-left-tab-stats')).toBeTruthy()
     expect(await screen.findByLabelText('stats-overview-card')).toBeTruthy()
+  })
+
+  it('凌晨 2 点前从 /diary 进入时应默认定位到前一天', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date(2026, 1, 20, 1, 30, 0))
+    window.history.replaceState({}, '', '/diary')
+    render(<App />)
+
+    await enterGuestFromEntryModal()
+    expect(await screen.findByRole('heading', { name: '2026-02-19 日记' })).toBeTruthy()
   })
 
   it('往年今日列表不应展示字数文案', () => {
