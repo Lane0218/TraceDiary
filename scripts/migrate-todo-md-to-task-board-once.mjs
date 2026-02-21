@@ -83,29 +83,24 @@ function createTaskUid(displayId, title, moduleKey) {
   return `td_${digest}`
 }
 
-function escapeForTemplateLiteral(raw) {
-  return raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
-}
-
 function buildBoardHtml(tasks, generatedAt) {
-  const safePayload = escapeForTemplateLiteral(
-    JSON.stringify(
-      {
-        generatedAt,
-        taskCount: tasks.length,
-        tasks,
-      },
-      null,
-      2
-    )
+  const payloadJson = JSON.stringify(
+    {
+      generatedAt,
+      taskCount: tasks.length,
+      tasks,
+    },
+    null,
+    2
   )
+  const payloadBase64 = Buffer.from(payloadJson, 'utf8').toString('base64')
 
   return `<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TraceDiary 任务看板（一次性迁移快照）</title>
+    <title>TraceDiary Agent 任务看板</title>
     <style>
       :root {
         --bg: #f6f4ee;
@@ -157,7 +152,7 @@ function buildBoardHtml(tasks, generatedAt) {
       .toolbar {
         margin-top: 18px;
         display: grid;
-        grid-template-columns: 1.3fr 0.9fr 0.9fr;
+        grid-template-columns: 1.6fr 0.9fr;
         gap: 12px;
       }
       .toolbar input,
@@ -275,12 +270,11 @@ function buildBoardHtml(tasks, generatedAt) {
   <body>
     <main class="wrap">
       <section class="hero">
-        <h1>TraceDiary 任务看板</h1>
+        <h1>TraceDiary Agent 任务看板</h1>
         <p class="meta" id="meta"></p>
         <div class="toolbar">
-          <input id="searchInput" placeholder="搜索：ID / 任务 / 分类 / 状态" />
+          <input id="searchInput" placeholder="搜索：ID / 任务 / 状态" />
           <select id="statusSelect"></select>
-          <select id="categorySelect"></select>
         </div>
         <div class="stats">
           <div class="card"><span class="label">总任务</span><span class="value" id="statTotal">0</span></div>
@@ -295,12 +289,10 @@ function buildBoardHtml(tasks, generatedAt) {
           <table>
             <thead>
               <tr>
-                <th style="width: 10%">ID</th>
-                <th style="width: 9%">状态</th>
-                <th style="width: 20%">分类</th>
-                <th style="width: 24%">任务</th>
-                <th style="width: 20%">验收标准</th>
-                <th style="width: 17%">完成记录</th>
+                <th style="width: 14%">ID</th>
+                <th style="width: 12%">状态</th>
+                <th style="width: 54%">任务</th>
+                <th style="width: 20%">完成记录</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -309,12 +301,12 @@ function buildBoardHtml(tasks, generatedAt) {
       </section>
     </main>
     <script>
-      const payload = ${safePayload}
+      const payloadBytes = Uint8Array.from(atob('${payloadBase64}'), (ch) => ch.charCodeAt(0))
+      const payload = JSON.parse(new TextDecoder('utf-8').decode(payloadBytes))
       const allTasks = payload.tasks.slice().sort((a, b) => a.order - b.order)
 
       const searchInput = document.getElementById('searchInput')
       const statusSelect = document.getElementById('statusSelect')
-      const categorySelect = document.getElementById('categorySelect')
       const tableBody = document.getElementById('tableBody')
       const meta = document.getElementById('meta')
 
@@ -324,7 +316,26 @@ function buildBoardHtml(tasks, generatedAt) {
       const statTodo = document.getElementById('statTodo')
       const statBlocked = document.getElementById('statBlocked')
 
-      meta.textContent = '数据来源：TODO.md（一次性迁移快照） | 生成时间：' + payload.generatedAt
+      function formatBeijingTime(raw) {
+        const parsed = new Date(raw)
+        if (Number.isNaN(parsed.getTime())) {
+          return raw
+        }
+        return parsed
+          .toLocaleString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+          .replaceAll('/', '-')
+      }
+
+      meta.textContent = '生成时间（北京时间）：' + formatBeijingTime(payload.generatedAt)
 
       function escapeHtml(raw) {
         return raw
@@ -337,15 +348,9 @@ function buildBoardHtml(tasks, generatedAt) {
 
       function fillFilters() {
         const statuses = ['ALL', 'DONE', 'DOING', 'TODO', 'BLOCKED']
-        const categories = ['ALL'].concat(
-          Array.from(new Set(allTasks.map((task) => task.module_label))).sort((a, b) => a.localeCompare(b, 'zh-CN'))
-        )
 
         statusSelect.innerHTML = statuses
           .map((status) => '<option value="' + status + '">' + (status === 'ALL' ? '全部状态' : status) + '</option>')
-          .join('')
-        categorySelect.innerHTML = categories
-          .map((category) => '<option value="' + escapeHtml(category) + '">' + (category === 'ALL' ? '全部分类' : escapeHtml(category)) + '</option>')
           .join('')
       }
 
@@ -371,9 +376,7 @@ function buildBoardHtml(tasks, generatedAt) {
               '<tr>',
               '<td class="mono">' + escapeHtml(task.display_id) + '</td>',
               '<td><span class="status status-' + escapeHtml(task.status) + '">' + escapeHtml(task.status) + '</span></td>',
-              '<td><div>' + escapeHtml(task.module_label) + '</div><div class="tiny mono">' + escapeHtml(task.id_prefix) + '</div></td>',
               '<td>' + escapeHtml(task.title) + '</td>',
-              '<td class="tiny">' + escapeHtml(task.acceptance) + '</td>',
               '<td class="mono">' + escapeHtml(doneRecord) + '</td>',
               '</tr>',
             ].join('')
@@ -384,13 +387,9 @@ function buildBoardHtml(tasks, generatedAt) {
       function applyFilters() {
         const q = searchInput.value.trim().toLowerCase()
         const selectedStatus = statusSelect.value
-        const selectedCategory = categorySelect.value
 
         const filtered = allTasks.filter((task) => {
           if (selectedStatus !== 'ALL' && task.status !== selectedStatus) {
-            return false
-          }
-          if (selectedCategory !== 'ALL' && task.module_label !== selectedCategory) {
             return false
           }
           if (!q) {
@@ -400,8 +399,6 @@ function buildBoardHtml(tasks, generatedAt) {
             task.display_id,
             task.title,
             task.status,
-            task.module_label,
-            task.acceptance,
             task.done_record,
           ]
             .join(' ')
@@ -418,7 +415,6 @@ function buildBoardHtml(tasks, generatedAt) {
 
       searchInput.addEventListener('input', applyFilters)
       statusSelect.addEventListener('change', applyFilters)
-      categorySelect.addEventListener('change', applyFilters)
     </script>
   </body>
 </html>
@@ -426,6 +422,7 @@ function buildBoardHtml(tasks, generatedAt) {
 }
 
 function main() {
+  const boardOnly = process.argv.includes('--board-only')
   const raw = readFileSync(todoPath, 'utf8')
   const lines = raw.split(/\r?\n/)
   const tasks = []
@@ -490,19 +487,22 @@ function main() {
     order += 1
   }
 
-  mkdirSync(tasksDir, { recursive: true })
-  for (const task of tasks) {
-    const path = resolve(tasksDir, `${task.task_uid}.json`)
-    writeFileSync(path, `${JSON.stringify(task, null, 2)}\n`, 'utf8')
+  if (!boardOnly) {
+    mkdirSync(tasksDir, { recursive: true })
+    for (const task of tasks) {
+      const path = resolve(tasksDir, `${task.task_uid}.json`)
+      writeFileSync(path, `${JSON.stringify(task, null, 2)}\n`, 'utf8')
+    }
   }
 
   const boardHtml = buildBoardHtml(tasks, nowIso)
   mkdirSync(resolve(repoRoot, 'todo'), { recursive: true })
   writeFileSync(boardPath, boardHtml, 'utf8')
 
-  process.stdout.write(
-    `迁移完成：${tasks.length} 条任务\n输出目录：${tasksDir}\n看板文件：${boardPath}\n`
-  )
+  const output = boardOnly
+    ? `看板重建完成：${tasks.length} 条任务（未改写 tasks 目录）\n看板文件：${boardPath}\n`
+    : `迁移完成：${tasks.length} 条任务\n输出目录：${tasksDir}\n看板文件：${boardPath}\n`
+  process.stdout.write(output)
 }
 
 main()
