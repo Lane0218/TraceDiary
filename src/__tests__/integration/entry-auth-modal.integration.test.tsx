@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EntryAuthModal from '../../components/auth/entry-auth-modal'
-import type { UseAuthResult } from '../../hooks/use-auth'
 
 const sendEmailOtpMock = vi.hoisted(() => vi.fn())
 const verifyEmailOtpMock = vi.hoisted(() => vi.fn())
@@ -18,22 +17,12 @@ vi.mock('../../services/supabase', async () => {
 
 const OTP_COOLDOWN_STORAGE_KEY = 'trace-diary:entry-auth:otp-cooldown'
 
-function buildAuthStub(): UseAuthResult {
-  return {
-    state: {
-      stage: 'needs-setup',
-    },
-    restoreConfigFromCloud: vi.fn(async () => {}),
-  } as unknown as UseAuthResult
-}
-
 function renderEntryAuthModal() {
   return render(
     <MemoryRouter>
       <EntryAuthModal
         open
         canClose
-        auth={buildAuthStub()}
         session={null}
         cloudAuthEnabled
         onClose={() => undefined}
