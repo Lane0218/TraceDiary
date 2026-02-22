@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { UseAuthResult } from '../../hooks/use-auth'
+import { useToast } from '../../hooks/use-toast'
 import {
   INITIAL_AUTH_FORM_STATE,
   createAuthSubmitModel,
@@ -14,6 +15,15 @@ interface AuthPanelProps {
   variant: AuthPanelVariant
   canClose?: boolean
   onClose?: () => void
+}
+
+type SyncCheckStatus = 'unconfigured' | 'checking' | 'success' | 'warning' | 'error'
+
+interface SyncCheckSnapshot {
+  status: SyncCheckStatus
+  title: string
+  message: string
+  updatedAt: string | null
 }
 
 function getStageTitle(stage: string): { title: string; subtitle: string; badge: string } {
@@ -58,8 +68,108 @@ function buildRepoInput(state: UseAuthResult['state']): string {
   return `${state.config.giteeOwner}/${state.config.giteeRepoName}`
 }
 
+function formatStatusTime(value: string | null): string | null {
+  if (!value) {
+    return null
+  }
+
+  const timestamp = new Date(value)
+  if (Number.isNaN(timestamp.getTime())) {
+    return value
+  }
+  return timestamp.toLocaleString('zh-CN', { hour12: false })
+}
+
+function createDefaultSyncCheckSnapshot(state: UseAuthResult['state']): SyncCheckSnapshot {
+  switch (state.stage) {
+    case 'needs-setup':
+      return {
+        status: 'unconfigured',
+        title: '未完成配置',
+        message: '请先填写仓库、Token 与主密码后初始化。',
+        updatedAt: null,
+      }
+    case 'needs-unlock':
+      return {
+        status: 'warning',
+        title: '会话未解锁',
+        message: '请先输入主密码解锁后再执行配置校验。',
+        updatedAt: null,
+      }
+    case 'needs-token-refresh':
+      return {
+        status: 'error',
+        title: 'Token 不可用',
+        message: state.errorMessage ?? '请更新 Token 后再执行配置校验。',
+        updatedAt: null,
+      }
+    case 'checking':
+      return {
+        status: 'checking',
+        title: '校验中',
+        message: '正在处理认证或配置校验，请稍候。',
+        updatedAt: null,
+      }
+    default:
+      if (state.errorMessage) {
+        return {
+          status: 'error',
+          title: '校验失败',
+          message: state.errorMessage,
+          updatedAt: null,
+        }
+      }
+      return {
+        status: 'success',
+        title: '配置就绪',
+        message: '当前同步配置可用，修改后会立即进行校验。',
+        updatedAt: null,
+      }
+  }
+}
+
+function buildSyncCheckSnapshotFromSubmitResult(
+  result: Awaited<ReturnType<UseAuthResult['updateConnectionSettings']>>,
+): SyncCheckSnapshot {
+  if (!result.ok) {
+    return {
+      status: 'error',
+      title: '校验失败',
+      message: result.message,
+      updatedAt: result.checkedAt,
+    }
+  }
+
+  if (result.cloudSaveStatus === 'error') {
+    return {
+      status: 'warning',
+      title: '校验成功（云端失败）',
+      message: result.cloudSaveMessage ?? '本地已保存，但云端回写失败，请稍后重试。',
+      updatedAt: result.checkedAt,
+    }
+  }
+
+  if (result.cloudSaveStatus === 'not_applicable') {
+    return {
+      status: 'success',
+      title: '校验成功（仅本地）',
+      message: result.cloudSaveMessage ?? '已完成本地保存，当前未执行云端回写。',
+      updatedAt: result.checkedAt,
+    }
+  }
+
+  return {
+    status: 'success',
+    title: '校验成功',
+    message: result.cloudSaveMessage ?? '同步配置校验通过，已保存并同步到云端。',
+    updatedAt: result.checkedAt,
+  }
+}
+
 export default function AuthPanel({ auth, variant, canClose = false, onClose }: AuthPanelProps) {
+  const { push: pushToast } = useToast()
   const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
+  const [lastSyncCheckSnapshot, setLastSyncCheckSnapshot] = useState<SyncCheckSnapshot | null>(null)
   const {
     state,
     getMasterPasswordError,
@@ -79,6 +189,14 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   )
 
   const stageCopy = useMemo(() => getStageTitle(state.stage), [state.stage])
+  const syncCheckSnapshot = useMemo(
+    () => (state.stage === 'ready' ? lastSyncCheckSnapshot ?? createDefaultSyncCheckSnapshot(state) : createDefaultSyncCheckSnapshot(state)),
+    [lastSyncCheckSnapshot, state],
+  )
+  const syncCheckSnapshotTimeLabel = useMemo(
+    () => formatStatusTime(syncCheckSnapshot.updatedAt),
+    [syncCheckSnapshot.updatedAt],
+  )
   const passwordHint = useMemo(
     () => getMasterPasswordError(form.masterPassword),
     [form.masterPassword, getMasterPasswordError],
@@ -86,6 +204,20 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   const isModal = variant === 'modal'
   const showReadyPasswordInput = form.readyToken.trim().length > 0
   const primaryActionButtonClass = `td-btn ${isModal ? 'td-btn-primary' : 'td-btn-primary-ink'} w-full sm:w-auto`
+  const syncCheckToneClass = useMemo(() => {
+    switch (syncCheckSnapshot.status) {
+      case 'success':
+        return 'border-emerald-200 bg-emerald-50/70 text-emerald-700'
+      case 'warning':
+        return 'border-amber-200 bg-amber-50/70 text-amber-700'
+      case 'error':
+        return 'border-red-200 bg-red-50 text-red-700'
+      case 'checking':
+        return 'border-slate-300 bg-slate-100 text-slate-700'
+      default:
+        return 'border-td-line bg-td-surface-soft text-td-muted'
+    }
+  }, [syncCheckSnapshot.status])
 
   useEffect(() => {
     if (state.stage !== 'ready' || !state.config) {
@@ -103,6 +235,73 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
     }))
   }, [state])
 
+  const handleReadyUpdateSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const pendingMessage = '正在校验同步配置，请稍候...'
+    setLastSyncCheckSnapshot({
+      status: 'checking',
+      title: '校验中',
+      message: pendingMessage,
+      updatedAt: new Date().toISOString(),
+    })
+
+    if (!isModal) {
+      pushToast({
+        kind: 'system',
+        level: 'info',
+        message: pendingMessage,
+        autoDismiss: false,
+      })
+    }
+
+    const result = await updateConnectionSettings({
+      repoInput: form.readyRepoInput,
+      giteeBranch: form.readyRepoBranch,
+      token: form.readyToken || undefined,
+      masterPassword: form.readyMasterPassword || undefined,
+    })
+    const nextSnapshot = buildSyncCheckSnapshotFromSubmitResult(result)
+    setLastSyncCheckSnapshot(nextSnapshot)
+
+    if (isModal) {
+      return
+    }
+
+    if (!result.ok) {
+      pushToast({
+        kind: 'system',
+        level: 'error',
+        message: `同步配置校验失败：${result.message}`,
+      })
+      return
+    }
+
+    if (result.cloudSaveStatus === 'error') {
+      pushToast({
+        kind: 'system',
+        level: 'warning',
+        message: `同步配置校验通过；本地已保存，但云端回写失败：${result.cloudSaveMessage ?? '请稍后重试'}`,
+      })
+      return
+    }
+
+    if (result.cloudSaveStatus === 'not_applicable') {
+      pushToast({
+        kind: 'system',
+        level: 'info',
+        message: '同步配置校验通过，当前仅保存到本地（未登录云端账号）。',
+      })
+      return
+    }
+
+    pushToast({
+      kind: 'system',
+      level: 'success',
+      message: '同步配置校验通过，已保存并同步到云端。',
+    })
+  }
+
   const body = (
     <section className={isModal ? 'space-y-4 px-4 py-4 sm:px-5 sm:py-5' : 'space-y-4'}>
       {isModal ? (
@@ -111,6 +310,20 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
           {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
           {state.config ? <p>分支：{state.config.giteeBranch ?? 'master'}</p> : null}
         </div>
+      ) : null}
+
+      {!isModal ? (
+        <section
+          className={`rounded-[10px] border px-3 py-2 text-sm ${syncCheckToneClass}`}
+          data-testid="settings-sync-check-status"
+          data-status={syncCheckSnapshot.status}
+          aria-live="polite"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.04em]">配置检测状态</p>
+          <p className="mt-1 text-sm font-medium">{syncCheckSnapshot.title}</p>
+          <p className="mt-1 text-xs leading-5">{syncCheckSnapshot.message}</p>
+          {syncCheckSnapshotTimeLabel ? <p className="mt-1 text-[11px]">更新时间：{syncCheckSnapshotTimeLabel}</p> : null}
+        </section>
       ) : null}
 
       {state.errorMessage ? (
@@ -226,7 +439,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
       ) : null}
 
       {state.stage === 'ready' ? (
-        <form className="space-y-4" onSubmit={(event) => void submitModel.onReadyUpdateSubmit(event)}>
+        <form className="space-y-4" onSubmit={(event) => void handleReadyUpdateSubmit(event)}>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
             <div className="space-y-1">
               <AuthFormField

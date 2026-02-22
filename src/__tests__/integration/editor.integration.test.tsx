@@ -141,7 +141,13 @@ function buildAuthResult(overrides?: Partial<UseAuthResult['state']>): UseAuthRe
     restoreConfigFromCloud: vi.fn(async () => {}),
     unlockWithMasterPassword: vi.fn(async () => {}),
     updateTokenCiphertext: vi.fn(async () => {}),
-    updateConnectionSettings: vi.fn(async () => {}),
+      updateConnectionSettings: vi.fn(async () => ({
+        ok: true,
+        message: '同步配置校验通过，本地保存成功。',
+        checkedAt: '2026-02-22T00:00:00.000Z',
+        cloudSaveStatus: 'not_applicable' as const,
+        cloudSaveMessage: '当前未登录云端账号，配置仅保存在本地。',
+      })),
     lockNow: vi.fn(),
     clearError: vi.fn(),
   }

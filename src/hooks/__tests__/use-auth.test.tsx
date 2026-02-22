@@ -39,6 +39,7 @@ function buildDependencies(overrides?: Partial<AuthDependencies>): AuthDependenc
     saveConfig: vi.fn(async () => undefined),
     loadCloudConfig: vi.fn(async () => null),
     saveCloudConfig: vi.fn(async () => undefined),
+    hasCloudSession: vi.fn(async () => false),
     validateGiteeRepoAccess: vi.fn(async () => undefined),
     generateKdfParams: vi.fn(async () => sampleKdf),
     hashMasterPassword: vi.fn(async ({ masterPassword }) => `hash:${masterPassword}`),
@@ -244,14 +245,22 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
 
+    let updateResult: Awaited<ReturnType<typeof result.current.updateConnectionSettings>> | null = null
     await act(async () => {
-      await result.current.updateConnectionSettings({
+      updateResult = await result.current.updateConnectionSettings({
         repoInput: 'alice/trace-diary-next',
         giteeBranch: 'main',
       })
     })
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(updateResult).toEqual({
+      ok: true,
+      message: '同步配置校验通过，本地保存成功。',
+      checkedAt: new Date(fixedNow).toISOString(),
+      cloudSaveStatus: 'not_applicable',
+      cloudSaveMessage: '当前未登录云端账号，配置仅保存在本地。',
+    })
     expect(result.current.state.config?.giteeOwner).toBe('alice')
     expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
     expect(result.current.state.config?.giteeBranch).toBe('main')
@@ -277,8 +286,9 @@ describe('useAuth', () => {
     })
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
 
+    let updateResult: Awaited<ReturnType<typeof result.current.updateConnectionSettings>> | null = null
     await act(async () => {
-      await result.current.updateConnectionSettings({
+      updateResult = await result.current.updateConnectionSettings({
         repoInput: 'alice/trace-diary',
         giteeBranch: 'master',
         token: 'token-new',
@@ -287,6 +297,13 @@ describe('useAuth', () => {
     })
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(updateResult).toEqual({
+      ok: false,
+      message: '主密码错误，无法更新 Token',
+      checkedAt: new Date(fixedNow).toISOString(),
+      cloudSaveStatus: 'not_applicable',
+      cloudSaveMessage: null,
+    })
     expect(result.current.state.errorMessage).toBe('主密码错误，无法更新 Token')
     expect(result.current.state.tokenInMemory).toBe('token-plain')
     expect(result.current.state.config?.encryptedToken).toBe('cipher:token-plain')
@@ -310,8 +327,9 @@ describe('useAuth', () => {
     })
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
 
+    let updateResult: Awaited<ReturnType<typeof result.current.updateConnectionSettings>> | null = null
     await act(async () => {
-      await result.current.updateConnectionSettings({
+      updateResult = await result.current.updateConnectionSettings({
         repoInput: 'alice/trace-diary-next',
         giteeBranch: 'main',
         token: 'token-new',
@@ -320,11 +338,97 @@ describe('useAuth', () => {
     })
 
     await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(updateResult).toEqual({
+      ok: true,
+      message: '同步配置校验通过，本地保存成功。',
+      checkedAt: new Date(fixedNow).toISOString(),
+      cloudSaveStatus: 'not_applicable',
+      cloudSaveMessage: '当前未登录云端账号，配置仅保存在本地。',
+    })
     expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
     expect(result.current.state.config?.giteeBranch).toBe('main')
     expect(result.current.state.config?.encryptedToken).toBe('cipher:token-new')
     expect(result.current.state.tokenInMemory).toBe('token-new')
     expect(result.current.state.dataEncryptionKey).toBe(sampleDataEncryptionKey)
+    expect(saveConfig).toHaveBeenCalledTimes(2)
+  })
+
+  it('ready 状态下存在云端会话时应返回 cloudSaveStatus=success', async () => {
+    const saveConfig = vi.fn(async () => undefined)
+    const saveCloudConfig = vi.fn(async () => undefined)
+    const dependencies = buildDependencies({
+      saveConfig,
+      saveCloudConfig,
+      hasCloudSession: vi.fn(async () => true),
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+
+    let updateResult: Awaited<ReturnType<typeof result.current.updateConnectionSettings>> | null = null
+    await act(async () => {
+      updateResult = await result.current.updateConnectionSettings({
+        repoInput: 'alice/trace-diary-next',
+        giteeBranch: 'main',
+      })
+    })
+
+    expect(updateResult).toEqual({
+      ok: true,
+      message: '同步配置校验通过，本地保存成功。',
+      checkedAt: new Date(fixedNow).toISOString(),
+      cloudSaveStatus: 'success',
+      cloudSaveMessage: '云端配置已同步。',
+    })
+    expect(saveCloudConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it('ready 状态下云端保存失败时应返回 cloudSaveStatus=error 且不回滚本地配置', async () => {
+    const saveConfig = vi.fn(async () => undefined)
+    const saveCloudConfig = vi
+      .fn(async () => undefined)
+      .mockRejectedValueOnce(new Error('云端配置保存失败：network'))
+    const dependencies = buildDependencies({
+      saveConfig,
+      saveCloudConfig,
+      hasCloudSession: vi.fn(async () => true),
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    await act(async () => {
+      await result.current.initializeFirstTime({
+        repoInput: 'alice/trace-diary',
+        token: 'token-plain',
+        masterPassword: 'master1234',
+      })
+    })
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+
+    let updateResult: Awaited<ReturnType<typeof result.current.updateConnectionSettings>> | null = null
+    await act(async () => {
+      updateResult = await result.current.updateConnectionSettings({
+        repoInput: 'alice/trace-diary-next',
+        giteeBranch: 'main',
+      })
+    })
+
+    expect(updateResult).toEqual({
+      ok: true,
+      message: '同步配置校验通过，本地保存成功。',
+      checkedAt: new Date(fixedNow).toISOString(),
+      cloudSaveStatus: 'error',
+      cloudSaveMessage: '云端配置保存失败：network',
+    })
+    expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
     expect(saveConfig).toHaveBeenCalledTimes(2)
   })
 

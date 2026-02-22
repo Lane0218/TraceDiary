@@ -7,6 +7,7 @@ import {
   hashMasterPassword as hashMasterPasswordWithKdf,
 } from '../services/crypto'
 import {
+  hasCloudSession,
   loadCloudConfigForCurrentUser,
   saveCloudConfigForCurrentUser,
 } from '../services/cloud-config'
@@ -48,6 +49,7 @@ export interface AuthDependencies {
   saveConfig: (config: AppConfig) => Promise<void>
   loadCloudConfig: () => Promise<AppConfig | null>
   saveCloudConfig: (config: AppConfig) => Promise<void>
+  hasCloudSession: () => Promise<boolean>
   validateGiteeRepoAccess: (payload: { owner: string; repoName: string; token: string }) => Promise<void>
   generateKdfParams: (masterPassword: string) => Promise<KdfParams>
   hashMasterPassword: (payload: { masterPassword: string; kdfParams: KdfParams }) => Promise<string>
@@ -82,6 +84,16 @@ export interface UpdateConnectionSettingsPayload {
   masterPassword?: string
 }
 
+export type CloudSaveStatus = 'success' | 'not_applicable' | 'error'
+
+export interface UpdateConnectionSettingsResult {
+  ok: boolean
+  message: string
+  checkedAt: string
+  cloudSaveStatus: CloudSaveStatus
+  cloudSaveMessage: string | null
+}
+
 export interface AuthState {
   stage: 'checking' | 'needs-setup' | 'needs-unlock' | 'needs-token-refresh' | 'ready'
   config: AppConfig | null
@@ -103,7 +115,7 @@ export interface UseAuthResult {
   restoreConfigFromCloud: () => Promise<void>
   unlockWithMasterPassword: (payload: UnlockPayload) => Promise<void>
   updateTokenCiphertext: (payload: RefreshTokenPayload) => Promise<void>
-  updateConnectionSettings: (payload: UpdateConnectionSettingsPayload) => Promise<void>
+  updateConnectionSettings: (payload: UpdateConnectionSettingsPayload) => Promise<UpdateConnectionSettingsResult>
   lockNow: () => void
   clearError: () => void
 }
@@ -348,6 +360,9 @@ function createDefaultDependencies(): AuthDependencies {
     saveCloudConfig: async (config) => {
       await saveCloudConfigForCurrentUser(config)
     },
+    hasCloudSession: async () => {
+      return hasCloudSession()
+    },
     validateGiteeRepoAccess: async ({ owner, repoName, token }) => {
       const result = await validateGiteeRepoAccessService({
         token,
@@ -446,11 +461,40 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   }, [])
 
   const syncCloudConfigBestEffort = useCallback(
-    async (config: AppConfig) => {
+    async (
+      config: AppConfig,
+    ): Promise<{
+      status: CloudSaveStatus
+      message: string | null
+    }> => {
+      let hasSession = false
+      try {
+        hasSession = await dependencies.hasCloudSession()
+      } catch (error) {
+        return {
+          status: 'error',
+          message: error instanceof Error ? error.message : '云端配置状态检测失败，请稍后重试',
+        }
+      }
+
+      if (!hasSession) {
+        return {
+          status: 'not_applicable',
+          message: '当前未登录云端账号，配置仅保存在本地。',
+        }
+      }
+
       try {
         await dependencies.saveCloudConfig(config)
-      } catch {
-        // 云端回写失败不应阻断本地可用性，保留后续手动重试能力。
+        return {
+          status: 'success',
+          message: '云端配置已同步。',
+        }
+      } catch (error) {
+        return {
+          status: 'error',
+          message: error instanceof Error ? error.message : '云端配置保存失败，请稍后重试',
+        }
       }
     },
     [dependencies],
@@ -1014,22 +1058,40 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   )
 
   const updateConnectionSettings = useCallback(
-    async (payload: UpdateConnectionSettingsPayload) => {
+    async (payload: UpdateConnectionSettingsPayload): Promise<UpdateConnectionSettingsResult> => {
       clearError()
+      const checkedAt = new Date(dependencies.now()).toISOString()
+
+      const fail = (message: string): UpdateConnectionSettingsResult => ({
+        ok: false,
+        message,
+        checkedAt,
+        cloudSaveStatus: 'not_applicable',
+        cloudSaveMessage: null,
+      })
 
       if (state.stage !== 'ready' || !state.config) {
-        setState((prev) => ({ ...prev, errorMessage: '当前会话未就绪，请先完成解锁' }))
-        return
+        const message = '当前会话未就绪，请先完成解锁'
+        setState((prev) => ({ ...prev, errorMessage: message }))
+        return fail(message)
       }
 
-      const repoRef = parseGiteeRepo(payload.repoInput)
+      let repoRef: RepoRef
+      try {
+        repoRef = parseGiteeRepo(payload.repoInput)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '仓库地址格式错误'
+        setState((prev) => ({ ...prev, errorMessage: message }))
+        return fail(message)
+      }
       const nextBranch = normalizeGiteeBranch(payload.giteeBranch)
       const nextToken = payload.token?.trim() ?? ''
       const hasTokenUpdate = nextToken.length > 0
       const validationToken = hasTokenUpdate ? nextToken : state.tokenInMemory?.trim() ?? ''
       if (!validationToken) {
-        setState((prev) => ({ ...prev, errorMessage: '当前会话缺少可用 Token，请输入 Token 后重试' }))
-        return
+        const message = '当前会话缺少可用 Token，请输入 Token 后重试'
+        setState((prev) => ({ ...prev, errorMessage: message }))
+        return fail(message)
       }
 
       setState((prev) => ({ ...prev, stage: 'checking' }))
@@ -1089,7 +1151,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.saveConfig(nextConfig)
-        await syncCloudConfigBestEffort(nextConfig)
+        const cloudSyncResult = await syncCloudConfigBestEffort(nextConfig)
 
         if (hasTokenUpdate && nextTokenInMemory && nextDataEncryptionKey) {
           try {
@@ -1117,12 +1179,21 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
           initialPullStatus: 'idle',
           initialPullError: null,
         })
+        return {
+          ok: true,
+          message: '同步配置校验通过，本地保存成功。',
+          checkedAt,
+          cloudSaveStatus: cloudSyncResult.status,
+          cloudSaveMessage: cloudSyncResult.message,
+        }
       } catch (error) {
+        const message = error instanceof Error ? error.message : '连接配置更新失败，请重试'
         setState((prev) => ({
           ...prev,
           stage: 'ready',
-          errorMessage: error instanceof Error ? error.message : '连接配置更新失败，请重试',
+          errorMessage: message,
         }))
+        return fail(message)
       }
     },
     [
