@@ -15,11 +15,11 @@
     "src/__tests__/integration/entry-auth-modal.integration.test.tsx"
   ],
   "test_record": "风险分级：中；本轮移除“登录成功后账号状态中间页”，改为登录后自动退出首屏弹窗；`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（80/80，含既有 `act(...)` 警告）；定向 E2E：`npx playwright test e2e/specs/auth-setup.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 通过（4/4）；未执行全量 E2E（本任务未命中全量门禁）。",
-  "done_record": "2026-02-22 / pending",
+  "done_record": "2026-02-22 / fe4f742",
   "source": {
     "file": "TODO.md",
     "line": 253
   },
-  "version": 10,
-  "updated_at": "2026-02-22T15:28:11.000Z"
+  "version": 11,
+  "updated_at": "2026-02-22T15:29:06.000Z"
 }
