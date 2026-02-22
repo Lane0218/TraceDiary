@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Session } from '@supabase/supabase-js'
 import {
   sendEmailOtp,
   verifyEmailOtp,
@@ -64,7 +63,6 @@ function setOtpCooldown(email: string, expiresAt: number): void {
 interface EntryAuthModalProps {
   open: boolean
   canClose?: boolean
-  session: Session | null
   cloudAuthEnabled: boolean
   onClose?: () => void
   onEnterGuest: () => void
@@ -74,7 +72,6 @@ interface EntryAuthModalProps {
 export default function EntryAuthModal({
   open,
   canClose = false,
-  session,
   cloudAuthEnabled,
   onClose,
   onEnterGuest,
@@ -144,8 +141,9 @@ export default function EntryAuthModal({
     setIsVerifyingOtp(true)
     try {
       await verifyEmailOtp(normalizedEmail, normalizedOtp)
-      setNotice('登录成功。系统将自动尝试恢复云端配置；你也可以前往设置页继续配置。')
+      setNotice('登录成功，正在进入。')
       setOtp('')
+      onClose?.()
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '验证码校验失败，请重试')
     } finally {
@@ -184,14 +182,6 @@ export default function EntryAuthModal({
 
             {!cloudAuthEnabled ? (
               <p className="text-sm text-[#5f5b54]">当前未配置 Supabase，登录能力暂不可用。</p>
-            ) : session ? (
-              <div className="space-y-2">
-                <p className="text-xs tracking-[0.06em] text-[#7c7467]">账号状态</p>
-                <p className="text-base text-[#2c2925]">
-                  已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
-                </p>
-                <p className="text-sm text-[#6b655a]">系统会自动尝试恢复云端配置；你也可前往设置页继续绑定仓库。</p>
-              </div>
             ) : (
               <div className="space-y-3">
                 <label className="flex flex-col gap-1 text-sm text-[#6a6357]">

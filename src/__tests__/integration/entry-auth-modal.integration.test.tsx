@@ -23,7 +23,6 @@ function renderEntryAuthModal() {
       <EntryAuthModal
         open
         canClose
-        session={null}
         cloudAuthEnabled
         onClose={() => undefined}
         onEnterGuest={() => undefined}
@@ -52,6 +51,7 @@ describe('首屏登录弹窗 OTP 交互', () => {
     renderEntryAuthModal()
     expect(screen.queryByText('第一步：邮箱')).toBeNull()
     expect(screen.queryByText('第二步：验证码')).toBeNull()
+    expect(screen.queryByText('账号状态')).toBeNull()
     expect(screen.getByText('邮箱')).toBeTruthy()
     expect(screen.getByText('验证码')).toBeTruthy()
   })

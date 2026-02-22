@@ -89,7 +89,8 @@ function AppRoutes() {
   const cloudAuthEnabled = isSupabaseConfigured()
   const sessionUserId = session?.user.id ?? null
   const blocksAutoEntryModal = location.pathname.startsWith('/settings')
-  const autoEntryModalOpen = !blocksAutoEntryModal && auth.state.stage === 'needs-setup' && !guestEntrySelected
+  const autoEntryModalOpen =
+    !blocksAutoEntryModal && auth.state.stage === 'needs-setup' && !guestEntrySelected && !sessionUserId
   const entryModalOpen = manualEntryModalOpen || autoEntryModalOpen
   const canCloseEntryModal = manualEntryModalOpen && !autoEntryModalOpen
 
@@ -312,7 +313,6 @@ function AppRoutes() {
       <EntryAuthModal
         open={entryModalOpen}
         canClose={canCloseEntryModal}
-        session={session}
         cloudAuthEnabled={cloudAuthEnabled}
         onClose={closeEntryModal}
         onEnterGuest={() => {
