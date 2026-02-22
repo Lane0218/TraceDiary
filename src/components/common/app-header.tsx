@@ -49,6 +49,7 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
     }
     return getEmailAlias(sessionEmail)
   }, [sessionEmail])
+  const guestModeDescription = guestMode?.description?.trim() ?? ''
 
   useEffect(() => {
     if (!accountMenuOpen) {
@@ -110,8 +111,12 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
           <div className="td-guest-pill" data-testid="guest-mode-pill" aria-label="演示模式提示">
             <span className="td-guest-pill-dot" aria-hidden="true" />
             <span>演示模式</span>
-            <span className="td-guest-pill-sep" aria-hidden="true">/</span>
-            <span className="td-guest-pill-desc">{guestMode.description ?? '只读'}</span>
+            {guestModeDescription ? (
+              <>
+                <span className="td-guest-pill-sep" aria-hidden="true">/</span>
+                <span className="td-guest-pill-desc">{guestModeDescription}</span>
+              </>
+            ) : null}
             {guestMode.ctaHref ? (
               <button
                 type="button"

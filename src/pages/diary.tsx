@@ -74,7 +74,6 @@ const DIARY_PANEL_HEIGHT_DESKTOP = 340
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
 const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
-const GUEST_MODE_HINT = '当前处于演示模式，内容为只读。点击“开始使用我的数据”完成登录与配置后可编辑。'
 const DIARY_PANEL_HEIGHT_STYLE = {
   '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
   '--diary-panel-body-height': `${DIARY_PANEL_BODY_HEIGHT_DESKTOP}px`,
@@ -923,30 +922,12 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
             isGuestMode
               ? {
                   enabled: true,
-                  description: '可浏览演示数据',
                   ctaHref: '/settings',
                   ctaLabel: '开始使用我的数据',
                 }
               : undefined
           }
         />
-
-        {isGuestMode ? (
-          <section className="td-guest-banner mt-4" aria-label="guest-mode-banner">
-            <div className="td-guest-banner-body">
-              <p className="td-guest-banner-title">演示模式已开启</p>
-              <p className="td-guest-banner-copy">{GUEST_MODE_HINT}</p>
-            </div>
-            <button
-              type="button"
-              className="td-btn td-btn-primary-ink"
-              onClick={() => navigate('/settings')}
-              data-testid="guest-go-settings-btn"
-            >
-              去设置页配置
-            </button>
-          </section>
-        ) : null}
 
         {yearlyReminder.show ? (
           <section className="mt-4 td-toolbar" aria-label="yearly-reminder">

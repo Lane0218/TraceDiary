@@ -42,11 +42,11 @@ function buildYearlyRecord(year: number, content: string): DiaryRecord {
 }
 
 function buildDemoDailyContent(date: DateString): string {
-  return `# ${date} · 演示日记\n\n这是 ${DEMO_AUTHOR} 的只读示例内容。\n\n- 今日关键词：专注 / 复盘 / 同步\n- 演示说明：当前处于游客模式，编辑与 push/pull 已禁用\n\n> 你可以先体验阅读、日历切换与往年今日。\n`
+  return `# ${date} · 演示日记\n\n这是 ${DEMO_AUTHOR} 的只读示例内容。\n\n- 今日关键词：专注 / 复盘 / 同步\n- 游客模式：可浏览演示日记，编辑 / push / pull 已禁用。\n\n> 你可以先体验阅读、日历切换与往年今日。\n`
 }
 
 function buildDemoSummaryContent(year: number): string {
-  return `# ${year} 年年度总结（演示）\n\n## 今年最重要的三件事\n\n- 建立稳定的日记记录习惯\n- 每月进行一次节奏复盘\n- 把想法沉淀为可执行计划\n\n## 想继续完善的方向\n\n- 更细致地记录情绪与能量波动\n- 把年度目标拆成季度与周计划\n\n> 当前是演示数据，登录并完成配置后可切换到你的真实数据。\n`
+  return `# ${year} 年年度总结（演示）\n\n> 游客模式：可浏览演示年度总结，编辑 / push / pull 已禁用。\n\n## 今年最重要的三件事\n\n- 建立稳定的日记记录习惯\n- 每月进行一次节奏复盘\n- 把想法沉淀为可执行计划\n\n## 想继续完善的方向\n\n- 更细致地记录情绪与能量波动\n- 把年度目标拆成季度与周计划\n`
 }
 
 export function getDemoDailyEntry(date: DateString): DiaryRecord {

@@ -59,7 +59,6 @@ const MIN_YEAR = 1970
 const MAX_YEAR = 9999
 const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
 const RENDERED_HEADING_SELECTOR = '.ProseMirror h1'
-const GUEST_MODE_HINT = '演示模式下可浏览示例年度总结，编辑与同步已禁用。'
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
   const parsed = Number.parseInt(yearParam ?? '', 10)
@@ -869,30 +868,12 @@ export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySumma
             isGuestMode
               ? {
                   enabled: true,
-                  description: '演示年度总结',
                   ctaHref: '/settings',
                   ctaLabel: '开始使用我的数据',
                 }
               : undefined
           }
         />
-
-        {isGuestMode ? (
-          <section className="td-guest-banner mt-4" aria-label="guest-mode-banner-yearly">
-            <div className="td-guest-banner-body">
-              <p className="td-guest-banner-title">演示模式已开启</p>
-              <p className="td-guest-banner-copy">{GUEST_MODE_HINT}</p>
-            </div>
-            <button
-              type="button"
-              className="td-btn td-btn-primary-ink"
-              onClick={() => navigate('/settings')}
-              data-testid="guest-go-settings-btn-yearly"
-            >
-              去设置页配置
-            </button>
-          </section>
-        ) : null}
 
         <section
           className="mt-4 grid gap-4 td-fade-in lg:min-h-[calc(100vh-150px)] lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:items-stretch"

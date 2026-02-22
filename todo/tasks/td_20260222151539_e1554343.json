@@ -1,0 +1,29 @@
+{
+  "task_uid": "td_20260222151539_e1554343",
+  "display_id": "TD-UI-20260222-151539-E155",
+  "id_prefix": "UI",
+  "module_key": "6.15",
+  "module_name": "演示链路与验收（v1.2）",
+  "module_label": "6.15 演示链路与验收（v1.2）",
+  "order": 20260222151539,
+  "status": "DONE",
+  "title": "收敛演示模式提示并将禁用说明下沉到演示内容",
+  "acceptance": "主标题右侧仅保留“演示模式”徽标；移除日记与年度总结页标题下方演示提示条；在日记与年度总结演示内容中精简说明编辑与 push/pull 禁用",
+  "related_files": [
+    "src/components/common/app-header.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/pages/insights.tsx",
+    "src/services/demo-data.ts",
+    "src/index.css",
+    "e2e/fixtures/app.ts"
+  ],
+  "test_record": "风险分级：中（演示模式 UI 与文案收敛）。`npm run lint` 首次失败（worktree 缺少依赖，`@eslint/js` 未找到）；挂载主工作区 `node_modules` 后重跑通过。`npm run test:unit` 通过（95/95）。`npm run test:integration` 通过（77/77，含既有 act warning）。`npm run test:e2e:changed` 首轮失败（28/31，通过；失败：`conflict-resolution.spec.ts`、`manual-sync-failure.spec.ts`、`manual-sync-success.spec.ts`，均为远端链路波动）；定向复跑 `npx playwright test e2e/specs/conflict-resolution.spec.ts e2e/specs/manual-sync-failure.spec.ts e2e/specs/manual-sync-success.spec.ts --project=chromium --workers=1 --retries=1 --trace=off --reporter=line` 通过（6/6）。",
+  "done_record": "2026-02-22 / pending",
+  "source": {
+    "file": "src/components/common/app-header.tsx",
+    "line": 110
+  },
+  "version": 3,
+  "updated_at": "2026-02-22T15:27:41.000Z"
+}

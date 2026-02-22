@@ -64,7 +64,6 @@ export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProp
             isGuestMode
               ? {
                   enabled: true,
-                  description: '演示统计视图',
                   ctaHref: '/settings',
                   ctaLabel: '开始使用我的数据',
                 }

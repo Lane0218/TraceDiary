@@ -155,20 +155,6 @@ export async function ensureReadySession(
         continue
       }
 
-      const guestPanelButton = page.getByTestId('guest-go-settings-btn').first()
-      if (await guestPanelButton.isVisible().catch(() => false)) {
-        await guestPanelButton.click()
-        await page.waitForTimeout(retryIntervalMs)
-        continue
-      }
-
-      const yearlyGuestPanelButton = page.getByTestId('guest-go-settings-btn-yearly').first()
-      if (await yearlyGuestPanelButton.isVisible().catch(() => false)) {
-        await yearlyGuestPanelButton.click()
-        await page.waitForTimeout(retryIntervalMs)
-        continue
-      }
-
       const isSettingsPage = await page
         .evaluate(() => window.location.pathname === '/settings')
         .catch(() => false)
