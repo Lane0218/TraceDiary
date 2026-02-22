@@ -42,6 +42,7 @@ test('ready 状态下应可在设置页更新仓库与分支（不改 token）',
   await page.getByTestId('auth-ready-token-input').fill('')
   await expect(page.getByTestId('auth-ready-password-input')).toHaveCount(0)
   await page.getByTestId('auth-ready-submit').click()
+  await expect(page.getByTestId('toast-system')).toContainText('正在校验同步配置，请稍候...')
   await page.waitForFunction(
     ({ key, branch }) => {
       const raw = localStorage.getItem(key)
@@ -62,6 +63,8 @@ test('ready 状态下应可在设置页更新仓库与分支（不改 token）',
   expect(config.giteeOwner).toBe(env.owner)
   expect(config.giteeRepoName).toBe(env.repo)
   expect(config.giteeBranch).toBe(nextBranch)
+  await expect(page.getByTestId('settings-sync-check-status')).toHaveAttribute('data-status', 'success')
+  await expect(page.getByTestId('settings-sync-check-status')).toContainText('校验成功')
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
@@ -80,6 +83,7 @@ test('ready 状态下应可在设置页更新 token', async ({ page }) => {
   await expect(page.getByTestId('auth-ready-password-input')).toBeVisible()
   await page.getByTestId('auth-ready-password-input').fill(env.masterPassword)
   await page.getByTestId('auth-ready-submit').click()
+  await expect(page.getByTestId('toast-system')).toContainText('正在校验同步配置，请稍候...')
   await page.waitForFunction(
     ({ key, branch, token }) => {
       const raw = localStorage.getItem(key)
@@ -107,5 +111,24 @@ test('ready 状态下应可在设置页更新 token', async ({ page }) => {
   expect(config.giteeBranch).toBe(env.branch)
   expect(typeof config.encryptedToken).toBe('string')
   expect(config.encryptedToken).not.toBe(env.token)
+  await expect(page.getByTestId('settings-sync-check-status')).toHaveAttribute('data-status', 'success')
   await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('ready 状态下仓库地址不合法时应显示失败 toast 与状态', async ({ page }) => {
+  const env = getE2EEnv()
+
+  await gotoDiary(page, TEST_DATE)
+  await ensureReadySession(page, env)
+
+  await page.getByTestId('app-nav-settings').click()
+  await expect(page.getByLabel('settings-page')).toBeVisible()
+
+  await page.getByTestId('auth-ready-repo-input').fill('invalid-repo-input')
+  await page.getByTestId('auth-ready-submit').click()
+
+  await expect(page.getByTestId('settings-sync-check-status')).toHaveAttribute('data-status', 'error')
+  await expect(page.getByTestId('settings-sync-check-status')).toContainText('校验失败')
+  await expect(page.getByTestId('toast-system')).toContainText('同步配置校验失败')
+  await expect(page.getByRole('alert')).toContainText('仓库地址需为 <owner>/<repo>')
 })

@@ -7,24 +7,25 @@
   "module_label": "6.8 UI 体验优化",
   "order": 117,
   "status": "DONE",
-  "title": "设置页去冗余并支持 ready 状态下直接编辑仓库/分支/Token",
-  "acceptance": "设置页改为单层紧凑布局，移除解释性冗余文案与二级嵌套头；ready 状态可提交仓库/分支/Token 变更并即时校验生效；继续不提供“立即锁定”按钮",
+  "title": "设置页同步配置提交反馈增强（校验状态展示 + Toast + 云端回写结果）",
+  "acceptance": "ready 状态下提交仓库/分支/Token 后，必须通过 toast 展示“校验中/成功/失败”；并在设置页常驻展示当前配置检测状态（含未配置/校验中/成功/失败）；云端配置回写结果需可感知（云端成功、仅本地、云端失败）",
   "related_files": [
-    "src/pages/settings.tsx",
+    "e2e/specs/settings-update.spec.ts",
     "src/components/auth/auth-panel.tsx",
-    "src/components/auth/auth-form-model.ts",
     "src/hooks/use-auth.ts",
     "src/hooks/__tests__/use-auth.test.tsx",
-    "src/__tests__/integration/app.integration.test.tsx",
-    "e2e/specs/settings-update.spec.ts",
-    "TODO.md"
+    "src/__tests__/integration/settings-sync-feedback.integration.test.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx",
+    "src/__tests__/integration/export.integration.test.tsx",
+    "src/__tests__/integration/import.integration.test.tsx",
+    "todo/tasks/td_ab9d395e89747198934a.json"
   ],
-  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（58/58）；`npm run test:integration` 通过（60/60）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e`），执行 `bash /home/ljcwsl/.codex/skills/main-worktree-flow/scripts/worktree-flow.sh fix-e2e-env --repo /home/ljcwsl/0-code/TraceDiary --branch plan/settings-page-compact-editable --e2e-cmd \"npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --retries=0\"` 后发现新增 settings 用例失败，修复后重跑同命令通过（7/7）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁）",
-  "done_record": "2026-02-15 / 46fadd6",
+  "test_record": "风险分级：高；`npm ci`（worktree 缺少依赖时补装）完成；`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（77/77，存在既有 act warning，不影响通过）；`npx playwright test e2e/specs/settings-update.spec.ts --project=chromium --retries=0` 通过（3/3）；未执行全量 `npm run test:e2e`（本任务未命中全量门禁，已执行直接相关 E2E）。",
+  "done_record": "2026-02-22 / pending",
   "source": {
     "file": "TODO.md",
     "line": 171
   },
-  "version": 1,
-  "updated_at": "2026-02-21T14:31:06.652Z"
+  "version": 3,
+  "updated_at": "2026-02-22T14:35:14.000Z"
 }
