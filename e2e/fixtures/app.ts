@@ -148,13 +148,6 @@ export async function ensureReadySession(
         continue
       }
 
-      const guestHeaderButton = page.getByTestId('guest-start-button').first()
-      if (await guestHeaderButton.isVisible().catch(() => false)) {
-        await guestHeaderButton.click()
-        await page.waitForTimeout(retryIntervalMs)
-        continue
-      }
-
       const isSettingsPage = await page
         .evaluate(() => window.location.pathname === '/settings')
         .catch(() => false)

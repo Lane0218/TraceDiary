@@ -17,8 +17,6 @@ interface AppHeaderProps {
   guestMode?: {
     enabled: boolean
     description?: string
-    ctaHref?: string
-    ctaLabel?: string
   }
   authEntry?: AppHeaderAuthEntry
 }
@@ -116,18 +114,6 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
                 <span className="td-guest-pill-sep" aria-hidden="true">/</span>
                 <span className="td-guest-pill-desc">{guestModeDescription}</span>
               </>
-            ) : null}
-            {guestMode.ctaHref ? (
-              <button
-                type="button"
-                className="td-guest-pill-cta"
-                data-testid="guest-start-button"
-                onClick={() => {
-                  navigate(guestMode.ctaHref as string)
-                }}
-              >
-                {guestMode.ctaLabel ?? '开始使用我的数据'}
-              </button>
             ) : null}
           </div>
         ) : null}

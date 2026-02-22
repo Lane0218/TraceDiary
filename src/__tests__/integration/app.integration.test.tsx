@@ -29,7 +29,6 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
     expect(screen.getByTestId('app-nav-settings')).toBeTruthy()
     expect(await screen.findByTestId('guest-mode-pill')).toBeTruthy()
-    expect(screen.getByTestId('guest-start-button')).toBeTruthy()
     expect(screen.queryByLabelText('auth-modal')).toBeNull()
   })
 

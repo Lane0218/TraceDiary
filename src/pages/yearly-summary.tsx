@@ -868,8 +868,6 @@ export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySumma
             isGuestMode
               ? {
                   enabled: true,
-                  ctaHref: '/settings',
-                  ctaLabel: '开始使用我的数据',
                 }
               : undefined
           }

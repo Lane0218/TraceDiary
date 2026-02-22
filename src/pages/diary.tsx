@@ -922,8 +922,6 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
             isGuestMode
               ? {
                   enabled: true,
-                  ctaHref: '/settings',
-                  ctaLabel: '开始使用我的数据',
                 }
               : undefined
           }

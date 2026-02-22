@@ -881,21 +881,6 @@
     color: #736657;
   }
 
-  .td-guest-pill-cta {
-    border: none;
-    background: transparent;
-    color: #34465e;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    font-size: 12px;
-    cursor: pointer;
-    padding: 0 0 0 2px;
-  }
-
-  .td-guest-pill-cta:hover {
-    color: #1f3249;
-  }
-
   .td-fade-in {
     animation: td-fade-in 0.18s ease;
   }
