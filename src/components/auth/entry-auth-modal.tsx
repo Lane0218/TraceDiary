@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import type { UseAuthResult } from '../../hooks/use-auth'
@@ -6,6 +6,61 @@ import {
   sendEmailOtp,
   verifyEmailOtp,
 } from '../../services/supabase'
+
+const OTP_COOLDOWN_SECONDS = 60
+const OTP_COOLDOWN_STORAGE_KEY = 'trace-diary:entry-auth:otp-cooldown'
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const OTP_PATTERN = /^\d{6}$/
+
+function readOtpCooldownMap(): Record<string, number> {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+  const raw = localStorage.getItem(OTP_COOLDOWN_STORAGE_KEY)
+  if (!raw) {
+    return {}
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') {
+      return {}
+    }
+    const result: Record<string, number> = {}
+    for (const [email, expiresAt] of Object.entries(parsed)) {
+      if (typeof expiresAt === 'number' && Number.isFinite(expiresAt)) {
+        result[email] = expiresAt
+      }
+    }
+    return result
+  } catch {
+    return {}
+  }
+}
+
+function writeOtpCooldownMap(next: Record<string, number>): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  localStorage.setItem(OTP_COOLDOWN_STORAGE_KEY, JSON.stringify(next))
+}
+
+function getOtpCooldownRemainingMs(email: string): number {
+  if (!email) {
+    return 0
+  }
+  const cooldownMap = readOtpCooldownMap()
+  const expiresAt = cooldownMap[email]
+  if (!expiresAt) {
+    return 0
+  }
+  return Math.max(0, expiresAt - Date.now())
+}
+
+function setOtpCooldown(email: string, expiresAt: number): void {
+  const cooldownMap = readOtpCooldownMap()
+  cooldownMap[email] = expiresAt
+  writeOtpCooldownMap(cooldownMap)
+}
 
 interface EntryAuthModalProps {
   open: boolean
@@ -36,18 +91,47 @@ export default function EntryAuthModal({
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isRestoringConfig, setIsRestoringConfig] = useState(false)
+  const [otpCooldownRemainingMs, setOtpCooldownRemainingMs] = useState(0)
+  const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
+  const normalizedOtp = useMemo(() => otp.trim().replace(/\s+/g, ''), [otp])
+  const otpCooldownSeconds = Math.ceil(otpCooldownRemainingMs / 1000)
+  const isEmailValid = EMAIL_PATTERN.test(normalizedEmail)
+  const isOtpValid = OTP_PATTERN.test(normalizedOtp)
+  const canSendOtp = isEmailValid && otpCooldownRemainingMs <= 0 && !isSendingOtp
+  const canVerifyOtp = isEmailValid && isOtpValid && !isVerifyingOtp
+
+  useEffect(() => {
+    if (!open || !normalizedEmail) {
+      setOtpCooldownRemainingMs(0)
+      return
+    }
+    const syncCooldown = () => {
+      setOtpCooldownRemainingMs(getOtpCooldownRemainingMs(normalizedEmail))
+    }
+    syncCooldown()
+    const timer = window.setInterval(syncCooldown, 1000)
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [normalizedEmail, open])
 
   if (!open) {
     return null
   }
 
   const handleSendOtp = async () => {
+    if (!canSendOtp) {
+      return
+    }
     setError(null)
     setNotice(null)
     setIsSendingOtp(true)
     try {
-      await sendEmailOtp(email)
-      setNotice('验证码已发送，请检查邮箱并输入 6 位验证码。')
+      await sendEmailOtp(normalizedEmail)
+      const expiresAt = Date.now() + OTP_COOLDOWN_SECONDS * 1000
+      setOtpCooldown(normalizedEmail, expiresAt)
+      setOtpCooldownRemainingMs(OTP_COOLDOWN_SECONDS * 1000)
+      setNotice('验证码已发送，请检查邮箱。')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '验证码发送失败，请稍后重试')
     } finally {
@@ -56,11 +140,14 @@ export default function EntryAuthModal({
   }
 
   const handleVerifyOtp = async () => {
+    if (!canVerifyOtp) {
+      return
+    }
     setError(null)
     setNotice(null)
     setIsVerifyingOtp(true)
     try {
-      await verifyEmailOtp(email, otp)
+      await verifyEmailOtp(normalizedEmail, normalizedOtp)
       setNotice('登录成功，可继续恢复云端配置。')
       setOtp('')
     } catch (submitError) {
@@ -113,82 +200,74 @@ export default function EntryAuthModal({
               <h2 className="text-[26px] leading-tight text-td-text sm:text-[30px]">登录 TraceDiary</h2>
             </header>
 
-            <div className="space-y-4 rounded-[14px] border border-[#dfd8cb] bg-white p-4">
-              {!cloudAuthEnabled ? (
-                <p className="text-sm text-[#5f5b54]">当前未配置 Supabase，登录能力暂不可用。</p>
-              ) : session ? (
-                <>
-                  <p className="text-xs tracking-[0.06em] text-[#7c7467]">账号状态</p>
-                  <p className="text-base text-[#2c2925]">
-                    已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
-                  </p>
-                  {auth.state.stage === 'needs-setup' ? (
-                    <button
-                      type="button"
-                      className="td-btn td-btn-primary-ink h-10"
-                      onClick={() => void handleRestoreCloudConfig()}
-                      disabled={isRestoringConfig}
-                      data-testid="entry-auth-restore-config-btn"
-                    >
-                      {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
-                    </button>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-[#635d54]">流程：1. 输入邮箱发送验证码 2. 输入验证码完成登录</p>
-                  <div className="grid gap-3">
-                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px] sm:items-end">
-                      <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
-                        第一步：邮箱
-                        <input
-                          type="email"
-                          className="td-input border-[#dad3c6] bg-[#fffcf7]"
-                          placeholder="name@example.com"
-                          autoComplete="email"
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                          data-testid="entry-auth-email-input"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="td-btn td-btn-primary-ink h-10"
-                        onClick={() => void handleSendOtp()}
-                        disabled={isSendingOtp || email.trim().length === 0}
-                        data-testid="entry-auth-send-otp-btn"
-                      >
-                        {isSendingOtp ? '发送中...' : '发送验证码'}
-                      </button>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px] sm:items-end">
-                      <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
-                        第二步：验证码
-                        <input
-                          type="text"
-                          className="td-input border-[#dad3c6] bg-[#fffcf7]"
-                          placeholder="6 位验证码"
-                          autoComplete="one-time-code"
-                          value={otp}
-                          onChange={(event) => setOtp(event.target.value)}
-                          data-testid="entry-auth-otp-input"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="td-btn td-btn-primary-ink h-10"
-                        onClick={() => void handleVerifyOtp()}
-                        disabled={isVerifyingOtp || email.trim().length === 0 || otp.trim().length === 0}
-                        data-testid="entry-auth-verify-otp-btn"
-                      >
-                        {isVerifyingOtp ? '验证中...' : '登录并继续'}
-                      </button>
-                    </div>
-                  </div>
-                  <p className="text-xs text-[#766f62]">收不到验证码时，可再次点击“发送验证码”。</p>
-                </>
-              )}
-            </div>
+            {!cloudAuthEnabled ? (
+              <p className="text-sm text-[#5f5b54]">当前未配置 Supabase，登录能力暂不可用。</p>
+            ) : session ? (
+              <div className="space-y-2">
+                <p className="text-xs tracking-[0.06em] text-[#7c7467]">账号状态</p>
+                <p className="text-base text-[#2c2925]">
+                  已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
+                </p>
+                {auth.state.stage === 'needs-setup' ? (
+                  <button
+                    type="button"
+                    className="td-btn td-btn-primary-ink h-10"
+                    onClick={() => void handleRestoreCloudConfig()}
+                    disabled={isRestoringConfig}
+                    data-testid="entry-auth-restore-config-btn"
+                  >
+                    {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                  邮箱
+                  <input
+                    type="email"
+                    className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                    placeholder="name@example.com"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    data-testid="entry-auth-email-input"
+                  />
+                </label>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_148px] sm:items-end">
+                  <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                    验证码
+                    <input
+                      type="text"
+                      className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                      placeholder="6 位验证码"
+                      autoComplete="one-time-code"
+                      value={otp}
+                      onChange={(event) => setOtp(event.target.value)}
+                      data-testid="entry-auth-otp-input"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="td-btn h-10 border-[#d2ccc0] bg-[#f9f7f2]"
+                    onClick={() => void handleSendOtp()}
+                    disabled={!canSendOtp}
+                    data-testid="entry-auth-send-otp-btn"
+                  >
+                    {isSendingOtp ? '发送中...' : otpCooldownSeconds > 0 ? `${otpCooldownSeconds}s 后重发` : '发送验证码'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="td-btn td-btn-primary-ink h-10"
+                  onClick={() => void handleVerifyOtp()}
+                  disabled={!canVerifyOtp}
+                  data-testid="entry-auth-verify-otp-btn"
+                >
+                  {isVerifyingOtp ? '验证中...' : '登录 / 注册'}
+                </button>
+              </div>
+            )}
 
             {notice ? (
               <p className="text-sm text-[#16643a]">{notice}</p>
