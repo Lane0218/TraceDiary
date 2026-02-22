@@ -93,6 +93,7 @@ describe('App 路由与日记页入口', () => {
     expect(await screen.findByRole('heading', { name: '设置' })).toBeTruthy()
     expect(screen.getByLabelText('settings-page')).toBeTruthy()
     expect(screen.getByLabelText('settings-auth-panel')).toBeTruthy()
+    expect(screen.queryByLabelText('cloud-auth-panel')).toBeNull()
     expect(screen.queryByText('在此直接管理配置、解锁状态与 Token 凭据。')).toBeNull()
     expect(screen.queryByText('认证与安全')).toBeNull()
     expect(screen.queryByRole('button', { name: '配置' })).toBeNull()

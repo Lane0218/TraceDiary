@@ -22,12 +22,12 @@ export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProp
   const [session, setSession] = useState<Session | null>(null)
   const [cloudNotice, setCloudNotice] = useState<string | null>(null)
   const [cloudError, setCloudError] = useState<string | null>(null)
-  const [isRestoringConfig, setIsRestoringConfig] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const cloudAuthEnabled = isSupabaseConfigured()
 
   useEffect(() => {
     if (!cloudAuthEnabled) {
+      setSession(null)
       return
     }
 
@@ -54,20 +54,6 @@ export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProp
     }
   }, [cloudAuthEnabled])
 
-  const handleRestoreCloudConfig = async () => {
-    setCloudError(null)
-    setCloudNotice(null)
-    setIsRestoringConfig(true)
-    try {
-      await auth.restoreConfigFromCloud()
-      setCloudNotice('已从云端恢复配置，请输入主密码完成解锁。')
-    } catch (error) {
-      setCloudError(error instanceof Error ? error.message : '云端恢复失败，请稍后重试')
-    } finally {
-      setIsRestoringConfig(false)
-    }
-  }
-
   const handleSignOut = async () => {
     setCloudError(null)
     setCloudNotice(null)
@@ -92,35 +78,17 @@ export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProp
           <h2 className="font-display text-2xl text-td-text">设置</h2>
         </header>
 
-        <article className="td-card-muted td-panel space-y-3" aria-label="cloud-auth-panel">
-          <header>
-            <h2 className="td-settings-section-title">账号（可选）</h2>
-            <p className="td-settings-section-desc">
-              登录入口已移动到首屏弹窗；本区仅展示账号状态与恢复/退出操作。
-            </p>
-          </header>
-
-          {!cloudAuthEnabled ? (
-            <p className="text-sm text-td-muted">
-              当前未配置 Supabase，登录功能已关闭。你仍可继续本地配置与使用。
-            </p>
-          ) : session ? (
+        {cloudAuthEnabled && session ? (
+          <article className="td-card-muted td-panel space-y-3" aria-label="cloud-auth-panel">
+            <header>
+              <h2 className="td-settings-section-title">账号</h2>
+              <p className="td-settings-section-desc">当前设备的云端会话信息。</p>
+            </header>
             <div className="space-y-3">
               <p className="text-sm text-td-muted">
                 当前登录：<span className="font-medium text-td-text">{session.user.email ?? '未知邮箱'}</span>
               </p>
               <div className="flex flex-wrap gap-2">
-                {auth.state.stage === 'needs-setup' ? (
-                  <button
-                    type="button"
-                    className="td-btn td-btn-primary-ink"
-                    onClick={() => void handleRestoreCloudConfig()}
-                    disabled={isRestoringConfig}
-                    data-testid="cloud-restore-config-btn"
-                  >
-                    {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className="td-btn"
@@ -132,15 +100,11 @@ export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProp
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-td-muted">
-              当前未登录。请返回首屏弹窗输入邮箱与 6 位验证码完成登录；登录后可在此恢复云端配置。
-            </p>
-          )}
 
-          {cloudNotice ? <p className="text-sm text-emerald-700">{cloudNotice}</p> : null}
-          {cloudError ? <p className="text-sm text-red-700">{cloudError}</p> : null}
-        </article>
+            {cloudNotice ? <p className="text-sm text-emerald-700">{cloudNotice}</p> : null}
+            {cloudError ? <p className="text-sm text-red-700">{cloudError}</p> : null}
+          </article>
+        ) : null}
 
         <article className="td-card-muted td-panel space-y-4">
           <header>

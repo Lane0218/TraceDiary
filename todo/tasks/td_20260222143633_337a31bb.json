@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260222143633_337a31bb",
+  "display_id": "TD-AUTH-20260222-143633-337A",
+  "id_prefix": "AUTH",
+  "module_key": "6.13",
+  "module_name": "游客模式与账号体系（v1.2）",
+  "module_label": "6.13 游客模式与账号体系（v1.2）",
+  "order": 20260222143633,
+  "status": "DONE",
+  "title": "优化登录后云端配置恢复与设置页账号区展示",
+  "acceptance": "未登录时设置页隐藏账号区；登录后自动恢复云端配置；本地已有配置时仅弹窗确认是否覆盖；移除“从云端恢复配置”按钮",
+  "related_files": [
+    "src/App.tsx",
+    "src/pages/settings.tsx",
+    "src/components/auth/entry-auth-modal.tsx",
+    "src/__tests__/integration/app.integration.test.tsx"
+  ],
+  "test_record": "风险分级：中（认证入口与设置页展示逻辑变更）。已执行：`npm run lint`（通过）；`npm run test:unit`（95/95 通过）；`npm run test:integration`（72/72 通过，存在既有 act warning 但不影响通过）；`npm run test:e2e:changed`（通过）；`npm run test:e2e:fast`（5/5 通过）。",
+  "done_record": "2026-02-22 / d968888",
+  "source": {
+    "file": "src/App.tsx",
+    "line": 1
+  },
+  "version": 3,
+  "updated_at": "2026-02-22T14:46:41.000Z"
+}

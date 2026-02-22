@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import type { UseAuthResult } from '../../hooks/use-auth'
 import {
   sendEmailOtp,
   verifyEmailOtp,
@@ -65,7 +64,6 @@ function setOtpCooldown(email: string, expiresAt: number): void {
 interface EntryAuthModalProps {
   open: boolean
   canClose?: boolean
-  auth: UseAuthResult
   session: Session | null
   cloudAuthEnabled: boolean
   onClose?: () => void
@@ -76,7 +74,6 @@ interface EntryAuthModalProps {
 export default function EntryAuthModal({
   open,
   canClose = false,
-  auth,
   session,
   cloudAuthEnabled,
   onClose,
@@ -90,7 +87,6 @@ export default function EntryAuthModal({
   const [error, setError] = useState<string | null>(null)
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
-  const [isRestoringConfig, setIsRestoringConfig] = useState(false)
   const [otpCooldownRemainingMs, setOtpCooldownRemainingMs] = useState(0)
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
   const normalizedOtp = useMemo(() => otp.trim().replace(/\s+/g, ''), [otp])
@@ -148,26 +144,12 @@ export default function EntryAuthModal({
     setIsVerifyingOtp(true)
     try {
       await verifyEmailOtp(normalizedEmail, normalizedOtp)
-      setNotice('登录成功，可继续恢复云端配置。')
+      setNotice('登录成功。系统将自动尝试恢复云端配置；你也可以前往设置页继续配置。')
       setOtp('')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '验证码校验失败，请重试')
     } finally {
       setIsVerifyingOtp(false)
-    }
-  }
-
-  const handleRestoreCloudConfig = async () => {
-    setError(null)
-    setNotice(null)
-    setIsRestoringConfig(true)
-    try {
-      await auth.restoreConfigFromCloud()
-      setNotice('已从云端恢复配置，请输入主密码完成解锁。')
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : '云端恢复失败，请稍后重试')
-    } finally {
-      setIsRestoringConfig(false)
     }
   }
 
@@ -208,17 +190,7 @@ export default function EntryAuthModal({
                 <p className="text-base text-[#2c2925]">
                   已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
                 </p>
-                {auth.state.stage === 'needs-setup' ? (
-                  <button
-                    type="button"
-                    className="td-btn td-btn-primary-ink h-10"
-                    onClick={() => void handleRestoreCloudConfig()}
-                    disabled={isRestoringConfig}
-                    data-testid="entry-auth-restore-config-btn"
-                  >
-                    {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
-                  </button>
-                ) : null}
+                <p className="text-sm text-[#6b655a]">系统会自动尝试恢复云端配置；你也可前往设置页继续绑定仓库。</p>
               </div>
             ) : (
               <div className="space-y-3">
