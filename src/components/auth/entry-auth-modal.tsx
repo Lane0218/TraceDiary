@@ -36,7 +36,6 @@ export default function EntryAuthModal({
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isRestoringConfig, setIsRestoringConfig] = useState(false)
-  const [otpStepActive, setOtpStepActive] = useState(false)
 
   if (!open) {
     return null
@@ -49,7 +48,6 @@ export default function EntryAuthModal({
     try {
       await sendEmailOtp(email)
       setNotice('验证码已发送，请检查邮箱并输入 6 位验证码。')
-      setOtpStepActive(true)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '验证码发送失败，请稍后重试')
     } finally {
@@ -115,100 +113,88 @@ export default function EntryAuthModal({
               <h2 className="text-[26px] leading-tight text-td-text sm:text-[30px]">登录 TraceDiary</h2>
             </header>
 
-            {!cloudAuthEnabled ? (
-              <section className="space-y-3 rounded-[14px] border border-[#e4ddd0] bg-[#faf6ee] p-4">
+            <div className="space-y-4 rounded-[14px] border border-[#dfd8cb] bg-white p-4">
+              {!cloudAuthEnabled ? (
                 <p className="text-sm text-[#5f5b54]">当前未配置 Supabase，登录能力暂不可用。</p>
-              </section>
-            ) : session ? (
-              <section className="space-y-3 rounded-[14px] border border-[#dfd8cb] bg-white p-4">
-                <p className="text-xs tracking-[0.06em] text-[#7c7467]">账号状态</p>
-                <p className="text-base text-[#2c2925]">
-                  已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
-                </p>
-                {auth.state.stage === 'needs-setup' ? (
-                  <button
-                    type="button"
-                    className="td-btn td-btn-primary-ink h-10"
-                    onClick={() => void handleRestoreCloudConfig()}
-                    disabled={isRestoringConfig}
-                    data-testid="entry-auth-restore-config-btn"
-                  >
-                    {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
-                  </button>
-                ) : null}
-              </section>
-            ) : (
-              <section className="space-y-3 rounded-[14px] border border-[#dfd8cb] bg-white p-4">
-                <p className="text-xs tracking-[0.06em] text-[#7c7467]">{otpStepActive ? '第二步：输入验证码' : '第一步：输入邮箱'}</p>
-                <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
-                  邮箱
-                  <input
-                    type="email"
-                    className="td-input border-[#dad3c6] bg-[#fffcf7]"
-                    placeholder="name@example.com"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value)
-                      setOtp('')
-                      setOtpStepActive(false)
-                    }}
-                    data-testid="entry-auth-email-input"
-                  />
-                </label>
-
-                {otpStepActive ? (
-                  <>
-                    <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
-                      验证码
-                      <input
-                        type="text"
-                        className="td-input border-[#dad3c6] bg-[#fffcf7]"
-                        placeholder="6 位验证码"
-                        autoComplete="one-time-code"
-                        value={otp}
-                        onChange={(event) => setOtp(event.target.value)}
-                        data-testid="entry-auth-otp-input"
-                      />
-                    </label>
+              ) : session ? (
+                <>
+                  <p className="text-xs tracking-[0.06em] text-[#7c7467]">账号状态</p>
+                  <p className="text-base text-[#2c2925]">
+                    已登录：<span className="font-semibold">{session.user.email ?? '未知邮箱'}</span>
+                  </p>
+                  {auth.state.stage === 'needs-setup' ? (
                     <button
                       type="button"
                       className="td-btn td-btn-primary-ink h-10"
-                      onClick={() => void handleVerifyOtp()}
-                      disabled={isVerifyingOtp}
-                      data-testid="entry-auth-verify-otp-btn"
+                      onClick={() => void handleRestoreCloudConfig()}
+                      disabled={isRestoringConfig}
+                      data-testid="entry-auth-restore-config-btn"
                     >
-                      {isVerifyingOtp ? '验证中...' : '登录并继续'}
+                      {isRestoringConfig ? '恢复中...' : '从云端恢复配置'}
                     </button>
-                    <button
-                      type="button"
-                      className="text-left text-xs text-[#766f62] underline-offset-4 transition hover:text-[#2c2925] hover:underline"
-                      onClick={() => void handleSendOtp()}
-                      disabled={isSendingOtp}
-                      data-testid="entry-auth-send-otp-btn"
-                    >
-                      {isSendingOtp ? '发送中...' : '重新发送验证码'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="td-btn td-btn-primary-ink h-10"
-                    onClick={() => void handleSendOtp()}
-                    disabled={isSendingOtp}
-                    data-testid="entry-auth-send-otp-btn"
-                  >
-                    {isSendingOtp ? '发送中...' : '发送验证码'}
-                  </button>
-                )}
-              </section>
-            )}
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-[#635d54]">流程：1. 输入邮箱发送验证码 2. 输入验证码完成登录</p>
+                  <div className="grid gap-3">
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px] sm:items-end">
+                      <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                        第一步：邮箱
+                        <input
+                          type="email"
+                          className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                          placeholder="name@example.com"
+                          autoComplete="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          data-testid="entry-auth-email-input"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="td-btn td-btn-primary-ink h-10"
+                        onClick={() => void handleSendOtp()}
+                        disabled={isSendingOtp || email.trim().length === 0}
+                        data-testid="entry-auth-send-otp-btn"
+                      >
+                        {isSendingOtp ? '发送中...' : '发送验证码'}
+                      </button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px] sm:items-end">
+                      <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                        第二步：验证码
+                        <input
+                          type="text"
+                          className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                          placeholder="6 位验证码"
+                          autoComplete="one-time-code"
+                          value={otp}
+                          onChange={(event) => setOtp(event.target.value)}
+                          data-testid="entry-auth-otp-input"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="td-btn td-btn-primary-ink h-10"
+                        onClick={() => void handleVerifyOtp()}
+                        disabled={isVerifyingOtp || email.trim().length === 0 || otp.trim().length === 0}
+                        data-testid="entry-auth-verify-otp-btn"
+                      >
+                        {isVerifyingOtp ? '验证中...' : '登录并继续'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#766f62]">收不到验证码时，可再次点击“发送验证码”。</p>
+                </>
+              )}
+            </div>
 
             {notice ? (
-              <p className="rounded-[10px] border border-[#cde8d2] bg-[#f2fbf4] px-3 py-2 text-sm text-[#16643a]">{notice}</p>
+              <p className="text-sm text-[#16643a]">{notice}</p>
             ) : null}
             {error ? (
-              <p className="rounded-[10px] border border-[#f0c5c5] bg-[#fff4f4] px-3 py-2 text-sm text-[#a63f3f]">{error}</p>
+              <p className="text-sm text-[#a63f3f]">{error}</p>
             ) : null}
 
             <div className="flex items-center justify-between border-t border-[#ece5d8] pt-4">

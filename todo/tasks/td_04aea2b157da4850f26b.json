@@ -8,16 +8,16 @@
   "order": 174,
   "status": "DONE",
   "title": "实现邮箱 OTP 登录/注册一体化入口（首屏登录窗口减负优化）",
-  "acceptance": "登录入口在不改变 OTP 能力的前提下完成信息减负：去副标题、简化为单列主流程、收敛按钮层级，用户可更快完成邮箱验证码登录",
+  "acceptance": "登录入口在不改变 OTP 能力的前提下完成信息减负：层级精简为单面板，第一步与第二步同时可见并具备清晰流程提示，用户无需猜测下一步操作",
   "related_files": [
     "src/components/auth/entry-auth-modal.tsx"
   ],
-  "test_record": "风险分级：中；首次 `npm run lint` 失败（缺少依赖 `@eslint/js`），执行 `npm ci` 后重跑通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（72/72，含既有 `act(...)` 警告）；定向 E2E：`npx playwright test e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 首次失败（缺少 `.env.e2e` 中 `E2E_GITEE_OWNER`），复制主仓库 `.env.e2e` 后重跑通过（4/4）；`npx playwright test e2e/specs/auth-setup.spec.ts --project=chromium --retries=0` 通过（1/1）；未执行全量 E2E（本任务未命中全量门禁）。",
+  "test_record": "风险分级：中；`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（72/72，含既有 `act(...)` 警告）；定向 E2E：`npx playwright test e2e/specs/auth-setup.spec.ts --project=chromium --retries=0` 通过（1/1）；`npx playwright test e2e/specs/auth-session.spec.ts --project=chromium --retries=0` 通过（4/4）；中途并行执行曾出现 preview 端口占用（4173）后改为串行重跑通过；未执行全量 E2E（本任务未命中全量门禁）。",
   "done_record": "2026-02-22 / pending",
   "source": {
     "file": "TODO.md",
     "line": 253
   },
-  "version": 3,
-  "updated_at": "2026-02-22T14:02:50.000Z"
+  "version": 5,
+  "updated_at": "2026-02-22T14:28:00.000Z"
 }
