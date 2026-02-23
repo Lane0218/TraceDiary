@@ -223,24 +223,6 @@ function AppRoutes() {
     void signOutCurrentSession()
   }, [signOutCurrentSession])
 
-  const handleSwitchAccount = useCallback(() => {
-    setGuestEntrySelected(false)
-    saveGuestEntryPreference(false)
-
-    if (!cloudAuthEnabled) {
-      setManualEntryModalOpen(true)
-      return
-    }
-
-    void (async () => {
-      const signedOut = await signOutCurrentSession()
-      if (!signedOut) {
-        return
-      }
-      setManualEntryModalOpen(true)
-    })()
-  }, [cloudAuthEnabled, signOutCurrentSession])
-
   const handleKeepLocalConfig = useCallback(() => {
     if (!cloudOverwritePromptUserId) {
       return
@@ -290,9 +272,8 @@ function AppRoutes() {
       isSigningOut,
       onOpenAuthModal: openEntryModal,
       onSignOut: handleSignOut,
-      onSwitchAccount: handleSwitchAccount,
     }),
-    [handleSignOut, handleSwitchAccount, isSigningOut, openEntryModal, session?.user.email],
+    [handleSignOut, isSigningOut, openEntryModal, session?.user.email],
   )
 
   return (

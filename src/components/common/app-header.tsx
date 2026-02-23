@@ -8,7 +8,6 @@ export interface AppHeaderAuthEntry {
   isSigningOut?: boolean
   onOpenAuthModal: () => void
   onSignOut: () => void
-  onSwitchAccount: () => void
 }
 
 interface AppHeaderProps {
@@ -190,18 +189,6 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
                       </p>
                     </div>
                     <div className="mt-3 flex flex-col gap-2">
-                      <button
-                        type="button"
-                        className="td-btn justify-center border-[#d9d3c7] bg-white text-sm"
-                        onClick={() => {
-                          setAccountMenuOpen(false)
-                          authEntry.onSwitchAccount()
-                        }}
-                        role="menuitem"
-                        data-testid="app-header-account-switch-btn"
-                      >
-                        切换账号
-                      </button>
                       <button
                         type="button"
                         className="td-btn justify-center border-[#efc6c6] bg-[#fff5f5] text-sm text-[#a63f3f]"

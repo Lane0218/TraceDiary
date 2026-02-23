@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_20260223110207_538b8105",
+  "display_id": "TD-UI-20260223-110207-56E5",
+  "id_prefix": "UI",
+  "module_key": "ui.account",
+  "module_name": "账号菜单",
+  "module_label": "账号菜单精简",
+  "order": 20260223110207,
+  "status": "DONE",
+  "title": "右上角账号菜单移除切换账号，仅保留退出登录",
+  "acceptance": "登录态账号菜单仅展示退出登录，相关类型与调用链无冗余字段，交互行为保持一致",
+  "related_files": [
+    "src/components/common/app-header.tsx",
+    "src/App.tsx"
+  ],
+  "test_record": "npm run lint 通过；npm run test:unit 通过（95/95）；npm run test:integration 通过（87/87，存在既有 act 警告）；npm run test:e2e:changed 通过；npm run test:e2e:fast 通过（5/5）。未执行全量 E2E（test:e2e:full）。",
+  "done_record": "2026-02-23 / pending",
+  "source": {
+    "file": "src/components/common/app-header.tsx",
+    "line": 193
+  },
+  "version": 2,
+  "updated_at": "2026-02-23T11:05:11.000Z"
+}
