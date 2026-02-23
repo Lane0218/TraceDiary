@@ -256,29 +256,7 @@ describe('年度总结页面', () => {
     })
   })
 
-  it('点击 pull 主按钮应触发全量拉取并展示结果弹窗', async () => {
-    useDiaryMock.mockReturnValue(
-      buildUseDiaryResult({
-        entryId: 'summary:2026',
-      }),
-    )
-
-    renderYearlyPage('/yearly/2026')
-    fireEvent.click(screen.getByTestId('manual-pull-button'))
-
-    await waitFor(() => {
-      expect(pullRemoteDiariesToIndexedDbMock).toHaveBeenCalledTimes(1)
-    })
-    expect(screen.getByTestId('pull-result-dialog')).toBeTruthy()
-    expect(screen.getByText('全量拉取汇总')).toBeTruthy()
-
-    fireEvent.click(screen.getByTestId('pull-result-close'))
-    await waitFor(() => {
-      expect(screen.queryByTestId('pull-result-dialog')).toBeNull()
-    })
-  })
-
-  it('pull 下拉菜单可触发当前条目拉取', async () => {
+  it('点击 pull 按钮应触发当前条目拉取', async () => {
     const setContent = vi.fn()
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({
@@ -300,8 +278,7 @@ describe('年度总结页面', () => {
     )
 
     renderYearlyPage('/yearly/2026')
-    fireEvent.click(screen.getByTestId('manual-pull-menu-trigger'))
-    fireEvent.click(screen.getByTestId('manual-pull-current-button'))
+    fireEvent.click(screen.getByTestId('manual-pull-button'))
 
     await waitFor(() => {
       expect(pullDiaryFromGiteeMock).toHaveBeenCalledTimes(1)

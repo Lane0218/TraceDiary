@@ -488,67 +488,6 @@
     @apply relative z-[1] ml-auto flex max-w-full flex-wrap items-center gap-2;
   }
 
-  .td-sync-pull-split {
-    position: relative;
-    display: inline-flex;
-    align-items: stretch;
-    border-radius: 10px;
-  }
-
-  .td-sync-pull-main-btn {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right-width: 0;
-    min-width: 102px;
-  }
-
-  .td-sync-pull-menu-btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    min-width: 34px;
-    padding: 0 10px;
-    color: #5b645d;
-  }
-
-  .td-sync-pull-menu-btn:hover {
-    color: #3f4742;
-  }
-
-  .td-sync-pull-menu {
-    @apply pointer-events-none absolute right-0 top-[calc(100%+6px)] rounded-[10px] border p-1;
-    width: max-content;
-    min-width: 150px;
-    border-color: #ddd9cf;
-    background-color: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 10px 24px rgba(19, 25, 22, 0.14);
-    opacity: 0;
-    transform: translateY(-4px);
-    transition:
-      opacity 0.14s ease,
-      transform 0.14s ease;
-  }
-
-  .td-sync-pull-menu.is-open {
-    pointer-events: auto;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .td-sync-pull-menu-item {
-    @apply w-full rounded-[8px] px-2.5 py-1.5 text-left text-xs transition;
-    color: #4b534d;
-  }
-
-  .td-sync-pull-menu-item:hover {
-    background-color: #f4f0e8;
-    color: #2d342f;
-  }
-
-  .td-sync-pull-menu-item:disabled {
-    cursor: not-allowed;
-    color: #9ca3af;
-  }
-
   .td-sync-details-popover {
     @apply pointer-events-none absolute left-3 top-[calc(100%+6px)] z-[6] max-w-[calc(100vw-24px)] rounded-[12px] border p-2.5;
     border-color: #ddd9cf;

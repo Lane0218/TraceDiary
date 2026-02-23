@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import AuthPanel from '../components/auth/auth-panel'
 import AppHeader, { type AppHeaderAuthEntry } from '../components/common/app-header'
+import BulkSyncPanel from '../components/common/bulk-sync-panel'
 import ExportDataPanel from '../components/common/export-data-panel'
 import ImportDataPanel from '../components/common/import-data-panel'
 import type { UseAuthResult } from '../hooks/use-auth'
@@ -122,6 +123,7 @@ export default function SettingsPage({ auth, headerAuthEntry }: SettingsPageProp
           <div className="td-settings-data-stack">
             <ImportDataPanel auth={auth} variant="row" />
             <ExportDataPanel auth={auth} variant="row" />
+            <BulkSyncPanel auth={auth} />
           </div>
         </article>
       </section>
