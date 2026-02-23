@@ -10,6 +10,34 @@ SKIP_LINT=false
 SKIP_VERIFY=false
 VERIFY_URLS=()
 
+load_vercel_token_from_env_local() {
+  local env_file="$ROOT_DIR/.env.local"
+  local line=''
+  local value=''
+
+  if [[ -n "${VERCEL_TOKEN:-}" ]] || [[ ! -f "$env_file" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    if [[ "$line" == VERCEL_TOKEN=* ]]; then
+      value="${line#VERCEL_TOKEN=}"
+      if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+        value="${value:1:${#value}-2}"
+      elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+        value="${value:1:${#value}-2}"
+      fi
+
+      if [[ -n "$value" ]]; then
+        export VERCEL_TOKEN="$value"
+      fi
+      return 0
+    fi
+  done < "$env_file"
+}
+
 usage() {
   cat <<'EOF'
 用法:
@@ -23,7 +51,7 @@ usage() {
   -h, --help          查看帮助
 
 环境变量:
-  VERCEL_TOKEN        必填，Vercel token（不要写入仓库）
+  VERCEL_TOKEN        必填，Vercel token（若未设置会尝试读取 .env.local）
   NPM_CACHE_DIR       可选，npx/npm 缓存目录（默认: /tmp/.npm-cache）
   ALLOW_STATUS_CODES  可选，允许的 HTTP 状态码，逗号分隔
 
@@ -91,8 +119,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+load_vercel_token_from_env_local
+
 if [[ -z "${VERCEL_TOKEN:-}" ]]; then
-  echo "缺少环境变量 VERCEL_TOKEN，请先执行: export VERCEL_TOKEN='你的token'" >&2
+  echo "缺少 VERCEL_TOKEN，请先执行: export VERCEL_TOKEN='你的token'，或在 .env.local 写入 VERCEL_TOKEN=xxx" >&2
   exit 1
 fi
 
@@ -114,7 +144,7 @@ export npm_config_cache="$NPM_CACHE_DIR"
 cd "$ROOT_DIR"
 
 echo "[1/4] 校验 Vercel 身份..."
-npx vercel whoami --scope "$VERCEL_SCOPE" >/dev/null
+npx vercel whoami --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" >/dev/null
 echo "已通过身份校验。"
 
 if [[ "$SKIP_LINT" == "true" ]]; then
@@ -125,7 +155,7 @@ else
 fi
 
 echo "[3/4] 执行生产部署..."
-deploy_output="$(npx vercel --prod --yes --scope "$VERCEL_SCOPE" 2>&1)"
+deploy_output="$(npx vercel --prod --yes --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" 2>&1)"
 echo "$deploy_output"
 
 deployment_url="$(printf '%s\n' "$deploy_output" | grep -Eo 'https://[a-zA-Z0-9.-]+\.vercel\.app' | tail -n 1 || true)"

@@ -7,18 +7,19 @@
   "module_label": "6.6 PWA、部署与安全头",
   "order": 64,
   "status": "DONE",
-  "title": "执行 Vercel 生产部署并回传可访问地址",
-  "acceptance": "成功产出生产部署 URL 且可访问",
+  "title": "补齐 Vercel 环境变量中的 Supabase 配置并复核发布",
+  "acceptance": "Vercel 至少在 production 环境存在 `VITE_SUPABASE_URL` 与 `VITE_SUPABASE_ANON_KEY`；完成配置复核并记录结果",
   "related_files": [
-    "TODO.md",
-    ".gitignore"
+    ".env.local",
+    "scripts/deploy-vercel-prod.sh",
+    "todo/tasks/td_dd5e3f89f430e9824d84.json"
   ],
-  "test_record": "风险分级：低（部署与配置记录）；`npm run lint` 通过；`npx vercel whoami --token ***` 通过（账号：`lane0218`）；`npx vercel --prod --yes --name tracediary --token ***` 通过（Production: `https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app`，Alias: `https://tracediary.vercel.app`）；`curl -I https://tracediary.vercel.app` 返回 `HTTP/2 200` 且安全响应头生效；`curl -I https://tracediary-g0q3xm6tx-lanes-projects-29cb0384.vercel.app` 返回 `HTTP/2 401`（部署保护）",
-  "done_record": "2026-02-17 / 232ca05",
+  "test_record": "风险分级：低（云端环境变量配置与发布复核）；`npx vercel env ls production/preview/development` 均确认原先为空；已写入 `VITE_SUPABASE_URL` 与 `VITE_SUPABASE_ANON_KEY` 到 production、preview、development；回读验证三个环境均显示上述两个变量（Encrypted）；`bash scripts/deploy-vercel-prod.sh` 通过（含 `npm run lint`），新生产 URL：`https://tracediary-botzaxhkq-lanes-projects-29cb0384.vercel.app`；域名校验 `https://diary.laneljc.cn` 与 `https://tracediary.laneljc.cn` 均为 HTTP 200；未执行 unit/integration/e2e（本轮未改应用代码）。",
+  "done_record": "2026-02-23 / pending",
   "source": {
     "file": "TODO.md",
     "line": 108
   },
-  "version": 1,
-  "updated_at": "2026-02-21T14:31:06.652Z"
+  "version": 5,
+  "updated_at": "2026-02-22T16:27:35.000Z"
 }

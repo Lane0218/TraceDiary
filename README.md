@@ -66,9 +66,16 @@ npm run test:e2e:fast
 仓库已提供一键生产部署脚本：`scripts/deploy-vercel-prod.sh`。
 
 ```bash
+# 方式 A：临时环境变量
 export VERCEL_TOKEN='你的新token'
 bash scripts/deploy-vercel-prod.sh
+
+# 方式 B：写入项目根目录 .env.local（脚本会自动读取）
+# VERCEL_TOKEN=你的新token
+bash scripts/deploy-vercel-prod.sh
 ```
+
+> token 读取优先级：当前 shell 环境变量 `VERCEL_TOKEN` > 项目根目录 `.env.local`。
 
 默认行为：
 
