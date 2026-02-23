@@ -36,12 +36,21 @@ function formatDeltaRatio(value: number | null): string {
 
 export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProps) {
   const [reloadSignal, setReloadSignal] = useState(0)
+  const [dismissedTokenRefreshKey, setDismissedTokenRefreshKey] = useState<string | null>(null)
   const stats = useStats({ reloadSignal })
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const isGuestMode = auth.state.stage === 'needs-setup'
-  const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
-  const authModalOpen = forceOpenAuthModal
+  const needsTokenRefresh = auth.state.stage === 'needs-token-refresh'
+  const tokenRefreshKey = [
+    auth.state.tokenRefreshReason ?? 'unknown',
+    auth.state.errorMessage ?? '',
+    auth.state.config?.giteeOwner ?? '',
+    auth.state.config?.giteeRepoName ?? '',
+    auth.state.config?.giteeBranch ?? '',
+  ].join('|')
+  const forceOpenAuthModal = (auth.state.stage === 'checking' || auth.state.stage === 'needs-unlock') && !isGuestMode
+  const authModalOpen = forceOpenAuthModal || (needsTokenRefresh && !isGuestMode && dismissedTokenRefreshKey !== tokenRefreshKey)
 
   const chartModel = useMemo(() => buildStatsChartModel(stats.summary), [stats.summary])
   const latestMonth = chartModel.monthly.length > 0 ? chartModel.monthly[chartModel.monthly.length - 1] : null
@@ -189,7 +198,12 @@ export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProp
         </section>
       </main>
 
-      <AuthModal auth={auth} open={authModalOpen} canClose={!forceOpenAuthModal} onClose={() => undefined} />
+      <AuthModal
+        auth={auth}
+        open={authModalOpen}
+        canClose={!forceOpenAuthModal}
+        onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
+      />
     </>
   )
 }

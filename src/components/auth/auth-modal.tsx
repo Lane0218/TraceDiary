@@ -14,7 +14,10 @@ export default function AuthModal({ auth, open, canClose, onClose }: AuthModalPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm td-fade-in">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#151311]/55 px-4 py-6 backdrop-blur-[2px] td-fade-in"
+      data-testid="auth-modal-overlay"
+    >
       <AuthPanel auth={auth} variant="modal" canClose={canClose} onClose={onClose} />
     </div>
   )

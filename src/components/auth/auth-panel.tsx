@@ -128,6 +128,19 @@ function createDefaultSyncCheckSnapshot(state: UseAuthResult['state']): SyncChec
   }
 }
 
+function getTokenRefreshReasonMessage(state: UseAuthResult['state']): string {
+  switch (state.tokenRefreshReason) {
+    case 'missing-token':
+      return '检测到当前设备存在历史配置，但本地 Token 密文缺失。请补输新 Token 以恢复同步能力。'
+    case 'decrypt-failed':
+      return '本地 Token 密文恢复失败，可能是会话密钥失效或历史数据不完整。请补输新 Token 覆盖本地密文。'
+    case 'token-invalid':
+      return '当前 Token 校验失败，可能已过期、被撤销或仓库权限已变更。请更新为可访问仓库的新 Token。'
+    default:
+      return '当前 Token 不可用，请更新后继续使用远端同步。'
+  }
+}
+
 function buildSyncCheckSnapshotFromSubmitResult(
   result: Awaited<ReturnType<UseAuthResult['updateConnectionSettings']>>,
 ): SyncCheckSnapshot {
@@ -218,6 +231,10 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
         return 'border-td-line bg-td-surface-soft text-td-muted'
     }
   }, [syncCheckSnapshot.status])
+  const tokenRefreshReasonMessage = useMemo(
+    () => (state.stage === 'needs-token-refresh' ? getTokenRefreshReasonMessage(state) : null),
+    [state],
+  )
 
   useEffect(() => {
     if (state.stage !== 'ready' || !state.config) {
@@ -305,7 +322,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   const body = (
     <section className={isModal ? 'space-y-4 px-4 py-4 sm:px-5 sm:py-5' : 'space-y-4'}>
       {isModal ? (
-        <div className="rounded-[10px] border border-td-line bg-td-surface-soft px-3 py-2 text-sm text-td-muted">
+        <div className="rounded-[12px] border border-[#e6dfd1] bg-[#f9f5ec] px-3 py-2 text-sm text-[#625a4f]">
           <p>状态：{state.stage}</p>
           {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
           {state.config ? <p>分支：{state.config.giteeBranch ?? 'master'}</p> : null}
@@ -406,6 +423,9 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
       {state.stage === 'needs-token-refresh' ? (
         <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
+          <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {tokenRefreshReasonMessage}
+          </p>
           <AuthFormField
             label="新的 Gitee Token"
             value={form.refreshToken}
@@ -421,20 +441,32 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             label="主密码"
             value={form.refreshMasterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshMasterPassword: next }))}
-            placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
-            type="password"
-            autoComplete="current-password"
-            testId="auth-refresh-password-input"
-            containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
-            inputClassName="td-input"
-          />
-          <button
-            type="submit"
-            className={primaryActionButtonClass}
-            data-testid="auth-refresh-submit"
-          >
-            覆盖本地 Token 密文
-          </button>
+              placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
+              type="password"
+              autoComplete="current-password"
+              testId="auth-refresh-password-input"
+              containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+              inputClassName="td-input"
+            />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              className={primaryActionButtonClass}
+              data-testid="auth-refresh-submit"
+            >
+              覆盖本地 Token 密文
+            </button>
+            {isModal && canClose && onClose ? (
+              <button
+                type="button"
+                className="td-btn w-full sm:w-auto"
+                onClick={onClose}
+                data-testid="auth-refresh-dismiss-btn"
+              >
+                稍后处理
+              </button>
+            ) : null}
+          </div>
         </form>
       ) : null}
 
@@ -517,24 +549,37 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   }
 
   return (
-    <article className="td-card w-full max-w-xl bg-td-bg shadow-card" aria-label="auth-modal">
-      <header className="border-b border-td-line px-4 py-3 sm:px-5">
-        <div className="flex items-start gap-2">
+    <article
+      className="relative w-full max-w-[640px] max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-[20px] border border-[#dad3c7] bg-[#fffdfa] shadow-[0_24px_72px_rgba(24,20,16,0.32)]"
+      aria-label="auth-modal"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(203,185,156,0.22),transparent_52%)]"
+        aria-hidden="true"
+      />
+      <header className="relative border-b border-[#ece5d8] px-5 py-4 sm:px-6">
+        <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <div className="mb-1 inline-flex items-center rounded-full border border-td-line bg-td-soft px-2 py-0.5 text-[11px] font-medium tracking-[0.04em] text-td-muted">
+            <div className="mb-1 inline-flex items-center rounded-full border border-[#ddd3c4] bg-[#f8f2e8] px-2 py-0.5 text-[11px] font-medium tracking-[0.04em] text-[#6f665a]">
               {stageCopy.badge}
             </div>
             <h2 className="text-xl text-td-text">{stageCopy.title}</h2>
-            <p className="mt-1 text-sm text-td-muted">{stageCopy.subtitle}</p>
+            <p className="mt-1 text-sm text-[#6c6459]">{stageCopy.subtitle}</p>
           </div>
           {canClose && onClose ? (
-            <button type="button" onClick={onClose} className="td-btn px-2 py-1 text-xs" aria-label="关闭认证弹层">
-              关闭
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d9d2c7] bg-white text-[#6f665a] transition hover:bg-[#f6f1e8]"
+              aria-label="关闭认证弹层"
+              data-testid="auth-modal-close-btn"
+            >
+              ×
             </button>
           ) : null}
         </div>
       </header>
-      {body}
+      <div className="relative">{body}</div>
     </article>
   )
 }

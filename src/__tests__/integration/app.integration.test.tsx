@@ -20,6 +20,30 @@ describe('App 路由与日记页入口', () => {
     })
   }
 
+  function seedBrokenTokenConfig(): void {
+    localStorage.setItem(
+      'trace-diary:app-config',
+      JSON.stringify({
+        giteeRepo: 'https://gitee.com/lane/diary',
+        giteeOwner: 'lane',
+        giteeRepoName: 'diary',
+        giteeBranch: 'master',
+        passwordHash: 'hash',
+        passwordExpiry: '2099-12-31T00:00:00.000Z',
+        kdfParams: {
+          algorithm: 'PBKDF2',
+          hash: 'SHA-256',
+          iterations: 300000,
+          salt: 'salt',
+        },
+        encryptedToken: 'cipher-token',
+        tokenCipherVersion: 'v1',
+      }),
+    )
+    localStorage.setItem('trace-diary:auth:lock-state', 'unlocked')
+    localStorage.setItem('trace-diary:auth:password-expiry', String(Date.now() + 60 * 60 * 1000))
+  }
+
   it('应默认进入单页日记并展示游客模式入口', async () => {
     render(<App />)
 
@@ -110,6 +134,23 @@ describe('App 路由与日记页入口', () => {
     expect(screen.queryByTestId('cloud-auth-otp-input')).toBeNull()
     expect(screen.queryByTestId('cloud-auth-send-otp-btn')).toBeNull()
     expect(screen.queryByTestId('cloud-auth-verify-otp-btn')).toBeNull()
+  })
+
+  it('Token 失效时认证弹窗应可关闭，用户可先继续浏览本地内容', async () => {
+    seedBrokenTokenConfig()
+    render(<App />)
+
+    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '更新 Token' })).toBeTruthy()
+    expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
+
+    fireEvent.click(screen.getByTestId('auth-modal-close-btn'))
+    await waitFor(() => {
+      expect(screen.queryByLabelText('auth-modal')).toBeNull()
+    })
+
+    expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
+    expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
 
   it('日记页左侧应支持往年今日与统计分段切换', async () => {

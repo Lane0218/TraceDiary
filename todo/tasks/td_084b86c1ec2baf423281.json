@@ -7,18 +7,22 @@
   "module_label": "6.2 认证、安全与密钥管理",
   "order": 12,
   "status": "DONE",
-  "title": "实现 Token 解密失败/失效回退输入流程",
-  "acceptance": "失败时可补输并覆盖本地密文",
+  "title": "实现 Token 解密失败/失效回退输入流程并优化阻断弹窗体验",
+  "acceptance": "Token 失效时可补输并覆盖本地密文；`needs-token-refresh` 弹窗可理解、可关闭，且视觉风格与现有主弹窗一致",
   "related_files": [
-    "src/pages/welcome.tsx",
-    "src/hooks/use-auth.ts"
+    "src/components/auth/auth-modal.tsx",
+    "src/components/auth/auth-panel.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/pages/insights.tsx",
+    "src/__tests__/integration/app.integration.test.tsx"
   ],
-  "test_record": "`npm run test:unit` 通过（13/13）；`npm run test:integration` 通过（6/6）；`npm run test:e2e` 通过（冒烟）；`npm run lint` 通过；`npm run build` 通过",
-  "done_record": "2026-02-08 / cb09c7f",
+  "test_record": "风险分级：中（认证流程弹窗策略 + UI 样式 + 跨页面入口逻辑）。已执行：`npm run lint`（通过）；`npm run test:unit`（95/95 通过）；`npm run test:integration`（87/87 通过，存在既有 act warning 但不影响通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。",
+  "done_record": "2026-02-23 / pending",
   "source": {
     "file": "TODO.md",
     "line": 36
   },
-  "version": 1,
-  "updated_at": "2026-02-21T14:31:06.652Z"
+  "version": 3,
+  "updated_at": "2026-02-23T08:32:10.000Z"
 }

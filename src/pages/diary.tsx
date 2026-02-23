@@ -195,6 +195,7 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
+  const [dismissedTokenRefreshKey, setDismissedTokenRefreshKey] = useState<string | null>(null)
   const [pullConflictState, setPullConflictState] = useState<{
     local: DiarySyncMetadata
     remote: DiarySyncMetadata | null
@@ -304,8 +305,16 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
     )
   }, [diaries])
 
-  const forceOpenAuthModal = auth.state.stage !== 'ready' && !isGuestMode
-  const authModalOpen = forceOpenAuthModal
+  const needsTokenRefresh = auth.state.stage === 'needs-token-refresh'
+  const tokenRefreshKey = [
+    auth.state.tokenRefreshReason ?? 'unknown',
+    auth.state.errorMessage ?? '',
+    auth.state.config?.giteeOwner ?? '',
+    auth.state.config?.giteeRepoName ?? '',
+    auth.state.config?.giteeBranch ?? '',
+  ].join('|')
+  const forceOpenAuthModal = (auth.state.stage === 'checking' || auth.state.stage === 'needs-unlock') && !isGuestMode
+  const authModalOpen = forceOpenAuthModal || (needsTokenRefresh && !isGuestMode && dismissedTokenRefreshKey !== tokenRefreshKey)
 
   useEffect(() => {
     if (!canSyncToRemote) {
@@ -988,7 +997,7 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
         auth={auth}
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
-        onClose={() => undefined}
+        onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
       />
 
       <ConflictDialog
