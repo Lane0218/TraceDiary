@@ -78,17 +78,51 @@ export async function submitRefreshToken(
   await page.getByTestId('auth-refresh-submit').click()
 }
 
+function getAuthStageTitle(stage: AuthStage): string {
+  switch (stage) {
+    case 'needs-setup':
+      return '首次配置'
+    case 'needs-unlock':
+      return '解锁会话'
+    case 'needs-token-refresh':
+      return '更新 Token'
+    case 'checking':
+      return '处理中'
+    case 'ready':
+      return '设置'
+    default:
+      return '设置'
+  }
+}
+
+async function detectAuthStageFromModal(authModal: Locator): Promise<AuthStage | 'unknown'> {
+  if (await authModal.getByTestId('auth-setup-submit').isVisible().catch(() => false)) {
+    return 'needs-setup'
+  }
+  if (await authModal.getByTestId('auth-unlock-submit').isVisible().catch(() => false)) {
+    return 'needs-unlock'
+  }
+  if (await authModal.getByTestId('auth-refresh-submit').isVisible().catch(() => false)) {
+    return 'needs-token-refresh'
+  }
+  if (await authModal.getByRole('heading', { name: '处理中' }).isVisible().catch(() => false)) {
+    return 'checking'
+  }
+  if (await authModal.getByRole('heading', { name: '设置' }).isVisible().catch(() => false)) {
+    return 'ready'
+  }
+  return 'unknown'
+}
+
 export async function expectAuthStage(page: Page, expected: AuthStage | RegExp): Promise<void> {
   const authModal = page.getByLabel('auth-modal')
-  const stageLine = authModal.locator('p').filter({ hasText: /^状态：/u }).first()
 
   await expect(authModal).toBeVisible({ timeout: 30_000 })
-  await expect(stageLine).toBeVisible()
 
   if (expected instanceof RegExp) {
-    await expect(stageLine).toContainText(expected)
+    await expect(authModal).toContainText(expected)
   } else {
-    await expect(stageLine).toContainText(`状态：${expected}`)
+    await expect(authModal.getByRole('heading', { name: getAuthStageTitle(expected) })).toBeVisible()
   }
 }
 
@@ -169,11 +203,7 @@ export async function ensureReadySession(
       continue
     }
 
-    const stageLine = authModal.locator('p').filter({ hasText: /^状态：/u }).first()
-    const rawStage = await stageLine.textContent().catch(() => null)
-    if (rawStage) {
-      lastStage = rawStage.replace(/^状态：/u, '').trim() || 'unknown'
-    }
+    lastStage = await detectAuthStageFromModal(authModal)
 
     const modalAlert = authModal.getByRole('alert').first()
     if (await modalAlert.isVisible().catch(() => false)) {
@@ -215,13 +245,7 @@ export async function ensureReadySession(
     return
   }
 
-  const finalStage = await authModal
-    .locator('p')
-    .filter({ hasText: /^状态：/u })
-    .first()
-    .textContent()
-    .then((text) => text?.replace(/^状态：/u, '').trim() || lastStage)
-    .catch(() => lastStage)
+  const finalStage = await detectAuthStageFromModal(authModal).catch(() => lastStage)
 
   const finalError = await authModal
     .getByRole('alert')

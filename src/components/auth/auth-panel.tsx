@@ -26,37 +26,32 @@ interface SyncCheckSnapshot {
   updatedAt: string | null
 }
 
-function getStageTitle(stage: string): { title: string; subtitle: string; badge: string } {
+function getStageTitle(stage: string): { title: string; subtitle: string } {
   switch (stage) {
     case 'needs-setup':
       return {
         title: '首次配置',
         subtitle: '首次使用请配置 Gitee 仓库、Token 与主密码。',
-        badge: 'SETUP',
       }
     case 'needs-unlock':
       return {
         title: '解锁会话',
         subtitle: '输入主密码后进入日记。',
-        badge: 'UNLOCK',
       }
     case 'needs-token-refresh':
       return {
         title: '更新 Token',
-        subtitle: '当前 Token 不可用，请输入新 Token 覆盖本地密文。',
-        badge: 'TOKEN',
+        subtitle: '请更新 Token 以恢复云端同步。',
       }
     case 'checking':
       return {
         title: '处理中',
         subtitle: '正在执行认证流程，请稍候。',
-        badge: 'CHECKING',
       }
     default:
       return {
         title: '设置',
         subtitle: '更新仓库连接与凭证，保存后会立即校验。',
-        badge: 'READY',
       }
   }
 }
@@ -131,13 +126,43 @@ function createDefaultSyncCheckSnapshot(state: UseAuthResult['state']): SyncChec
 function getTokenRefreshReasonMessage(state: UseAuthResult['state']): string {
   switch (state.tokenRefreshReason) {
     case 'missing-token':
-      return '检测到当前设备存在历史配置，但本地 Token 密文缺失。请补输新 Token 以恢复同步能力。'
+      return '当前设备缺少可用 Token，请输入新的 Token 覆盖本地密文。'
     case 'decrypt-failed':
-      return '本地 Token 密文恢复失败，可能是会话密钥失效或历史数据不完整。请补输新 Token 覆盖本地密文。'
+      return '本地 Token 无法恢复，请输入新的 Token 覆盖本地密文。'
     case 'token-invalid':
-      return '当前 Token 校验失败，可能已过期、被撤销或仓库权限已变更。请更新为可访问仓库的新 Token。'
+      return '当前 Token 已失效或权限不足，请输入可访问仓库的新 Token。'
     default:
       return '当前 Token 不可用，请更新后继续使用远端同步。'
+  }
+}
+
+function resolveTokenRefreshNotice(state: UseAuthResult['state']): { message: string; tone: 'warning' | 'error' } {
+  const errorMessage = state.errorMessage?.trim()
+  const reasonMessage = getTokenRefreshReasonMessage(state)
+  if (!errorMessage) {
+    return {
+      message: reasonMessage,
+      tone: 'warning',
+    }
+  }
+
+  const genericMessages = new Set([
+    'Token 恢复失败，请补输 Token 覆盖本地密文',
+    'Token 解密失败，请补输 Token 并覆盖本地密文',
+    'Token 已失效，请补输新的 Token',
+    '当前没有可用 Token 密文，请补输 Token',
+  ])
+
+  if (genericMessages.has(errorMessage)) {
+    return {
+      message: reasonMessage,
+      tone: 'warning',
+    }
+  }
+
+  return {
+    message: errorMessage,
+    tone: 'error',
   }
 }
 
@@ -216,7 +241,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
   )
   const isModal = variant === 'modal'
   const showReadyPasswordInput = form.readyToken.trim().length > 0
-  const primaryActionButtonClass = `td-btn ${isModal ? 'td-btn-primary' : 'td-btn-primary-ink'} w-full sm:w-auto`
+  const primaryActionButtonClass = 'td-btn td-btn-primary-ink w-full sm:w-auto'
   const syncCheckToneClass = useMemo(() => {
     switch (syncCheckSnapshot.status) {
       case 'success':
@@ -231,10 +256,15 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
         return 'border-td-line bg-td-surface-soft text-td-muted'
     }
   }, [syncCheckSnapshot.status])
-  const tokenRefreshReasonMessage = useMemo(
-    () => (state.stage === 'needs-token-refresh' ? getTokenRefreshReasonMessage(state) : null),
-    [state],
-  )
+  const tokenRefreshNotice = state.stage === 'needs-token-refresh' ? resolveTokenRefreshNotice(state) : null
+  const tokenRefreshRepoLabel =
+    state.stage === 'needs-token-refresh' && state.config
+      ? (() => {
+          const branch = state.config.giteeBranch?.trim() || 'master'
+          const branchSuffix = branch !== 'master' ? ` · 分支：${branch}` : ''
+          return `${state.config.giteeOwner}/${state.config.giteeRepoName}${branchSuffix}`
+        })()
+      : null
 
   useEffect(() => {
     if (state.stage !== 'ready' || !state.config) {
@@ -321,14 +351,6 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
   const body = (
     <section className={isModal ? 'space-y-4 px-4 py-4 sm:px-5 sm:py-5' : 'space-y-4'}>
-      {isModal ? (
-        <div className="rounded-[12px] border border-[#e6dfd1] bg-[#f9f5ec] px-3 py-2 text-sm text-[#625a4f]">
-          <p>状态：{state.stage}</p>
-          {state.config ? <p>仓库：{state.config.giteeOwner + '/' + state.config.giteeRepoName}</p> : null}
-          {state.config ? <p>分支：{state.config.giteeBranch ?? 'master'}</p> : null}
-        </div>
-      ) : null}
-
       {!isModal ? (
         <section
           className={`rounded-[10px] border px-3 py-2 text-sm ${syncCheckToneClass}`}
@@ -343,7 +365,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
         </section>
       ) : null}
 
-      {state.errorMessage ? (
+      {state.errorMessage && state.stage !== 'needs-token-refresh' ? (
         <p role="alert" className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.errorMessage}
         </p>
@@ -423,8 +445,15 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
       {state.stage === 'needs-token-refresh' ? (
         <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
-          <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {tokenRefreshReasonMessage}
+          {tokenRefreshRepoLabel ? <p className="text-xs text-[#6c6459]">目标仓库：{tokenRefreshRepoLabel}</p> : null}
+          <p
+            className={`rounded-[10px] border px-3 py-2 text-sm ${
+              tokenRefreshNotice?.tone === 'error'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-amber-200 bg-amber-50 text-amber-800'
+            }`}
+          >
+            {tokenRefreshNotice?.message}
           </p>
           <AuthFormField
             label="新的 Gitee Token"
@@ -441,13 +470,13 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             label="主密码"
             value={form.refreshMasterPassword}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshMasterPassword: next }))}
-              placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
-              type="password"
-              autoComplete="current-password"
-              testId="auth-refresh-password-input"
-              containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
-              inputClassName="td-input"
-            />
+            placeholder={state.needsMasterPasswordForTokenRefresh ? '当前会话缺少主密码，需补输' : '当前会话已保留主密码，可留空'}
+            type="password"
+            autoComplete="current-password"
+            testId="auth-refresh-password-input"
+            containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+            inputClassName="td-input"
+          />
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
@@ -560,9 +589,6 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
       <header className="relative border-b border-[#ece5d8] px-5 py-4 sm:px-6">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <div className="mb-1 inline-flex items-center rounded-full border border-[#ddd3c4] bg-[#f8f2e8] px-2 py-0.5 text-[11px] font-medium tracking-[0.04em] text-[#6f665a]">
-              {stageCopy.badge}
-            </div>
             <h2 className="text-xl text-td-text">{stageCopy.title}</h2>
             <p className="mt-1 text-sm text-[#6c6459]">{stageCopy.subtitle}</p>
           </div>

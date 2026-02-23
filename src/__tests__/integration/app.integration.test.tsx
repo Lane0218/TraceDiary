@@ -142,6 +142,8 @@ describe('App 路由与日记页入口', () => {
 
     expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
     expect(screen.getByRole('heading', { name: '更新 Token' })).toBeTruthy()
+    expect(screen.queryByText('TOKEN')).toBeNull()
+    expect(screen.queryByText(/状态：needs-token-refresh/)).toBeNull()
     expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
 
     fireEvent.click(screen.getByTestId('auth-modal-close-btn'))
