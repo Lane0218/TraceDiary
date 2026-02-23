@@ -8,6 +8,7 @@ import {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? ''
 const OTP_LENGTH = 6
+const MIN_ACCOUNT_PASSWORD_LENGTH = 8
 const OTP_TEMPLATE_HINT = '若邮件里只有登录链接、没有 6 位验证码，请在 Supabase 邮件模板中加入 {{ .Token }}。'
 
 let cachedClient: SupabaseClient | null = null
@@ -55,6 +56,35 @@ function mapOtpErrorMessage(rawMessage: string, phase: 'send' | 'verify'): strin
   return message
 }
 
+function mapPasswordAuthErrorMessage(rawMessage: string, phase: 'signup' | 'signin'): string {
+  const message = rawMessage.trim()
+  if (!message) {
+    return phase === 'signup' ? '注册失败，请稍后重试' : '登录失败，请稍后重试'
+  }
+
+  const normalized = message.toLowerCase()
+  if (normalized.includes('user already registered')) {
+    return '该邮箱已注册，请直接登录'
+  }
+  if (normalized.includes('invalid login credentials')) {
+    return '邮箱或密码错误，请重试'
+  }
+  if (normalized.includes('email not confirmed')) {
+    return '邮箱尚未验证，请先完成邮箱验证后再登录'
+  }
+  if (
+    normalized.includes('password should be')
+    || normalized.includes('weak password')
+    || normalized.includes('password is too weak')
+  ) {
+    return `密码强度不足，请至少使用 ${MIN_ACCOUNT_PASSWORD_LENGTH} 位并包含字母与数字`
+  }
+  if (normalized.includes('rate limit') || normalized.includes('too many requests')) {
+    return '操作过于频繁，请稍后再试'
+  }
+  return message
+}
+
 export function getSupabaseClient(): SupabaseClient {
   if (cachedClient) {
     return cachedClient
@@ -65,7 +95,8 @@ export function getSupabaseClient(): SupabaseClient {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      // GitHub OAuth 回跳后需要自动从 URL 中恢复会话。
+      detectSessionInUrl: true,
     },
   })
 
@@ -101,6 +132,79 @@ export async function sendEmailOtp(email: string): Promise<void> {
 
   if (error) {
     throw new Error(mapOtpErrorMessage(error.message, 'send'))
+  }
+}
+
+export interface SignUpWithEmailPasswordResult {
+  needsEmailConfirmation: boolean
+}
+
+export async function signUpWithEmailPassword(
+  email: string,
+  password: string,
+): Promise<SignUpWithEmailPasswordResult> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    throw new Error('请填写邮箱地址')
+  }
+  if (!password) {
+    throw new Error('请填写密码')
+  }
+  if (password.length < MIN_ACCOUNT_PASSWORD_LENGTH) {
+    throw new Error(`密码至少需要 ${MIN_ACCOUNT_PASSWORD_LENGTH} 位`)
+  }
+
+  const client = getSupabaseClient()
+  const { data, error } = await client.auth.signUp({
+    email: normalizedEmail,
+    password,
+  })
+
+  if (error) {
+    throw new Error(mapPasswordAuthErrorMessage(error.message, 'signup'))
+  }
+
+  return {
+    needsEmailConfirmation: !data.session,
+  }
+}
+
+export async function signInWithEmailPassword(email: string, password: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    throw new Error('请填写邮箱地址')
+  }
+  if (!password) {
+    throw new Error('请填写密码')
+  }
+
+  const client = getSupabaseClient()
+  const { error } = await client.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  })
+
+  if (error) {
+    throw new Error(mapPasswordAuthErrorMessage(error.message, 'signin'))
+  }
+}
+
+export async function signInWithGitHub(): Promise<void> {
+  if (typeof window === 'undefined') {
+    throw new Error('当前环境不支持 GitHub 登录')
+  }
+
+  const client = getSupabaseClient()
+  const redirectTo = `${window.location.origin}${window.location.pathname}${window.location.search}`
+  const { error } = await client.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo,
+    },
+  })
+
+  if (error) {
+    throw new Error('GitHub 登录发起失败，请稍后重试')
   }
 }
 

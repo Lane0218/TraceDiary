@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 import OnThisDayList from '../../components/history/on-this-day-list'
 import type { DiaryRecord } from '../../services/indexeddb'
+import { isSupabaseConfigured } from '../../services/supabase'
 
 describe('App 路由与日记页入口', () => {
   afterEach(() => {
@@ -23,7 +24,11 @@ describe('App 路由与日记页入口', () => {
     render(<App />)
 
     expect(await screen.findByTestId('entry-auth-guest-btn')).toBeTruthy()
-    expect(screen.getByTestId('entry-auth-go-settings-btn')).toBeTruthy()
+    if (isSupabaseConfigured()) {
+      expect(screen.queryByTestId('entry-auth-go-settings-btn')).toBeNull()
+    } else {
+      expect(screen.getByTestId('entry-auth-go-settings-btn')).toBeTruthy()
+    }
     await enterGuestFromEntryModal()
     expect(screen.getByRole('heading', { name: 'TraceDiary' })).toBeTruthy()
     expect(screen.getByTestId('app-nav-diary')).toBeTruthy()
@@ -32,10 +37,14 @@ describe('App 路由与日记页入口', () => {
     expect(screen.queryByLabelText('auth-modal')).toBeNull()
   })
 
-  it('首屏弹窗应支持跳转到设置页继续登录与配置', async () => {
+  it('未启用云登录时，首屏弹窗应支持跳转到设置页继续登录与配置', async () => {
     render(<App />)
 
     expect(await screen.findByLabelText('entry-auth-modal')).toBeTruthy()
+    if (isSupabaseConfigured()) {
+      expect(screen.queryByTestId('entry-auth-go-settings-btn')).toBeNull()
+      return
+    }
     expect(screen.getByTestId('entry-auth-go-settings-btn')).toBeTruthy()
     fireEvent.click(screen.getByTestId('entry-auth-go-settings-btn'))
     expect(await screen.findByLabelText('settings-page')).toBeTruthy()

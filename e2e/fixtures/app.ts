@@ -137,6 +137,14 @@ export async function ensureReadySession(
         await page.waitForTimeout(retryIntervalMs)
         continue
       }
+      const isSettingsPage = await page
+        .evaluate(() => window.location.pathname === '/settings')
+        .catch(() => false)
+      if (!isSettingsPage) {
+        await page.goto('/settings')
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
       await page.waitForTimeout(retryIntervalMs)
       continue
     }
