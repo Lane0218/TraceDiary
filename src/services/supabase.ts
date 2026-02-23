@@ -9,7 +9,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? ''
 const OTP_LENGTH = 6
 const MIN_ACCOUNT_PASSWORD_LENGTH = 8
+// 新用户首次用邮箱验证码登录时，created_at 可能早于 verify 时刻数分钟到数十分钟（取决于用户收码与输入耗时）。
+const NEW_OTP_USER_SIGNIN_SKEW_MS = 2 * 60 * 60 * 1000
 const OTP_TEMPLATE_HINT = '若邮件里只有登录链接、没有 6 位验证码，请在 Supabase 邮件模板中加入 {{ .Token }}。'
+const PASSWORD_RESET_REDIRECT_PATH = '/auth/reset-password'
 
 let cachedClient: SupabaseClient | null = null
 
@@ -83,6 +86,48 @@ function mapPasswordAuthErrorMessage(rawMessage: string, phase: 'signup' | 'sign
     return '操作过于频繁，请稍后再试'
   }
   return message
+}
+
+function mapPasswordResetErrorMessage(rawMessage: string): string {
+  const message = rawMessage.trim()
+  if (!message) {
+    return '密码重置邮件发送失败，请稍后重试'
+  }
+  const normalized = message.toLowerCase()
+  if (normalized.includes('rate limit') || normalized.includes('too many requests')) {
+    return '请求过于频繁，请稍后再试'
+  }
+  return message
+}
+
+function buildAbsoluteUrl(path: string): string {
+  if (typeof window === 'undefined') {
+    throw new Error('当前环境不支持该操作')
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${window.location.origin}${normalizedPath}`
+}
+
+function inferIsNewOtpUser(createdAt: string | null | undefined, lastSignInAt: string | null | undefined): boolean {
+  if (!createdAt) {
+    return false
+  }
+
+  const createdAtMs = Date.parse(createdAt)
+  if (!Number.isFinite(createdAtMs)) {
+    return false
+  }
+
+  if (!lastSignInAt) {
+    return true
+  }
+
+  const lastSignInAtMs = Date.parse(lastSignInAt)
+  if (!Number.isFinite(lastSignInAtMs)) {
+    return false
+  }
+
+  return Math.abs(lastSignInAtMs - createdAtMs) <= NEW_OTP_USER_SIGNIN_SKEW_MS
 }
 
 export function getSupabaseClient(): SupabaseClient {
@@ -208,7 +253,64 @@ export async function signInWithGitHub(): Promise<void> {
   }
 }
 
-export async function verifyEmailOtp(email: string, token: string): Promise<void> {
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    throw new Error('请填写邮箱地址')
+  }
+
+  const client = getSupabaseClient()
+  const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: buildAbsoluteUrl(PASSWORD_RESET_REDIRECT_PATH),
+  })
+
+  if (error) {
+    throw new Error(mapPasswordResetErrorMessage(error.message))
+  }
+}
+
+export async function resendSignupConfirmation(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    throw new Error('请填写邮箱地址')
+  }
+
+  const client = getSupabaseClient()
+  const { error } = await client.auth.resend({
+    type: 'signup',
+    email: normalizedEmail,
+    options: {
+      emailRedirectTo: buildAbsoluteUrl('/'),
+    },
+  })
+
+  if (error) {
+    throw new Error(mapPasswordResetErrorMessage(error.message))
+  }
+}
+
+export async function updateSupabasePassword(password: string): Promise<void> {
+  if (!password) {
+    throw new Error('请填写新密码')
+  }
+  if (password.length < MIN_ACCOUNT_PASSWORD_LENGTH) {
+    throw new Error(`密码至少需要 ${MIN_ACCOUNT_PASSWORD_LENGTH} 位`)
+  }
+
+  const client = getSupabaseClient()
+  const { error } = await client.auth.updateUser({
+    password,
+  })
+  if (error) {
+    throw new Error(mapPasswordAuthErrorMessage(error.message, 'signup'))
+  }
+}
+
+export interface VerifyEmailOtpResult {
+  isNewUser: boolean
+}
+
+export async function verifyEmailOtp(email: string, token: string): Promise<VerifyEmailOtpResult> {
   const normalizedEmail = email.trim().toLowerCase()
   const normalizedToken = token.trim().replace(/\s+/g, '')
   if (!normalizedEmail) {
@@ -222,7 +324,7 @@ export async function verifyEmailOtp(email: string, token: string): Promise<void
   }
 
   const client = getSupabaseClient()
-  const { error } = await client.auth.verifyOtp({
+  const { data, error } = await client.auth.verifyOtp({
     email: normalizedEmail,
     token: normalizedToken,
     type: 'email',
@@ -230,6 +332,10 @@ export async function verifyEmailOtp(email: string, token: string): Promise<void
 
   if (error) {
     throw new Error(mapOtpErrorMessage(error.message, 'verify'))
+  }
+
+  return {
+    isNewUser: inferIsNewOtpUser(data.user?.created_at, data.user?.last_sign_in_at),
   }
 }
 

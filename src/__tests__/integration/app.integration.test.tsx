@@ -155,6 +155,15 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
 
+  it('重置密码页路由应可访问且不弹出首屏登录弹窗', async () => {
+    window.history.replaceState({}, '', '/auth/reset-password')
+    render(<App />)
+
+    expect(await screen.findByLabelText('auth-reset-password-page')).toBeTruthy()
+    expect(screen.getByTestId('auth-reset-password-submit-btn')).toBeTruthy()
+    expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
+  })
+
   it('日记页左侧应支持往年今日与统计分段切换', async () => {
     window.history.replaceState({}, '', '/diary')
     render(<App />)

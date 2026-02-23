@@ -7,21 +7,25 @@
   "module_label": "6.13 游客模式与账号体系（v1.2）",
   "order": 174,
   "status": "DONE",
-  "title": "优化单入口登录弹窗并确保 GitHub OAuth 可用",
-  "acceptance": "移除冗余说明文案；模式切换入口布局更清晰；邮箱密码与验证码主提交文案统一为“继续”；“改用邮箱密码”替换为自然表述；登录前默认隐藏“去设置页继续配置”且不影响现有链路；Supabase GitHub Provider 已启用且 authorize 接口不再返回 provider not enabled",
+  "title": "统一邮箱验证码流程并移除登录注册分叉",
+  "acceptance": "邮箱验证码界面不再区分登录/注册模式，统一为单一 OTP 流程；保留“还没有账号？点击注册”入口但不引入独立注册状态；清理相关分叉代码与测试",
   "related_files": [
+    "src/App.tsx",
     "src/components/auth/entry-auth-modal.tsx",
+    "src/pages/auth-reset-password.tsx",
+    "src/services/supabase.ts",
     "src/__tests__/integration/entry-auth-modal.integration.test.tsx",
     "src/__tests__/integration/app.integration.test.tsx",
+    "src/__tests__/integration/app-entry-auth-transition.integration.test.tsx",
     "e2e/fixtures/app.ts",
     "todo/tasks/td_04aea2b157da4850f26b.json"
   ],
-  "test_record": "风险分级：中（认证入口文案与交互布局调整）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（85/85，含既有 act warning）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0 --reporter=line --trace=off` 通过（5/5）。补充记录：`npm run test:e2e:changed` 运行到 31 条时出现 3 条非本次改动相关的远端失败（`conflict-resolution.spec.ts`、`manual-sync-state-consistency.spec.ts`、`upload-encryption.spec.ts`，表现为远端写入失败与 Gitee 403/WAF），其余 28 条通过。本轮（切换文案位置微调）复跑 `npm run lint`、`npm run test:unit`、`npm run test:integration` 与上述认证 E2E，均通过。本轮（GitHub Provider 配置）为远端配置变更，无仓库功能代码改动；已执行 Supabase Management API PATCH/GET 校验（`external_github_enabled=true`），并调用 `auth/v1/authorize?provider=github` 验证返回 302 且跳转 GitHub。",
-  "done_record": "2026-02-23 / af49223",
+  "test_record": "风险分级：高（认证主链路 UI/状态机改造）。已将首登设置密码从 OTP 页内嵌小卡片改为独立步骤页：验证码首登成功后切换到 `setup-password` 视图，提供“设置密码并继续”主按钮与“先跳过，稍后设置”底部按钮，不再走“去设置密码”跳转卡片。新增/更新集成测试覆盖首登进入设置页、设置成功提交、两次密码不一致时禁止提交。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（93/93）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --retries=0 --reporter=line --trace=off` 通过（5/5）。",
+  "done_record": "2026-02-23 / 15e408d",
   "source": {
     "file": "TODO.md",
     "line": 253
   },
-  "version": 26,
-  "updated_at": "2026-02-23T07:53:10.000Z"
+  "version": 55,
+  "updated_at": "2026-02-23T11:53:44.000Z"
 }

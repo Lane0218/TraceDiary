@@ -9,6 +9,7 @@ import InsightsPage from './pages/insights'
 import DiaryPage from './pages/diary'
 import SettingsPage from './pages/settings'
 import YearlySummaryPage from './pages/yearly-summary'
+import AuthResetPasswordPage from './pages/auth-reset-password'
 import ToastCenter from './components/common/toast-center'
 import {
   getSupabaseSession,
@@ -88,14 +89,14 @@ function AppRoutes() {
   const lastSessionUserIdRef = useRef<string | null>(null)
   const cloudAuthEnabled = isSupabaseConfigured()
   const sessionUserId = session?.user.id ?? null
-  const blocksAutoEntryModal = location.pathname.startsWith('/settings')
+  const blocksAutoEntryModal = location.pathname.startsWith('/settings') || location.pathname.startsWith('/auth/reset-password')
   const autoEntryModalOpen =
     !blocksAutoEntryModal && auth.state.stage === 'needs-setup' && !guestEntrySelected && !sessionUserId
   const entryModalOpen = manualEntryModalOpen || autoEntryModalOpen
   const canCloseEntryModal = manualEntryModalOpen && !autoEntryModalOpen
 
   useEffect(() => {
-    if (auth.state.stage === 'needs-setup') {
+    if (auth.state.stage === 'needs-setup' || auth.state.stage === 'checking') {
       return
     }
     setGuestEntrySelected(false)
@@ -287,6 +288,7 @@ function AppRoutes() {
         />
         <Route path="/insights" element={<InsightsPage auth={auth} headerAuthEntry={headerAuthEntry} />} />
         <Route path="/settings" element={<SettingsPage auth={auth} headerAuthEntry={headerAuthEntry} />} />
+        <Route path="/auth/reset-password" element={<AuthResetPasswordPage />} />
         <Route path="/welcome" element={<Navigate to="/diary" replace />} />
         <Route path="/yearly-summary" element={<YearlySummaryRedirect />} />
         <Route path="*" element={<Navigate to="/diary" replace />} />
@@ -296,6 +298,9 @@ function AppRoutes() {
         canClose={canCloseEntryModal}
         cloudAuthEnabled={cloudAuthEnabled}
         onClose={closeEntryModal}
+        onLockOpenForAuthTransition={() => {
+          setManualEntryModalOpen(true)
+        }}
         onEnterGuest={() => {
           setGuestEntrySelected(true)
           saveGuestEntryPreference(true)

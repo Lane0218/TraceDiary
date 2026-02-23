@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  requestPasswordReset,
   sendEmailOtp,
   signInWithEmailPassword,
   signInWithGitHub,
-  signUpWithEmailPassword,
+  updateSupabasePassword,
   verifyEmailOtp,
 } from '../../services/supabase'
 
@@ -12,11 +13,9 @@ const OTP_COOLDOWN_SECONDS = 60
 const OTP_COOLDOWN_STORAGE_KEY = 'trace-diary:entry-auth:otp-cooldown'
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const OTP_PATTERN = /^\d{6}$/
-const MIN_PASSWORD_LENGTH = 8
-const INVALID_CREDENTIALS_HINT = '邮箱或密码错误，请重试'
-const ALREADY_REGISTERED_HINT = '该邮箱已注册，请直接登录'
+const ACCOUNT_PASSWORD_MIN_LENGTH = 8
 
-type EntryAuthViewMode = 'password' | 'otp'
+type EntryAuthViewMode = 'password' | 'otp' | 'setup-password'
 
 function readOtpCooldownMap(): Record<string, number> {
   if (typeof window === 'undefined') {
@@ -73,6 +72,7 @@ interface EntryAuthModalProps {
   canClose?: boolean
   cloudAuthEnabled: boolean
   onClose?: () => void
+  onLockOpenForAuthTransition?: () => void
   onEnterGuest: () => void
   onChooseAuthFlow: () => void
 }
@@ -90,6 +90,7 @@ export default function EntryAuthModal({
   canClose = false,
   cloudAuthEnabled,
   onClose,
+  onLockOpenForAuthTransition,
   onEnterGuest,
   onChooseAuthFlow,
 }: EntryAuthModalProps) {
@@ -98,27 +99,41 @@ export default function EntryAuthModal({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
+  const [setupPassword, setSetupPassword] = useState('')
+  const [setupPasswordConfirm, setSetupPasswordConfirm] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [showCreateAccountPrompt, setShowCreateAccountPrompt] = useState(false)
   const [isSigningInWithPassword, setIsSigningInWithPassword] = useState(false)
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false)
   const [isSigningInWithGitHub, setIsSigningInWithGitHub] = useState(false)
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false)
+  const [isSettingUpPassword, setIsSettingUpPassword] = useState(false)
   const [otpCooldownRemainingMs, setOtpCooldownRemainingMs] = useState(0)
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
   const normalizedOtp = useMemo(() => otp.trim().replace(/\s+/g, ''), [otp])
+  const normalizedSetupPassword = useMemo(() => setupPassword.trim(), [setupPassword])
+  const normalizedSetupPasswordConfirm = useMemo(() => setupPasswordConfirm.trim(), [setupPasswordConfirm])
   const otpCooldownSeconds = Math.ceil(otpCooldownRemainingMs / 1000)
   const isEmailValid = EMAIL_PATTERN.test(normalizedEmail)
   const isOtpValid = OTP_PATTERN.test(normalizedOtp)
-  const isPasswordValid = password.length >= MIN_PASSWORD_LENGTH
   const canSendOtp = isEmailValid && otpCooldownRemainingMs <= 0 && !isSendingOtp
   const canVerifyOtp = isEmailValid && isOtpValid && !isVerifyingOtp
-  const canContinueWithPassword = isEmailValid && password.length > 0 && !isSigningInWithPassword && !isCreatingAccount
-  const canCreateAccount = isEmailValid && isPasswordValid && !isSigningInWithPassword && !isCreatingAccount
+  const canContinueWithPassword = isEmailValid && password.length > 0 && !isSigningInWithPassword
+  const canRequestPasswordReset = isEmailValid && !isSendingPasswordReset
+  const isSetupPasswordLengthValid = normalizedSetupPassword.length >= ACCOUNT_PASSWORD_MIN_LENGTH
+  const isSetupPasswordConfirmValid =
+    normalizedSetupPasswordConfirm.length > 0 && normalizedSetupPasswordConfirm === normalizedSetupPassword
+  const canSubmitSetupPassword =
+    isSetupPasswordLengthValid && isSetupPasswordConfirmValid && !isSettingUpPassword
+  const otpInlineStatus = viewMode === 'otp' ? (error ?? notice) : null
   const isAnyAuthPending =
-    isSigningInWithPassword || isCreatingAccount || isSigningInWithGitHub || isSendingOtp || isVerifyingOtp
+    isSigningInWithPassword
+    || isSigningInWithGitHub
+    || isSendingOtp
+    || isVerifyingOtp
+    || isSendingPasswordReset
+    || isSettingUpPassword
   const shouldShowGoSettings = !cloudAuthEnabled
 
   useEffect(() => {
@@ -138,6 +153,37 @@ export default function EntryAuthModal({
 
   if (!open) {
     return null
+  }
+
+  const resetOtpFlow = () => {
+    setOtp('')
+  }
+
+  const resetSetupPasswordFlow = () => {
+    setSetupPassword('')
+    setSetupPasswordConfirm('')
+  }
+
+  const switchToPasswordLogin = () => {
+    if (isAnyAuthPending || viewMode === 'setup-password') {
+      return
+    }
+    setViewMode('password')
+    resetOtpFlow()
+    resetSetupPasswordFlow()
+    setNotice(null)
+    setError(null)
+  }
+
+  const switchToOtpLogin = () => {
+    if (isAnyAuthPending || viewMode === 'setup-password') {
+      return
+    }
+    setViewMode('otp')
+    resetOtpFlow()
+    resetSetupPasswordFlow()
+    setNotice(null)
+    setError(null)
   }
 
   const handleSendOtp = async () => {
@@ -164,18 +210,72 @@ export default function EntryAuthModal({
     if (!canVerifyOtp) {
       return
     }
+    onLockOpenForAuthTransition?.()
     setError(null)
     setNotice(null)
     setIsVerifyingOtp(true)
     try {
-      await verifyEmailOtp(normalizedEmail, normalizedOtp)
-      setNotice('登录成功，正在进入。')
+      const verifyResult = await verifyEmailOtp(normalizedEmail, normalizedOtp)
       setOtp('')
+      if (verifyResult.isNewUser) {
+        resetSetupPasswordFlow()
+        setViewMode('setup-password')
+        setNotice(null)
+        return
+      }
+      setNotice('登录成功，正在进入。')
       onClose?.()
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '验证码校验失败，请重试')
     } finally {
       setIsVerifyingOtp(false)
+    }
+  }
+
+  const handleSubmitSetupPassword = async () => {
+    if (isAnyAuthPending || !canSubmitSetupPassword) {
+      return
+    }
+    setIsSettingUpPassword(true)
+    setNotice(null)
+    setError(null)
+    try {
+      await updateSupabasePassword(normalizedSetupPassword)
+      setNotice('密码设置成功，正在进入。')
+      onClose?.()
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : '密码设置失败，请稍后重试')
+    } finally {
+      setIsSettingUpPassword(false)
+    }
+  }
+
+  const handleSkipSetPassword = () => {
+    if (isAnyAuthPending || viewMode !== 'setup-password') {
+      return
+    }
+    setViewMode('password')
+    resetSetupPasswordFlow()
+    setNotice('登录成功，正在进入。')
+    setError(null)
+    onClose?.()
+  }
+
+  const handleRequestPasswordReset = async () => {
+    if (!isEmailValid || !canRequestPasswordReset) {
+      setError('请先填写有效邮箱地址')
+      return
+    }
+    setError(null)
+    setNotice(null)
+    setIsSendingPasswordReset(true)
+    try {
+      await requestPasswordReset(normalizedEmail)
+      setNotice('如果该邮箱存在，我们已发送重置邮件。请按邮件提示设置新密码后再登录。')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : '重置邮件发送失败，请稍后重试')
+    } finally {
+      setIsSendingPasswordReset(false)
     }
   }
 
@@ -185,7 +285,6 @@ export default function EntryAuthModal({
     }
     setError(null)
     setNotice(null)
-    setShowCreateAccountPrompt(false)
     setIsSigningInWithPassword(true)
     try {
       await signInWithEmailPassword(normalizedEmail, password)
@@ -194,44 +293,9 @@ export default function EntryAuthModal({
       onClose?.()
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : '邮箱密码登录失败，请稍后重试'
-      if (message.includes(INVALID_CREDENTIALS_HINT)) {
-        setShowCreateAccountPrompt(true)
-        setNotice('未登录成功。若你是首次使用，可创建新账号继续。')
-        return
-      }
       setError(message)
     } finally {
       setIsSigningInWithPassword(false)
-    }
-  }
-
-  const handleCreateAccount = async () => {
-    if (!canCreateAccount) {
-      return
-    }
-    setError(null)
-    setNotice(null)
-    setIsCreatingAccount(true)
-    try {
-      const result = await signUpWithEmailPassword(normalizedEmail, password)
-      setShowCreateAccountPrompt(false)
-      if (result.needsEmailConfirmation) {
-        setNotice('账号已创建，请先前往邮箱完成验证，再返回此处登录。')
-        return
-      }
-      setNotice('注册并登录成功，正在进入。')
-      setPassword('')
-      onClose?.()
-    } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : '邮箱密码注册失败，请稍后重试'
-      if (message.includes(ALREADY_REGISTERED_HINT)) {
-        setShowCreateAccountPrompt(false)
-        setError('该邮箱已注册，当前密码不正确，请重新输入后再试。')
-        return
-      }
-      setError(message)
-    } finally {
-      setIsCreatingAccount(false)
     }
   }
 
@@ -310,7 +374,10 @@ export default function EntryAuthModal({
                     placeholder="name@example.com"
                     autoComplete="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) => {
+                      setEmail(event.target.value)
+                      setError(null)
+                    }}
                     data-testid="entry-auth-email-input"
                   />
                 </label>
@@ -329,68 +396,38 @@ export default function EntryAuthModal({
                         data-testid="entry-auth-password-input"
                       />
                     </label>
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-between">
                       <button
                         type="button"
                         className="w-fit text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
-                        onClick={() => {
-                          if (isAnyAuthPending) {
-                            return
-                          }
-                          setViewMode('otp')
-                          setShowCreateAccountPrompt(false)
-                          setNotice(null)
-                          setError(null)
-                        }}
+                        onClick={() => void handleRequestPasswordReset()}
+                        disabled={!canRequestPasswordReset}
+                        data-testid="entry-auth-forgot-password-btn"
+                      >
+                        {isSendingPasswordReset ? '发送中...' : '忘记密码'}
+                      </button>
+                      <button
+                        type="button"
+                        className="w-fit text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
+                        onClick={switchToOtpLogin}
                         data-testid="entry-auth-switch-otp-btn"
                       >
-                        使用邮箱验证码
+                        使用邮箱验证码登录
                       </button>
                     </div>
                     <button
                       type="button"
-                      className="td-btn td-btn-primary-ink h-10"
+                      className="td-btn td-btn-primary-ink h-11 w-full text-base"
                       onClick={() => void handlePasswordSignIn()}
                       disabled={!canContinueWithPassword}
                       data-testid="entry-auth-continue-password-btn"
                     >
                       {isSigningInWithPassword ? '继续中...' : '继续'}
                     </button>
-
-                    {showCreateAccountPrompt ? (
-                      <div
-                        className="space-y-2 rounded-[12px] border border-[#d9d2c6] bg-[#f8f3ea] px-3 py-3"
-                        data-testid="entry-auth-create-account-prompt"
-                      >
-                        <p className="text-sm text-[#594f40]">未登录成功，是否使用该邮箱创建新账号？</p>
-                        <p className="text-xs text-[#7a7265]">创建账号需至少 {MIN_PASSWORD_LENGTH} 位密码。</p>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            className="td-btn td-btn-primary-ink h-9"
-                            onClick={() => void handleCreateAccount()}
-                            disabled={!canCreateAccount}
-                            data-testid="entry-auth-create-account-btn"
-                          >
-                            {isCreatingAccount ? '创建中...' : '创建账号'}
-                          </button>
-                          <button
-                            type="button"
-                            className="td-btn h-9 border-[#d2ccc0] bg-[#fffcf7]"
-                            onClick={() => {
-                              setShowCreateAccountPrompt(false)
-                              setNotice(null)
-                            }}
-                            disabled={isAnyAuthPending}
-                            data-testid="entry-auth-retry-password-btn"
-                          >
-                            重新输入密码
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
                   </>
-                ) : (
+                ) : null}
+
+                {viewMode === 'otp' ? (
                   <>
                     <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_148px] sm:items-end">
                       <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
@@ -401,7 +438,9 @@ export default function EntryAuthModal({
                           placeholder="6 位验证码"
                           autoComplete="one-time-code"
                           value={otp}
-                          onChange={(event) => setOtp(event.target.value)}
+                          onChange={(event) => {
+                            setOtp(event.target.value)
+                          }}
                           data-testid="entry-auth-otp-input"
                         />
                       </label>
@@ -415,18 +454,17 @@ export default function EntryAuthModal({
                         {isSendingOtp ? '发送中...' : otpCooldownSeconds > 0 ? `${otpCooldownSeconds}s 后重发` : '发送验证码'}
                       </button>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex min-h-[20px] items-center gap-3">
+                      <p
+                        className={`flex-1 text-xs ${error ? 'text-[#a63f3f]' : 'text-[#16643a]'}`}
+                        data-testid="entry-auth-otp-inline-status"
+                      >
+                        {otpInlineStatus ?? ''}
+                      </p>
                       <button
                         type="button"
                         className="w-fit text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
-                        onClick={() => {
-                          if (isAnyAuthPending) {
-                            return
-                          }
-                          setViewMode('password')
-                          setNotice(null)
-                          setError(null)
-                        }}
+                        onClick={switchToPasswordLogin}
                         data-testid="entry-auth-switch-password-btn"
                       >
                         返回密码登录
@@ -434,7 +472,7 @@ export default function EntryAuthModal({
                     </div>
                     <button
                       type="button"
-                      className="td-btn td-btn-primary-ink h-10"
+                      className="td-btn td-btn-primary-ink h-11 w-full text-base"
                       onClick={() => void handleVerifyOtp()}
                       disabled={!canVerifyOtp}
                       data-testid="entry-auth-verify-otp-btn"
@@ -442,42 +480,116 @@ export default function EntryAuthModal({
                       {isVerifyingOtp ? '验证中...' : '继续'}
                     </button>
                   </>
-                )}
+                ) : null}
+
+                {viewMode === 'setup-password' ? (
+                  <div className="space-y-3" data-testid="entry-auth-password-setup-view">
+                    <div className="rounded-[14px] border border-[#ddd5c8] bg-[#f9f5ed] px-3 py-3 text-sm text-[#5d5548]">
+                      首次注册成功。请设置登录密码，后续可直接使用邮箱密码登录。
+                    </div>
+                    <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                      新密码
+                      <input
+                        type="password"
+                        className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                        placeholder="至少 8 位，建议包含字母和数字"
+                        autoComplete="new-password"
+                        value={setupPassword}
+                        onChange={(event) => {
+                          setSetupPassword(event.target.value)
+                          setError(null)
+                        }}
+                        data-testid="entry-auth-setup-password-input"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm text-[#6a6357]">
+                      确认密码
+                      <input
+                        type="password"
+                        className="td-input border-[#dad3c6] bg-[#fffcf7]"
+                        placeholder="再次输入密码"
+                        autoComplete="new-password"
+                        value={setupPasswordConfirm}
+                        onChange={(event) => {
+                          setSetupPasswordConfirm(event.target.value)
+                          setError(null)
+                        }}
+                        data-testid="entry-auth-setup-password-confirm-input"
+                      />
+                    </label>
+                    {!isSetupPasswordLengthValid && normalizedSetupPassword.length > 0 ? (
+                      <p className="text-xs text-[#a63f3f]">密码至少需要 8 位。</p>
+                    ) : null}
+                    {normalizedSetupPasswordConfirm.length > 0 && !isSetupPasswordConfirmValid ? (
+                      <p className="text-xs text-[#a63f3f]">两次输入的密码不一致。</p>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="td-btn td-btn-primary-ink h-11 w-full text-base"
+                      onClick={() => void handleSubmitSetupPassword()}
+                      disabled={!canSubmitSetupPassword}
+                      data-testid="entry-auth-submit-set-password-btn"
+                    >
+                      {isSettingUpPassword ? '设置中...' : '设置密码并继续'}
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
+                      onClick={handleSkipSetPassword}
+                      data-testid="entry-auth-skip-set-password-btn"
+                    >
+                      先跳过，稍后设置
+                    </button>
+                    {notice ? <p className="text-sm text-[#16643a]">{notice}</p> : null}
+                    {error ? <p className="text-sm text-[#a63f3f]">{error}</p> : null}
+                  </div>
+                ) : null}
               </div>
             )}
 
-            {notice ? (
+            {notice && viewMode === 'password' ? (
               <p className="text-sm text-[#16643a]">{notice}</p>
             ) : null}
-            {error ? (
+            {error && viewMode === 'password' ? (
               <p className="text-sm text-[#a63f3f]">{error}</p>
             ) : null}
 
-            <div className="flex items-center justify-between border-t border-[#ece5d8] pt-4">
-              {shouldShowGoSettings ? (
+            {viewMode !== 'setup-password' ? (
+              <div className="flex items-center justify-between border-t border-[#ece5d8] pt-4">
                 <button
                   type="button"
-                  className="text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
-                  data-testid="entry-auth-go-settings-btn"
-                  onClick={() => {
-                    onChooseAuthFlow()
-                    navigate('/settings')
-                  }}
+                  className="text-sm font-medium text-[#2d2924] underline-offset-4 transition hover:underline"
+                  data-testid="entry-auth-guest-btn"
+                  onClick={onEnterGuest}
                 >
-                  去设置页继续配置
+                  先以游客模式进入
                 </button>
-              ) : (
-                <span />
-              )}
-              <button
-                type="button"
-                className="text-sm font-medium text-[#2d2924] underline-offset-4 transition hover:underline"
-                data-testid="entry-auth-guest-btn"
-                onClick={onEnterGuest}
-              >
-                先以游客模式进入
-              </button>
-            </div>
+                {shouldShowGoSettings ? (
+                  <button
+                    type="button"
+                    className="text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
+                    data-testid="entry-auth-go-settings-btn"
+                    onClick={() => {
+                      onChooseAuthFlow()
+                      navigate('/settings')
+                    }}
+                  >
+                    去设置页继续配置
+                  </button>
+                ) : cloudAuthEnabled && viewMode === 'password' ? (
+                  <button
+                    type="button"
+                    className="text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
+                    onClick={switchToOtpLogin}
+                    data-testid="entry-auth-go-register-btn"
+                  >
+                    还没有账号？点击注册
+                  </button>
+                ) : (
+                  <span />
+                )}
+              </div>
+            ) : null}
           </section>
         </div>
       </article>
