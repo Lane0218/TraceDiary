@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260224150232_96c0c2b2",
+  "display_id": "TD-OPS-20260224-150232-96C0",
+  "id_prefix": "OPS",
+  "module_key": "6.11",
+  "module_name": "仓库运维",
+  "module_label": "6.11 仓库运维",
+  "order": 20260224150232,
+  "status": "DONE",
+  "title": "移除无用 chrome_devtools MCP 并修复 Supabase MCP 启动",
+  "acceptance": "chrome_devtools 从 Codex MCP 配置移除；Supabase MCP 可恢复启动，若无法自动修复则提供可执行人工修复步骤",
+  "related_files": [
+    "todo/tasks/td_20260224150232_96c0c2b2.json",
+    "~/.codex/config.toml",
+    "~/.codex/config.toml.bak_mcp_20260224_1",
+    "~/.codex/.credentials.json"
+  ],
+  "test_record": "风险分级：中（本地 MCP 配置与 OAuth 鉴权链路）。已执行：1) 删除 ~/.codex/config.toml 中 mcp_servers.chrome_devtools；2) 执行 codex mcp logout supabase（失败，原因：keyring 删除失败）；3) 执行 codex mcp login supabase（成功，凭据刷新，expires_at=2026-02-25T15:05:27.072Z）；4) 执行 list_mcp_resources server=supabase 复测（仍失败：OAuth token refresh failed: Failed to parse server response）；5) 使用新 access token 直连 mcp.supabase.com 返回 HTTP 405（非 401），证明 Bearer token 可被服务端接受。未执行 lint/unit/integration/e2e（本任务不涉及仓库应用代码行为变更）。",
+  "done_record": "2026-02-24 / pending",
+  "source": {
+    "file": "AGENTS.md",
+    "line": 1
+  },
+  "version": 3,
+  "updated_at": "2026-02-24T15:08:48.000Z"
+}
