@@ -7,7 +7,7 @@
   "module_label": "6.13 游客模式与账号体系（v1.2）",
   "order": 175,
   "status": "DONE",
-  "title": "游客模式入口收敛并统一游客文案",
+  "title": "补充游客示例内容中的退出提示",
   "acceptance": "游客模式入口仅保留在登录注册弹窗；页头点击“游客模式”可退出游客模式；“演示模式”文案统一为“游客模式”",
   "related_files": [
     "src/App.tsx",
@@ -21,12 +21,12 @@
     "src/__tests__/integration/app.integration.test.tsx",
     "src/__tests__/integration/editor.integration.test.tsx"
   ],
-  "test_record": "风险分级：高（游客模式入口与认证弹窗链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）；`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx` 通过（12/12）。",
-  "done_record": "2026-02-25 / cc83070",
+  "test_record": "风险分级：低（游客示例文案补充，无行为改动）。已执行：`npm run lint` 通过；`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx` 通过（12/12）。",
+  "done_record": "2026-02-25 / pending",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 8,
-  "updated_at": "2026-02-24T16:07:20.000Z"
+  "version": 10,
+  "updated_at": "2026-02-24T16:10:20.000Z"
 }

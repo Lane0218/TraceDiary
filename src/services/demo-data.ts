@@ -42,11 +42,11 @@ function buildYearlyRecord(year: number, content: string): DiaryRecord {
 }
 
 function buildDemoDailyContent(date: DateString): string {
-  return `# ${date} · 游客日记\n\n这是 ${DEMO_AUTHOR} 的只读示例内容。\n\n- 今日关键词：专注 / 复盘 / 同步\n- 游客模式：可浏览游客日记，编辑 / push / pull 已禁用。\n\n> 你可以先体验阅读、日历切换与往年今日。\n`
+  return `# ${date} · 游客日记\n\n这是 ${DEMO_AUTHOR} 的只读示例内容。\n\n- 今日关键词：专注 / 复盘 / 同步\n- 游客模式：可浏览游客日记，编辑 / push / pull 已禁用。\n\n> 你可以先体验阅读、日历切换与往年今日。\n> 点击顶部“游客模式”按钮可退出游客模式。\n`
 }
 
 function buildDemoSummaryContent(year: number): string {
-  return `# ${year} 年年度总结（游客）\n\n> 游客模式：可浏览游客年度总结，编辑 / push / pull 已禁用。\n\n## 今年最重要的三件事\n\n- 建立稳定的日记记录习惯\n- 每月进行一次节奏复盘\n- 把想法沉淀为可执行计划\n\n## 想继续完善的方向\n\n- 更细致地记录情绪与能量波动\n- 把年度目标拆成季度与周计划\n`
+  return `# ${year} 年年度总结（游客）\n\n> 游客模式：可浏览游客年度总结，编辑 / push / pull 已禁用。\n> 点击顶部“游客模式”按钮可退出游客模式。\n\n## 今年最重要的三件事\n\n- 建立稳定的日记记录习惯\n- 每月进行一次节奏复盘\n- 把想法沉淀为可执行计划\n\n## 想继续完善的方向\n\n- 更细致地记录情绪与能量波动\n- 把年度目标拆成季度与周计划\n`
 }
 
 export function getDemoDailyEntry(date: DateString): DiaryRecord {
