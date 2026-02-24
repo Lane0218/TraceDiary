@@ -155,6 +155,23 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
 
+  it('本地已有配置且 Token 失效时，仍可切换到演示模式并可恢复到我的数据模式', async () => {
+    seedBrokenTokenConfig()
+    render(<App />)
+
+    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('auth-modal-enter-guest-btn'))
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('auth-modal')).toBeNull()
+    })
+    expect(await screen.findByTestId('guest-mode-pill')).toBeTruthy()
+    expect(screen.getByTestId('guest-mode-use-data-btn')).toBeTruthy()
+
+    fireEvent.click(screen.getByTestId('guest-mode-use-data-btn'))
+    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
+  })
+
   it('重置密码页路由应可访问且不弹出首屏登录弹窗', async () => {
     window.history.replaceState({}, '', '/auth/reset-password')
     render(<App />)

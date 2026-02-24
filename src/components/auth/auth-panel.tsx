@@ -15,6 +15,7 @@ interface AuthPanelProps {
   variant: AuthPanelVariant
   canClose?: boolean
   onClose?: () => void
+  onEnterGuestMode?: () => void
 }
 
 type SyncCheckStatus = 'unconfigured' | 'checking' | 'success' | 'warning' | 'error'
@@ -204,7 +205,7 @@ function buildSyncCheckSnapshotFromSubmitResult(
   }
 }
 
-export default function AuthPanel({ auth, variant, canClose = false, onClose }: AuthPanelProps) {
+export default function AuthPanel({ auth, variant, canClose = false, onClose, onEnterGuestMode }: AuthPanelProps) {
   const { push: pushToast } = useToast()
   const [form, setForm] = useState<AuthFormState>(INITIAL_AUTH_FORM_STATE)
   const [lastSyncCheckSnapshot, setLastSyncCheckSnapshot] = useState<SyncCheckSnapshot | null>(null)
@@ -265,6 +266,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
           return `${state.config.giteeOwner}/${state.config.giteeRepoName}${branchSuffix}`
         })()
       : null
+  const shouldShowEnterGuestAction = isModal && Boolean(onEnterGuestMode) && state.stage !== 'ready'
 
   useEffect(() => {
     if (state.stage !== 'ready' || !state.config) {
@@ -565,6 +567,18 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
             </button>
           </div>
         </form>
+      ) : null}
+      {shouldShowEnterGuestAction ? (
+        <div className="border-t border-[#ece5d8] pt-3">
+          <button
+            type="button"
+            className="text-sm text-[#5f594f] underline-offset-4 transition hover:text-[#2d2924] hover:underline"
+            onClick={onEnterGuestMode}
+            data-testid="auth-modal-enter-guest-btn"
+          >
+            先进入演示模式
+          </button>
+        </div>
       ) : null}
     </section>
   )

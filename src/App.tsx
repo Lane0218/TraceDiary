@@ -18,21 +18,29 @@ import {
   signOutSupabase,
 } from './services/supabase'
 
+type ExperienceMode = 'guest' | 'user'
+
+const EXPERIENCE_MODE_STORAGE_KEY = 'trace-diary:experience-mode'
 const GUEST_ENTRY_PREFERENCE_KEY = 'trace-diary:entry-preference'
 const CLOUD_RESTORE_HANDLED_KEY_PREFIX = 'trace-diary:cloud-restore-handled:'
 
-function readGuestEntryPreference(): boolean {
+function readExperienceModePreference(): ExperienceMode {
   if (typeof window === 'undefined') {
-    return false
+    return 'user'
   }
-  return localStorage.getItem(GUEST_ENTRY_PREFERENCE_KEY) === 'guest'
+  const persistedMode = localStorage.getItem(EXPERIENCE_MODE_STORAGE_KEY)
+  if (persistedMode === 'guest' || persistedMode === 'user') {
+    return persistedMode
+  }
+  return localStorage.getItem(GUEST_ENTRY_PREFERENCE_KEY) === 'guest' ? 'guest' : 'user'
 }
 
-function saveGuestEntryPreference(value: boolean): void {
+function saveExperienceModePreference(mode: ExperienceMode): void {
   if (typeof window === 'undefined') {
     return
   }
-  if (value) {
+  localStorage.setItem(EXPERIENCE_MODE_STORAGE_KEY, mode)
+  if (mode === 'guest') {
     localStorage.setItem(GUEST_ENTRY_PREFERENCE_KEY, 'guest')
     return
   }
@@ -79,7 +87,7 @@ function AppRoutes() {
   const auth = useAuth()
   const { push: pushToast } = useToast()
   const location = useLocation()
-  const [guestEntrySelected, setGuestEntrySelected] = useState<boolean>(readGuestEntryPreference)
+  const [experienceMode, setExperienceMode] = useState<ExperienceMode>(readExperienceModePreference)
   const [manualEntryModalOpen, setManualEntryModalOpen] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -89,9 +97,10 @@ function AppRoutes() {
   const lastSessionUserIdRef = useRef<string | null>(null)
   const cloudAuthEnabled = isSupabaseConfigured()
   const sessionUserId = session?.user.id ?? null
+  const isGuestMode = experienceMode === 'guest'
   const blocksAutoEntryModal = location.pathname.startsWith('/settings') || location.pathname.startsWith('/auth/reset-password')
   const autoEntryModalOpen =
-    !blocksAutoEntryModal && auth.state.stage === 'needs-setup' && !guestEntrySelected && !sessionUserId
+    !blocksAutoEntryModal && auth.state.stage === 'needs-setup' && !isGuestMode && !sessionUserId
   const entryModalOpen = manualEntryModalOpen || autoEntryModalOpen
   const canCloseEntryModal = manualEntryModalOpen && !autoEntryModalOpen
 
@@ -102,8 +111,6 @@ function AppRoutes() {
     if (auth.state.stage === 'needs-setup' || auth.state.stage === 'checking') {
       return
     }
-    setGuestEntrySelected(false)
-    saveGuestEntryPreference(false)
     setManualEntryModalOpen(false)
   }, [auth.state.stage, manualEntryModalOpen])
 
@@ -159,6 +166,9 @@ function AppRoutes() {
     if (!cloudAuthEnabled || !sessionUserId || pendingCloudRestoreUserId !== sessionUserId) {
       return
     }
+    if (isGuestMode) {
+      return
+    }
     if (auth.state.stage === 'checking') {
       return
     }
@@ -202,7 +212,19 @@ function AppRoutes() {
 
     setCloudOverwritePromptUserId(sessionUserId)
     setPendingCloudRestoreUserId(null)
-  }, [auth, auth.state.stage, cloudAuthEnabled, entryModalOpen, pendingCloudRestoreUserId, pushToast, sessionUserId])
+  }, [auth, auth.state.stage, cloudAuthEnabled, entryModalOpen, isGuestMode, pendingCloudRestoreUserId, pushToast, sessionUserId])
+
+  const enterGuestMode = useCallback(() => {
+    setManualEntryModalOpen(false)
+    setExperienceMode('guest')
+    saveExperienceModePreference('guest')
+  }, [])
+
+  const enterUserMode = useCallback(() => {
+    setManualEntryModalOpen(false)
+    setExperienceMode('user')
+    saveExperienceModePreference('user')
+  }, [])
 
   const openEntryModal = useCallback(() => {
     setManualEntryModalOpen(true)
@@ -292,12 +314,42 @@ function AppRoutes() {
     <>
       <Routes>
         <Route index element={<Navigate to="/diary" replace />} />
-        <Route path="/diary" element={<DiaryPage auth={auth} headerAuthEntry={headerAuthEntry} />} />
+        <Route
+          path="/diary"
+          element={(
+            <DiaryPage
+              auth={auth}
+              headerAuthEntry={headerAuthEntry}
+              isGuestMode={isGuestMode}
+              onEnterGuestMode={enterGuestMode}
+              onEnterUserMode={enterUserMode}
+            />
+          )}
+        />
         <Route
           path="/yearly/:year?"
-          element={<YearlySummaryPage auth={auth} headerAuthEntry={headerAuthEntry} />}
+          element={(
+            <YearlySummaryPage
+              auth={auth}
+              headerAuthEntry={headerAuthEntry}
+              isGuestMode={isGuestMode}
+              onEnterGuestMode={enterGuestMode}
+              onEnterUserMode={enterUserMode}
+            />
+          )}
         />
-        <Route path="/insights" element={<InsightsPage auth={auth} headerAuthEntry={headerAuthEntry} />} />
+        <Route
+          path="/insights"
+          element={(
+            <InsightsPage
+              auth={auth}
+              headerAuthEntry={headerAuthEntry}
+              isGuestMode={isGuestMode}
+              onEnterGuestMode={enterGuestMode}
+              onEnterUserMode={enterUserMode}
+            />
+          )}
+        />
         <Route path="/settings" element={<SettingsPage auth={auth} headerAuthEntry={headerAuthEntry} />} />
         <Route path="/auth/reset-password" element={<AuthResetPasswordPage />} />
         <Route path="/welcome" element={<Navigate to="/diary" replace />} />
@@ -312,18 +364,10 @@ function AppRoutes() {
         onLockOpenForAuthTransition={() => {
           setManualEntryModalOpen(true)
         }}
-        onEnterGuest={() => {
-          setGuestEntrySelected(true)
-          saveGuestEntryPreference(true)
-          setManualEntryModalOpen(false)
-        }}
-        onChooseAuthFlow={() => {
-          setGuestEntrySelected(false)
-          saveGuestEntryPreference(false)
-          setManualEntryModalOpen(false)
-        }}
+        onEnterGuest={enterGuestMode}
+        onChooseAuthFlow={enterUserMode}
       />
-      {cloudOverwritePromptUserId ? (
+      {!isGuestMode && cloudOverwritePromptUserId ? (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-[#151311]/55 px-4 py-6 backdrop-blur-[2px]"
           aria-label="cloud-config-overwrite-modal"

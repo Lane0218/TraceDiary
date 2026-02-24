@@ -80,7 +80,17 @@ function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
     <ToastProvider>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path="/yearly/:year" element={<YearlySummaryPage auth={auth ?? buildAuthResult()} />} />
+          <Route
+            path="/yearly/:year"
+            element={(
+              <YearlySummaryPage
+                auth={auth ?? buildAuthResult()}
+                isGuestMode={false}
+                onEnterGuestMode={() => {}}
+                onEnterUserMode={() => {}}
+              />
+            )}
+          />
         </Routes>
       </MemoryRouter>
       <ToastCenter />

@@ -7,22 +7,25 @@
   "module_label": "6.13 游客模式与账号体系（v1.2）",
   "order": 175,
   "status": "DONE",
-  "title": "新增默认游客模式入口与“开始使用我的数据”转化路径",
-  "acceptance": "首次访问默认进入游客体验；游客态可浏览 Demo 日记但不可写入远端；可一键跳转登录/注册",
+  "title": "支持本地有数据时随时切换游客模式",
+  "acceptance": "本地已有配置/数据时仍可进入演示模式；可从演示模式一键回到“我的数据”并恢复既有认证流程；相关回归测试通过",
   "related_files": [
     "src/App.tsx",
-    "src/components/auth/entry-auth-modal.tsx",
-    "src/pages/settings.tsx",
+    "src/components/common/app-header.tsx",
+    "src/components/auth/auth-panel.tsx",
+    "src/components/auth/auth-modal.tsx",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/pages/insights.tsx",
     "src/__tests__/integration/app.integration.test.tsx",
-    "e2e/fixtures/app.ts",
-    "e2e/specs/export-data.spec.ts"
+    "src/__tests__/integration/editor.integration.test.tsx"
   ],
-  "test_record": "风险分级：高；`npm run lint` 通过；`npm run test:unit` 通过（92/92）；`npm run test:integration` 通过（71/71，含既有 `act(...)` 警告）；`npm run test:e2e:full` 通过（29 项执行，27 passed + 2 flaky 经 retry 通过）",
-  "done_record": "2026-02-19 / 6ce2dfd",
+  "test_record": "风险分级：高（游客模式与认证状态链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）。额外定向验证：`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx src/__tests__/integration/editor.integration.test.tsx` 通过（21/21）。",
+  "done_record": "2026-02-24 / pending",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 1,
-  "updated_at": "2026-02-21T14:31:06.652Z"
+  "version": 3,
+  "updated_at": "2026-02-24T15:48:06.000Z"
 }

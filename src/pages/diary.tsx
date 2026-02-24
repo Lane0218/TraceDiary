@@ -56,6 +56,9 @@ import { REMOTE_PULL_COMPLETED_EVENT } from '../utils/remote-sync-events'
 interface DiaryPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
+  isGuestMode: boolean
+  onEnterGuestMode: () => void
+  onEnterUserMode: () => void
 }
 
 interface YearlyReminder {
@@ -175,7 +178,7 @@ function getYearlyReminder(now: Date): YearlyReminder {
   }
 }
 
-export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
+export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterGuestMode, onEnterUserMode }: DiaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -210,7 +213,6 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
 
   const baseMonth = useMemo(() => toMonthStartFromDateKey(date), [date])
   const month = useMemo(() => shiftMonth(baseMonth, monthOffset), [baseMonth, monthOffset])
-  const isGuestMode = auth.state.stage === 'needs-setup'
   const demoDiaryEntry = useMemo(() => getDemoDailyEntry(date), [date])
 
   const diary = useDiary(
@@ -836,6 +838,7 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
             isGuestMode
               ? {
                   enabled: true,
+                  onUseMyData: onEnterUserMode,
                 }
               : undefined
           }
@@ -998,6 +1001,7 @@ export default function DiaryPage({ auth, headerAuthEntry }: DiaryPageProps) {
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
+        onEnterGuestMode={onEnterGuestMode}
       />
 
       <ConflictDialog

@@ -48,6 +48,9 @@ import {
 interface YearlySummaryPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
+  isGuestMode: boolean
+  onEnterGuestMode: () => void
+  onEnterUserMode: () => void
 }
 
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
@@ -75,7 +78,13 @@ function parseValidYearInput(value: string): number | null {
   return parsed
 }
 
-export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySummaryPageProps) {
+export default function YearlySummaryPage({
+  auth,
+  headerAuthEntry,
+  isGuestMode,
+  onEnterGuestMode,
+  onEnterUserMode,
+}: YearlySummaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const params = useParams<{ year?: string }>()
@@ -97,7 +106,6 @@ export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySumma
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const year = useMemo(() => normalizeYear(params.year, currentYear), [currentYear, params.year])
-  const isGuestMode = auth.state.stage === 'needs-setup'
   const [isYearPickerOpen, setIsYearPickerOpen] = useState(false)
   const [draftYear, setDraftYear] = useState(year)
   const [draftYearInput, setDraftYearInput] = useState(String(year))
@@ -781,6 +789,7 @@ export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySumma
             isGuestMode
               ? {
                   enabled: true,
+                  onUseMyData: onEnterUserMode,
                 }
               : undefined
           }
@@ -966,6 +975,7 @@ export default function YearlySummaryPage({ auth, headerAuthEntry }: YearlySumma
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
+        onEnterGuestMode={onEnterGuestMode}
       />
 
       <ConflictDialog

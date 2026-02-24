@@ -13,6 +13,9 @@ import { buildStatsChartModel } from '../utils/stats'
 interface InsightsPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
+  isGuestMode: boolean
+  onEnterGuestMode: () => void
+  onEnterUserMode: () => void
 }
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
@@ -34,13 +37,18 @@ function formatDeltaRatio(value: number | null): string {
   return `${sign}${percentFormatter.format(value)}`
 }
 
-export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProps) {
+export default function InsightsPage({
+  auth,
+  headerAuthEntry,
+  isGuestMode,
+  onEnterGuestMode,
+  onEnterUserMode,
+}: InsightsPageProps) {
   const [reloadSignal, setReloadSignal] = useState(0)
   const [dismissedTokenRefreshKey, setDismissedTokenRefreshKey] = useState<string | null>(null)
   const stats = useStats({ reloadSignal })
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
-  const isGuestMode = auth.state.stage === 'needs-setup'
   const needsTokenRefresh = auth.state.stage === 'needs-token-refresh'
   const tokenRefreshKey = [
     auth.state.tokenRefreshReason ?? 'unknown',
@@ -73,6 +81,7 @@ export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProp
             isGuestMode
               ? {
                   enabled: true,
+                  onUseMyData: onEnterUserMode,
                 }
               : undefined
           }
@@ -203,6 +212,7 @@ export default function InsightsPage({ auth, headerAuthEntry }: InsightsPageProp
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
+        onEnterGuestMode={onEnterGuestMode}
       />
     </>
   )
