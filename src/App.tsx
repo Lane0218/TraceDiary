@@ -96,13 +96,16 @@ function AppRoutes() {
   const canCloseEntryModal = manualEntryModalOpen && !autoEntryModalOpen
 
   useEffect(() => {
+    if (manualEntryModalOpen) {
+      return
+    }
     if (auth.state.stage === 'needs-setup' || auth.state.stage === 'checking') {
       return
     }
     setGuestEntrySelected(false)
     saveGuestEntryPreference(false)
     setManualEntryModalOpen(false)
-  }, [auth.state.stage])
+  }, [auth.state.stage, manualEntryModalOpen])
 
   useEffect(() => {
     if (!cloudAuthEnabled) {
@@ -159,6 +162,14 @@ function AppRoutes() {
     if (auth.state.stage === 'checking') {
       return
     }
+    // 登录/注册流程进行中（含首登设置密码）时，延后本地覆盖确认，避免弹窗互相遮挡。
+    if (entryModalOpen) {
+      return
+    }
+    // Token 刷新阶段优先完成认证流程，避免与本地覆盖确认弹窗并发。
+    if (auth.state.stage === 'needs-token-refresh') {
+      return
+    }
 
     if (auth.state.stage === 'needs-setup') {
       setIsApplyingCloudConfig(true)
@@ -191,7 +202,7 @@ function AppRoutes() {
 
     setCloudOverwritePromptUserId(sessionUserId)
     setPendingCloudRestoreUserId(null)
-  }, [auth, auth.state.stage, cloudAuthEnabled, pendingCloudRestoreUserId, pushToast, sessionUserId])
+  }, [auth, auth.state.stage, cloudAuthEnabled, entryModalOpen, pendingCloudRestoreUserId, pushToast, sessionUserId])
 
   const openEntryModal = useCallback(() => {
     setManualEntryModalOpen(true)

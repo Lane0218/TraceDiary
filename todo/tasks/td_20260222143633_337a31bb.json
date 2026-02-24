@@ -13,14 +13,15 @@
     "src/App.tsx",
     "src/pages/settings.tsx",
     "src/components/auth/entry-auth-modal.tsx",
-    "src/__tests__/integration/app.integration.test.tsx"
+    "src/__tests__/integration/app.integration.test.tsx",
+    "src/__tests__/integration/app-entry-auth-transition.integration.test.tsx"
   ],
-  "test_record": "风险分级：中（认证入口与设置页展示逻辑变更）。已执行：`npm run lint`（通过）；`npm run test:unit`（95/95 通过）；`npm run test:integration`（72/72 通过，存在既有 act warning 但不影响通过）；`npm run test:e2e:changed`（通过）；`npm run test:e2e:fast`（5/5 通过）。",
-  "done_record": "2026-02-22 / d968888",
+  "test_record": "风险分级：高（认证链路与弹窗时序，涉及首登与 Token 刷新主路径）。已执行：`npm run lint`（通过）；`npm run test:unit`（95/95 通过）；`npm run test:integration`（96/96 通过，存在既有 act warning 但不影响通过）；`npx vitest run --environment jsdom src/__tests__/integration/app-entry-auth-transition.integration.test.tsx`（3/3 通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。未执行全量 E2E（仅执行直接相关认证链路用例）。",
+  "done_record": "2026-02-24 / pending",
   "source": {
     "file": "src/App.tsx",
     "line": 1
   },
-  "version": 3,
-  "updated_at": "2026-02-22T14:46:41.000Z"
+  "version": 5,
+  "updated_at": "2026-02-24T15:23:31.000Z"
 }

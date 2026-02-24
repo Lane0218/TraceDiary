@@ -1,10 +1,28 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
 
 const mockAuthState = vi.hoisted(() => ({
   stage: 'needs-setup',
 }))
+
+const mockSessionState = vi.hoisted(() => ({
+  userId: null as string | null,
+}))
+
+const getSupabaseSessionMock = vi.hoisted(() =>
+  vi.fn(async () => {
+    if (!mockSessionState.userId) {
+      return null
+    }
+    return {
+      user: {
+        id: mockSessionState.userId,
+        email: `${mockSessionState.userId}@example.com`,
+      },
+    }
+  }),
+)
 
 const mockAuth = vi.hoisted(() => ({
   state: mockAuthState as unknown as {
@@ -42,7 +60,7 @@ vi.mock('../../services/supabase', async () => {
   return {
     ...actual,
     isSupabaseConfigured: () => true,
-    getSupabaseSession: vi.fn(async () => null),
+    getSupabaseSession: getSupabaseSessionMock,
     onSupabaseAuthStateChange: vi.fn(() => () => {}),
     signOutSupabase: vi.fn(async () => {}),
   }
@@ -52,9 +70,10 @@ vi.mock('../../components/auth/entry-auth-modal', () => ({
   default: (props: {
     open: boolean
     onLockOpenForAuthTransition?: () => void
+    onClose?: () => void
   }) =>
-    props.open ? (
-      <div data-testid="mock-entry-auth-modal">
+    (
+      <div data-testid="mock-entry-auth-modal" data-open={props.open ? '1' : '0'}>
         <button
           type="button"
           data-testid="mock-lock-open-btn"
@@ -62,14 +81,20 @@ vi.mock('../../components/auth/entry-auth-modal', () => ({
         >
           lock-open
         </button>
+        <button type="button" data-testid="mock-entry-close-btn" onClick={() => props.onClose?.()}>
+          close
+        </button>
+        {props.open ? <span data-testid="mock-entry-open" /> : null}
       </div>
-    ) : null,
+    ),
 }))
 
 describe('App 首屏弹窗过渡态', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/diary')
     mockAuthState.stage = 'needs-setup'
+    mockSessionState.userId = null
+    window.sessionStorage.clear()
   })
 
   afterEach(() => {
@@ -87,5 +112,42 @@ describe('App 首屏弹窗过渡态', () => {
     rerender(<App />)
 
     expect(screen.getByTestId('mock-entry-auth-modal')).toBeTruthy()
+  })
+
+  it('首屏认证弹窗打开时应延后“本地已有配置”覆盖确认，关闭后再出现', async () => {
+    mockSessionState.userId = 'entry-modal-user'
+    mockAuthState.stage = 'checking'
+    const { rerender } = render(<App />)
+
+    fireEvent.click(screen.getByTestId('mock-lock-open-btn'))
+    mockAuthState.stage = 'needs-unlock'
+    rerender(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-entry-open')).toBeTruthy()
+    })
+    expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+
+    fireEvent.click(screen.getByTestId('mock-entry-close-btn'))
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
+  })
+
+  it('Token 刷新阶段应延后“本地已有配置”覆盖确认，回到 ready 后再出现', async () => {
+    mockSessionState.userId = 'token-refresh-user'
+    mockAuthState.stage = 'needs-token-refresh'
+    const { rerender } = render(<App />)
+
+    await waitFor(() => {
+      expect(getSupabaseSessionMock).toHaveBeenCalled()
+    })
+    expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+
+    mockAuthState.stage = 'ready'
+    rerender(<App />)
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
   })
 })
