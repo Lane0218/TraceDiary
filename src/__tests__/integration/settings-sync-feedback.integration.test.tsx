@@ -147,4 +147,15 @@ describe('设置页同步配置反馈', () => {
       '同步配置校验失败：仓库地址需为 gitee.com/<owner>/<repo>',
     )
   })
+
+  it('needs-token-refresh 状态下应允许修改仓库与分支后更新 token', async () => {
+    renderSettings(buildAuthResult('needs-token-refresh'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth-refresh-repo-input')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('auth-refresh-repo-input')).toHaveValue('lane/diary')
+    expect(screen.getByTestId('auth-refresh-branch-input')).toHaveValue('master')
+    expect(screen.getByTestId('auth-refresh-submit')).toHaveTextContent('更新并恢复同步')
+  })
 })

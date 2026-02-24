@@ -138,6 +138,8 @@ test('token 解密失败后应进入 refresh，并在覆盖后恢复 ready', asy
   await submitUnlock(page, env.masterPassword)
   await expectAuthStage(page, 'needs-token-refresh')
   await expect(page.getByTestId('auth-refresh-submit')).toBeVisible()
+  await expect(page.getByTestId('auth-refresh-repo-input')).toHaveValue(`${env.owner}/${env.repo}`)
+  await expect(page.getByTestId('auth-refresh-branch-input')).toHaveValue(env.branch)
 
   await submitRefreshToken(page, { token: env.token })
   await expectSessionReady(page)
@@ -161,6 +163,8 @@ test('token 失效后应进入 refresh，并在补输有效 token 后恢复 read
 
   await submitUnlock(page, env.masterPassword)
   await expectAuthStage(page, 'needs-token-refresh')
+  await expect(page.getByTestId('auth-refresh-repo-input')).toHaveValue(`${env.owner}/${env.repo}`)
+  await expect(page.getByTestId('auth-refresh-branch-input')).toHaveValue(env.branch)
 
   await submitRefreshToken(page, { token: env.token })
   await expectSessionReady(page)

@@ -41,7 +41,7 @@ function getStageTitle(stage: string): { title: string; subtitle: string } {
     case 'needs-token-refresh':
       return {
         title: '更新 Token',
-        subtitle: '请更新 Token 以恢复云端同步。',
+        subtitle: '请更新 Token，必要时可切换目标仓库与分支。',
       }
     case 'checking':
       return {
@@ -95,7 +95,7 @@ function createDefaultSyncCheckSnapshot(state: UseAuthResult['state']): SyncChec
       return {
         status: 'error',
         title: 'Token 不可用',
-        message: state.errorMessage ?? '请更新 Token 后再执行配置校验。',
+        message: state.errorMessage ?? '请更新 Token，必要时可切换目标仓库后重试。',
         updatedAt: null,
       }
     case 'checking':
@@ -282,6 +282,25 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
     }))
   }, [state])
 
+  useEffect(() => {
+    if (state.stage !== 'needs-token-refresh' || !state.config) {
+      return
+    }
+    const nextRefreshRepoInput = buildRepoInput(state)
+    const nextRefreshRepoBranch = state.config.giteeBranch ?? 'master'
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- token-refresh 配置变化后需同步回填表单默认值
+    setForm((prev) => {
+      if (prev.refreshRepoInput === nextRefreshRepoInput && prev.refreshRepoBranch === nextRefreshRepoBranch) {
+        return prev
+      }
+      return {
+        ...prev,
+        refreshRepoInput: nextRefreshRepoInput,
+        refreshRepoBranch: nextRefreshRepoBranch,
+      }
+    })
+  }, [state])
+
   const handleReadyUpdateSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -445,7 +464,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
 
       {state.stage === 'needs-token-refresh' ? (
         <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
-          {tokenRefreshRepoLabel ? <p className="text-xs text-[#6c6459]">目标仓库：{tokenRefreshRepoLabel}</p> : null}
+          {tokenRefreshRepoLabel ? <p className="text-xs text-[#6c6459]">当前目标仓库：{tokenRefreshRepoLabel}（可修改）</p> : null}
           <p
             className={`rounded-[10px] border px-3 py-2 text-sm ${
               tokenRefreshNotice?.tone === 'error'
@@ -455,6 +474,26 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
           >
             {tokenRefreshNotice?.message}
           </p>
+          <AuthFormField
+            label="仓库地址"
+            value={form.refreshRepoInput}
+            onChange={(next) => setForm((prev) => ({ ...prev, refreshRepoInput: next }))}
+            placeholder="owner/repo 或 https://gitee.com/owner/repo"
+            autoComplete="off"
+            testId="auth-refresh-repo-input"
+            containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+            inputClassName="td-input"
+          />
+          <AuthFormField
+            label="分支"
+            value={form.refreshRepoBranch}
+            onChange={(next) => setForm((prev) => ({ ...prev, refreshRepoBranch: next }))}
+            placeholder="默认 master，可填写 main/dev"
+            autoComplete="off"
+            testId="auth-refresh-branch-input"
+            containerClassName="flex flex-col gap-1.5 text-sm text-td-muted"
+            inputClassName="td-input"
+          />
           <AuthFormField
             label="新的 Gitee Token"
             value={form.refreshToken}
@@ -483,7 +522,7 @@ export default function AuthPanel({ auth, variant, canClose = false, onClose }: 
               className={primaryActionButtonClass}
               data-testid="auth-refresh-submit"
             >
-              覆盖本地 Token 密文
+              更新并恢复同步
             </button>
             {isModal && canClose && onClose ? (
               <button

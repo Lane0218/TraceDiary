@@ -197,6 +197,97 @@ describe('useAuth', () => {
     expect(dependencies.deriveDataEncryptionKey).toHaveBeenCalledWith('master1234')
   })
 
+  it('token-refresh 阶段应支持切换仓库与分支后恢复 ready', async () => {
+    const config = buildConfig()
+    const saveConfig = vi.fn(async () => undefined)
+    const validateGiteeRepoAccess = vi.fn(async ({ owner, repoName, token }) => {
+      if (owner === 'alice-next' && repoName === 'trace-diary-next' && token === 'token-new') {
+        return
+      }
+      throw new Error('repo/token invalid')
+    })
+    const dependencies = buildDependencies({
+      loadConfig: vi.fn(async () => config),
+      saveConfig,
+      hashMasterPassword: vi.fn(async ({ masterPassword }) => `hash:${masterPassword}`),
+      decryptToken: vi.fn(async () => {
+        throw new Error('cipher broken')
+      }),
+      validateGiteeRepoAccess,
+      encryptToken: vi.fn(async ({ token }) => `cipher:${token}`),
+    })
+
+    localStorage.setItem(AUTH_LOCK_STATE_KEY, 'locked')
+    localStorage.setItem(AUTH_PASSWORD_EXPIRY_KEY, String(fixedNow - 1_000))
+
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-unlock'))
+
+    await act(async () => {
+      await result.current.unlockWithMasterPassword({ masterPassword: 'master1234' })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-token-refresh'))
+
+    await act(async () => {
+      await result.current.updateTokenCiphertext({
+        repoInput: 'alice-next/trace-diary-next',
+        giteeBranch: 'main',
+        token: 'token-new',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('ready'))
+    expect(result.current.state.config?.giteeOwner).toBe('alice-next')
+    expect(result.current.state.config?.giteeRepoName).toBe('trace-diary-next')
+    expect(result.current.state.config?.giteeRepo).toBe('https://gitee.com/alice-next/trace-diary-next')
+    expect(result.current.state.config?.giteeBranch).toBe('main')
+    expect(result.current.state.config?.encryptedToken).toBe('cipher:token-new')
+    expect(result.current.state.tokenInMemory).toBe('token-new')
+    expect(validateGiteeRepoAccess).toHaveBeenLastCalledWith({
+      owner: 'alice-next',
+      repoName: 'trace-diary-next',
+      token: 'token-new',
+    })
+    expect(saveConfig).toHaveBeenCalled()
+  })
+
+  it('token-refresh 阶段仓库地址非法时应保持 needs-token-refresh', async () => {
+    const config = buildConfig()
+    const dependencies = buildDependencies({
+      loadConfig: vi.fn(async () => config),
+      hashMasterPassword: vi.fn(async ({ masterPassword }) => `hash:${masterPassword}`),
+      decryptToken: vi.fn(async () => {
+        throw new Error('cipher broken')
+      }),
+      validateGiteeRepoAccess: vi.fn(async () => undefined),
+    })
+
+    localStorage.setItem(AUTH_LOCK_STATE_KEY, 'locked')
+    localStorage.setItem(AUTH_PASSWORD_EXPIRY_KEY, String(fixedNow - 1_000))
+
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-unlock'))
+
+    await act(async () => {
+      await result.current.unlockWithMasterPassword({ masterPassword: 'master1234' })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-token-refresh'))
+    const previousConfig = result.current.state.config
+
+    await act(async () => {
+      await result.current.updateTokenCiphertext({
+        repoInput: 'invalid-repo-input',
+        token: 'token-new',
+      })
+    })
+
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-token-refresh'))
+    expect(result.current.state.errorMessage).toBe('仓库地址需为 <owner>/<repo>')
+    expect(result.current.state.config).toEqual(previousConfig)
+  })
+
   it('token 校验失效后应进入补输流程', async () => {
     const config = buildConfig()
     const dependencies = buildDependencies({

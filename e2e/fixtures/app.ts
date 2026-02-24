@@ -68,8 +68,14 @@ export async function submitUnlock(page: Page, masterPassword: string): Promise<
 
 export async function submitRefreshToken(
   page: Page,
-  payload: { token: string; masterPassword?: string },
+  payload: { repoInput?: string; giteeBranch?: string; token: string; masterPassword?: string },
 ): Promise<void> {
+  if (payload.repoInput !== undefined) {
+    await page.getByTestId('auth-refresh-repo-input').fill(payload.repoInput)
+  }
+  if (payload.giteeBranch !== undefined) {
+    await page.getByTestId('auth-refresh-branch-input').fill(payload.giteeBranch)
+  }
   await page.getByTestId('auth-refresh-token-input').fill(payload.token)
   const passwordInput = page.getByTestId('auth-refresh-password-input')
   if (await passwordInput.isVisible()) {

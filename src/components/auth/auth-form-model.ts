@@ -6,6 +6,8 @@ export interface AuthFormState {
   repoBranch: string
   token: string
   masterPassword: string
+  refreshRepoInput: string
+  refreshRepoBranch: string
   refreshToken: string
   refreshMasterPassword: string
   readyRepoInput: string
@@ -19,6 +21,8 @@ export const INITIAL_AUTH_FORM_STATE: AuthFormState = {
   repoBranch: 'master',
   token: '',
   masterPassword: '',
+  refreshRepoInput: '',
+  refreshRepoBranch: 'master',
   refreshToken: '',
   refreshMasterPassword: '',
   readyRepoInput: '',
@@ -61,6 +65,8 @@ export function createAuthSubmitModel(actions: AuthSubmitActions, form: AuthForm
     onRefreshTokenSubmit: async (event) => {
       event.preventDefault()
       await actions.updateTokenCiphertext({
+        repoInput: form.refreshRepoInput,
+        giteeBranch: form.refreshRepoBranch,
         token: form.refreshToken,
         masterPassword: form.refreshMasterPassword || undefined,
       })
