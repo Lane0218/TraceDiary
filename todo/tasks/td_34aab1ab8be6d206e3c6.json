@@ -7,18 +7,18 @@
   "module_label": "6.10 文档维护",
   "order": 168,
   "status": "DONE",
-  "title": "压缩 AGENTS 的 pane 重命名说明并改为基于 `TMUX_PANE` 定位当前 Codex pane",
-  "acceptance": "AGENTS 第 3 节以最少步骤明确：通过 `TMUX_PANE` 反查 `session:window.pane_index` 后重命名并回读；禁止用不带 `-t` 的 `#S:#I.#P` 判定当前 pane",
+  "title": "润色 AGENTS 第 3 节执行流程，提升可读性并保留 pane 定位约束",
+  "acceptance": "第 3 节步骤表达更清晰：`TMUX_PANE` 定位、`pane_index` 约束、同任务不重复改名与后续提交流程均无歧义且可直接执行",
   "related_files": [
     "AGENTS.md",
-    "TODO.md"
+    "todo/tasks/td_34aab1ab8be6d206e3c6.json"
   ],
-  "test_record": "风险分级：低（仅文档）；`npm run lint` 通过；仅文档改动，无功能行为变化，未执行单元/集成/E2E",
-  "done_record": "2026-02-14 / 9d87dea",
+  "test_record": "风险分级：低（仅文档）；仅文档改动，无功能行为变化，未执行自动化测试。",
+  "done_record": "2026-02-24 / pending",
   "source": {
-    "file": "TODO.md",
-    "line": 237
+    "file": "AGENTS.md",
+    "line": 14
   },
-  "version": 1,
-  "updated_at": "2026-02-21T14:31:06.652Z"
+  "version": 2,
+  "updated_at": "2026-02-24T15:00:58.000Z"
 }

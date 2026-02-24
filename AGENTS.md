@@ -13,15 +13,23 @@
 
 ## 3. 执行流程（强制）
 
-1. 接收任务后先明确范围：目标、影响文件、验收标准。
-2. 判定是否属于“同一任务语义”：
+1. 每次接收“新任务”后，先将当前 Codex 进程所在的 tmux pane 重命名为任务名称（第 4.3 节的 `title`）；以 `TMUX_PANE` 定位当前 pane，不以 active pane 为准。推荐按以下顺序执行并回读确认：
+   - `pane_id="$TMUX_PANE"`
+   - `sw=$(tmux display-message -p -t "$pane_id" '#S:#I')`
+   - `pi=$(tmux display-message -p -t "$pane_id" '#P')`
+   - `tmux select-pane -t "${sw}.${pi}" -T "任务语义名称"`
+   - `tmux list-panes -t "$sw" -F '#{pane_index} #{pane_title}'`
+2. 目标 pane 必须使用 `pane_index`（纯数字，如 `1`），不得直接使用 `%pane_id`；禁止使用不带 `-t` 的 `tmux display-message -p '#S:#I.#P'` 判定当前 pane。
+3. 同一任务的连续回合（例如任务已 `DONE` 后被打回微调）不需要重复改名；仅当任务语义发生切换时再重命名 pane。
+4. 接收任务后先明确范围：目标、影响文件、验收标准。
+5. 判定是否属于“同一任务语义”：
    - 同一任务语义（包括已 `DONE` 后被打回）：不得新建任务；沿用原任务文件，必要时 `DONE -> DOING`。
    - 新任务语义：按第 4 节新建任务文件并置为 `DOING`。
-3. 实施改动，并持续更新任务文件中的 `related_files`、`test_record`、`updated_at`。
-4. 按第 7 节执行测试；任一步失败即停止提交流程。
-5. 测试通过后，按第 6 节执行 `commit + push`。
-6. 任务收尾时将状态更新为 `DONE` 或 `BLOCKED`，并补齐完成记录。
-7. 向用户汇报：改动摘要、测试结果（含是否执行全量 E2E）、commit hash、push 结果。
+6. 实施改动，并持续更新任务文件中的 `related_files`、`test_record`、`updated_at`。
+7. 按第 7 节执行测试；任一步失败即停止提交流程。
+8. 测试通过后，按第 6 节执行 `commit + push`。
+9. 任务收尾时将状态更新为 `DONE` 或 `BLOCKED`，并补齐完成记录。
+10. 向用户汇报：改动摘要、测试结果（含是否执行全量 E2E）、commit hash、push 结果。
 
 ## 4. 任务文件规范（强制）
 
