@@ -57,7 +57,6 @@ interface DiaryPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
   isGuestMode: boolean
-  onEnterGuestMode: () => void
   onEnterUserMode: () => void
 }
 
@@ -178,7 +177,7 @@ function getYearlyReminder(now: Date): YearlyReminder {
   }
 }
 
-export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterGuestMode, onEnterUserMode }: DiaryPageProps) {
+export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterUserMode }: DiaryPageProps) {
   const navigate = useNavigate()
   const { push: pushToast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -838,7 +837,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterG
             isGuestMode
               ? {
                   enabled: true,
-                  onUseMyData: onEnterUserMode,
+                  onExit: onEnterUserMode,
                 }
               : undefined
           }
@@ -1001,7 +1000,6 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterG
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
-        onEnterGuestMode={onEnterGuestMode}
       />
 
       <ConflictDialog

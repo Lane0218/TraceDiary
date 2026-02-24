@@ -145,6 +145,7 @@ describe('App 路由与日记页入口', () => {
     expect(screen.queryByText('TOKEN')).toBeNull()
     expect(screen.queryByText(/状态：needs-token-refresh/)).toBeNull()
     expect(screen.queryByLabelText('entry-auth-modal')).toBeNull()
+    expect(screen.queryByTestId('auth-modal-enter-guest-btn')).toBeNull()
 
     fireEvent.click(screen.getByTestId('auth-modal-close-btn'))
     await waitFor(() => {
@@ -155,21 +156,15 @@ describe('App 路由与日记页入口', () => {
     expect(screen.getByLabelText('diary-layout')).toBeTruthy()
   })
 
-  it('本地已有配置且 Token 失效时，仍可切换到演示模式并可恢复到我的数据模式', async () => {
-    seedBrokenTokenConfig()
+  it('游客模式下再次点击“游客模式”徽标应退出游客模式并回到登录注册弹窗', async () => {
     render(<App />)
 
-    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
-    fireEvent.click(screen.getByTestId('auth-modal-enter-guest-btn'))
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('auth-modal')).toBeNull()
-    })
+    await enterGuestFromEntryModal()
     expect(await screen.findByTestId('guest-mode-pill')).toBeTruthy()
-    expect(screen.getByTestId('guest-mode-use-data-btn')).toBeTruthy()
 
-    fireEvent.click(screen.getByTestId('guest-mode-use-data-btn'))
-    expect(await screen.findByLabelText('auth-modal')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('guest-mode-pill'))
+    expect(await screen.findByLabelText('entry-auth-modal')).toBeTruthy()
+    expect(screen.queryByLabelText('auth-modal')).toBeNull()
   })
 
   it('重置密码页路由应可访问且不弹出首屏登录弹窗', async () => {

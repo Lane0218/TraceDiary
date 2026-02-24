@@ -86,7 +86,6 @@ function renderYearlyPage(path = '/yearly/2026', auth?: UseAuthResult) {
               <YearlySummaryPage
                 auth={auth ?? buildAuthResult()}
                 isGuestMode={false}
-                onEnterGuestMode={() => {}}
                 onEnterUserMode={() => {}}
               />
             )}

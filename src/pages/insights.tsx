@@ -14,7 +14,6 @@ interface InsightsPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
   isGuestMode: boolean
-  onEnterGuestMode: () => void
   onEnterUserMode: () => void
 }
 
@@ -41,7 +40,6 @@ export default function InsightsPage({
   auth,
   headerAuthEntry,
   isGuestMode,
-  onEnterGuestMode,
   onEnterUserMode,
 }: InsightsPageProps) {
   const [reloadSignal, setReloadSignal] = useState(0)
@@ -81,7 +79,7 @@ export default function InsightsPage({
             isGuestMode
               ? {
                   enabled: true,
-                  onUseMyData: onEnterUserMode,
+                  onExit: onEnterUserMode,
                 }
               : undefined
           }
@@ -212,7 +210,6 @@ export default function InsightsPage({
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
-        onEnterGuestMode={onEnterGuestMode}
       />
     </>
   )

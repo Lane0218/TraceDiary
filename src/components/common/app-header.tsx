@@ -16,8 +16,7 @@ interface AppHeaderProps {
   guestMode?: {
     enabled: boolean
     description?: string
-    onUseMyData?: () => void
-    useMyDataLabel?: string
+    onExit?: () => void
   }
   authEntry?: AppHeaderAuthEntry
 }
@@ -49,7 +48,6 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
     return getEmailAlias(sessionEmail)
   }, [sessionEmail])
   const guestModeDescription = guestMode?.description?.trim() ?? ''
-  const guestModeUseMyDataLabel = guestMode?.useMyDataLabel?.trim() || '开始使用我的数据'
 
   useEffect(() => {
     if (!accountMenuOpen) {
@@ -108,28 +106,24 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
         {guestMode?.enabled ? (
-          <>
-            <div className="td-guest-pill" data-testid="guest-mode-pill" aria-label="演示模式提示">
-              <span className="td-guest-pill-dot" aria-hidden="true" />
-              <span>演示模式</span>
-              {guestModeDescription ? (
-                <>
-                  <span className="td-guest-pill-sep" aria-hidden="true">/</span>
-                  <span className="td-guest-pill-desc">{guestModeDescription}</span>
-                </>
-              ) : null}
-            </div>
-            {guestMode.onUseMyData ? (
-              <button
-                type="button"
-                className="td-btn td-btn-primary-ink px-3 py-1.5 text-xs sm:text-sm"
-                data-testid="guest-mode-use-data-btn"
-                onClick={guestMode.onUseMyData}
-              >
-                {guestModeUseMyDataLabel}
-              </button>
+          <button
+            type="button"
+            className="td-guest-pill cursor-pointer"
+            data-testid="guest-mode-pill"
+            aria-label="游客模式提示，点击退出游客模式"
+            onClick={() => {
+              guestMode.onExit?.()
+            }}
+          >
+            <span className="td-guest-pill-dot" aria-hidden="true" />
+            <span>游客模式</span>
+            {guestModeDescription ? (
+              <>
+                <span className="td-guest-pill-sep" aria-hidden="true">/</span>
+                <span className="td-guest-pill-desc">{guestModeDescription}</span>
+              </>
             ) : null}
-          </>
+          </button>
         ) : null}
       </div>
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">

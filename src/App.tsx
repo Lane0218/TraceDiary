@@ -321,7 +321,6 @@ function AppRoutes() {
               auth={auth}
               headerAuthEntry={headerAuthEntry}
               isGuestMode={isGuestMode}
-              onEnterGuestMode={enterGuestMode}
               onEnterUserMode={enterUserMode}
             />
           )}
@@ -333,7 +332,6 @@ function AppRoutes() {
               auth={auth}
               headerAuthEntry={headerAuthEntry}
               isGuestMode={isGuestMode}
-              onEnterGuestMode={enterGuestMode}
               onEnterUserMode={enterUserMode}
             />
           )}
@@ -345,7 +343,6 @@ function AppRoutes() {
               auth={auth}
               headerAuthEntry={headerAuthEntry}
               isGuestMode={isGuestMode}
-              onEnterGuestMode={enterGuestMode}
               onEnterUserMode={enterUserMode}
             />
           )}

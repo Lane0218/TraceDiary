@@ -49,7 +49,6 @@ interface YearlySummaryPageProps {
   auth: UseAuthResult
   headerAuthEntry?: AppHeaderAuthEntry
   isGuestMode: boolean
-  onEnterGuestMode: () => void
   onEnterUserMode: () => void
 }
 
@@ -82,7 +81,6 @@ export default function YearlySummaryPage({
   auth,
   headerAuthEntry,
   isGuestMode,
-  onEnterGuestMode,
   onEnterUserMode,
 }: YearlySummaryPageProps) {
   const navigate = useNavigate()
@@ -789,7 +787,7 @@ export default function YearlySummaryPage({
             isGuestMode
               ? {
                   enabled: true,
-                  onUseMyData: onEnterUserMode,
+                  onExit: onEnterUserMode,
                 }
               : undefined
           }
@@ -975,7 +973,6 @@ export default function YearlySummaryPage({
         open={authModalOpen}
         canClose={!forceOpenAuthModal}
         onClose={() => setDismissedTokenRefreshKey(tokenRefreshKey)}
-        onEnterGuestMode={onEnterGuestMode}
       />
 
       <ConflictDialog

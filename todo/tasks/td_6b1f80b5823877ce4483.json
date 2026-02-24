@@ -7,8 +7,8 @@
   "module_label": "6.13 游客模式与账号体系（v1.2）",
   "order": 175,
   "status": "DONE",
-  "title": "支持本地有数据时随时切换游客模式",
-  "acceptance": "本地已有配置/数据时仍可进入演示模式；可从演示模式一键回到“我的数据”并恢复既有认证流程；相关回归测试通过",
+  "title": "游客模式入口收敛并统一游客文案",
+  "acceptance": "游客模式入口仅保留在登录注册弹窗；页头点击“游客模式”可退出游客模式；“演示模式”文案统一为“游客模式”",
   "related_files": [
     "src/App.tsx",
     "src/components/common/app-header.tsx",
@@ -17,15 +17,16 @@
     "src/pages/diary.tsx",
     "src/pages/yearly-summary.tsx",
     "src/pages/insights.tsx",
+    "src/services/demo-data.ts",
     "src/__tests__/integration/app.integration.test.tsx",
     "src/__tests__/integration/editor.integration.test.tsx"
   ],
-  "test_record": "风险分级：高（游客模式与认证状态链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）。额外定向验证：`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx src/__tests__/integration/editor.integration.test.tsx` 通过（21/21）。",
-  "done_record": "2026-02-24 / 97c577e",
+  "test_record": "风险分级：高（游客模式入口与认证弹窗链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）；`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx` 通过（12/12）。",
+  "done_record": "2026-02-25 / pending",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 4,
-  "updated_at": "2026-02-24T15:49:51.000Z"
+  "version": 7,
+  "updated_at": "2026-02-24T16:06:37.000Z"
 }
