@@ -21,11 +21,11 @@
     "src/__tests__/integration/editor.integration.test.tsx"
   ],
   "test_record": "风险分级：高（游客模式与认证状态链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）。额外定向验证：`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx src/__tests__/integration/editor.integration.test.tsx` 通过（21/21）。",
-  "done_record": "2026-02-24 / pending",
+  "done_record": "2026-02-24 / 97c577e",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 3,
-  "updated_at": "2026-02-24T15:48:06.000Z"
+  "version": 4,
+  "updated_at": "2026-02-24T15:49:51.000Z"
 }
