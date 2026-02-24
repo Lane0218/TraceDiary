@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260224153525_04a1d84d",
+  "display_id": "TD-UI-20260224-153525-04A1",
+  "id_prefix": "UI",
+  "module_key": "6.2",
+  "module_name": "日记编辑",
+  "module_label": "6.2 日记编辑",
+  "order": 20260224153525,
+  "status": "TODO",
+  "title": "在日记页接入搜索标签与双行虚拟滚动结果列表",
+  "acceptance": "日记页左侧新增搜索 tab，支持关键词输入与 200ms 防抖，结果以“日期+双行片段”虚拟列表展示，点击后跳转对应日期",
+  "related_files": [
+    "src/pages/diary.tsx",
+    "src/components/history/diary-search-list.tsx",
+    "SPEC.md",
+    "todo/tasks/td_20260224153525_04a1d84d.json"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "SPEC.md",
+    "line": 218
+  },
+  "version": 1,
+  "updated_at": "2026-02-24T15:38:20.000Z"
+}

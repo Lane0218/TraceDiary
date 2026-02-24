@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_20260224153526_ccda5d76",
+  "display_id": "TD-TEST-20260224-153526-CCDA",
+  "id_prefix": "TEST",
+  "module_key": "6.12",
+  "module_name": "测试与质量",
+  "module_label": "6.12 测试与质量",
+  "order": 20260224153526,
+  "status": "TODO",
+  "title": "补齐日记搜索单元测试与页面联动测试",
+  "acceptance": "覆盖空关键词、子串命中、排序与截断、双行片段展示、结果点击跳转日期等关键路径并通过测试",
+  "related_files": [
+    "src/utils/__tests__/diary-search.test.ts",
+    "src/pages/__tests__/diary-search.integration.test.tsx",
+    "e2e/specs/diary-search.spec.ts",
+    "SPEC.md",
+    "todo/tasks/td_20260224153526_ccda5d76.json"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "SPEC.md",
+    "line": 1063
+  },
+  "version": 1,
+  "updated_at": "2026-02-24T15:38:20.000Z"
+}

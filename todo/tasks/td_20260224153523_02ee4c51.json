@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_20260224153523_02ee4c51",
+  "display_id": "TD-DOC-20260224-153523-02EE",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 20260224153523,
+  "status": "DONE",
+  "title": "将日记页搜索完整规格落库到 SPEC 并拆分执行任务",
+  "acceptance": "SPEC 明确日记页搜索范围、规则、交互、接口与验收标准，并在 todo/tasks 拆分出可执行后续任务",
+  "related_files": [
+    "SPEC.md",
+    "todo/tasks/td_20260224153523_02ee4c51.json",
+    "todo/tasks/td_20260224153524_2905aad0.json",
+    "todo/tasks/td_20260224153525_04a1d84d.json",
+    "todo/tasks/td_20260224153526_ccda5d76.json"
+  ],
+  "test_record": "风险分级：低（仅规格文档与任务清单调整，无功能行为变更）。未执行 lint/unit/integration/e2e；已人工校对章节编号、范围约束与验收条目。",
+  "done_record": "2026-02-24 / pending",
+  "source": {
+    "file": "用户会话需求",
+    "line": 1
+  },
+  "version": 1,
+  "updated_at": "2026-02-24T15:38:20.000Z"
+}

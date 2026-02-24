@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260224153524_2905aad0",
+  "display_id": "TD-IMP-20260224-153524-2905",
+  "id_prefix": "IMP",
+  "module_key": "6.2",
+  "module_name": "日记编辑",
+  "module_label": "6.2 日记编辑",
+  "order": 20260224153524,
+  "status": "TODO",
+  "title": "实现日记搜索核心匹配与命中片段生成工具",
+  "acceptance": "提供仅 daily、本地缓存、字面量子串匹配的纯函数搜索能力，返回按日期倒序结果与首个命中片段，支持 limit=200 截断",
+  "related_files": [
+    "src/utils/diary-search.ts",
+    "src/types/diary.ts",
+    "SPEC.md",
+    "todo/tasks/td_20260224153524_2905aad0.json"
+  ],
+  "test_record": "",
+  "done_record": "",
+  "source": {
+    "file": "SPEC.md",
+    "line": 438
+  },
+  "version": 1,
+  "updated_at": "2026-02-24T15:38:20.000Z"
+}
