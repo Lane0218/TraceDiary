@@ -239,7 +239,7 @@ diary-data/                    # 用户的私有仓库名称
 3. 如果未过期，尝试恢复本地解锁态（不包含主密码明文）并解密 `encryptedToken`
 4. 如果过期，要求重新输入主密码
 5. 验证主密码后更新过期时间，并解密 `encryptedToken`
-6. 若 `encryptedToken` 解密失败或 Token 已失效，提示重新输入 Token 并覆盖本地密文
+6. 若 `encryptedToken` 解密失败或 Token 已失效，提示重新输入 Token 覆盖本地密文；必要时可同时切换目标仓库与分支
 
 ### 4.2 日记编辑功能
 
@@ -913,7 +913,7 @@ interface DiarySearchResponse {
 - 每次进入应用时检查是否过期，并尝试恢复本地解锁态
 - 本地解锁态仅用于免输主密码，不存储主密码明文
 - 过期后要求重新输入密码
-- 若 `encryptedToken` 无法解密或 Token 已失效，要求补输 Token
+- 若 `encryptedToken` 无法解密或 Token 已失效，要求补输 Token；必要时允许同时切换目标仓库与分支
 
 ### 7.5 安全最佳实践
 

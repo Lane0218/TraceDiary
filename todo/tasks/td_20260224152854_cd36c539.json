@@ -1,0 +1,32 @@
+{
+  "task_uid": "td_20260224152854_cd36c539",
+  "display_id": "TD-SYNC-20260224-152854-32C9",
+  "id_prefix": "SYNC",
+  "module_key": "6.4",
+  "module_name": "同步设置",
+  "module_label": "6.4 同步设置",
+  "order": 20260224152854,
+  "status": "DONE",
+  "title": "实现更新 Token 阶段支持修改目标仓库与分支",
+  "acceptance": "needs-token-refresh 阶段可编辑仓库/分支并提交校验；更新 Token 弹窗与设置页同步生效；通过默认分层测试与相关 E2E",
+  "related_files": [
+    "SPEC.md",
+    "e2e/fixtures/app.ts",
+    "e2e/specs/auth-session.spec.ts",
+    "src/__tests__/integration/settings-sync-feedback.integration.test.tsx",
+    "src/components/auth/auth-panel.tsx",
+    "src/components/auth/auth-form-model.ts",
+    "src/hooks/use-auth.ts",
+    "src/hooks/__tests__/use-auth.test.tsx",
+    "src/pages/welcome.tsx",
+    "todo/tasks/td_20260224152854_cd36c539.json"
+  ],
+  "test_record": "风险分级：高（认证/Token 恢复与仓库连接主链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`VITE_SUPABASE_URL=https://example.supabase.co VITE_SUPABASE_ANON_KEY=anon-test-key npm run test:integration` 通过（99/99）；`npm run test:e2e:changed` 首次失败（缺少 .env.e2e）；已执行 `worktree-flow.sh fix-e2e-env` 复制环境后重跑，结果 25 passed/7 failed（远端既有不稳定：conflict-resolution 超时、upload/yearly remote fetch timeout、settings-bulk-sync 断言不符）；与本次改动直接相关定向 E2E：`npx playwright test e2e/specs/auth-session.spec.ts e2e/specs/settings-update.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off` 通过（7/7）。",
+  "done_record": "2026-02-25 / pending",
+  "source": {
+    "file": "用户反馈截图",
+    "line": 1
+  },
+  "version": 2,
+  "updated_at": "2026-02-24T16:04:22.000Z"
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../hooks/use-auth'
 import {
   INITIAL_AUTH_FORM_STATE,
@@ -31,6 +31,26 @@ export default function WelcomePage() {
   )
 
   const passwordHint = useMemo(() => getMasterPasswordError(form.masterPassword), [form.masterPassword, getMasterPasswordError])
+
+  useEffect(() => {
+    if (state.stage !== 'needs-token-refresh' || !state.config) {
+      return
+    }
+
+    const nextRefreshRepoInput = `${state.config.giteeOwner}/${state.config.giteeRepoName}`
+    const nextRefreshRepoBranch = state.config.giteeBranch ?? 'master'
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- token-refresh 配置变化后需同步回填表单默认值
+    setForm((prev) => {
+      if (prev.refreshRepoInput === nextRefreshRepoInput && prev.refreshRepoBranch === nextRefreshRepoBranch) {
+        return prev
+      }
+      return {
+        ...prev,
+        refreshRepoInput: nextRefreshRepoInput,
+        refreshRepoBranch: nextRefreshRepoBranch,
+      }
+    })
+  }, [state])
 
   return (
     <article className="space-y-4" aria-label="welcome-page">
@@ -135,6 +155,26 @@ export default function WelcomePage() {
       {state.stage === 'needs-token-refresh' ? (
         <form className="space-y-3" onSubmit={(event) => void submitModel.onRefreshTokenSubmit(event)}>
           <AuthFormField
+            label="仓库地址"
+            value={form.refreshRepoInput}
+            onChange={(next) => setForm((prev) => ({ ...prev, refreshRepoInput: next }))}
+            placeholder="owner/repo 或 https://gitee.com/owner/repo"
+            autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
+          />
+          <AuthFormField
+            label="仓库分支"
+            value={form.refreshRepoBranch}
+            onChange={(next) => setForm((prev) => ({ ...prev, refreshRepoBranch: next }))}
+            placeholder="默认 master，可填写 main/dev"
+            autoComplete="off"
+            containerClassName="flex flex-col gap-1.5 text-sm text-slate-700"
+            labelClassName="font-medium text-slate-800"
+            inputClassName="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-400 transition focus:border-brand-400 focus:ring-2"
+          />
+          <AuthFormField
             label="新的 Gitee Token"
             value={form.refreshToken}
             onChange={(next) => setForm((prev) => ({ ...prev, refreshToken: next }))}
@@ -160,7 +200,7 @@ export default function WelcomePage() {
             type="submit"
             className="rounded-full bg-brand-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
           >
-            覆盖本地 Token 密文
+            更新并恢复同步
           </button>
         </form>
       ) : null}

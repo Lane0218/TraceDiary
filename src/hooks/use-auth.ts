@@ -73,6 +73,8 @@ export interface UnlockPayload {
 }
 
 export interface RefreshTokenPayload {
+  repoInput?: string
+  giteeBranch?: string
   token: string
   masterPassword?: string
 }
@@ -984,6 +986,8 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         setState((prev) => ({ ...prev, errorMessage: '请填写新的 Gitee Token' }))
         return
       }
+      const repoInput = payload.repoInput?.trim() || `${state.config.giteeOwner}/${state.config.giteeRepoName}`
+      const nextBranch = normalizeGiteeBranch(payload.giteeBranch ?? state.config.giteeBranch)
 
       const masterPassword = payload.masterPassword?.trim() || masterPasswordRef.current
       if (!masterPassword) {
@@ -994,6 +998,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
       setState((prev) => ({ ...prev, stage: 'checking' }))
 
       try {
+        const repoRef = parseGiteeRepo(repoInput)
         const passwordHash = await dependencies.hashMasterPassword({
           masterPassword,
           kdfParams: state.config.kdfParams,
@@ -1003,8 +1008,8 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         }
 
         await dependencies.validateGiteeRepoAccess({
-          owner: state.config.giteeOwner,
-          repoName: state.config.giteeRepoName,
+          owner: repoRef.owner,
+          repoName: repoRef.repoName,
           token,
         })
 
@@ -1019,6 +1024,10 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         const dataEncryptionKey = await dependencies.deriveDataEncryptionKey(masterPassword)
         const nextConfig: AppConfig = {
           ...state.config,
+          giteeRepo: `https://gitee.com/${repoRef.canonicalRepo}`,
+          giteeOwner: repoRef.owner,
+          giteeRepoName: repoRef.repoName,
+          giteeBranch: nextBranch,
           passwordExpiry: expiry.iso,
           encryptedToken,
           tokenCipherVersion: 'v1',
