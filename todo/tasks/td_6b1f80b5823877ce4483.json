@@ -22,11 +22,11 @@
     "src/__tests__/integration/editor.integration.test.tsx"
   ],
   "test_record": "风险分级：低（游客示例文案补充，无行为改动）。已执行：`npm run lint` 通过；`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx` 通过（12/12）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 851d217",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 10,
-  "updated_at": "2026-02-24T16:10:20.000Z"
+  "version": 11,
+  "updated_at": "2026-02-24T16:12:34.000Z"
 }
