@@ -22,11 +22,11 @@
     "src/__tests__/integration/editor.integration.test.tsx"
   ],
   "test_record": "风险分级：高（游客模式入口与认证弹窗链路）。已执行：`npm run lint` 通过；`npm run test:unit` 通过（95/95）；`npm run test:integration` 通过（97/97，含既有 `act(...)` warning）；`npm run test:e2e:fast` 通过（5/5）；`npx vitest run --environment jsdom src/__tests__/integration/app.integration.test.tsx` 通过（12/12）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / cc83070",
   "source": {
     "file": "TODO.md",
     "line": 254
   },
-  "version": 7,
-  "updated_at": "2026-02-24T16:06:37.000Z"
+  "version": 8,
+  "updated_at": "2026-02-24T16:07:20.000Z"
 }
