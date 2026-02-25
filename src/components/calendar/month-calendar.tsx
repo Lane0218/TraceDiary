@@ -230,7 +230,7 @@ export function MonthCalendar({
           const isActive = cell.dateKey === activeDateKey
           const hasDiaryHighlight = cell.inCurrentMonth && cell.hasDiary
           const baseStyle =
-            'relative flex h-9 w-full items-center justify-center rounded-[8px] border text-sm transition sm:h-10'
+            'relative flex h-[34px] w-full items-center justify-center rounded-[8px] border text-sm transition sm:h-[35px]'
           const monthStyle = cell.inCurrentMonth
             ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
