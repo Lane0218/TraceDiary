@@ -3,7 +3,7 @@ set -euo pipefail
 
 SESSION_NAME="${1:-codex4}"
 WINDOW_NAME="${WINDOW_NAME:-codex}"
-CODEX_CMD="${CODEX_CMD:-codex}"
+CODEX_CMD="${CODEX_CMD:-codex --sandbox danger-full-access}"
 PANE_TITLES_RAW="${PANE_TITLES:-A,B,C,D}"
 
 require_cmd() {

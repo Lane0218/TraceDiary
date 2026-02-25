@@ -15,7 +15,8 @@
 ./scripts/start-codex4.sh
 ```
 
-默认会创建会话 `codex4`。如果会话已存在，则直接 attach。
+默认会创建会话 `codex4`，并以 `codex --sandbox danger-full-access` 启动每个 pane。  
+如果会话已存在，则直接 attach。
 
 ## 可选参数与环境变量
 
@@ -26,7 +27,7 @@
 # 自定义 pane 默认名称（逗号分隔，顺序对应左上/右上/左下/右下）
 PANE_TITLES="需求,实现,测试,Review" ./scripts/start-codex4.sh
 
-# 自定义 Codex 启动命令
+# 自定义 Codex 启动命令（会覆盖默认 full access 参数）
 CODEX_CMD="codex --help" ./scripts/start-codex4.sh
 ```
 
