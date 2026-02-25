@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260225142357_a9a8f6fb",
+  "display_id": "TD-UI-20260225-142357-C8AA",
+  "id_prefix": "UI",
+  "module_key": "6.4",
+  "module_name": "核心功能：日历、编辑、年度总结、往年今日",
+  "module_label": "6.4 核心功能：日历、编辑、年度总结、往年今日",
+  "order": 20260225142357,
+  "status": "DONE",
+  "title": "修复移动端空白日记与年度总结编辑区高度塌缩",
+  "acceptance": "移动端空白内容时日记与年度总结编辑区最小高度不少于 280px；桌面端高度同步与布局行为不回退",
+  "related_files": [
+    "e2e/specs/daily-edit.spec.ts-snapshots/diary-layout-columns-aligned-chromium-linux.png",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "todo/tasks/td_20260225142357_a9a8f6fb.json"
+  ],
+  "test_record": "风险分级：中（移动端编辑区布局约束）。已执行：npm run lint（通过）；npm run test:unit（通过，102/102）；npm run test:integration（通过，109/109，存在既有 act(...) warning 不影响结果）；npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0 --workers=2 --reporter=line --trace=off（通过，6/6）。视觉用例因布局高度变化首次触发快照差异，已执行 npx playwright test e2e/specs/daily-edit.spec.ts --project=chromium --grep \"布局应保持左右列底部对齐\" --update-snapshots 更新基线并复跑通过。未执行全量 E2E（仅执行与改动直接相关用例）。",
+  "done_record": "2026-02-25 / pending",
+  "source": {
+    "file": "src/pages/diary.tsx",
+    "line": 1
+  },
+  "version": 2,
+  "updated_at": "2026-02-25T14:27:37.000Z"
+}
