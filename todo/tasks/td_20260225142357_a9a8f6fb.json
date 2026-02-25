@@ -17,11 +17,11 @@
     "todo/tasks/td_20260225142357_a9a8f6fb.json"
   ],
   "test_record": "风险分级：中（移动端编辑区布局约束 + E2E 防回退断言）。已执行：npm run lint（通过）；npm run test:unit（通过，102/102）；npm run test:integration（通过，109/109，存在既有 act(...) warning 不影响结果）；npx playwright test e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --project=chromium --retries=0 --workers=2 --reporter=line --trace=off（通过，8/8，含新增移动端空白编辑区高度断言）。未执行全量 E2E（仅执行与改动直接相关用例）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 2e80161",
   "source": {
     "file": "src/pages/diary.tsx",
     "line": 1
   },
-  "version": 4,
-  "updated_at": "2026-02-25T14:44:34.000Z"
+  "version": 5,
+  "updated_at": "2026-02-25T14:45:43.000Z"
 }
