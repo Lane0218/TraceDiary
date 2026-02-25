@@ -2,7 +2,7 @@ import { useMemo, type CSSProperties } from 'react'
 import { List, type RowComponentProps } from 'react-window'
 import type { DateString, DiarySearchResult, DiarySearchResultItem } from '../../types/diary'
 
-const SEARCH_ROW_HEIGHT = 72
+const SEARCH_ROW_HEIGHT = 68
 const SEARCH_INPUT_BLOCK_HEIGHT = 50
 
 interface SearchRowProps {
@@ -19,11 +19,10 @@ interface DiarySearchListProps {
   viewportHeight?: number
 }
 
-const snippetTextClampStyle: CSSProperties = {
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical',
+const snippetSingleLineStyle: CSSProperties = {
+  whiteSpace: 'nowrap',
   overflow: 'hidden',
+  textOverflow: 'ellipsis',
 }
 
 function SearchRow({ index, style, items, onSelectDate }: RowComponentProps<SearchRowProps>) {
@@ -34,12 +33,17 @@ function SearchRow({ index, style, items, onSelectDate }: RowComponentProps<Sear
       <button
         type="button"
         onClick={() => onSelectDate(item.date)}
-        className="flex h-full w-full flex-col rounded-[10px] border border-td-line bg-td-surface px-3 py-1.5 text-left transition hover:border-[#c6c5c1] hover:bg-[#fcfcfb]"
+        className="flex h-full w-full flex-col rounded-[10px] border border-td-line bg-td-surface px-3 py-1 text-left transition hover:border-[#c6c5c1] hover:bg-[#fcfcfb]"
         aria-label={`打开 ${item.date}`}
         data-testid="diary-search-card"
       >
-        <p className="min-w-0 flex-1 truncate text-sm font-medium text-td-text">{item.date}</p>
-        <p className="mt-0.5 w-full text-[13px] leading-[1.35] text-td-muted" style={snippetTextClampStyle}>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full border border-[#d8d6cf] bg-[#f5f3ed] px-1.5 py-[1px] text-[10px] leading-none text-[#5f5b54]">
+            日期
+          </span>
+          <p className="min-w-0 truncate text-sm font-medium text-td-text">{item.date}</p>
+        </div>
+        <p className="mt-px w-full text-[13px] leading-[1.3] text-td-muted" style={snippetSingleLineStyle}>
           {item.snippet}
         </p>
       </button>
