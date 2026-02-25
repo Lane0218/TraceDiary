@@ -11,14 +11,15 @@
   "acceptance": "当前日记与年度总结编辑框在输入增长时外框高度保持固定不再拉长；超出内容在编辑框内纵向滚动；桌面与移动端交互不回退",
   "related_files": [
     "e2e/specs/daily-edit.spec.ts",
+    "e2e/specs/daily-edit.spec.ts-snapshots/diary-layout-columns-aligned-chromium-linux.png",
     "src/pages/diary.tsx",
     "src/pages/yearly-summary.tsx",
     "src/components/editor/markdown-editor.tsx",
     "src/components/editor/markdown-editor.css",
     "todo/tasks/td_20260225043442_e1bbec31.json"
   ],
-  "test_record": "2026-02-25: npm run lint（通过）；npm run test:unit（101/101 通过）；npm run test:integration（102/102 通过，存在既有 act 警告）；npm run test:e2e -- e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --workers=2 --retries=0 --reporter=line --trace=off（5/5 通过，新增 WYSIWYG 内滚动与外框固定回归用例）。",
+  "test_record": "2026-02-25: npm run lint（通过）；npm run test:unit（101/101 通过）；npm run test:integration（102/102 通过，存在既有 act 警告）；npm run test:e2e -- e2e/specs/daily-edit.spec.ts -g \"视觉回归\" --update-snapshots（通过并更新快照）；npm run test:e2e -- e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --workers=2 --retries=0 --reporter=line --trace=off（6/6 通过，含 WYSIWYG 固定高度与左右列底部对齐视觉回归）。",
   "done_record": "2026-02-25 / pending",
-  "version": 10,
-  "updated_at": "2026-02-25T10:04:03.000Z"
+  "version": 12,
+  "updated_at": "2026-02-25T10:36:14.000Z"
 }

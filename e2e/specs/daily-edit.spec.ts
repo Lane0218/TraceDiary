@@ -52,7 +52,7 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   await expect(editor).toContainText(marker, { timeout: 15_000 })
 })
 
-test('日记页左右面板应等高，长内容只在编辑区内滚动', async ({ page }) => {
+test('日记页右侧编辑面板应固定高度，长内容只在编辑区内滚动', async ({ page }) => {
   const env = getE2EEnv()
   const marker = `daily-height-${Date.now().toString(36)}`
   const longMarkdown = Array.from({ length: 80 }, (_, index) => `第 ${index + 1} 行 ${marker}`).join('\n\n')
@@ -61,12 +61,10 @@ test('日记页左右面板应等高，长内容只在编辑区内滚动', async
   await ensureReadySession(page, env)
 
   await page.getByTestId('diary-left-tab-search').click()
-  await expect(page.getByTestId('diary-left-panel')).toBeVisible()
-  await expect(page.getByTestId('diary-panel')).toBeVisible()
+  const rightPanel = page.getByTestId('diary-panel')
+  await expect(rightPanel).toBeVisible()
 
-  const leftHeightBefore = await page.getByTestId('diary-left-panel').evaluate((node) => node.getBoundingClientRect().height)
-  const rightHeightBefore = await page.getByTestId('diary-panel').evaluate((node) => node.getBoundingClientRect().height)
-  expect(Math.abs(leftHeightBefore - rightHeightBefore)).toBeLessThanOrEqual(1)
+  const rightHeightBefore = await rightPanel.evaluate((node) => node.getBoundingClientRect().height)
 
   await page.getByTestId('daily-editor-mode-source').click()
   const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
@@ -74,7 +72,7 @@ test('日记页左右面板应等高，长内容只在编辑区内滚动', async
   await sourceEditor.fill(longMarkdown)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
-  const rightHeightAfter = await page.getByTestId('diary-panel').evaluate((node) => node.getBoundingClientRect().height)
+  const rightHeightAfter = await rightPanel.evaluate((node) => node.getBoundingClientRect().height)
   expect(Math.abs(rightHeightAfter - rightHeightBefore)).toBeLessThanOrEqual(1)
 
   const sourceScrollable = await sourceEditor.evaluate((node) => node.scrollHeight > node.clientHeight + 1)
@@ -91,25 +89,20 @@ test('日记页 WYSIWYG 模式应保持外框固定并在内部滚动', async ({
   await ensureReadySession(page, env)
 
   await page.getByTestId('diary-left-tab-search').click()
-  const leftPanel = page.getByTestId('diary-left-panel')
   const rightPanel = page.getByTestId('diary-panel')
   const editorRoot = page.locator('[data-testid="daily-editor"]').first()
   const proseMirror = page.locator('[data-testid="daily-editor"] .ProseMirror').first()
   await expect(proseMirror).toBeVisible()
 
-  const leftHeightBefore = await leftPanel.evaluate((node) => node.getBoundingClientRect().height)
   const rightHeightBefore = await rightPanel.evaluate((node) => node.getBoundingClientRect().height)
   const editorHeightBefore = await editorRoot.evaluate((node) => node.getBoundingClientRect().height)
-  expect(Math.abs(leftHeightBefore - rightHeightBefore)).toBeLessThanOrEqual(1)
 
   await proseMirror.click()
   await proseMirror.fill(markdown)
   await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
 
-  const leftHeightAfter = await leftPanel.evaluate((node) => node.getBoundingClientRect().height)
   const rightHeightAfter = await rightPanel.evaluate((node) => node.getBoundingClientRect().height)
   const editorHeightAfter = await editorRoot.evaluate((node) => node.getBoundingClientRect().height)
-  expect(Math.abs(leftHeightAfter - rightHeightAfter)).toBeLessThanOrEqual(1)
   expect(Math.abs(rightHeightAfter - rightHeightBefore)).toBeLessThanOrEqual(1)
   expect(Math.abs(editorHeightAfter - editorHeightBefore)).toBeLessThanOrEqual(1)
 
@@ -118,4 +111,37 @@ test('日记页 WYSIWYG 模式应保持外框固定并在内部滚动', async ({
 
   const proseScrollable = await proseMirror.evaluate((node) => node.scrollHeight > node.clientHeight + 1)
   expect(proseScrollable).toBeTruthy()
+})
+
+test('日记页布局应保持左右列底部对齐（视觉回归）', async ({ page }) => {
+  const env = getE2EEnv()
+
+  await gotoDiary(page, TEST_DATE)
+  await ensureReadySession(page, env)
+
+  await page.getByTestId('diary-left-tab-search').click()
+  const searchInput = page.getByTestId('diary-search-input')
+  await searchInput.fill('layout-regression-no-hit-keyword')
+
+  const layout = page.locator('section[aria-label="diary-layout"]').first()
+  const leftColumn = layout.locator(':scope > aside').first()
+  const rightColumn = layout.locator(':scope > section').first()
+  await expect(leftColumn).toBeVisible()
+  await expect(rightColumn).toBeVisible()
+
+  const leftBottom = await leftColumn.evaluate((node) => node.getBoundingClientRect().bottom)
+  const rightBottom = await rightColumn.evaluate((node) => node.getBoundingClientRect().bottom)
+  expect(Math.abs(leftBottom - rightBottom)).toBeLessThanOrEqual(1)
+
+  await expect(layout).toHaveScreenshot('diary-layout-columns-aligned.png', {
+    animations: 'disabled',
+    caret: 'hide',
+    scale: 'css',
+    maxDiffPixelRatio: 0.01,
+    mask: [
+      page.getByTestId('diary-left-panel-body'),
+      page.getByTestId('diary-editor-slot'),
+      page.locator('section[aria-label="sync-control-bar"]'),
+    ],
+  })
 })

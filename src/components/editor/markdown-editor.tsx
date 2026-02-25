@@ -139,7 +139,7 @@ function MarkdownEditorInner({
       ? ({ height: `${resolvedViewportHeight}px` } as CSSProperties)
       : undefined
   const editorShellClassName = fillHeight ? 'flex h-full min-h-0 flex-col' : ''
-  const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1' : 'relative'
+  const editorBodyClassName = fillHeight ? 'relative min-h-0 flex-1 overflow-hidden' : 'relative'
   const bubbleFrameClassName = 'inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] leading-none'
   const bubbleClassName = `${bubbleFrameClassName} border-td-line bg-td-surface text-td-muted`
   const sourceBubbleClassName = `${bubbleFrameClassName} transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${

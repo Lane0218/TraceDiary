@@ -980,7 +980,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             </section>
           </aside>
 
-          <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
+          <section className="space-y-3 lg:flex lg:h-full lg:flex-col lg:justify-between lg:space-y-0">
             <SyncControlBar
               statusHint={
                 <StatusHint
@@ -1008,12 +1008,12 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             />
 
             <article
-              className="td-card-primary td-panel flex flex-col lg:h-[340px] lg:flex-none"
+              className="td-card-primary td-panel flex flex-col overflow-hidden lg:h-[340px] lg:flex-none"
               data-testid="diary-panel"
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
               <div
-                className="min-h-0 flex-1 lg:h-[252px] lg:flex-none"
+                className="min-h-0 flex-1 overflow-hidden lg:h-[252px] lg:flex-none"
                 data-testid="diary-editor-slot"
               >
                 {isGuestMode || !diary.isLoading ? (
