@@ -80,6 +80,8 @@ function MilkdownRuntimeEditor({
   }, [docKey])
   const resolvedViewportHeight =
     typeof viewportHeight === 'number' && viewportHeight > 0 ? viewportHeight : undefined
+  const milkdownContainerClassName =
+    fillHeight && !resolvedViewportHeight ? 'h-full min-h-[360px]' : ''
   const editorStyle = fillHeight
     ? ({
         '--td-editor-height': resolvedViewportHeight ? `${resolvedViewportHeight}px` : '100%',
@@ -97,7 +99,7 @@ function MilkdownRuntimeEditor({
   return (
     <div
       className={`trace-milkdown rounded-[10px] border border-td-line bg-td-surface ${
-        fillHeight ? 'h-full min-h-[360px]' : ''
+        milkdownContainerClassName
       } ${
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
