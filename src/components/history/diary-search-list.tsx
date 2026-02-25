@@ -37,12 +37,9 @@ function SearchRow({ index, style, items, onSelectDate }: RowComponentProps<Sear
         aria-label={`打开 ${item.date}`}
         data-testid="diary-search-card"
       >
-        <div className="flex items-center gap-1.5">
-          <span className="rounded-full border border-[#d8d6cf] bg-[#f5f3ed] px-1.5 py-[1px] text-[10px] leading-none text-[#5f5b54]">
-            日期
-          </span>
-          <p className="min-w-0 truncate text-sm font-medium text-td-text">{item.date}</p>
-        </div>
+        <p className="inline-flex w-fit max-w-full items-center rounded-full border border-[#d8d6cf] bg-[#f5f3ed] px-2 py-[2px] text-sm font-medium leading-none text-td-text">
+          {item.date}
+        </p>
         <p className="mt-px w-full text-[13px] leading-[1.3] text-td-muted" style={snippetSingleLineStyle}>
           {item.snippet}
         </p>
