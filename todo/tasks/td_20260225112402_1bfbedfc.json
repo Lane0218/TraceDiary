@@ -14,11 +14,11 @@
     "todo/tasks/td_20260225112402_1bfbedfc.json"
   ],
   "test_record": "风险分级：中（单模块 UI 交互样式微调）。已执行：npm run lint（通过）；npm run test:unit（101/101 通过）；npm run test:integration（102/102 通过，存在既有 act 警告）；npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off（2/2 通过）；npm run test:e2e -- e2e/specs/daily-edit.spec.ts -g \"视觉回归\" --update-snapshots（1/1 通过）。未执行全量 npm run test:e2e（本任务未命中全量门禁，已执行直接相关 E2E）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 8eb876f",
   "source": {
     "file": "AGENTS.md",
     "line": 1
   },
-  "version": 2,
-  "updated_at": "2026-02-25T11:25:38.000Z"
+  "version": 3,
+  "updated_at": "2026-02-25T11:26:23.000Z"
 }
