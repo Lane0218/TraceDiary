@@ -16,11 +16,11 @@
     "todo/tasks/td_20260224153525_04a1d84d.json"
   ],
   "test_record": "风险分级：中（日记页搜索 UI 风格收敛）。本轮改动：移除搜索头部冗余信息（去掉“日记搜索”标题与常态命中胶囊）；常态结果不再展示“共命中 X 条记录”，仅在截断时展示提示；关键词高亮由亮黄改为中性灰（更贴合整体黑灰风格）；搜索条目卡片与输入区进一步极简化并压缩高度；同步更新 diary-search.integration 用例以匹配新交互规范（常态不显示命中计数）。已执行：npm run lint（通过）；npm run test:unit（通过）；npm run test:integration（通过，存在既有 act 警告但不影响结果）；npm run test:e2e:changed（通过）。未执行全量 E2E（仅定向 changed）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / b730c0b",
   "source": {
     "file": "SPEC.md",
     "line": 218
   },
-  "version": 13,
-  "updated_at": "2026-02-25T09:58:36.000Z"
+  "version": 14,
+  "updated_at": "2026-02-25T09:59:22.000Z"
 }
