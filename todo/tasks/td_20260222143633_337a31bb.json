@@ -15,12 +15,12 @@
     "src/types/cloud-config.ts",
     "src/__tests__/integration/app-entry-auth-transition.integration.test.tsx"
   ],
-  "test_record": "风险分级：高（认证链路与覆盖弹窗时序，涉及登录后配置恢复主路径）。已执行：`npm run lint`（通过）；`npm run test:unit`（102/102 通过）；`npm run test:integration`（109/109 通过，存在既有 act warning 但不影响通过）；`npx vitest run --environment jsdom src/__tests__/integration/app-entry-auth-transition.integration.test.tsx`（7/7 通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。未执行全量 E2E（仅执行直接相关认证链路用例）。",
+  "test_record": "风险分级：高（认证链路与覆盖弹窗时序，涉及登录后配置恢复主路径返工）。已执行：`npm run lint`（通过）；`npm run test:unit`（102/102 通过）；`npm run test:integration`（109/109 通过，存在既有 act warning 但不影响通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。未执行全量 E2E（仅执行直接相关认证链路用例）。",
   "done_record": "2026-02-25 / pending",
   "source": {
     "file": "src/App.tsx",
     "line": 1
   },
-  "version": 9,
-  "updated_at": "2026-02-25T13:53:32.000Z"
+  "version": 11,
+  "updated_at": "2026-02-25T14:06:22.000Z"
 }

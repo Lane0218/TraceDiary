@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../App'
+import type { CloudConfigConflictMeta } from '../../types/cloud-config'
 
 const mockAuthState = vi.hoisted(() => ({
   stage: 'needs-setup',
@@ -26,7 +27,7 @@ const getSupabaseSessionMock = vi.hoisted(() =>
 )
 
 const loadCloudConfigConflictMetaForCurrentUserMock = vi.hoisted(() =>
-  vi.fn(async () => ({
+  vi.fn<() => Promise<CloudConfigConflictMeta>>(async () => ({
     exists: true,
     fingerprint: 'fp-2026-02-25-000000',
   })),
