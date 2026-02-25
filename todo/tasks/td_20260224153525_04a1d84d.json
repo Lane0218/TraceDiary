@@ -16,11 +16,11 @@
     "todo/tasks/td_20260224153525_04a1d84d.json"
   ],
   "test_record": "风险分级：中（日记页搜索 UI 视觉重构）。本轮改动：修复 diary-search-list.tsx 中重复 SearchRow 定义导致的结构问题；统一搜索面板为“标题计数+输入区+结果容器”视觉层级；结果项采用“日期值徽章+单行片段+关键词高亮”并压缩条目高度。已执行：npm run lint（通过）；npm run test:unit（通过）；npm run test:integration（通过，存在既有 act 警告但不影响结果）；npm run test:e2e:changed（通过）。未执行全量 E2E（仅定向 changed）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 4690e38",
   "source": {
     "file": "SPEC.md",
     "line": 218
   },
-  "version": 10,
-  "updated_at": "2026-02-25T05:22:39.000Z"
+  "version": 11,
+  "updated_at": "2026-02-25T05:23:18.000Z"
 }
