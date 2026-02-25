@@ -23,8 +23,18 @@
 }
 
 .trace-milkdown.trace-milkdown-fill {
+  display: flex;
+  overflow: hidden;
   height: 100%;
   min-height: 0;
+  flex-direction: column;
+}
+
+.trace-milkdown.trace-milkdown-fill [data-milkdown-root='true'] {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex: 1;
 }
 
 .trace-milkdown.trace-milkdown-fill .milkdown {
@@ -32,6 +42,7 @@
   min-height: 0;
   height: 100%;
   box-sizing: border-box;
+  flex: 1;
   flex-direction: column;
 }
 
@@ -47,6 +58,7 @@
   min-height: 0;
   height: auto;
   flex: 1;
+  overflow-y: auto;
 }
 
 .trace-milkdown .milkdown .ProseMirror h1,
