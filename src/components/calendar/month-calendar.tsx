@@ -235,7 +235,7 @@ export function MonthCalendar({
             ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
           const diaryStyle = hasDiaryHighlight
-            ? 'border-[#c8d7ff] bg-[#eef3ff] text-[#1d2f5f] hover:border-[#b9cbff] hover:bg-[#e6eeff]'
+            ? 'border-[#d7c9ab] bg-[#f4eee0] text-[#4a4335] hover:border-[#c8b894] hover:bg-[#eee4cf]'
             : ''
           const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
           const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin' : ''
