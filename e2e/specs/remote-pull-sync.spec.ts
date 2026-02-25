@@ -45,7 +45,9 @@ test('新本地设备解锁后应自动拉取远端已有日记到本地 @remote
   await ensureReadySession(readerPage, env)
   await expect(readerPage.getByRole('heading', { name: `${TEST_DATE} 日记` })).toBeVisible()
   await waitForDailyDiaryPersisted(readerPage, TEST_DATE, marker)
-  await expect(readerPage.getByLabel(`${TEST_DATE} 已记录`)).toBeVisible({ timeout: 45_000 })
+  await expect(
+    readerPage.locator(`button[data-date-key="${TEST_DATE}"][data-has-diary="true"]`),
+  ).toBeVisible({ timeout: 45_000 })
 
   await readerContext.close()
 })

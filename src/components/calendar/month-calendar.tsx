@@ -228,11 +228,15 @@ export function MonthCalendar({
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
         {grid.map((cell) => {
           const isActive = cell.dateKey === activeDateKey
+          const hasDiaryHighlight = cell.inCurrentMonth && cell.hasDiary
           const baseStyle =
             'relative flex h-9 w-full items-center justify-center rounded-[8px] border text-sm transition sm:h-10'
           const monthStyle = cell.inCurrentMonth
             ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
+          const diaryStyle = hasDiaryHighlight
+            ? 'border-[#c8d7ff] bg-[#eef3ff] text-[#1d2f5f] hover:border-[#b9cbff] hover:bg-[#e6eeff]'
+            : ''
           const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
           const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin' : ''
 
@@ -241,14 +245,13 @@ export function MonthCalendar({
               key={cell.dateKey}
               type="button"
               onClick={() => onSelectDate(cell.dateKey)}
-              className={`${baseStyle} ${monthStyle} ${todayStyle} ${activeStyle}`}
+              className={`${baseStyle} ${monthStyle} ${diaryStyle} ${todayStyle} ${activeStyle}`}
               aria-current={cell.isToday ? 'date' : undefined}
               aria-label={`选择 ${cell.dateKey}`}
+              data-date-key={cell.dateKey}
+              data-has-diary={hasDiaryHighlight ? 'true' : 'false'}
             >
               <span>{cell.day}</span>
-              {cell.hasDiary ? (
-                <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-td-text" aria-label={`${cell.dateKey} 已记录`} />
-              ) : null}
             </button>
           )
         })}

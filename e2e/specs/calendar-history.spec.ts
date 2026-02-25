@@ -92,11 +92,14 @@ test('同月同日历史应展示并可跳转，且支持上/下月和选择年�
   await expect(pickMonthButton).toContainText('2100年12月')
 })
 
-test('清空当日内容后，月历不应继续显示记录点', async ({ page }) => {
+test('清空当日内容后，月历不应继续显示记录高亮', async ({ page }) => {
   const env = getE2EEnv()
   const marker = buildRunMarker('calendar-empty-content')
   const sourceButton = page.getByTestId('daily-editor-mode-source')
   const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+  const highlightedDate = page.locator(
+    `button[data-date-key="${EMPTY_CONTENT_DATE}"][data-has-diary="true"]`,
+  )
 
   await gotoDiary(page, EMPTY_CONTENT_DATE)
   await ensureReadySession(page, env)
@@ -106,7 +109,7 @@ test('清空当日内容后，月历不应继续显示记录点', async ({ page 
   await expect(sourceEditor).toBeVisible()
   await sourceEditor.fill(`临时内容 ${marker}`)
   await waitForDailyDiaryPersisted(page, EMPTY_CONTENT_DATE, marker)
-  await expect(page.getByLabel(`${EMPTY_CONTENT_DATE} 已记录`)).toBeVisible()
+  await expect(highlightedDate).toBeVisible()
 
   await sourceEditor.fill('   ')
   await page.waitForFunction(
@@ -139,5 +142,5 @@ test('清空当日内容后，月历不应继续显示记录点', async ({ page 
     { date: EMPTY_CONTENT_DATE },
     { timeout: 15_000 },
   )
-  await expect(page.getByLabel(`${EMPTY_CONTENT_DATE} 已记录`)).toHaveCount(0)
+  await expect(highlightedDate).toHaveCount(0)
 })
