@@ -238,7 +238,7 @@ export function MonthCalendar({
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
           const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
           const activeStyle = isActive
-            ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin hover:border-brand-500 hover:bg-brand-50'
+            ? 'border-[#3f4742] bg-[#e7ece9] text-[#2f3a43] shadow-thin hover:border-[#3f4742] hover:bg-[#e7ece9]'
             : ''
           const visualStyle = isActive ? activeStyle : monthStyle
 
