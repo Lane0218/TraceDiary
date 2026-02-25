@@ -2,8 +2,8 @@ import { useMemo, type CSSProperties } from 'react'
 import { List, type RowComponentProps } from 'react-window'
 import type { DateString, DiarySearchResult, DiarySearchResultItem } from '../../types/diary'
 
-const SEARCH_ROW_HEIGHT = 84
-const SEARCH_INPUT_BLOCK_HEIGHT = 62
+const SEARCH_ROW_HEIGHT = 72
+const SEARCH_INPUT_BLOCK_HEIGHT = 50
 
 interface SearchRowProps {
   items: DiarySearchResultItem[]
@@ -30,21 +30,16 @@ function SearchRow({ index, style, items, onSelectDate }: RowComponentProps<Sear
   const item = items[index]
 
   return (
-    <div style={style} className="px-0.5 py-1">
+    <div style={style} className="px-0.5 py-0.5">
       <button
         type="button"
         onClick={() => onSelectDate(item.date)}
-        className="flex h-full w-full flex-col rounded-[10px] border border-td-line bg-td-surface px-3 py-2 text-left transition hover:border-[#c6c5c1] hover:bg-[#fcfcfb]"
+        className="flex h-full w-full flex-col rounded-[10px] border border-td-line bg-td-surface px-3 py-1.5 text-left transition hover:border-[#c6c5c1] hover:bg-[#fcfcfb]"
         aria-label={`打开 ${item.date}`}
         data-testid="diary-search-card"
       >
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-[#d8d6cf] bg-[#f5f3ed] px-2 py-0.5 text-[11px] text-[#5f5b54]">
-            日记
-          </span>
-          <p className="min-w-0 flex-1 truncate text-sm font-medium text-td-text">{item.date}</p>
-        </div>
-        <p className="mt-1 text-xs leading-5 text-td-muted" style={snippetTextClampStyle}>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-td-text">{item.date}</p>
+        <p className="mt-0.5 w-full text-[13px] leading-[1.35] text-td-muted" style={snippetTextClampStyle}>
           {item.snippet}
         </p>
       </button>
@@ -70,7 +65,7 @@ export default function DiarySearchList({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2" aria-label="diary-search-panel">
-      <div className="space-y-1.5">
+      <div>
         <input
           type="text"
           value={keyword}
@@ -80,7 +75,6 @@ export default function DiarySearchList({
           data-testid="diary-search-input"
           aria-label="日记搜索输入"
         />
-        <p className="text-[11px] text-[#6a665f]">仅搜索本地已缓存日记，支持文字匹配，不支持正则。</p>
       </div>
 
       <div className="min-h-0 flex-1">
