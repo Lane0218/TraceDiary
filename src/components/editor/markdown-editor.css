@@ -1,6 +1,7 @@
 .trace-milkdown .milkdown {
   min-height: var(--td-editor-height, 380px);
   height: var(--td-editor-height, auto);
+  overflow: hidden;
   padding: 0.9rem 1rem;
   border-radius: 10px;
   background-color: #ffffff;
@@ -14,6 +15,7 @@
 .trace-milkdown .milkdown .ProseMirror {
   min-height: var(--td-editor-content-height, 340px);
   height: var(--td-editor-content-height, auto);
+  overflow-y: auto;
   outline: none;
   color: #111111;
   font-size: 0.98rem;

@@ -1,0 +1,21 @@
+{
+  "task_uid": "td_20260225043442_e1bbec31",
+  "display_id": "TD-UI-20260225-043442-E1BB",
+  "id_prefix": "UI",
+  "module_key": "6.2",
+  "module_name": "日记编辑",
+  "module_label": "6.2 日记编辑",
+  "order": 20260225043442,
+  "status": "DONE",
+  "title": "将日记与年度总结编辑框改为固定高度并启用内部滚动",
+  "acceptance": "当前日记与年度总结编辑框在输入增长时外框高度保持固定不再拉长；超出内容在编辑框内纵向滚动；桌面与移动端交互不回退",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/components/editor/markdown-editor.css",
+    "todo/tasks/td_20260225043442_e1bbec31.json"
+  ],
+  "test_record": "2026-02-25: npm run lint（通过）；npm run test:unit（95/95 通过）；npm run test:integration（100/100 通过）；npm run test:e2e -- e2e/specs/daily-edit.spec.ts e2e/specs/yearly-summary.spec.ts --workers=2 --retries=0 --reporter=line --trace=off（3 passed）",
+  "done_record": "2026-02-25 / pending",
+  "version": 2,
+  "updated_at": "2026-02-25T04:38:54.000Z"
+}
