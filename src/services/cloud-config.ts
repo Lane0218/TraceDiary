@@ -1,5 +1,11 @@
 import type { AppConfig } from '../types/config'
-import type { CloudConfigMeta, CloudConfigRow, CloudConfigUpsertPayload } from '../types/cloud-config'
+import type {
+  CloudConfigConflictMeta,
+  CloudConfigConflictSnapshot,
+  CloudConfigMeta,
+  CloudConfigRow,
+  CloudConfigUpsertPayload,
+} from '../types/cloud-config'
 import { getSupabaseClient, getSupabaseUserId, isSupabaseConfigured } from './supabase'
 
 const TABLE_NAME = 'user_sync_configs'
@@ -31,6 +37,19 @@ function toAppConfig(row: CloudConfigRow): AppConfig {
     encryptedToken: row.encrypted_token ?? undefined,
     tokenCipherVersion: row.token_cipher_version,
   }
+}
+
+function buildCloudConfigConflictFingerprint(snapshot: CloudConfigConflictSnapshot): string {
+  return JSON.stringify({
+    giteeRepo: snapshot.gitee_repo ?? '',
+    giteeOwner: snapshot.gitee_owner ?? '',
+    giteeRepoName: snapshot.gitee_repo_name ?? '',
+    giteeBranch: snapshot.gitee_branch ?? 'master',
+    passwordHash: snapshot.password_hash ?? '',
+    kdfParams: snapshot.kdf_params ?? null,
+    encryptedToken: snapshot.encrypted_token ?? null,
+    tokenCipherVersion: snapshot.token_cipher_version ?? 'v1',
+  })
 }
 
 export async function loadCloudConfigForCurrentUser(): Promise<AppConfig | null> {
@@ -89,6 +108,37 @@ export async function loadCloudConfigMetaForCurrentUser(): Promise<CloudConfigMe
   return {
     exists: true,
     updatedAt: data.updated_at ?? null,
+  }
+}
+
+export async function loadCloudConfigConflictMetaForCurrentUser(): Promise<CloudConfigConflictMeta> {
+  if (!isSupabaseConfigured()) {
+    return { exists: false, fingerprint: null }
+  }
+
+  const userId = await getSupabaseUserId()
+  if (!userId) {
+    return { exists: false, fingerprint: null }
+  }
+
+  const client = getSupabaseClient()
+  const { data, error } = await client
+    .from(TABLE_NAME)
+    .select('gitee_repo, gitee_owner, gitee_repo_name, gitee_branch, password_hash, kdf_params, encrypted_token, token_cipher_version')
+    .eq('user_id', userId)
+    .maybeSingle<CloudConfigConflictSnapshot>()
+
+  if (error) {
+    throw new Error(`云端配置状态检测失败：${error.message}`)
+  }
+
+  if (!data) {
+    return { exists: false, fingerprint: null }
+  }
+
+  return {
+    exists: true,
+    fingerprint: buildCloudConfigConflictFingerprint(data),
   }
 }
 

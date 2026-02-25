@@ -25,10 +25,10 @@ const getSupabaseSessionMock = vi.hoisted(() =>
   }),
 )
 
-const loadCloudConfigMetaForCurrentUserMock = vi.hoisted(() =>
+const loadCloudConfigConflictMetaForCurrentUserMock = vi.hoisted(() =>
   vi.fn(async () => ({
     exists: true,
-    updatedAt: '2026-02-25T00:00:00.000Z',
+    fingerprint: 'fp-2026-02-25-000000',
   })),
 )
 
@@ -45,7 +45,7 @@ vi.mock('../../hooks/use-auth', () => ({
 }))
 
 vi.mock('../../services/cloud-config', () => ({
-  loadCloudConfigMetaForCurrentUser: loadCloudConfigMetaForCurrentUserMock,
+  loadCloudConfigConflictMetaForCurrentUser: loadCloudConfigConflictMetaForCurrentUserMock,
 }))
 
 vi.mock('../../pages/diary', () => ({
@@ -108,9 +108,9 @@ describe('App 首屏弹窗过渡态', () => {
     mockAuthState.stage = 'needs-setup'
     mockAuthState.config = null
     mockSessionState.userId = null
-    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+    loadCloudConfigConflictMetaForCurrentUserMock.mockResolvedValue({
       exists: true,
-      updatedAt: '2026-02-25T00:00:00.000Z',
+      fingerprint: 'fp-2026-02-25-000000',
     })
     window.localStorage.clear()
     window.sessionStorage.clear()
@@ -176,9 +176,9 @@ describe('App 首屏弹窗过渡态', () => {
     mockSessionState.userId = 'remember-choice-user'
     mockAuthState.stage = 'ready'
     mockAuthState.config = { giteeRepo: 'lane/diary' }
-    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+    loadCloudConfigConflictMetaForCurrentUserMock.mockResolvedValue({
       exists: true,
-      updatedAt: '2026-02-25T08:00:00.000Z',
+      fingerprint: 'fp-same-config',
     })
 
     const firstRender = render(<App />)
@@ -194,23 +194,23 @@ describe('App 首屏弹窗过渡态', () => {
 
     render(<App />)
     await waitFor(() => {
-      expect(loadCloudConfigMetaForCurrentUserMock).toHaveBeenCalledTimes(2)
+      expect(loadCloudConfigConflictMetaForCurrentUserMock).toHaveBeenCalledTimes(2)
     })
     expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
   })
 
-  it('云端配置版本变化后，应重新出现覆盖确认弹窗', async () => {
+  it('云端关键配置指纹变化后，应重新出现覆盖确认弹窗', async () => {
     mockSessionState.userId = 'cloud-version-changed-user'
     mockAuthState.stage = 'ready'
     mockAuthState.config = { giteeRepo: 'lane/diary' }
-    loadCloudConfigMetaForCurrentUserMock
+    loadCloudConfigConflictMetaForCurrentUserMock
       .mockResolvedValueOnce({
         exists: true,
-        updatedAt: '2026-02-25T08:00:00.000Z',
+        fingerprint: 'fp-config-v1',
       })
       .mockResolvedValueOnce({
         exists: true,
-        updatedAt: '2026-02-25T09:00:00.000Z',
+        fingerprint: 'fp-config-v2',
       })
 
     const firstRender = render(<App />)
@@ -234,14 +234,48 @@ describe('App 首屏弹窗过渡态', () => {
     mockSessionState.userId = 'no-cloud-config-user'
     mockAuthState.stage = 'ready'
     mockAuthState.config = { giteeRepo: 'lane/diary' }
-    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+    loadCloudConfigConflictMetaForCurrentUserMock.mockResolvedValue({
       exists: false,
-      updatedAt: null,
+      fingerprint: null,
     })
 
     render(<App />)
     await waitFor(() => {
-      expect(loadCloudConfigMetaForCurrentUserMock).toHaveBeenCalledTimes(1)
+      expect(loadCloudConfigConflictMetaForCurrentUserMock).toHaveBeenCalledTimes(1)
+    })
+    expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+  })
+
+  it('仅旧版 updatedAt 决策记录时，应再提示一次并在确认后写入新指纹记录', async () => {
+    mockSessionState.userId = 'legacy-record-user'
+    mockAuthState.stage = 'ready'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
+    loadCloudConfigConflictMetaForCurrentUserMock.mockResolvedValue({
+      exists: true,
+      fingerprint: 'fp-migrate-v1',
+    })
+    window.localStorage.setItem(
+      'trace-diary:cloud-overwrite-decision:v1:legacy-record-user',
+      JSON.stringify({
+        decision: 'keep_local',
+        cloudUpdatedAtAtDecision: '2026-02-25T00:00:00.000Z',
+        decidedAt: '2026-02-25T00:00:00.000Z',
+      }),
+    )
+
+    const firstRender = render(<App />)
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
+    fireEvent.click(screen.getByTestId('cloud-config-keep-local-btn'))
+    await waitFor(() => {
+      expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+    })
+    firstRender.unmount()
+
+    render(<App />)
+    await waitFor(() => {
+      expect(loadCloudConfigConflictMetaForCurrentUserMock).toHaveBeenCalledTimes(2)
     })
     expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
   })

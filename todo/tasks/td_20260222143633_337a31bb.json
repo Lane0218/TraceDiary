@@ -8,19 +8,19 @@
   "order": 20260222143633,
   "status": "DONE",
   "title": "优化登录后云端配置恢复与设置页账号区展示",
-  "acceptance": "未登录时设置页隐藏账号区；登录后自动恢复云端配置；本地已有配置时仅在冲突场景弹窗确认，用户选择可跨会话记忆且云端配置版本变化后可再次提示；移除“从云端恢复配置”按钮",
+  "acceptance": "未登录时设置页隐藏账号区；登录后自动恢复云端配置；本地已有配置时仅在冲突场景弹窗确认，用户选择可跨会话记忆且仅在云端关键配置指纹变化后再次提示（忽略 passwordExpiry 等会话字段）；移除“从云端恢复配置”按钮",
   "related_files": [
     "src/App.tsx",
     "src/services/cloud-config.ts",
     "src/types/cloud-config.ts",
     "src/__tests__/integration/app-entry-auth-transition.integration.test.tsx"
   ],
-  "test_record": "风险分级：高（认证链路与覆盖弹窗时序，涉及登录后配置恢复主路径）。已执行：`npm run lint`（通过）；`npm run test:unit`（102/102 通过）；`npm run test:integration`（108/108 通过，存在既有 act warning 但不影响通过）；`npx vitest run --environment jsdom src/__tests__/integration/app-entry-auth-transition.integration.test.tsx`（6/6 通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。未执行全量 E2E（仅执行直接相关认证链路用例）。",
+  "test_record": "风险分级：高（认证链路与覆盖弹窗时序，涉及登录后配置恢复主路径）。已执行：`npm run lint`（通过）；`npm run test:unit`（102/102 通过）；`npm run test:integration`（109/109 通过，存在既有 act warning 但不影响通过）；`npx vitest run --environment jsdom src/__tests__/integration/app-entry-auth-transition.integration.test.tsx`（7/7 通过）；`npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off`（5/5 通过）。未执行全量 E2E（仅执行直接相关认证链路用例）。",
   "done_record": "2026-02-25 / pending",
   "source": {
     "file": "src/App.tsx",
     "line": 1
   },
-  "version": 7,
-  "updated_at": "2026-02-25T13:29:01.000Z"
+  "version": 9,
+  "updated_at": "2026-02-25T13:53:32.000Z"
 }

@@ -31,3 +31,20 @@ export interface CloudConfigMeta {
   exists: boolean
   updatedAt: string | null
 }
+
+export type CloudConfigConflictSnapshot = Pick<
+  CloudConfigRow,
+  | 'gitee_repo'
+  | 'gitee_owner'
+  | 'gitee_repo_name'
+  | 'gitee_branch'
+  | 'password_hash'
+  | 'kdf_params'
+  | 'encrypted_token'
+  | 'token_cipher_version'
+>
+
+export interface CloudConfigConflictMeta {
+  exists: boolean
+  fingerprint: string | null
+}

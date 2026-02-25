@@ -11,7 +11,7 @@ import SettingsPage from './pages/settings'
 import YearlySummaryPage from './pages/yearly-summary'
 import AuthResetPasswordPage from './pages/auth-reset-password'
 import ToastCenter from './components/common/toast-center'
-import { loadCloudConfigMetaForCurrentUser } from './services/cloud-config'
+import { loadCloudConfigConflictMetaForCurrentUser } from './services/cloud-config'
 import {
   getSupabaseSession,
   isSupabaseConfigured,
@@ -29,13 +29,13 @@ type CloudOverwriteDecision = 'keep_local' | 'use_cloud'
 
 interface CloudOverwriteDecisionRecord {
   decision: CloudOverwriteDecision
-  cloudUpdatedAtAtDecision: string | null
+  cloudFingerprintAtDecision: string | null
   decidedAt: string
 }
 
 interface CloudOverwritePromptState {
   userId: string
-  cloudUpdatedAt: string | null
+  cloudFingerprint: string | null
 }
 
 function readExperienceModePreference(): ExperienceMode {
@@ -76,11 +76,11 @@ function readCloudOverwriteDecisionRecord(userId: string): CloudOverwriteDecisio
   }
 
   try {
-    const parsed = JSON.parse(raw) as Partial<CloudOverwriteDecisionRecord>
+    const parsed = JSON.parse(raw) as Partial<CloudOverwriteDecisionRecord & { cloudUpdatedAtAtDecision?: unknown }>
     if (parsed.decision !== 'keep_local' && parsed.decision !== 'use_cloud') {
       return null
     }
-    if (parsed.cloudUpdatedAtAtDecision !== null && typeof parsed.cloudUpdatedAtAtDecision !== 'string') {
+    if (parsed.cloudFingerprintAtDecision !== null && parsed.cloudFingerprintAtDecision !== undefined && typeof parsed.cloudFingerprintAtDecision !== 'string') {
       return null
     }
     if (typeof parsed.decidedAt !== 'string') {
@@ -88,7 +88,7 @@ function readCloudOverwriteDecisionRecord(userId: string): CloudOverwriteDecisio
     }
     return {
       decision: parsed.decision,
-      cloudUpdatedAtAtDecision: parsed.cloudUpdatedAtAtDecision ?? null,
+      cloudFingerprintAtDecision: parsed.cloudFingerprintAtDecision ?? null,
       decidedAt: parsed.decidedAt,
     }
   } catch {
@@ -99,7 +99,7 @@ function readCloudOverwriteDecisionRecord(userId: string): CloudOverwriteDecisio
 function persistCloudOverwriteDecisionRecord(
   userId: string,
   decision: CloudOverwriteDecision,
-  cloudUpdatedAtAtDecision: string | null,
+  cloudFingerprintAtDecision: string | null,
 ): void {
   if (typeof window === 'undefined') {
     return
@@ -108,7 +108,7 @@ function persistCloudOverwriteDecisionRecord(
     buildCloudOverwriteDecisionStorageKey(userId),
     JSON.stringify({
       decision,
-      cloudUpdatedAtAtDecision,
+      cloudFingerprintAtDecision,
       decidedAt: new Date().toISOString(),
     } satisfies CloudOverwriteDecisionRecord),
   )
@@ -258,7 +258,7 @@ function AppRoutes() {
     }
 
     let cancelled = false
-    void loadCloudConfigMetaForCurrentUser()
+    void loadCloudConfigConflictMetaForCurrentUser()
       .then((cloudMeta) => {
         if (cancelled) {
           return
@@ -268,12 +268,12 @@ function AppRoutes() {
           return
         }
         const decisionRecord = readCloudOverwriteDecisionRecord(targetUserId)
-        if (decisionRecord && decisionRecord.cloudUpdatedAtAtDecision === cloudMeta.updatedAt) {
+        if (decisionRecord && decisionRecord.cloudFingerprintAtDecision === cloudMeta.fingerprint) {
           return
         }
         setCloudOverwritePrompt({
           userId: targetUserId,
-          cloudUpdatedAt: cloudMeta.updatedAt,
+          cloudFingerprint: cloudMeta.fingerprint,
         })
       })
       .catch((error) => {
@@ -348,7 +348,7 @@ function AppRoutes() {
     if (!cloudOverwritePrompt) {
       return
     }
-    persistCloudOverwriteDecisionRecord(cloudOverwritePrompt.userId, 'keep_local', cloudOverwritePrompt.cloudUpdatedAt)
+    persistCloudOverwriteDecisionRecord(cloudOverwritePrompt.userId, 'keep_local', cloudOverwritePrompt.cloudFingerprint)
     setCloudOverwritePrompt(null)
     pushToast({
       kind: 'system',
@@ -367,7 +367,7 @@ function AppRoutes() {
     void auth
       .restoreConfigFromCloud()
       .then(() => {
-        persistCloudOverwriteDecisionRecord(targetPrompt.userId, 'use_cloud', targetPrompt.cloudUpdatedAt)
+        persistCloudOverwriteDecisionRecord(targetPrompt.userId, 'use_cloud', targetPrompt.cloudFingerprint)
         pushToast({
           kind: 'system',
           level: 'success',
