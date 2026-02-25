@@ -1,0 +1,21 @@
+{
+  "task_uid": "td_20260225114230_d6f1c028",
+  "display_id": "TD-AUTH-20260225-114230-D6F1",
+  "id_prefix": "AUTH",
+  "module_key": "6.2",
+  "module_name": "认证、安全与密钥管理",
+  "module_label": "6.2 认证、安全与密钥管理",
+  "order": 20260225114230,
+  "status": "DONE",
+  "title": "修复云端恢复失败后认证弹窗卡在处理中",
+  "acceptance": "云端无可恢复配置或恢复异常时，认证状态应退出 checking 并正确提示；相关单测与回归通过",
+  "related_files": [
+    "src/hooks/use-auth.ts",
+    "src/hooks/__tests__/use-auth.test.tsx",
+    "todo/tasks/td_20260225114230_d6f1c028.json"
+  ],
+  "test_record": "风险分级：高（认证状态机与云端恢复主链路）。已执行：npm run lint（通过）；npm run test:unit（101/101 通过）；npm run test:integration（105/105 通过，存在既有 act warning 不影响结果）；npx playwright test e2e/specs/auth-setup.spec.ts e2e/specs/auth-session.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off（5/5 通过）。未执行全量 E2E（仅执行直接相关认证用例）。",
+  "done_record": "2026-02-25 / pending",
+  "version": 4,
+  "updated_at": "2026-02-25T12:07:40.000Z"
+}

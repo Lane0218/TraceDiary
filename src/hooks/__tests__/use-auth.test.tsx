@@ -316,6 +316,75 @@ describe('useAuth', () => {
     expect(result.current.state.dataEncryptionKey).toBeNull()
   })
 
+  it('云端无可恢复配置时应退出 checking 并抛出错误', async () => {
+    const dependencies = buildDependencies()
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    let thrownError: unknown = null
+    await act(async () => {
+      try {
+        await result.current.restoreConfigFromCloud()
+      } catch (error) {
+        thrownError = error
+      }
+    })
+
+    expect(thrownError).toBeInstanceOf(Error)
+    expect((thrownError as Error).message).toBe('云端尚无可恢复的配置，请先在当前设备完成初始化并保存。')
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+    expect(result.current.state.errorMessage).toBe('云端尚无可恢复的配置，请先在当前设备完成初始化并保存。')
+  })
+
+  it('已有本地配置时云端恢复失败应回到 needs-unlock 而非 checking', async () => {
+    const config = buildConfig()
+    const dependencies = buildDependencies({
+      loadConfig: vi.fn(async () => config),
+    })
+    localStorage.setItem(AUTH_LOCK_STATE_KEY, 'locked')
+
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-unlock'))
+
+    let thrownError: unknown = null
+    await act(async () => {
+      try {
+        await result.current.restoreConfigFromCloud()
+      } catch (error) {
+        thrownError = error
+      }
+    })
+
+    expect(thrownError).toBeInstanceOf(Error)
+    expect((thrownError as Error).message).toBe('云端尚无可恢复的配置，请先在当前设备完成初始化并保存。')
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-unlock'))
+    expect(result.current.state.errorMessage).toBe('云端尚无可恢复的配置，请先在当前设备完成初始化并保存。')
+  })
+
+  it('云端恢复异常时应透传错误并恢复到进入前阶段', async () => {
+    const dependencies = buildDependencies({
+      loadCloudConfig: vi.fn(async () => {
+        throw new Error('cloud fetch failed')
+      }),
+    })
+    const { result } = renderHook(() => useAuth(dependencies))
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+
+    let thrownError: unknown = null
+    await act(async () => {
+      try {
+        await result.current.restoreConfigFromCloud()
+      } catch (error) {
+        thrownError = error
+      }
+    })
+
+    expect(thrownError).toBeInstanceOf(Error)
+    expect((thrownError as Error).message).toBe('cloud fetch failed')
+    await waitFor(() => expect(result.current.state.stage).toBe('needs-setup'))
+    expect(result.current.state.errorMessage).toBe('cloud fetch failed')
+  })
+
   it('ready 状态应支持仅更新仓库与分支（不改 token）', async () => {
     const saveConfig = vi.fn(async () => undefined)
     const dependencies = buildDependencies({

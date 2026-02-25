@@ -1218,6 +1218,7 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
   )
 
   const restoreConfigFromCloud = useCallback(async () => {
+    const previousStage = state.stage
     clearError()
     setState((prev) => ({ ...prev, stage: 'checking' }))
 
@@ -1247,13 +1248,20 @@ export function useAuth(customDependencies?: Partial<AuthDependencies>): UseAuth
         initialPullError: null,
       })
     } catch (error) {
+      const normalizedError = error instanceof Error ? error : new Error('云端恢复失败，请稍后重试')
       setState((prev) => ({
         ...prev,
-        stage: prev.config ? prev.stage : 'needs-setup',
-        errorMessage: error instanceof Error ? error.message : '云端恢复失败，请稍后重试',
+        stage:
+          previousStage !== 'checking'
+            ? previousStage
+            : prev.config
+              ? 'needs-unlock'
+              : 'needs-setup',
+        errorMessage: normalizedError.message,
       }))
+      throw normalizedError
     }
-  }, [clearError, dependencies])
+  }, [clearError, dependencies, state.stage])
 
   const lockNow = useCallback(() => {
     writeLockState(true)
