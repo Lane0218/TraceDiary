@@ -1081,7 +1081,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
               style={diaryPanelDesktopStyle}
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div className="h-[280px] overflow-hidden lg:min-h-0 lg:h-auto lg:flex-1" data-testid="diary-editor-slot">
+              <div className="h-[1800px] overflow-hidden lg:min-h-0 lg:h-auto lg:flex-1" data-testid="diary-editor-slot">
                 {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
                     key={isGuestMode ? `guest:${date}` : `${diary.entryId}:${diary.loadRevision}`}
