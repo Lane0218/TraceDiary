@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
@@ -74,6 +74,9 @@ const DIARY_LEFT_PANEL_STORAGE_KEY = 'trace-diary:diary:left-panel'
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
 const DIARY_SEARCH_DEBOUNCE_MS = 200
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
+const DIARY_LAYOUT_DESKTOP_BREAKPOINT = 1024
+const DIARY_LAYOUT_VERTICAL_GAP_DESKTOP = 12
+const DIARY_PANEL_MIN_HEIGHT_DESKTOP = 340
 
 function getInitialLeftPanelTab(): DiaryLeftPanelTab {
   if (typeof window === 'undefined') {
@@ -199,6 +202,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
   const [isSearchDebouncing, setIsSearchDebouncing] = useState(false)
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
+  const [desktopDiaryPanelHeight, setDesktopDiaryPanelHeight] = useState<number | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
   const [dismissedTokenRefreshKey, setDismissedTokenRefreshKey] = useState<string | null>(null)
   const [pullConflictState, setPullConflictState] = useState<{
@@ -206,6 +210,8 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
     remote: DiarySyncMetadata | null
     remoteSha?: string
   } | null>(null)
+  const leftColumnRef = useRef<HTMLElement | null>(null)
+  const syncBarWrapperRef = useRef<HTMLDivElement | null>(null)
 
   const today = useMemo(() => getDiaryDateKey(new Date()) as DateString, [])
   const date = useMemo(() => {
@@ -405,6 +411,62 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
     }
     window.localStorage.setItem(DIARY_LEFT_PANEL_STORAGE_KEY, leftPanelTab)
   }, [leftPanelTab])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const updateDesktopDiaryPanelHeight = () => {
+      if (window.innerWidth < DIARY_LAYOUT_DESKTOP_BREAKPOINT) {
+        setDesktopDiaryPanelHeight(null)
+        return
+      }
+
+      const leftColumn = leftColumnRef.current
+      const syncBarWrapper = syncBarWrapperRef.current
+      if (!leftColumn || !syncBarWrapper) {
+        return
+      }
+
+      const leftBottom = leftColumn.getBoundingClientRect().bottom
+      const syncBottom = syncBarWrapper.getBoundingClientRect().bottom
+      const nextHeight = Math.max(
+        DIARY_PANEL_MIN_HEIGHT_DESKTOP,
+        Math.floor(leftBottom - syncBottom - DIARY_LAYOUT_VERTICAL_GAP_DESKTOP),
+      )
+      setDesktopDiaryPanelHeight((prev) => (prev === nextHeight ? prev : nextHeight))
+    }
+
+    const rafId = window.requestAnimationFrame(updateDesktopDiaryPanelHeight)
+    const ResizeObserverCtor = window.ResizeObserver
+    const leftObserver =
+      ResizeObserverCtor && leftColumnRef.current
+        ? new ResizeObserverCtor(() => {
+            updateDesktopDiaryPanelHeight()
+          })
+        : null
+    const syncObserver =
+      ResizeObserverCtor && syncBarWrapperRef.current
+        ? new ResizeObserverCtor(() => {
+            updateDesktopDiaryPanelHeight()
+          })
+        : null
+    if (leftObserver && leftColumnRef.current) {
+      leftObserver.observe(leftColumnRef.current)
+    }
+    if (syncObserver && syncBarWrapperRef.current) {
+      syncObserver.observe(syncBarWrapperRef.current)
+    }
+    window.addEventListener('resize', updateDesktopDiaryPanelHeight)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      leftObserver?.disconnect()
+      syncObserver?.disconnect()
+      window.removeEventListener('resize', updateDesktopDiaryPanelHeight)
+    }
+  }, [])
 
   useEffect(() => {
     const normalized = searchKeyword.trim()
@@ -789,6 +851,10 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
     () => getSyncActionToneClass(pushActionSnapshot.status),
     [pushActionSnapshot.status],
   )
+  const diaryPanelDesktopStyle = useMemo<CSSProperties | undefined>(
+    () => (desktopDiaryPanelHeight ? { height: `${desktopDiaryPanelHeight}px` } : undefined),
+    [desktopDiaryPanelHeight],
+  )
 
   const isManualSyncing = sync.status === 'syncing'
   const activeConflictState = pullConflictState ?? sync.conflictState
@@ -883,7 +949,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
           className="mt-4 grid gap-4 lg:grid-cols-[minmax(285px,1fr)_minmax(0,2fr)] lg:items-stretch td-fade-in"
           aria-label="diary-layout"
         >
-          <aside className="space-y-3">
+          <aside ref={leftColumnRef} className="space-y-3">
             <section className="td-card-muted td-panel">
               <MonthCalendar
                 month={month}
@@ -980,42 +1046,42 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             </section>
           </aside>
 
-          <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
-            <SyncControlBar
-              statusHint={
-                <StatusHint
-                  isLoading={isGuestMode ? false : diary.isLoading}
-                  isSaving={isGuestMode ? false : diary.isSaving}
-                  error={isGuestMode ? null : diary.error}
-                />
-              }
-              pullStatusLabel={pullStatusLabel}
-              pushStatusLabel={pushStatusLabel}
-              pullStatusToneClass={pullStatusToneClass}
-              pushStatusToneClass={pushStatusToneClass}
-              pullStatus={pullActionSnapshot.status}
-              pushStatus={pushActionSnapshot.status}
-              pullFailureReason={pullActionSnapshot.reason}
-              pushFailureReason={pushActionSnapshot.reason}
-              isPulling={isManualPulling}
-              isPushing={isManualSyncing}
-              onPull={() => {
-                void pullNow()
-              }}
-              onPush={() => {
-                void saveNow()
-              }}
-            />
+          <section className="space-y-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+            <div ref={syncBarWrapperRef}>
+              <SyncControlBar
+                statusHint={
+                  <StatusHint
+                    isLoading={isGuestMode ? false : diary.isLoading}
+                    isSaving={isGuestMode ? false : diary.isSaving}
+                    error={isGuestMode ? null : diary.error}
+                  />
+                }
+                pullStatusLabel={pullStatusLabel}
+                pushStatusLabel={pushStatusLabel}
+                pullStatusToneClass={pullStatusToneClass}
+                pushStatusToneClass={pushStatusToneClass}
+                pullStatus={pullActionSnapshot.status}
+                pushStatus={pushActionSnapshot.status}
+                pullFailureReason={pullActionSnapshot.reason}
+                pushFailureReason={pushActionSnapshot.reason}
+                isPulling={isManualPulling}
+                isPushing={isManualSyncing}
+                onPull={() => {
+                  void pullNow()
+                }}
+                onPush={() => {
+                  void saveNow()
+                }}
+              />
+            </div>
 
             <article
-              className="td-card-primary td-panel flex flex-col overflow-hidden lg:h-[340px] lg:flex-none"
+              className="td-card-primary td-panel flex flex-col overflow-hidden lg:min-h-0 lg:flex-none"
               data-testid="diary-panel"
+              style={diaryPanelDesktopStyle}
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div
-                className="min-h-0 flex-1 overflow-hidden lg:h-[252px] lg:flex-none"
-                data-testid="diary-editor-slot"
-              >
+              <div className="min-h-0 flex-1 overflow-hidden" data-testid="diary-editor-slot">
                 {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
                     key={isGuestMode ? `guest:${date}` : `${diary.entryId}:${diary.loadRevision}`}

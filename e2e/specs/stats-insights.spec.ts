@@ -181,12 +181,17 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
     expect(sourceButtonBox).not.toBeNull()
     expect(editorBox).not.toBeNull()
 
-    const titleCenterY = (titleBox?.y ?? 0) + (titleBox?.height ?? 0) / 2
-    const buttonCenterY = (sourceButtonBox?.y ?? 0) + (sourceButtonBox?.height ?? 0) / 2
-    expect(Math.abs(titleCenterY - buttonCenterY)).toBeLessThanOrEqual(12)
-
     const titleBottom = (titleBox?.y ?? 0) + (titleBox?.height ?? 0)
+    const sourceTop = sourceButtonBox?.y ?? 0
+    const sourceBottom = (sourceButtonBox?.y ?? 0) + (sourceButtonBox?.height ?? 0)
     const editorTop = editorBox?.y ?? 0
+    const titleToSourceGap = sourceTop - titleBottom
+    const sourceToEditorGap = editorTop - sourceBottom
+
+    expect(titleToSourceGap).toBeGreaterThanOrEqual(0)
+    expect(titleToSourceGap).toBeLessThanOrEqual(16)
+    expect(sourceToEditorGap).toBeGreaterThanOrEqual(6)
+    expect(sourceToEditorGap).toBeLessThanOrEqual(20)
     expect(editorTop - titleBottom).toBeGreaterThanOrEqual(12)
   }
 

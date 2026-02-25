@@ -138,6 +138,9 @@ test('日记页布局应保持左右列底部对齐（视觉回归）', async ({
   const rightBottom = await rightColumn.evaluate((node) => node.getBoundingClientRect().bottom)
   expect(Math.abs(leftBottom - rightBottom)).toBeLessThanOrEqual(1)
 
+  const diaryPanelBottom = await diaryPanel.evaluate((node) => node.getBoundingClientRect().bottom)
+  expect(Math.abs(leftBottom - diaryPanelBottom)).toBeLessThanOrEqual(1)
+
   const syncBottom = await syncBar.evaluate((node) => node.getBoundingClientRect().bottom)
   const panelTop = await diaryPanel.evaluate((node) => node.getBoundingClientRect().top)
   const verticalGap = panelTop - syncBottom
