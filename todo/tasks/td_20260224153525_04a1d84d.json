@@ -16,11 +16,11 @@
     "todo/tasks/td_20260224153525_04a1d84d.json"
   ],
   "test_record": "风险分级：中（日记页 UI 交互微调）。本轮改动：将“日期值本身”改为徽章样式（移除“日期”文字徽章）、保持命中片段单行省略、继续压缩日期与片段间距。已执行：npm run lint（通过）；npm run test:unit（通过）；npm run test:integration（通过）；npm run test:e2e:changed（通过）。未执行全量 E2E（仅定向 changed）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 30ae5c7",
   "source": {
     "file": "SPEC.md",
     "line": 218
   },
-  "version": 8,
-  "updated_at": "2026-02-25T05:13:06.000Z"
+  "version": 9,
+  "updated_at": "2026-02-25T05:13:39.000Z"
 }
