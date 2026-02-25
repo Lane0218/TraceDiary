@@ -30,3 +30,26 @@ export interface YearlySummaryEntry extends EntryBase {
 }
 
 export type DiaryEntry = DailyEntry | YearlySummaryEntry
+
+export interface DiarySearchQuery {
+  keyword: string
+  normalizedKeyword: string
+  source: 'local_daily_only'
+  limit: number
+}
+
+export interface DiarySearchResultItem {
+  entryId: `daily:${string}`
+  date: DateString
+  snippet: string
+  matchIndex: number
+  contentLength: number
+}
+
+export interface DiarySearchResult {
+  query: DiarySearchQuery
+  totalMatched: number
+  returnedCount: number
+  truncated: boolean
+  items: DiarySearchResultItem[]
+}
