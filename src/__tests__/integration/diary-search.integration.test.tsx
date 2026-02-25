@@ -23,8 +23,10 @@ describe('Diary 搜索面板', () => {
     await enterGuestMode()
     fireEvent.click(screen.getByTestId('diary-left-tab-search'))
 
-    expect(await screen.findByTestId('diary-search-input')).toBeTruthy()
-    expect(screen.getByTestId('diary-search-empty')).toHaveTextContent('输入关键词开始搜索。')
+    const input = await screen.findByTestId('diary-search-input')
+    expect(input).toHaveAttribute('placeholder', '输入关键词搜索日记内容')
+    expect(screen.queryByText('输入关键词开始搜索。')).toBeNull()
+    expect(screen.queryByTestId('diary-search-empty')).toBeNull()
   })
 
   it('输入关键词后应展示结果并支持点击跳转日期', async () => {

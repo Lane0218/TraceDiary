@@ -3,7 +3,7 @@ import { List, type RowComponentProps } from 'react-window'
 import type { DateString, DiarySearchResult, DiarySearchResultItem } from '../../types/diary'
 
 const SEARCH_ROW_HEIGHT = 58
-const SEARCH_INPUT_BLOCK_HEIGHT = 60
+const SEARCH_INPUT_BLOCK_HEIGHT = 48
 
 interface SearchRowProps {
   items: DiarySearchResultItem[]
@@ -112,32 +112,30 @@ export default function DiarySearchList({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2" aria-label="diary-search-panel">
-      <div className="rounded-[10px] border border-[#d5d5d2] bg-white px-2.5 py-2">
-        <div className="relative">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#7b8087]"
-          >
-            ⌕
-          </span>
-          <input
-            type="text"
-            value={keyword}
-            onChange={(event) => onKeywordChange(event.target.value)}
-            placeholder="输入关键词搜索日记内容"
-            className="w-full rounded-[9px] border border-[#d7d7d3] bg-[#fcfcfb] px-3 py-[7px] pl-8 text-sm text-td-text outline-none transition focus:border-[#4b525a] focus:ring-2 focus:ring-[#e2e6ea]"
-            data-testid="diary-search-input"
-            aria-label="日记搜索输入"
+      <div className="relative">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          className="pointer-events-none absolute left-3 top-1/2 h-[16px] w-[16px] -translate-y-1/2 text-[#6f7680]"
+        >
+          <path
+            d="M13.8 12.4l3 3a1 1 0 1 1-1.4 1.4l-3-3a6 6 0 1 1 1.4-1.4Zm-5.3.6a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"
+            fill="currentColor"
           />
-        </div>
+        </svg>
+        <input
+          type="text"
+          value={keyword}
+          onChange={(event) => onKeywordChange(event.target.value)}
+          placeholder="输入关键词搜索日记内容"
+          className="w-full rounded-[10px] border border-[#d7d7d3] bg-[#fcfcfb] px-3 py-[8px] pl-10 text-sm text-td-text outline-none transition focus:border-[#4b525a] focus:ring-2 focus:ring-[#e2e6ea]"
+          data-testid="diary-search-input"
+          aria-label="日记搜索输入"
+        />
       </div>
 
       <div className="min-h-0 flex-1">
         {isSearching && hasKeyword ? <SearchStateBox text="正在搜索..." testId="diary-search-loading" style={listStyle} /> : null}
-
-        {!isSearching && !hasKeyword ? (
-          <SearchStateBox text="输入关键词开始搜索。" testId="diary-search-empty" style={listStyle} />
-        ) : null}
 
         {!isSearching && hasKeyword && result.items.length === 0 ? (
           <SearchStateBox text={`未找到包含“${normalizedKeyword}”的日记。`} testId="diary-search-empty" style={listStyle} />
