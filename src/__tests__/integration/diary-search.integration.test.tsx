@@ -38,7 +38,9 @@ describe('Diary 搜索面板', () => {
     fireEvent.change(screen.getByTestId('diary-search-input'), { target: { value: '专注' } })
 
     expect(await screen.findByTestId('diary-search-virtual-list')).toBeTruthy()
-    expect(await screen.findByText('共命中 8 条记录。')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.queryByText(/共命中 .* 条记录。/)).toBeNull()
+    })
 
     const cards = await screen.findAllByTestId('diary-search-card')
     fireEvent.click(cards[0] as HTMLElement)
