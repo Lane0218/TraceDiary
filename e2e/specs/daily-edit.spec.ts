@@ -129,9 +129,20 @@ test('日记页布局应保持左右列底部对齐（视觉回归）', async ({
   await expect(leftColumn).toBeVisible()
   await expect(rightColumn).toBeVisible()
 
+  const syncBar = page.locator('section[aria-label="sync-control-bar"]').first()
+  const diaryPanel = page.getByTestId('diary-panel')
+  await expect(syncBar).toBeVisible()
+  await expect(diaryPanel).toBeVisible()
+
   const leftBottom = await leftColumn.evaluate((node) => node.getBoundingClientRect().bottom)
   const rightBottom = await rightColumn.evaluate((node) => node.getBoundingClientRect().bottom)
   expect(Math.abs(leftBottom - rightBottom)).toBeLessThanOrEqual(1)
+
+  const syncBottom = await syncBar.evaluate((node) => node.getBoundingClientRect().bottom)
+  const panelTop = await diaryPanel.evaluate((node) => node.getBoundingClientRect().top)
+  const verticalGap = panelTop - syncBottom
+  expect(verticalGap).toBeGreaterThanOrEqual(8)
+  expect(verticalGap).toBeLessThanOrEqual(20)
 
   await expect(layout).toHaveScreenshot('diary-layout-columns-aligned.png', {
     animations: 'disabled',
@@ -141,7 +152,7 @@ test('日记页布局应保持左右列底部对齐（视觉回归）', async ({
     mask: [
       page.getByTestId('diary-left-panel-body'),
       page.getByTestId('diary-editor-slot'),
-      page.locator('section[aria-label="sync-control-bar"]'),
+      syncBar,
     ],
   })
 })

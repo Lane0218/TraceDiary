@@ -980,7 +980,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             </section>
           </aside>
 
-          <section className="space-y-3 lg:flex lg:h-full lg:flex-col lg:justify-between lg:space-y-0">
+          <section className="space-y-3 lg:flex lg:h-full lg:flex-col">
             <SyncControlBar
               statusHint={
                 <StatusHint
