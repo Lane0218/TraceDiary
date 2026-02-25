@@ -1,5 +1,5 @@
 import type { AppConfig } from '../types/config'
-import type { CloudConfigRow, CloudConfigUpsertPayload } from '../types/cloud-config'
+import type { CloudConfigMeta, CloudConfigRow, CloudConfigUpsertPayload } from '../types/cloud-config'
 import { getSupabaseClient, getSupabaseUserId, isSupabaseConfigured } from './supabase'
 
 const TABLE_NAME = 'user_sync_configs'
@@ -59,6 +59,37 @@ export async function loadCloudConfigForCurrentUser(): Promise<AppConfig | null>
   }
 
   return toAppConfig(data)
+}
+
+export async function loadCloudConfigMetaForCurrentUser(): Promise<CloudConfigMeta> {
+  if (!isSupabaseConfigured()) {
+    return { exists: false, updatedAt: null }
+  }
+
+  const userId = await getSupabaseUserId()
+  if (!userId) {
+    return { exists: false, updatedAt: null }
+  }
+
+  const client = getSupabaseClient()
+  const { data, error } = await client
+    .from(TABLE_NAME)
+    .select('updated_at')
+    .eq('user_id', userId)
+    .maybeSingle<Pick<CloudConfigRow, 'updated_at'>>()
+
+  if (error) {
+    throw new Error(`云端配置状态检测失败：${error.message}`)
+  }
+
+  if (!data) {
+    return { exists: false, updatedAt: null }
+  }
+
+  return {
+    exists: true,
+    updatedAt: data.updated_at ?? null,
+  }
 }
 
 export async function saveCloudConfigForCurrentUser(config: AppConfig): Promise<void> {

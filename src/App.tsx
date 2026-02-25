@@ -11,6 +11,7 @@ import SettingsPage from './pages/settings'
 import YearlySummaryPage from './pages/yearly-summary'
 import AuthResetPasswordPage from './pages/auth-reset-password'
 import ToastCenter from './components/common/toast-center'
+import { loadCloudConfigMetaForCurrentUser } from './services/cloud-config'
 import {
   getSupabaseSession,
   isSupabaseConfigured,
@@ -22,7 +23,20 @@ type ExperienceMode = 'guest' | 'user'
 
 const EXPERIENCE_MODE_STORAGE_KEY = 'trace-diary:experience-mode'
 const GUEST_ENTRY_PREFERENCE_KEY = 'trace-diary:entry-preference'
-const CLOUD_RESTORE_HANDLED_KEY_PREFIX = 'trace-diary:cloud-restore-handled:'
+const CLOUD_OVERWRITE_DECISION_STORAGE_KEY_PREFIX = 'trace-diary:cloud-overwrite-decision:v1:'
+
+type CloudOverwriteDecision = 'keep_local' | 'use_cloud'
+
+interface CloudOverwriteDecisionRecord {
+  decision: CloudOverwriteDecision
+  cloudUpdatedAtAtDecision: string | null
+  decidedAt: string
+}
+
+interface CloudOverwritePromptState {
+  userId: string
+  cloudUpdatedAt: string | null
+}
 
 function readExperienceModePreference(): ExperienceMode {
   if (typeof window === 'undefined') {
@@ -47,27 +61,57 @@ function saveExperienceModePreference(mode: ExperienceMode): void {
   localStorage.removeItem(GUEST_ENTRY_PREFERENCE_KEY)
 }
 
-function buildCloudRestoreHandledKey(userId: string): string {
-  return `${CLOUD_RESTORE_HANDLED_KEY_PREFIX}${userId}`
+function buildCloudOverwriteDecisionStorageKey(userId: string): string {
+  return `${CLOUD_OVERWRITE_DECISION_STORAGE_KEY_PREFIX}${userId}`
 }
 
-function hasHandledCloudRestore(userId: string): boolean {
+function readCloudOverwriteDecisionRecord(userId: string): CloudOverwriteDecisionRecord | null {
   if (typeof window === 'undefined') {
-    return false
+    return null
   }
-  return window.sessionStorage.getItem(buildCloudRestoreHandledKey(userId)) === '1'
+
+  const raw = window.localStorage.getItem(buildCloudOverwriteDecisionStorageKey(userId))
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<CloudOverwriteDecisionRecord>
+    if (parsed.decision !== 'keep_local' && parsed.decision !== 'use_cloud') {
+      return null
+    }
+    if (parsed.cloudUpdatedAtAtDecision !== null && typeof parsed.cloudUpdatedAtAtDecision !== 'string') {
+      return null
+    }
+    if (typeof parsed.decidedAt !== 'string') {
+      return null
+    }
+    return {
+      decision: parsed.decision,
+      cloudUpdatedAtAtDecision: parsed.cloudUpdatedAtAtDecision ?? null,
+      decidedAt: parsed.decidedAt,
+    }
+  } catch {
+    return null
+  }
 }
 
-function markCloudRestoreHandled(userId: string, handled: boolean): void {
+function persistCloudOverwriteDecisionRecord(
+  userId: string,
+  decision: CloudOverwriteDecision,
+  cloudUpdatedAtAtDecision: string | null,
+): void {
   if (typeof window === 'undefined') {
     return
   }
-  const key = buildCloudRestoreHandledKey(userId)
-  if (handled) {
-    window.sessionStorage.setItem(key, '1')
-    return
-  }
-  window.sessionStorage.removeItem(key)
+  window.localStorage.setItem(
+    buildCloudOverwriteDecisionStorageKey(userId),
+    JSON.stringify({
+      decision,
+      cloudUpdatedAtAtDecision,
+      decidedAt: new Date().toISOString(),
+    } satisfies CloudOverwriteDecisionRecord),
+  )
 }
 
 function YearlySummaryRedirect() {
@@ -92,7 +136,7 @@ function AppRoutes() {
   const [session, setSession] = useState<Session | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [pendingCloudRestoreUserId, setPendingCloudRestoreUserId] = useState<string | null>(null)
-  const [cloudOverwritePromptUserId, setCloudOverwritePromptUserId] = useState<string | null>(null)
+  const [cloudOverwritePrompt, setCloudOverwritePrompt] = useState<CloudOverwritePromptState | null>(null)
   const [isApplyingCloudConfig, setIsApplyingCloudConfig] = useState(false)
   const lastSessionUserIdRef = useRef<string | null>(null)
   const cloudAuthEnabled = isSupabaseConfigured()
@@ -147,7 +191,7 @@ function AppRoutes() {
     if (!sessionUserId) {
       lastSessionUserIdRef.current = null
       setPendingCloudRestoreUserId(null)
-      setCloudOverwritePromptUserId(null)
+      setCloudOverwritePrompt(null)
       return
     }
 
@@ -156,9 +200,6 @@ function AppRoutes() {
     }
     lastSessionUserIdRef.current = sessionUserId
 
-    if (hasHandledCloudRestore(sessionUserId)) {
-      return
-    }
     setPendingCloudRestoreUserId(sessionUserId)
   }, [sessionUserId])
 
@@ -180,6 +221,8 @@ function AppRoutes() {
     if (auth.state.stage === 'needs-token-refresh') {
       return
     }
+
+    const targetUserId = sessionUserId
 
     if (auth.state.stage === 'needs-setup') {
       setIsApplyingCloudConfig(true)
@@ -203,16 +246,63 @@ function AppRoutes() {
           }
         })
         .finally(() => {
-          markCloudRestoreHandled(sessionUserId, true)
           setPendingCloudRestoreUserId(null)
           setIsApplyingCloudConfig(false)
         })
       return
     }
 
-    setCloudOverwritePromptUserId(sessionUserId)
-    setPendingCloudRestoreUserId(null)
-  }, [auth, auth.state.stage, cloudAuthEnabled, entryModalOpen, isGuestMode, pendingCloudRestoreUserId, pushToast, sessionUserId])
+    if (!auth.state.config) {
+      setPendingCloudRestoreUserId(null)
+      return
+    }
+
+    let cancelled = false
+    void loadCloudConfigMetaForCurrentUser()
+      .then((cloudMeta) => {
+        if (cancelled) {
+          return
+        }
+        setPendingCloudRestoreUserId(null)
+        if (!cloudMeta.exists) {
+          return
+        }
+        const decisionRecord = readCloudOverwriteDecisionRecord(targetUserId)
+        if (decisionRecord && decisionRecord.cloudUpdatedAtAtDecision === cloudMeta.updatedAt) {
+          return
+        }
+        setCloudOverwritePrompt({
+          userId: targetUserId,
+          cloudUpdatedAt: cloudMeta.updatedAt,
+        })
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return
+        }
+        const message = error instanceof Error ? error.message : '云端配置状态检测失败'
+        setPendingCloudRestoreUserId(null)
+        pushToast({
+          kind: 'system',
+          level: 'warning',
+          message,
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    auth,
+    auth.state.config,
+    auth.state.stage,
+    cloudAuthEnabled,
+    entryModalOpen,
+    isGuestMode,
+    pendingCloudRestoreUserId,
+    pushToast,
+    sessionUserId,
+  ])
 
   const enterGuestMode = useCallback(() => {
     setManualEntryModalOpen(false)
@@ -241,9 +331,6 @@ function AppRoutes() {
     setIsSigningOut(true)
     try {
       await signOutSupabase()
-      if (sessionUserId) {
-        markCloudRestoreHandled(sessionUserId, false)
-      }
       return true
     } catch (error) {
       console.error('Supabase 退出登录失败', error)
@@ -251,35 +338,36 @@ function AppRoutes() {
     } finally {
       setIsSigningOut(false)
     }
-  }, [cloudAuthEnabled, sessionUserId])
+  }, [cloudAuthEnabled])
 
   const handleSignOut = useCallback(() => {
     void signOutCurrentSession()
   }, [signOutCurrentSession])
 
   const handleKeepLocalConfig = useCallback(() => {
-    if (!cloudOverwritePromptUserId) {
+    if (!cloudOverwritePrompt) {
       return
     }
-    markCloudRestoreHandled(cloudOverwritePromptUserId, true)
-    setCloudOverwritePromptUserId(null)
+    persistCloudOverwriteDecisionRecord(cloudOverwritePrompt.userId, 'keep_local', cloudOverwritePrompt.cloudUpdatedAt)
+    setCloudOverwritePrompt(null)
     pushToast({
       kind: 'system',
       level: 'info',
       message: '已保留当前设备本地配置。',
     })
-  }, [cloudOverwritePromptUserId, pushToast])
+  }, [cloudOverwritePrompt, pushToast])
 
   const handleUseCloudConfig = useCallback(() => {
-    if (!cloudOverwritePromptUserId) {
+    if (!cloudOverwritePrompt) {
       return
     }
-    const targetUserId = cloudOverwritePromptUserId
-    setCloudOverwritePromptUserId(null)
+    const targetPrompt = cloudOverwritePrompt
+    setCloudOverwritePrompt(null)
     setIsApplyingCloudConfig(true)
     void auth
       .restoreConfigFromCloud()
       .then(() => {
+        persistCloudOverwriteDecisionRecord(targetPrompt.userId, 'use_cloud', targetPrompt.cloudUpdatedAt)
         pushToast({
           kind: 'system',
           level: 'success',
@@ -295,10 +383,9 @@ function AppRoutes() {
         })
       })
       .finally(() => {
-        markCloudRestoreHandled(targetUserId, true)
         setIsApplyingCloudConfig(false)
       })
-  }, [auth, cloudOverwritePromptUserId, pushToast])
+  }, [auth, cloudOverwritePrompt, pushToast])
 
   const headerAuthEntry = useMemo<AppHeaderAuthEntry>(
     () => ({
@@ -364,7 +451,7 @@ function AppRoutes() {
         onEnterGuest={enterGuestMode}
         onChooseAuthFlow={enterUserMode}
       />
-      {!isGuestMode && cloudOverwritePromptUserId ? (
+      {!isGuestMode && cloudOverwritePrompt ? (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-[#151311]/55 px-4 py-6 backdrop-blur-[2px]"
           aria-label="cloud-config-overwrite-modal"

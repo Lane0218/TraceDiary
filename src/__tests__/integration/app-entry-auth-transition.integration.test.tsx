@@ -4,6 +4,7 @@ import App from '../../App'
 
 const mockAuthState = vi.hoisted(() => ({
   stage: 'needs-setup',
+  config: null as Record<string, unknown> | null,
 }))
 
 const mockSessionState = vi.hoisted(() => ({
@@ -24,15 +25,27 @@ const getSupabaseSessionMock = vi.hoisted(() =>
   }),
 )
 
+const loadCloudConfigMetaForCurrentUserMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    exists: true,
+    updatedAt: '2026-02-25T00:00:00.000Z',
+  })),
+)
+
 const mockAuth = vi.hoisted(() => ({
   state: mockAuthState as unknown as {
     stage: 'checking' | 'needs-setup' | 'needs-unlock' | 'needs-token-refresh' | 'ready'
+    config: Record<string, unknown> | null
   },
   restoreConfigFromCloud: vi.fn(async () => {}),
 }))
 
 vi.mock('../../hooks/use-auth', () => ({
   useAuth: () => mockAuth,
+}))
+
+vi.mock('../../services/cloud-config', () => ({
+  loadCloudConfigMetaForCurrentUser: loadCloudConfigMetaForCurrentUserMock,
 }))
 
 vi.mock('../../pages/diary', () => ({
@@ -93,7 +106,13 @@ describe('App 首屏弹窗过渡态', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/diary')
     mockAuthState.stage = 'needs-setup'
+    mockAuthState.config = null
     mockSessionState.userId = null
+    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+      exists: true,
+      updatedAt: '2026-02-25T00:00:00.000Z',
+    })
+    window.localStorage.clear()
     window.sessionStorage.clear()
   })
 
@@ -117,6 +136,7 @@ describe('App 首屏弹窗过渡态', () => {
   it('首屏认证弹窗打开时应延后“本地已有配置”覆盖确认，关闭后再出现', async () => {
     mockSessionState.userId = 'entry-modal-user'
     mockAuthState.stage = 'checking'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
     const { rerender } = render(<App />)
 
     fireEvent.click(screen.getByTestId('mock-lock-open-btn'))
@@ -137,6 +157,7 @@ describe('App 首屏弹窗过渡态', () => {
   it('Token 刷新阶段应延后“本地已有配置”覆盖确认，回到 ready 后再出现', async () => {
     mockSessionState.userId = 'token-refresh-user'
     mockAuthState.stage = 'needs-token-refresh'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
     const { rerender } = render(<App />)
 
     await waitFor(() => {
@@ -149,5 +170,79 @@ describe('App 首屏弹窗过渡态', () => {
     await waitFor(() => {
       expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
     })
+  })
+
+  it('选择保留本地后，重新打开页面且云端版本未变化时不应再次出现覆盖确认', async () => {
+    mockSessionState.userId = 'remember-choice-user'
+    mockAuthState.stage = 'ready'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
+    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+      exists: true,
+      updatedAt: '2026-02-25T08:00:00.000Z',
+    })
+
+    const firstRender = render(<App />)
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
+    fireEvent.click(screen.getByTestId('cloud-config-keep-local-btn'))
+    await waitFor(() => {
+      expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+    })
+
+    firstRender.unmount()
+
+    render(<App />)
+    await waitFor(() => {
+      expect(loadCloudConfigMetaForCurrentUserMock).toHaveBeenCalledTimes(2)
+    })
+    expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+  })
+
+  it('云端配置版本变化后，应重新出现覆盖确认弹窗', async () => {
+    mockSessionState.userId = 'cloud-version-changed-user'
+    mockAuthState.stage = 'ready'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
+    loadCloudConfigMetaForCurrentUserMock
+      .mockResolvedValueOnce({
+        exists: true,
+        updatedAt: '2026-02-25T08:00:00.000Z',
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        updatedAt: '2026-02-25T09:00:00.000Z',
+      })
+
+    const firstRender = render(<App />)
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
+    fireEvent.click(screen.getByTestId('cloud-config-keep-local-btn'))
+    await waitFor(() => {
+      expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
+    })
+
+    firstRender.unmount()
+
+    render(<App />)
+    await waitFor(() => {
+      expect(screen.getByTestId('cloud-config-overwrite-modal')).toBeTruthy()
+    })
+  })
+
+  it('云端无配置时不应出现覆盖确认弹窗', async () => {
+    mockSessionState.userId = 'no-cloud-config-user'
+    mockAuthState.stage = 'ready'
+    mockAuthState.config = { giteeRepo: 'lane/diary' }
+    loadCloudConfigMetaForCurrentUserMock.mockResolvedValue({
+      exists: false,
+      updatedAt: null,
+    })
+
+    render(<App />)
+    await waitFor(() => {
+      expect(loadCloudConfigMetaForCurrentUserMock).toHaveBeenCalledTimes(1)
+    })
+    expect(screen.queryByTestId('cloud-config-overwrite-modal')).toBeNull()
   })
 })

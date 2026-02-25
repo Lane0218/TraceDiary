@@ -26,3 +26,8 @@ export interface CloudConfigUpsertPayload {
   encrypted_token: string | null
   token_cipher_version: AppConfig['tokenCipherVersion']
 }
+
+export interface CloudConfigMeta {
+  exists: boolean
+  updatedAt: string | null
+}
