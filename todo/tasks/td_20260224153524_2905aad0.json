@@ -17,11 +17,11 @@
     "todo/tasks/td_20260224153524_2905aad0.json"
   ],
   "test_record": "风险分级：中（单模块逻辑变更）。已执行：npm run lint（通过）；npm run test:unit（通过，新增 diary-search 单测）；npm run test:integration（初次失败，因 worktree 缺少 .env.local 导致 reset-password 用例不满足环境，复制主工作区 .env.local/.env.e2e 后重跑通过）；npm run test:e2e:changed（通过）。未执行全量 E2E（仅定向 changed）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 0d24a05",
   "source": {
     "file": "SPEC.md",
     "line": 438
   },
-  "version": 2,
-  "updated_at": "2026-02-25T04:37:19.000Z"
+  "version": 3,
+  "updated_at": "2026-02-25T04:44:46.000Z"
 }

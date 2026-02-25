@@ -6,22 +6,22 @@
   "module_name": "测试与质量",
   "module_label": "6.12 测试与质量",
   "order": 20260224153526,
-  "status": "TODO",
+  "status": "DONE",
   "title": "补齐日记搜索单元测试与页面联动测试",
   "acceptance": "覆盖空关键词、子串命中、排序与截断、双行片段展示、结果点击跳转日期等关键路径并通过测试",
   "related_files": [
-    "src/utils/__tests__/diary-search.test.ts",
-    "src/pages/__tests__/diary-search.integration.test.tsx",
+    "src/__tests__/unit/diary-search.unit.test.ts",
+    "src/__tests__/integration/diary-search.integration.test.tsx",
     "e2e/specs/diary-search.spec.ts",
     "SPEC.md",
     "todo/tasks/td_20260224153526_ccda5d76.json"
   ],
-  "test_record": "",
-  "done_record": "",
+  "test_record": "风险分级：中（测试补齐与页面联动验证）。已执行：npm run lint（通过）；npm run test:unit（通过）；npm run test:integration（通过，新增 diary-search.integration 用例）；npm run test:e2e:changed（通过，命中 diary-search.spec.ts 1 条）。未执行全量 E2E（仅定向 changed）。",
+  "done_record": "2026-02-25 / pending",
   "source": {
     "file": "SPEC.md",
     "line": 1063
   },
-  "version": 1,
-  "updated_at": "2026-02-24T15:38:20.000Z"
+  "version": 2,
+  "updated_at": "2026-02-25T04:44:46.000Z"
 }

@@ -16,11 +16,11 @@
     "todo/tasks/td_20260224153525_04a1d84d.json"
   ],
   "test_record": "风险分级：中（日记页 UI 交互变更）。已执行：npm run lint（通过）；npm run test:unit（通过）；npm run test:integration（通过）；npm run test:e2e:changed（通过）。未执行全量 E2E（仅定向 changed）。",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 69d2ab4",
   "source": {
     "file": "SPEC.md",
     "line": 218
   },
-  "version": 2,
-  "updated_at": "2026-02-25T04:41:28.000Z"
+  "version": 3,
+  "updated_at": "2026-02-25T04:44:46.000Z"
 }
