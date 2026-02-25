@@ -232,20 +232,22 @@ export function MonthCalendar({
           const baseStyle =
             'relative flex h-[34px] w-full items-center justify-center rounded-[8px] border text-sm transition sm:h-[35px]'
           const monthStyle = cell.inCurrentMonth
-            ? 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
+            ? hasDiaryHighlight
+              ? 'border-[#d7c9ab] bg-[#f4eee0] text-[#4a4335] hover:border-[#c8b894] hover:bg-[#eee4cf]'
+              : 'border-transparent bg-td-surface text-td-text hover:border-td-line hover:bg-[#fcfcfc]'
             : 'border-transparent bg-[#fafafa] text-[#b7b7b7] hover:border-[#ececec]'
-          const diaryStyle = hasDiaryHighlight
-            ? 'border-[#d7c9ab] bg-[#f4eee0] text-[#4a4335] hover:border-[#c8b894] hover:bg-[#eee4cf]'
-            : ''
           const todayStyle = cell.isToday ? 'font-semibold ring-1 ring-brand-100' : ''
-          const activeStyle = isActive ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin' : ''
+          const activeStyle = isActive
+            ? 'border-brand-500 bg-brand-50 text-brand-600 shadow-thin hover:border-brand-500 hover:bg-brand-50'
+            : ''
+          const visualStyle = isActive ? activeStyle : monthStyle
 
           return (
             <button
               key={cell.dateKey}
               type="button"
               onClick={() => onSelectDate(cell.dateKey)}
-              className={`${baseStyle} ${monthStyle} ${diaryStyle} ${todayStyle} ${activeStyle}`}
+              className={`${baseStyle} ${visualStyle} ${todayStyle}`}
               aria-current={cell.isToday ? 'date' : undefined}
               aria-label={`选择 ${cell.dateKey}`}
               data-date-key={cell.dateKey}
