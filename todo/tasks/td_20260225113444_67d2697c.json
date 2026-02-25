@@ -1,0 +1,19 @@
+{
+  "task_uid": "td_20260225113444_67d2697c",
+  "display_id": "TD-DEP-20260225-113444-67D2",
+  "id_prefix": "DEP",
+  "module_key": "6.6",
+  "module_name": "PWA、部署与安全头",
+  "module_label": "6.6 PWA、部署与安全头",
+  "order": 20260225113444,
+  "status": "DONE",
+  "title": "执行 Vercel 生产部署脚本",
+  "acceptance": "成功执行 ./scripts/deploy-vercel-prod.sh 并记录部署结果（成功或失败原因）",
+  "related_files": [
+    "scripts/deploy-vercel-prod.sh"
+  ],
+  "test_record": "风险分级：低（仅执行既有部署脚本，无应用代码变更）；已执行 `bash ./scripts/deploy-vercel-prod.sh`：身份校验通过、`npm run lint` 通过、生产部署成功；部署 URL：`https://tracediary-e01n65uww-lanes-projects-29cb0384.vercel.app`；可达性校验通过：`https://diary.laneljc.cn` -> HTTP 200、`https://tracediary.laneljc.cn` -> HTTP 200；未执行 unit/integration/e2e（本任务仅部署执行）。",
+  "done_record": "2026-02-25 / pending",
+  "version": 2,
+  "updated_at": "2026-02-25T11:36:40.000Z"
+}
