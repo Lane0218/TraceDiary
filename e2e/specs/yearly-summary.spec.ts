@@ -127,3 +127,29 @@ test('年度总结手动保存并立即上传后应显示同步成功且远端�
   expect(remoteContent).not.toContain(marker)
   expect(remoteContent).toMatch(/^[A-Za-z0-9+/=]+$/)
 })
+
+test('移动端空白年度总结编辑区应保持最小高度且内层填充', async ({ page }) => {
+  const env = getE2EEnv()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto(`/yearly/${PERSIST_YEAR}`)
+  await ensureReadySession(page, env)
+
+  const editorSlot = page.getByTestId('yearly-editor-slot')
+  const editorRoot = editorSlot.locator('.trace-milkdown').first()
+  const proseMirror = editorSlot.locator('.ProseMirror').first()
+  await expect(editorSlot).toBeVisible()
+  await expect(editorRoot).toBeVisible()
+  await expect(proseMirror).toBeVisible()
+
+  const slotHeight = await editorSlot.evaluate((node) => node.getBoundingClientRect().height)
+  const rootHeight = await editorRoot.evaluate((node) => node.getBoundingClientRect().height)
+  const proseHeight = await proseMirror.evaluate((node) => node.getBoundingClientRect().height)
+  const slotToRootGap = Math.abs(slotHeight - rootHeight)
+
+  expect(slotHeight).toBeGreaterThanOrEqual(280)
+  expect(rootHeight).toBeGreaterThanOrEqual(240)
+  expect(slotToRootGap).toBeGreaterThanOrEqual(20)
+  expect(slotToRootGap).toBeLessThanOrEqual(52)
+  expect(proseHeight).toBeGreaterThanOrEqual(200)
+})

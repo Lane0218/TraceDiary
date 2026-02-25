@@ -942,7 +942,7 @@ export default function YearlySummaryPage({
               className="td-card-primary td-panel flex flex-col lg:min-h-0 lg:flex-1"
               data-testid="yearly-panel"
             >
-              <div className="min-h-[280px] flex-1 lg:min-h-0" data-testid="yearly-editor-slot">
+              <div className="h-[280px] lg:min-h-0 lg:h-auto lg:flex-1" data-testid="yearly-editor-slot">
                 {isGuestMode || !summary.isLoading ? (
                   <MarkdownEditor
                     key={isGuestMode ? `guest-yearly:${year}` : `${summary.entryId}:${summary.loadRevision}`}

@@ -113,6 +113,32 @@ test('日记页 WYSIWYG 模式应保持外框固定并在内部滚动', async ({
   expect(proseScrollable).toBeTruthy()
 })
 
+test('移动端空白日记编辑区应保持最小高度且内层填充', async ({ page }) => {
+  const env = getE2EEnv()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await gotoDiary(page, TEST_DATE)
+  await ensureReadySession(page, env)
+
+  const editorSlot = page.getByTestId('diary-editor-slot')
+  const editorRoot = page.getByTestId('daily-editor').first()
+  const proseMirror = page.locator('[data-testid="daily-editor"] .ProseMirror').first()
+  await expect(editorSlot).toBeVisible()
+  await expect(editorRoot).toBeVisible()
+  await expect(proseMirror).toBeVisible()
+
+  const slotHeight = await editorSlot.evaluate((node) => node.getBoundingClientRect().height)
+  const rootHeight = await editorRoot.evaluate((node) => node.getBoundingClientRect().height)
+  const proseHeight = await proseMirror.evaluate((node) => node.getBoundingClientRect().height)
+  const slotToRootGap = Math.abs(slotHeight - rootHeight)
+
+  expect(slotHeight).toBeGreaterThanOrEqual(280)
+  expect(rootHeight).toBeGreaterThanOrEqual(240)
+  expect(slotToRootGap).toBeGreaterThanOrEqual(20)
+  expect(slotToRootGap).toBeLessThanOrEqual(48)
+  expect(proseHeight).toBeGreaterThanOrEqual(200)
+})
+
 test('日记页布局应保持左右列底部对齐（视觉回归）', async ({ page }) => {
   const env = getE2EEnv()
 
