@@ -43,6 +43,10 @@ describe('Diary 搜索面板', () => {
     await waitFor(() => {
       expect(screen.queryByText(/共命中 .* 条记录。/)).toBeNull()
     })
+    await waitFor(() => {
+      const marks = Array.from(document.querySelectorAll('[data-testid="diary-search-snippet"] mark'))
+      expect(marks.some((mark) => mark.textContent === '专注')).toBe(true)
+    })
 
     const cards = await screen.findAllByTestId('diary-search-card')
     fireEvent.click(cards[0] as HTMLElement)

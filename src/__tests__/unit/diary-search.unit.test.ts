@@ -75,21 +75,32 @@ describe('searchDiaryRecords', () => {
 
     expect(result.items).toHaveLength(1)
     expect(result.items[0]?.matchIndex).toBe(15)
-    expect(result.items[0]?.snippet).toBe('...content search marker...')
+    expect(result.items[0]?.snippet).toBe('...content search marker')
   })
 })
 
 describe('buildMatchSnippet', () => {
-  it('命中位于中间时应追加前后省略号', () => {
+  it('命中位于中间时应追加前置省略号并保留关键词片段', () => {
     const content = '0123456789ABCDEFGHIJ'
     const snippet = buildMatchSnippet(content, 10, 3, 2)
-    expect(snippet).toBe('...789ABCDE...')
+    expect(snippet).toBe('...789ABCDE')
   })
 
   it('命中位于开头或结尾时省略号应按边界处理', () => {
     const startSnippet = buildMatchSnippet('hello world', 0, 4, 5)
     const endSnippet = buildMatchSnippet('hello world', 10, 4, 1)
-    expect(startSnippet).toBe('hello wor...')
+    expect(startSnippet).toBe('hello world')
     expect(endSnippet).toBe('...world')
+  })
+
+  it('长前缀场景应让关键词出现在片段靠前位置', () => {
+    const keyword = '可见关键词'
+    const content = `${'前缀'.repeat(30)}${keyword}${'结尾'.repeat(10)}`
+    const snippet = buildMatchSnippet(content, content.indexOf(keyword), 24, keyword.length)
+    const keywordIndex = snippet.indexOf(keyword)
+
+    expect(keywordIndex).toBeGreaterThanOrEqual(0)
+    expect(keywordIndex).toBeLessThanOrEqual(14)
+    expect(snippet.endsWith('...')).toBe(false)
   })
 })

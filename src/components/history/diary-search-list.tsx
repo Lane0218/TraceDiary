@@ -64,7 +64,11 @@ function SearchRow({ index, style, items, keyword, onSelectDate }: RowComponentP
         <p className="inline-flex w-fit max-w-full items-center rounded-full border border-[#cfd4d9] bg-[#eef1f4] px-2 py-[2px] text-[12px] font-medium leading-none text-[#2f3a43]">
           {item.date}
         </p>
-        <p className="mt-[3px] w-full text-[13px] leading-[1.25] text-[#4a545c]" style={snippetSingleLineStyle}>
+        <p
+          className="mt-[3px] w-full text-[13px] leading-[1.25] text-[#4a545c]"
+          style={snippetSingleLineStyle}
+          data-testid="diary-search-snippet"
+        >
           {renderHighlightedSnippet(item.snippet, keyword)}
         </p>
       </button>

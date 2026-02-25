@@ -4,6 +4,8 @@ import { countVisibleChars } from './word-count'
 
 const DEFAULT_SEARCH_LIMIT = 200
 const DEFAULT_SNIPPET_RADIUS = 24
+const MAX_SNIPPET_TOTAL_CHARS = 40
+const MAX_SNIPPET_LEADING_CONTEXT = 8
 
 interface SearchDiaryRecordsOptions {
   limit?: number
@@ -51,8 +53,15 @@ export function buildMatchSnippet(content: string, matchIndex: number, radius: n
   const safeRadius = Math.max(0, radius)
   const safeMatchLength = Math.max(1, matchLength)
   const safeMatchIndex = Math.min(Math.max(0, matchIndex), Math.max(content.length - 1, 0))
-  const start = Math.max(0, safeMatchIndex - safeRadius)
-  const end = Math.min(content.length, safeMatchIndex + safeMatchLength + safeRadius)
+  const leadingContext = Math.min(safeRadius, MAX_SNIPPET_LEADING_CONTEXT)
+  const trailingContext = safeRadius
+  const start = Math.max(0, safeMatchIndex - leadingContext)
+  const maxWindowLength = Math.max(
+    safeMatchLength + leadingContext,
+    Math.min(MAX_SNIPPET_TOTAL_CHARS, safeMatchLength + leadingContext + trailingContext),
+  )
+  const endByMatch = safeMatchIndex + safeMatchLength + trailingContext
+  const end = Math.min(content.length, Math.max(start + maxWindowLength, endByMatch))
   const snippet = toSnippetContent(content.slice(start, end))
 
   if (!snippet) {
@@ -60,8 +69,7 @@ export function buildMatchSnippet(content: string, matchIndex: number, radius: n
   }
 
   const prefix = start > 0 ? '...' : ''
-  const suffix = end < content.length ? '...' : ''
-  return `${prefix}${snippet}${suffix}`
+  return `${prefix}${snippet}`
 }
 
 function toSearchItem(
