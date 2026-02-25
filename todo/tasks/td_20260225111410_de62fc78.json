@@ -15,11 +15,11 @@
     "e2e/specs/remote-pull-sync.spec.ts"
   ],
   "test_record": "风险分级：中；npm run lint 通过；npm run test:unit 通过（102/102）；npm run test:integration 通过（105/105，含既有 act(...) 警告）；npx playwright test e2e/specs/calendar-history.spec.ts --project=chromium --retries=0 通过（2/2）；npx playwright test e2e/specs/remote-pull-sync.spec.ts --project=chromium --retries=0 通过（1/1）；未执行全量 npm run test:e2e:full（本任务未命中全量门禁，已执行直接相关 E2E）",
-  "done_record": "2026-02-25 / pending",
+  "done_record": "2026-02-25 / 9609335",
   "source": {
     "file": "src/components/calendar/month-calendar.tsx",
     "line": 1
   },
-  "version": 11,
-  "updated_at": "2026-02-25T13:04:59.952Z"
+  "version": 12,
+  "updated_at": "2026-02-25T13:05:46.548Z"
 }
