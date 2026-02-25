@@ -51,3 +51,32 @@ test('日记编辑后应持久化到 IndexedDB 并保留可见内容 @smoke', as
   const editor = page.locator('[data-testid="daily-editor"] .ProseMirror').first()
   await expect(editor).toContainText(marker, { timeout: 15_000 })
 })
+
+test('日记页左右面板应等高，长内容只在编辑区内滚动', async ({ page }) => {
+  const env = getE2EEnv()
+  const marker = `daily-height-${Date.now().toString(36)}`
+  const longMarkdown = Array.from({ length: 80 }, (_, index) => `第 ${index + 1} 行 ${marker}`).join('\n\n')
+
+  await gotoDiary(page, TEST_DATE)
+  await ensureReadySession(page, env)
+
+  await page.getByTestId('diary-left-tab-search').click()
+  await expect(page.getByTestId('diary-left-panel')).toBeVisible()
+  await expect(page.getByTestId('diary-panel')).toBeVisible()
+
+  const leftHeightBefore = await page.getByTestId('diary-left-panel').evaluate((node) => node.getBoundingClientRect().height)
+  const rightHeightBefore = await page.getByTestId('diary-panel').evaluate((node) => node.getBoundingClientRect().height)
+  expect(Math.abs(leftHeightBefore - rightHeightBefore)).toBeLessThanOrEqual(1)
+
+  await page.getByTestId('daily-editor-mode-source').click()
+  const sourceEditor = page.locator('textarea[data-testid="daily-editor"]').first()
+  await expect(sourceEditor).toBeVisible()
+  await sourceEditor.fill(longMarkdown)
+  await waitForDailyDiaryPersisted(page, TEST_DATE, marker)
+
+  const rightHeightAfter = await page.getByTestId('diary-panel').evaluate((node) => node.getBoundingClientRect().height)
+  expect(Math.abs(rightHeightAfter - rightHeightBefore)).toBeLessThanOrEqual(1)
+
+  const sourceScrollable = await sourceEditor.evaluate((node) => node.scrollHeight > node.clientHeight + 1)
+  expect(sourceScrollable).toBeTruthy()
+})

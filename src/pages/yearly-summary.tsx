@@ -55,7 +55,6 @@ interface YearlySummaryPageProps {
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
 const MIN_YEAR = 1970
 const MAX_YEAR = 9999
-const YEARLY_EDITOR_BODY_HEIGHT_DESKTOP = 620
 const RENDERED_HEADING_SELECTOR = '.ProseMirror h1'
 
 function normalizeYear(yearParam: string | undefined, fallbackYear: number): number {
@@ -911,7 +910,7 @@ export default function YearlySummaryPage({
             </section>
           </aside>
 
-          <section className="space-y-3 lg:flex lg:min-h-0 lg:flex-col">
+          <section className="space-y-3 lg:flex lg:min-h-0 lg:h-full lg:flex-col">
             <SyncControlBar
               statusHint={
                 <StatusHint
@@ -957,7 +956,6 @@ export default function YearlySummaryPage({
                     placeholder="写下本年度总结"
                     modeTogglePlacement="bottom"
                     modeToggleClassName="mt-3"
-                    viewportHeight={YEARLY_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
                     disabled={isGuestMode}
                   />

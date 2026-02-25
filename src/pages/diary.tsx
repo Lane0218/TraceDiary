@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthModal from '../components/auth/auth-modal'
 import MonthCalendar from '../components/calendar/month-calendar'
@@ -71,15 +71,9 @@ interface YearlyReminder {
 type DiaryLeftPanelTab = 'history' | 'stats' | 'search'
 
 const DIARY_LEFT_PANEL_STORAGE_KEY = 'trace-diary:diary:left-panel'
-const DIARY_PANEL_HEIGHT_DESKTOP = 340
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
-const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
 const DIARY_SEARCH_DEBOUNCE_MS = 200
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
-const DIARY_PANEL_HEIGHT_STYLE = {
-  '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
-  '--diary-panel-body-height': `${DIARY_PANEL_BODY_HEIGHT_DESKTOP}px`,
-} as CSSProperties
 
 function getInitialLeftPanelTab(): DiaryLeftPanelTab {
   if (typeof window === 'undefined') {
@@ -903,8 +897,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             </section>
 
             <section
-              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[var(--diary-panel-height)]"
-              style={DIARY_PANEL_HEIGHT_STYLE}
+              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[340px]"
               data-testid="diary-left-panel"
             >
               <div className="flex items-center gap-2">
@@ -955,8 +948,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
               </div>
 
               <div
-                className="min-h-0 flex-1 lg:h-[var(--diary-panel-body-height)] lg:flex-none"
-                style={DIARY_PANEL_HEIGHT_STYLE}
+                className="min-h-0 flex-1 lg:h-[252px] lg:flex-none"
                 data-testid="diary-left-panel-body"
               >
                 {leftPanelTab === 'history' ? (
@@ -1016,11 +1008,14 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             />
 
             <article
-              className="td-card-primary td-panel flex flex-col lg:min-h-[520px] lg:flex-1"
+              className="td-card-primary td-panel flex flex-col lg:h-[340px] lg:flex-none"
               data-testid="diary-panel"
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div className="min-h-0 flex-1" data-testid="diary-editor-slot">
+              <div
+                className="min-h-0 flex-1 lg:h-[252px] lg:flex-none"
+                data-testid="diary-editor-slot"
+              >
                 {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
                     key={isGuestMode ? `guest:${date}` : `${diary.entryId}:${diary.loadRevision}`}
@@ -1033,8 +1028,6 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
                     onChange={handleEditorChange}
                     placeholder="写下今天的记录（支持 Markdown）"
                     testId="daily-editor"
-                    modeToggleClassName="-mt-8 mb-5"
-                    viewportHeight={DIARY_EDITOR_BODY_HEIGHT_DESKTOP}
                     fillHeight
                     disabled={isGuestMode}
                   />

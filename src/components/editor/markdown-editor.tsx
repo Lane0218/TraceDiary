@@ -80,26 +80,17 @@ function MilkdownRuntimeEditor({
   }, [docKey])
   const resolvedViewportHeight =
     typeof viewportHeight === 'number' && viewportHeight > 0 ? viewportHeight : undefined
-  const milkdownContainerClassName =
-    fillHeight && !resolvedViewportHeight ? 'h-full min-h-[360px]' : ''
-  const editorStyle = fillHeight
+  const editorStyle = resolvedViewportHeight
     ? ({
-        '--td-editor-height': resolvedViewportHeight ? `${resolvedViewportHeight}px` : '100%',
-        '--td-editor-content-height': resolvedViewportHeight
-          ? `${Math.max(resolvedViewportHeight - 40, 260)}px`
-          : 'calc(100% - 40px)',
+        '--td-editor-height': `${resolvedViewportHeight}px`,
+        '--td-editor-content-height': `${Math.max(resolvedViewportHeight - 40, 260)}px`,
       } as CSSProperties)
-    : resolvedViewportHeight
-      ? ({
-          '--td-editor-height': `${resolvedViewportHeight}px`,
-          '--td-editor-content-height': `${Math.max(resolvedViewportHeight - 40, 260)}px`,
-        } as CSSProperties)
-      : undefined
+    : undefined
 
   return (
     <div
       className={`trace-milkdown rounded-[10px] border border-td-line bg-td-surface ${
-        milkdownContainerClassName
+        fillHeight ? 'trace-milkdown-fill h-full min-h-0' : ''
       } ${
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
@@ -143,7 +134,7 @@ function MarkdownEditorInner({
   const resolvedViewportHeight =
     typeof viewportHeight === 'number' && viewportHeight > 0 ? viewportHeight : undefined
   const sourceEditorStyle = fillHeight
-    ? ({ height: resolvedViewportHeight ? `${resolvedViewportHeight}px` : '100%' } as CSSProperties)
+    ? ({ height: '100%' } as CSSProperties)
     : resolvedViewportHeight
       ? ({ height: `${resolvedViewportHeight}px` } as CSSProperties)
       : undefined
@@ -220,7 +211,7 @@ function MarkdownEditorInner({
             onChange={(event) => applyDraftChange(event.target.value)}
             disabled={disabled}
             className={`w-full resize-none overflow-y-auto rounded-[10px] border border-td-line bg-td-surface p-4 text-td-text outline-none focus:border-brand-500 ${
-              fillHeight ? 'h-full min-h-[360px]' : 'min-h-[360px]'
+              fillHeight ? 'h-full min-h-0' : 'min-h-[360px]'
             } ${
               showSourceMode ? 'font-mono text-sm leading-7' : ''
             }`}
@@ -247,7 +238,7 @@ function MarkdownEditorInner({
             disabled={disabled}
             spellCheck={false}
             className={`trace-editor-source w-full resize-none overflow-y-auto rounded-[10px] border border-td-line bg-td-surface p-4 text-sm leading-7 text-td-text outline-none focus:border-brand-500 ${
-              fillHeight ? 'h-full min-h-[360px]' : 'min-h-[360px]'
+              fillHeight ? 'h-full min-h-0' : 'min-h-[360px]'
             }`}
             style={sourceEditorStyle}
           />
