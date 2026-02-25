@@ -7,6 +7,7 @@ import ConflictDialog from '../components/common/conflict-dialog'
 import SyncControlBar from '../components/common/sync-control-bar'
 import StatusHint from '../components/common/status-hint'
 import MarkdownEditor from '../components/editor/markdown-editor'
+import DiarySearchList from '../components/history/diary-search-list'
 import OnThisDayList from '../components/history/on-this-day-list'
 import StatsOverviewCard from '../components/stats/stats-overview-card'
 import type { UseAuthResult } from '../hooks/use-auth'
@@ -32,8 +33,9 @@ import {
   pullDiaryFromGitee,
   type DiarySyncMetadata,
 } from '../services/sync'
-import type { DateString } from '../types/diary'
+import type { DateString, DiarySearchResult } from '../types/diary'
 import { formatDateKey, getDiaryDateKey } from '../utils/date'
+import { searchDiaryRecords } from '../utils/diary-search'
 import { buildStatsSummary } from '../utils/stats'
 import { getSyncAvailability } from '../utils/sync-availability'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
@@ -66,12 +68,13 @@ interface YearlyReminder {
   message: string
 }
 
-type DiaryLeftPanelTab = 'history' | 'stats'
+type DiaryLeftPanelTab = 'history' | 'stats' | 'search'
 
 const DIARY_LEFT_PANEL_STORAGE_KEY = 'trace-diary:diary:left-panel'
 const DIARY_PANEL_HEIGHT_DESKTOP = 340
 const DIARY_PANEL_BODY_HEIGHT_DESKTOP = 252
 const DIARY_EDITOR_BODY_HEIGHT_DESKTOP = 480
+const DIARY_SEARCH_DEBOUNCE_MS = 200
 const EMPTY_PUSH_BLOCKED_MESSAGE = '当前内容为空，无需 push'
 const DIARY_PANEL_HEIGHT_STYLE = {
   '--diary-panel-height': `${DIARY_PANEL_HEIGHT_DESKTOP}px`,
@@ -83,7 +86,10 @@ function getInitialLeftPanelTab(): DiaryLeftPanelTab {
     return 'history'
   }
   const persisted = window.localStorage.getItem(DIARY_LEFT_PANEL_STORAGE_KEY)
-  return persisted === 'stats' ? 'stats' : 'history'
+  if (persisted === 'stats' || persisted === 'search') {
+    return persisted
+  }
+  return 'history'
 }
 
 function isValidDateString(value: string | null): value is DateString {
@@ -194,6 +200,9 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
   )
   const [diaries, setDiaries] = useState<DiaryRecord[]>([])
   const [yearlySummaries, setYearlySummaries] = useState<DiaryRecord[]>([])
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [debouncedSearchKeyword, setDebouncedSearchKeyword] = useState('')
+  const [isSearchDebouncing, setIsSearchDebouncing] = useState(false)
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
@@ -297,6 +306,10 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
 
   const yearlyReminder = useMemo(() => getYearlyReminder(new Date()), [])
   const statsSummary = useMemo(() => buildStatsSummary([...diaries, ...yearlySummaries]), [diaries, yearlySummaries])
+  const searchResult = useMemo<DiarySearchResult>(
+    () => searchDiaryRecords(diaries, debouncedSearchKeyword, { limit: 200, snippetRadius: 24 }),
+    [debouncedSearchKeyword, diaries],
+  )
 
   const diaryDateSet = useMemo(() => {
     return new Set(
@@ -398,6 +411,20 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
     }
     window.localStorage.setItem(DIARY_LEFT_PANEL_STORAGE_KEY, leftPanelTab)
   }, [leftPanelTab])
+
+  useEffect(() => {
+    const normalized = searchKeyword.trim()
+    const debouncedNormalized = debouncedSearchKeyword.trim()
+    setIsSearchDebouncing(normalized.length > 0 && normalized !== debouncedNormalized)
+
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchKeyword(searchKeyword)
+    }, DIARY_SEARCH_DEBOUNCE_MS)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [debouncedSearchKeyword, searchKeyword])
 
   const patchSearch = useCallback(
     (patcher: (next: URLSearchParams) => void) => {
@@ -881,7 +908,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
               data-testid="diary-left-panel"
             >
               <div className="flex items-center gap-2">
-                <div className="grid min-w-0 flex-1 grid-cols-2 rounded-[11px] border border-[#d2d1cd] bg-[#ebe9e4] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <div className="grid min-w-0 flex-1 grid-cols-3 rounded-[11px] border border-[#d2d1cd] bg-[#ebe9e4] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                   <button
                     type="button"
                     className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
@@ -910,6 +937,20 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
                   >
                     统计概览
                   </button>
+                  <button
+                    type="button"
+                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                      leftPanelTab === 'search'
+                        ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
+                        : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
+                    }`}
+                    onClick={() => {
+                      setLeftPanelTab('search')
+                    }}
+                    data-testid="diary-left-tab-search"
+                  >
+                    搜索
+                  </button>
                 </div>
               </div>
 
@@ -927,11 +968,20 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
                     onSelectDate={handleSelectDate}
                     viewportHeight={DIARY_PANEL_BODY_HEIGHT_DESKTOP}
                   />
-                ) : (
+                ) : leftPanelTab === 'stats' ? (
                   <StatsOverviewCard
                     summary={statsSummary}
                     isLoading={isLoadingDiaries}
                     error={diaryLoadError}
+                  />
+                ) : (
+                  <DiarySearchList
+                    keyword={searchKeyword}
+                    result={searchResult}
+                    isSearching={isSearchDebouncing}
+                    onKeywordChange={setSearchKeyword}
+                    onSelectDate={handleDateChange}
+                    viewportHeight={DIARY_PANEL_BODY_HEIGHT_DESKTOP}
                   />
                 )}
               </div>
