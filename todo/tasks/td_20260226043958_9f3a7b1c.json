@@ -14,11 +14,11 @@
     "todo/tasks/td_20260226043958_9f3a7b1c.json"
   ],
   "test_record": "1) bash -n scripts/deploy-vercel-prod.sh 通过；2) VERCEL_TOKEN='invalid_token' bash scripts/deploy-vercel-prod.sh --skip-lint --skip-verify：第1步可见输出，快速失败并返回 exit code=1。未执行 lint/unit/integration/E2E（本次仅发布脚本行为修复）。",
-  "done_record": "2026-02-26 / pending",
+  "done_record": "2026-02-26 / 42be497",
   "source": {
     "file": "scripts/deploy-vercel-prod.sh",
     "line": 146
   },
-  "version": 2,
-  "updated_at": "2026-02-26T04:43:19.000Z"
+  "version": 3,
+  "updated_at": "2026-02-26T04:43:56.000Z"
 }
