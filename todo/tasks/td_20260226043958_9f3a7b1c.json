@@ -1,0 +1,24 @@
+{
+  "task_uid": "td_20260226043958_9f3a7b1c",
+  "display_id": "TD-OPS-20260226-043958-9F3A",
+  "id_prefix": "OPS",
+  "module_key": "6.00",
+  "module_name": "发布运维",
+  "module_label": "6.00 发布运维",
+  "order": 20260226043958,
+  "status": "DONE",
+  "title": "排查 deploy-vercel-prod 校验 Vercel 身份卡住问题",
+  "acceptance": "明确第1步阻塞原因，给出可执行的修复或绕过方案，并验证脚本行为",
+  "related_files": [
+    "scripts/deploy-vercel-prod.sh",
+    "todo/tasks/td_20260226043958_9f3a7b1c.json"
+  ],
+  "test_record": "1) bash -n scripts/deploy-vercel-prod.sh 通过；2) VERCEL_TOKEN='invalid_token' bash scripts/deploy-vercel-prod.sh --skip-lint --skip-verify：第1步可见输出，快速失败并返回 exit code=1。未执行 lint/unit/integration/E2E（本次仅发布脚本行为修复）。",
+  "done_record": "2026-02-26 / pending",
+  "source": {
+    "file": "scripts/deploy-vercel-prod.sh",
+    "line": 146
+  },
+  "version": 2,
+  "updated_at": "2026-02-26T04:43:19.000Z"
+}

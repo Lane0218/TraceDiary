@@ -144,7 +144,8 @@ export npm_config_cache="$NPM_CACHE_DIR"
 cd "$ROOT_DIR"
 
 echo "[1/4] 校验 Vercel 身份..."
-npx vercel whoami --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" >/dev/null
+echo "提示：首次执行可能会安装 Vercel CLI，网络较慢时会等待一段时间。"
+npx --yes vercel whoami --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
 echo "已通过身份校验。"
 
 if [[ "$SKIP_LINT" == "true" ]]; then
@@ -155,7 +156,7 @@ else
 fi
 
 echo "[3/4] 执行生产部署..."
-deploy_output="$(npx vercel --prod --yes --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" 2>&1)"
+deploy_output="$(npx --yes vercel --prod --yes --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" 2>&1)"
 echo "$deploy_output"
 
 deployment_url="$(printf '%s\n' "$deploy_output" | grep -Eo 'https://[a-zA-Z0-9.-]+\.vercel\.app' | tail -n 1 || true)"
