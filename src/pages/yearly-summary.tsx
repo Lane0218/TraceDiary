@@ -89,6 +89,7 @@ export default function YearlySummaryPage({
   const [manualSyncError, setManualSyncError] = useState<string | null>(null)
   const [manualPullError, setManualPullError] = useState<string | null>(null)
   const [isManualPulling, setIsManualPulling] = useState(false)
+  const [editorPullRefreshRevision, setEditorPullRefreshRevision] = useState(0)
   const [pullActionSnapshot, setPullActionSnapshot] = useState<SyncActionSnapshot>(() =>
     createIdleSyncActionSnapshot(),
   )
@@ -518,6 +519,7 @@ export default function YearlySummaryPage({
       return
     }
     summary.setContent(remote.content)
+    setEditorPullRefreshRevision((prev) => prev + 1)
     await sync.markSynced(
       {
         ...remote,
@@ -945,11 +947,15 @@ export default function YearlySummaryPage({
               <div className="h-[1800px] lg:min-h-0 lg:h-auto lg:flex-1" data-testid="yearly-editor-slot">
                 {isGuestMode || !summary.isLoading ? (
                   <MarkdownEditor
-                    key={isGuestMode ? `guest-yearly:${year}` : `${summary.entryId}:${summary.loadRevision}`}
+                    key={
+                      isGuestMode
+                        ? `guest-yearly:${year}`
+                        : `${summary.entryId}:${summary.loadRevision}:${editorPullRefreshRevision}`
+                    }
                     docKey={
                       isGuestMode
                         ? `guest-yearly:${year}`
-                        : `${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}`
+                        : `${summary.entryId}:${summary.isLoading ? 'loading' : 'ready'}:${summary.loadRevision}:${editorPullRefreshRevision}`
                     }
                     initialValue={isGuestMode ? demoSummaryEntry.content ?? '' : summary.content}
                     onChange={handleEditorChange}

@@ -296,6 +296,41 @@ describe('年度总结页面', () => {
     expect(setContent).toHaveBeenCalledWith('远端年度内容')
   })
 
+  it('手动 pull 成功后应刷新编辑器 docKey，确保当前页立即显示远端内容', async () => {
+    useDiaryMock.mockReturnValue(
+      buildUseDiaryResult({
+        entryId: 'summary:2026',
+        content: '本地内容',
+        loadRevision: 0,
+        waitForPersisted: vi.fn(async (): Promise<UseDiaryResult['entry']> => ({
+          type: 'yearly_summary',
+          id: 'summary:2026',
+          year: 2026,
+          date: '2026-12-31',
+          filename: '2026-summary.md.enc',
+          content: '本地内容',
+          wordCount: 4,
+          createdAt: '2026-02-09T00:00:00.000Z',
+          modifiedAt: '2026-02-09T00:10:00.000Z',
+        })),
+      }),
+    )
+
+    renderYearlyPage('/yearly/2026')
+    const editorBeforePull = screen.getByLabelText('写下本年度总结')
+    const docKeyBeforePull = editorBeforePull.getAttribute('data-doc-key')
+    expect(docKeyBeforePull).toContain('summary:2026:ready:0:0')
+
+    fireEvent.click(screen.getByTestId('manual-pull-button'))
+
+    await waitFor(() => {
+      expect(pullDiaryFromGiteeMock).toHaveBeenCalledTimes(1)
+    })
+    const editorAfterPull = screen.getByLabelText('写下本年度总结')
+    const docKeyAfterPull = editorAfterPull.getAttribute('data-doc-key')
+    expect(docKeyAfterPull).toContain('summary:2026:ready:0:1')
+  })
+
   it('云端未就绪时点击手动上传应展示明确提示', () => {
     useDiaryMock.mockReturnValue(
       buildUseDiaryResult({

@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260226035053_a6b6f8b8",
+  "display_id": "TD-SYNC-20260226-035053-A6B6",
+  "id_prefix": "SYNC",
+  "module_key": "6.5",
+  "module_name": "同步与冲突解决",
+  "module_label": "6.5 同步与冲突解决",
+  "order": 20260226035053,
+  "status": "DONE",
+  "title": "修复 pull 后当前日期编辑器不即时刷新的问题",
+  "acceptance": "手动 pull 成功后当前日期编辑器无需切换日期即可显示远端内容；补充回归测试覆盖 pull 刷新编辑器 key 场景",
+  "related_files": [
+    "todo/tasks/td_20260226035053_a6b6f8b8.json",
+    "src/pages/diary.tsx",
+    "src/pages/yearly-summary.tsx",
+    "src/__tests__/integration/editor.integration.test.tsx"
+  ],
+  "test_record": "风险分级：中（手动 pull 后编辑器刷新链路）。已执行：npm run lint（通过）；npm run test:unit（102/102 通过）；npm run test:integration（110/110 通过，存在既有 act warning，不影响结果）；npm run test:e2e:fast（6/6 通过）。未执行全量 npm run test:e2e:full（本次未命中全量门禁，已执行 smoke E2E）。",
+  "done_record": "2026-02-26 / pending",
+  "source": {
+    "file": "用户反馈",
+    "line": 1
+  },
+  "version": 4,
+  "updated_at": "2026-02-26T04:09:25.000Z"
+}

@@ -203,6 +203,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
   const [isLoadingDiaries, setIsLoadingDiaries] = useState(true)
   const [diaryLoadError, setDiaryLoadError] = useState<string | null>(null)
   const [desktopDiaryPanelHeight, setDesktopDiaryPanelHeight] = useState<number | null>(null)
+  const [editorPullRefreshRevision, setEditorPullRefreshRevision] = useState(0)
   const [remotePullSignal, setRemotePullSignal] = useState(0)
   const [dismissedTokenRefreshKey, setDismissedTokenRefreshKey] = useState<string | null>(null)
   const [pullConflictState, setPullConflictState] = useState<{
@@ -637,6 +638,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
       return
     }
     diary.setContent(remote.content)
+    setEditorPullRefreshRevision((prev) => prev + 1)
     setDiaries((prev) => upsertDailyRecord(prev, date, remote.content))
     await sync.markSynced(
       {
@@ -1084,11 +1086,15 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
               <div className="h-[1800px] overflow-hidden lg:min-h-0 lg:h-auto lg:flex-1" data-testid="diary-editor-slot">
                 {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
-                    key={isGuestMode ? `guest:${date}` : `${diary.entryId}:${diary.loadRevision}`}
+                    key={
+                      isGuestMode
+                        ? `guest:${date}`
+                        : `${diary.entryId}:${diary.loadRevision}:${editorPullRefreshRevision}`
+                    }
                     docKey={
                       isGuestMode
                         ? `guest:${date}`
-                        : `${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}:${diary.loadRevision}`
+                        : `${diary.entryId}:${diary.isLoading ? 'loading' : 'ready'}:${diary.loadRevision}:${editorPullRefreshRevision}`
                     }
                     initialValue={isGuestMode ? (demoDiaryEntry.content ?? '') : diary.content}
                     onChange={handleEditorChange}
