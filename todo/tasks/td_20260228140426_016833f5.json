@@ -1,0 +1,26 @@
+{
+  "task_uid": "td_20260228140426_016833f5",
+  "display_id": "TD-FUNC-20260228-140426-1041",
+  "id_prefix": "FUNC",
+  "module_key": "editor.tasklist",
+  "module_name": "Markdown 编辑器",
+  "module_label": "Markdown 编辑器任务清单",
+  "order": 20260228140426,
+  "status": "DONE",
+  "title": "修复 Markdown 嵌套任务清单渲染并支持点击勾选",
+  "acceptance": "嵌套任务清单在可视化模式显示 checkbox，点击可切换并同步回 Markdown，普通列表不受影响",
+  "related_files": [
+    "src/components/editor/markdown-editor.tsx",
+    "src/components/editor/markdown-editor.css",
+    "src/components/editor/task-list-checkbox-plugin.ts",
+    "src/__tests__/integration/task-list-checkbox-plugin.integration.test.ts"
+  ],
+  "test_record": "风险分级：中（编辑器交互与样式改动）。已执行：npm run lint（通过）；npm run test:unit（15 files / 102 tests 全通过）；npm run test:integration（17 files / 113 tests 全通过，存在既有 act 警告）；npx playwright test e2e/specs/daily-edit.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line --trace=off（5 passed）。未执行全量 E2E（未触发主链路发布条件）。",
+  "done_record": "2026-02-28 / pending",
+  "source": {
+    "file": "src/components/editor/markdown-editor.tsx",
+    "line": 1
+  },
+  "version": 2,
+  "updated_at": "2026-02-28T14:16:40.000Z"
+}

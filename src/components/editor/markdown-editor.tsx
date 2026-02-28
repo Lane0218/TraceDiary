@@ -6,6 +6,7 @@ import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
 import { nord } from '@milkdown/theme-nord'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { countVisibleChars } from '../../utils/word-count'
+import { taskListCheckboxPlugin } from './task-list-checkbox-plugin'
 import './markdown-editor.css'
 
 interface MarkdownEditorProps {
@@ -76,6 +77,7 @@ function MilkdownRuntimeEditor({
       })
       .use(commonmark)
       .use(gfm)
+      .use(taskListCheckboxPlugin)
       .use(listener)
   }, [docKey])
   const resolvedViewportHeight =

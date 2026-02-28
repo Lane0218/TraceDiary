@@ -109,6 +109,71 @@
   line-height: 1.7;
 }
 
+.trace-milkdown .milkdown .ProseMirror li[data-item-type='task'] {
+  --td-task-checkbox-border: #b8b4aa;
+  --td-task-checkbox-border-hover: #868174;
+  --td-task-checkbox-fill: #38423d;
+  --td-task-checkbox-fill-hover: #414b46;
+  --td-task-checkbox-focus-ring: rgba(56, 66, 61, 0.2);
+  list-style: none;
+  position: relative;
+  padding-left: 1.7rem;
+}
+
+.trace-milkdown .milkdown .ProseMirror li[data-item-type='task']::marker {
+  content: '';
+}
+
+.trace-milkdown .milkdown .ProseMirror .td-task-checkbox {
+  position: absolute;
+  left: 0;
+  top: 0.34rem;
+  width: 1.02rem;
+  height: 1.02rem;
+  border: 1px solid var(--td-task-checkbox-border);
+  border-radius: 0.26rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f6f4 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0 rgba(56, 66, 61, 0);
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
+}
+
+.trace-milkdown .milkdown .ProseMirror .td-task-checkbox:hover {
+  border-color: var(--td-task-checkbox-border-hover);
+  box-shadow: 0 0 0 2px var(--td-task-checkbox-focus-ring);
+  transform: translateY(-1px);
+}
+
+.trace-milkdown .milkdown .ProseMirror .td-task-checkbox:focus-visible {
+  outline: none;
+  border-color: var(--td-task-checkbox-fill);
+  box-shadow: 0 0 0 3px var(--td-task-checkbox-focus-ring);
+}
+
+.trace-milkdown .milkdown .ProseMirror .td-task-checkbox[data-checked='true'] {
+  background: linear-gradient(180deg, var(--td-task-checkbox-fill-hover) 0%, var(--td-task-checkbox-fill) 100%);
+  border-color: var(--td-task-checkbox-fill);
+  box-shadow: 0 1px 1px rgba(22, 28, 25, 0.18);
+}
+
+.trace-milkdown .milkdown .ProseMirror .td-task-checkbox[data-checked='true']::after {
+  content: '';
+  width: 0.28rem;
+  height: 0.56rem;
+  border: 2px solid #ffffff;
+  border-top: 0;
+  border-left: 0;
+  transform: translateY(-0.03rem) rotate(45deg);
+}
+
 .trace-milkdown .milkdown .ProseMirror blockquote {
   border-left: 4px solid #e6e6e6;
   margin: 0.8rem 0;
