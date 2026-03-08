@@ -12,7 +12,7 @@
   "related_files": [
     "TODO.md"
   ],
-  "test_record": "风险分级：低（部署配置）；`npx vercel domains add tracediary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`npx vercel domains add diary.laneljc.cn --scope lanes-projects-29cb0384 --token ***` 通过；`curl -I https://tracediary.laneljc.cn` 返回 `HTTP/2 200`；`curl -I https://diary.laneljc.cn` 返回 `HTTP/2 200`；`npm run lint` 通过；未执行 `unit/integration/e2e`（本任务为部署配置低风险，不涉及运行时代码变更）",
+  "test_record": "风险分级：低（部署配置）；`npx vercel domains add tracediary.laneljc.cn --scope <redacted> --token ***` 通过；`npx vercel domains add diary.laneljc.cn --scope <redacted> --token ***` 通过；`curl -I https://tracediary.laneljc.cn` 返回 `HTTP/2 200`；`curl -I https://diary.laneljc.cn` 返回 `HTTP/2 200`；`npm run lint` 通过；未执行 `unit/integration/e2e`（本任务为部署配置低风险，不涉及运行时代码变更）",
   "done_record": "2026-02-17 / bc46def",
   "source": {
     "file": "TODO.md",

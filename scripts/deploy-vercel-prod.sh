@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERCEL_SCOPE="${VERCEL_SCOPE:-lanes-projects-29cb0384}"
+VERCEL_SCOPE="${VERCEL_SCOPE:-}"
 NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/.npm-cache}"
 ALLOW_STATUS_CODES="${ALLOW_STATUS_CODES:-200,301,302,307,308,401,403}"
 
@@ -44,7 +44,7 @@ usage() {
   VERCEL_TOKEN=xxx bash scripts/deploy-vercel-prod.sh [选项]
 
 选项:
-  --scope <scope>     指定 Vercel scope（默认: lanes-projects-29cb0384）
+  --scope <scope>     指定 Vercel scope（也可通过环境变量 VERCEL_SCOPE 提供）
   --url <https-url>   指定部署后校验地址（可重复传入）
   --skip-lint         跳过 npm run lint
   --skip-verify       跳过 URL 可达性校验
@@ -52,6 +52,7 @@ usage() {
 
 环境变量:
   VERCEL_TOKEN        必填，Vercel token（若未设置会尝试读取 .env.local）
+  VERCEL_SCOPE        必填，Vercel scope（若未设置需通过 --scope 传入）
   NPM_CACHE_DIR       可选，npx/npm 缓存目录（默认: /tmp/.npm-cache）
   ALLOW_STATUS_CODES  可选，允许的 HTTP 状态码，逗号分隔
 
@@ -123,6 +124,11 @@ load_vercel_token_from_env_local
 
 if [[ -z "${VERCEL_TOKEN:-}" ]]; then
   echo "缺少 VERCEL_TOKEN，请先执行: export VERCEL_TOKEN='你的token'，或在 .env.local 写入 VERCEL_TOKEN=xxx" >&2
+  exit 1
+fi
+
+if [[ -z "$VERCEL_SCOPE" ]]; then
+  echo "缺少 VERCEL_SCOPE，请先执行: export VERCEL_SCOPE='你的scope'，或通过 --scope 传入" >&2
   exit 1
 fi
 

@@ -135,8 +135,8 @@ bash scripts/deploy-vercel-prod.sh
 常用参数：
 
 ```bash
-# 自定义 scope
-bash scripts/deploy-vercel-prod.sh --scope lanes-projects-29cb0384
+# 指定 Vercel scope
+bash scripts/deploy-vercel-prod.sh --scope <your-vercel-scope>
 
 # 自定义校验地址（可重复 --url）
 bash scripts/deploy-vercel-prod.sh --url https://diary.laneljc.cn --url https://tracediary.laneljc.cn

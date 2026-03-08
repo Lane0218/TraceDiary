@@ -13,15 +13,19 @@
     "README.md",
     "LICENSE",
     "package.json",
+    "scripts/deploy-vercel-prod.sh",
     "docs/images/*",
-    "public/icons/icon.svg"
+    "public/icons/icon.svg",
+    "todo/tasks/td_dd5e3f89f430e9824d84.json",
+    "todo/tasks/td_20260225113444_67d2697c.json",
+    "todo/tasks/td_e25214c85b98c3f84beb.json"
   ],
-  "test_record": "风险分级：低（README 文案与展示结构调整）。已执行：`rg` 复核 README 中访问控制关键词已移除、`git diff --check` 通过。未执行：`lint/unit/integration/e2e`，原因：仅 README 文档改动，无功能行为变化。",
+  "test_record": "风险分级：低（README、部署脚本帮助文案与历史任务记录脱敏）。已执行：`git grep` 复核仓库中已无 `lanes-projects-29cb0384` 与临时 `.vercel.app` 部署 URL、`bash -n scripts/deploy-vercel-prod.sh` 通过、`git diff --check` 通过；已确认未跟踪 `.env.local`、`.env.e2e`、`.vercel/*`。未执行：`lint/unit/integration/e2e`，原因：本轮仅文档、脚本帮助文案和任务记录脱敏，无运行时代码逻辑变更。",
   "done_record": "2026-03-08 / pending",
   "source": {
     "file": "README.md",
     "line": 1
   },
   "version": 1,
-  "updated_at": "2026-03-08T08:03:13.000Z"
+  "updated_at": "2026-03-08T08:11:49.000Z"
 }
