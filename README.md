@@ -1,5 +1,9 @@
 # TraceDiary
 
+<p align="center">
+  <img src="./public/icons/icon.svg" alt="TraceDiary logo" width="120" />
+</p>
+
 TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + Gitee 私有仓库同步”架构。应用可在浏览器直接使用，支持跨设备访问，并通过主密码与入口门禁实现双层保护。
 
 ## 核心能力
@@ -9,6 +13,26 @@ TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + G
 - 手动 Push/Pull 同步到 Gitee 私有仓库
 - 往年今日回顾与日历导航
 - PWA 安装支持（移动端可用）
+
+## 界面预览
+
+### 日记页
+
+用于每天记录内容，并快速查看当天与历史条目。
+
+![TraceDiary 日记页](./docs/images/diary-page.png)
+
+### 年度总结页
+
+按年份聚合信息，方便做阶段复盘和年度回顾。
+
+![TraceDiary 年度总结页](./docs/images/yearly-review-page.png)
+
+### 数据统计页
+
+用可视化方式展示记录趋势和使用情况。
+
+![TraceDiary 数据统计页](./docs/images/stats-page.png)
 
 ## 本地开发
 

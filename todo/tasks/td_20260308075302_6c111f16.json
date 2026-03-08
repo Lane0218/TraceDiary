@@ -1,0 +1,27 @@
+{
+  "task_uid": "td_20260308075302_6c111f16",
+  "display_id": "TD-DOC-20260308-075302-6C11",
+  "id_prefix": "DOC",
+  "module_key": "6.10",
+  "module_name": "文档维护",
+  "module_label": "6.10 文档维护",
+  "order": 20260308075302,
+  "status": "DONE",
+  "title": "README 展示补全并补齐开源元信息",
+  "acceptance": "README 顶部展示 logo、本地截图预览可正常引用，补齐 MIT LICENSE 与 package.json 开源仓库元信息",
+  "related_files": [
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "docs/images/*",
+    "public/icons/icon.svg"
+  ],
+  "test_record": "风险分级：低（README、LICENSE 与仓库元信息）。已执行：资源文件存在性校验、`python3 -m json.tool package.json` 语法校验、`git diff --check`。未执行：`lint/unit/integration/e2e`，原因：仅文档与仓库元信息改动，无功能行为变化。",
+  "done_record": "2026-03-08 / pending",
+  "source": {
+    "file": "README.md",
+    "line": 1
+  },
+  "version": 1,
+  "updated_at": "2026-03-08T07:54:22.000Z"
+}

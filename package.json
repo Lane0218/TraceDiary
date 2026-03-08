@@ -1,8 +1,27 @@
 {
   "name": "tracediary",
+  "description": "Privacy-first encrypted web diary with Git-backed sync.",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "author": "Lane0218",
+  "license": "MIT",
+  "homepage": "https://github.com/Lane0218/TraceDiary",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lane0218/TraceDiary.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lane0218/TraceDiary/issues"
+  },
+  "keywords": [
+    "diary",
+    "journal",
+    "privacy",
+    "encryption",
+    "pwa",
+    "react"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
