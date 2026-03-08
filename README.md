@@ -147,9 +147,8 @@ bash scripts/deploy-vercel-prod.sh --skip-lint --skip-verify
 
 ## 文档
 
-- 详细产品与技术约束：`SPEC.md`
+- 详细产品与技术约束：`docs/SPEC.md`
 - 测试策略：`docs/testing-strategy.md`
-- 兼容性记录：`docs/compatibility-report.md`
 
 ## License
 
