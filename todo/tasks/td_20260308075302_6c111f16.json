@@ -16,12 +16,12 @@
     "docs/images/*",
     "public/icons/icon.svg"
   ],
-  "test_record": "风险分级：低（README、LICENSE 与仓库元信息）。已执行：资源文件存在性校验、`python3 -m json.tool package.json` 语法校验、`git diff --check`。未执行：`lint/unit/integration/e2e`，原因：仅文档与仓库元信息改动，无功能行为变化。",
+  "test_record": "风险分级：低（README 文案与展示结构调整）。已执行：`rg` 复核 README 中访问控制关键词已移除、`git diff --check` 通过。未执行：`lint/unit/integration/e2e`，原因：仅 README 文档改动，无功能行为变化。",
   "done_record": "2026-03-08 / pending",
   "source": {
     "file": "README.md",
     "line": 1
   },
   "version": 1,
-  "updated_at": "2026-03-08T07:54:22.000Z"
+  "updated_at": "2026-03-08T08:03:13.000Z"
 }

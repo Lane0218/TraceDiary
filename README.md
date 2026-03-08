@@ -1,38 +1,60 @@
 # TraceDiary
 
 <p align="center">
-  <img src="./public/icons/icon.svg" alt="TraceDiary logo" width="120" />
+  <img src="./public/icons/icon.svg" width="140" alt="TraceDiary Logo" />
 </p>
 
-TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + Gitee 私有仓库同步”架构。应用可在浏览器直接使用，支持跨设备访问，并通过主密码与入口门禁实现双层保护。
+<hr />
 
-## 核心能力
+<p align="center">
+  隐私优先的加密 Web 日记，支持 Git 仓库同步、年度回顾与数据统计
+</p>
 
-- 前端 AES-256-GCM 加密，明文不上传远端
-- Markdown 日记与年度总结编辑
-- 手动 Push/Pull 同步到 Gitee 私有仓库
-- 往年今日回顾与日历导航
-- PWA 安装支持（移动端可用）
+<p align="center">
+  <a href="https://github.com/Lane0218/TraceDiary/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Lane0218/TraceDiary?style=flat" alt="license">
+  </a>
+  <a href="https://github.com/Lane0218/TraceDiary/stargazers">
+    <img src="https://img.shields.io/github/stars/Lane0218/TraceDiary?style=flat" alt="stars">
+  </a>
+  <a href="https://github.com/Lane0218/TraceDiary">
+    <img src="https://img.shields.io/github/repo-size/Lane0218/TraceDiary?style=flat" alt="repo size">
+  </a>
+  <a href="https://github.com/Lane0218/TraceDiary/commits/main">
+    <img src="https://img.shields.io/github/last-commit/Lane0218/TraceDiary?style=flat" alt="last commit">
+  </a>
+</p>
 
-## 界面预览
+TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + Gitee 私有仓库同步”架构。应用可在浏览器直接使用，支持跨设备访问，适合长期记录日常、整理年度回顾，并通过可视化页面观察自己的写作与使用趋势。
+
+## 截图
 
 ### 日记页
 
 用于每天记录内容，并快速查看当天与历史条目。
 
-![TraceDiary 日记页](./docs/images/diary-page.png)
+<img src="./docs/images/diary-page.png" width="100%" alt="TraceDiary 日记页" />
 
 ### 年度总结页
 
 按年份聚合信息，方便做阶段复盘和年度回顾。
 
-![TraceDiary 年度总结页](./docs/images/yearly-review-page.png)
+<img src="./docs/images/yearly-review-page.png" width="100%" alt="TraceDiary 年度总结页" />
 
 ### 数据统计页
 
 用可视化方式展示记录趋势和使用情况。
 
-![TraceDiary 数据统计页](./docs/images/stats-page.png)
+<img src="./docs/images/stats-page.png" width="100%" alt="TraceDiary 数据统计页" />
+
+## 功能特性
+
+- 前端 AES-256-GCM 加密，明文不上传远端
+- Markdown 日记与年度总结编辑
+- 手动 Push / Pull 同步到 Gitee 私有仓库
+- 往年今日回顾与日历导航
+- 数据统计与使用趋势可视化
+- PWA 安装支持（移动端可用）
 
 ## 本地开发
 
@@ -42,7 +64,7 @@ TraceDiary 是一个隐私优先的 Web 日记应用，采用“前端加密 + G
 - npm 10+
 - 可选：Supabase（用于登录注册与云端配置同步）
 
-### 环境变量（可选）
+### 环境变量
 
 复制 `.env.example` 为 `.env`，按需填写：
 
@@ -53,7 +75,9 @@ cp .env.example .env
 - `VITE_SUPABASE_URL`：Supabase 项目 URL
 - `VITE_SUPABASE_ANON_KEY`：Supabase `anon` 公钥（禁止使用 `service_role`）
 
-### 快速启动
+### 常用命令
+
+本地开发：
 
 ```bash
 npm install
@@ -62,7 +86,7 @@ npm run dev
 
 默认开发地址：`http://localhost:5173`
 
-### 常用命令
+构建与测试：
 
 ```bash
 npm run build
@@ -73,9 +97,9 @@ npm run test:integration
 npm run test:e2e:fast
 ```
 
-## 部署与访问控制
+## 部署
 
-### 1. 部署基线（Vercel）
+### Vercel 部署基线
 
 1. 将仓库连接到 Vercel。
 2. 构建命令设置为 `npm run build`。
@@ -85,7 +109,7 @@ npm run test:e2e:fast
 
 > 若启用 Supabase 登录，请确认 `vercel.json` 的 CSP `connect-src` 已放行 `https://*.supabase.co` 与 `wss://*.supabase.co`。
 
-### 1.1 一键脚本部署（推荐）
+### 一键生产部署
 
 仓库已提供一键生产部署脚本：`scripts/deploy-vercel-prod.sh`。
 
@@ -103,10 +127,10 @@ bash scripts/deploy-vercel-prod.sh
 
 默认行为：
 
-1. 校验 Vercel 身份；
-2. 执行 `npm run lint`；
-3. 执行 `vercel --prod` 生产部署；
-4. 校验 `https://diary.laneljc.cn` 与 `https://tracediary.laneljc.cn` 可达。
+1. 校验 Vercel 身份
+2. 执行 `npm run lint`
+3. 执行 `vercel --prod` 生产部署
+4. 校验 `https://diary.laneljc.cn` 与 `https://tracediary.laneljc.cn` 可达
 
 常用参数：
 
@@ -121,69 +145,12 @@ bash scripts/deploy-vercel-prod.sh --url https://diary.laneljc.cn --url https://
 bash scripts/deploy-vercel-prod.sh --skip-lint --skip-verify
 ```
 
-### 2. 入口访问控制（三选一）
-
-生产环境必须启用以下三种方案之一，防止应用首页对公网匿名开放。
-
-#### 方案 A：Cloudflare Access（推荐）
-
-适用：已有 Cloudflare DNS/代理，想要邮箱或身份策略控制访问。
-
-落地步骤：
-
-1. 将业务域名接入 Cloudflare，代理到 Vercel。
-2. 在 Cloudflare Zero Trust 创建 `Self-hosted` 应用，域名指向 TraceDiary。
-3. 添加 `Allow` 策略（仅允许你自己的邮箱/身份组）。
-4. 默认拒绝其他访问，保存并发布策略。
-
-验收：
-
-- 未登录/未授权身份访问域名，必须被网关拦截，HTTP 状态码为 `401` 或 `403`。
-- 已授权身份登录后可访问页面（HTTP `200`）。
-
-#### 方案 B：Vercel 访问保护
-
-适用：不引入额外网关，直接使用 Vercel 项目级访问保护。
-
-落地步骤：
-
-1. 打开 Vercel 项目 `Settings -> Deployment Protection`。
-2. 为 `Production` 启用访问保护（账号登录或密码保护模式任选其一）。
-3. 配置允许访问的账号/密码。
-4. 重新部署并确认保护对生产域名生效。
-
-验收：
-
-- 未授权访问生产域名返回 `401` 或 `403`。
-- 授权后可正常打开应用首页（HTTP `200`）。
-
-#### 方案 C：Basic Auth（网关层）
-
-适用：已有反向代理（Nginx/Caddy/Cloudflare Worker），希望使用标准用户名密码门禁。
-
-落地步骤：
-
-1. 在网关配置 Basic Auth，并将凭证保存到密钥系统或环境变量（禁止写入仓库）。
-2. 对未携带 `Authorization` 的请求返回 `401`，并附带 `WWW-Authenticate` 响应头。
-3. 对错误凭证返回 `401` 或 `403`。
-4. 仅在鉴权通过后转发到 Vercel 源站。
-
-验收：
-
-- 无凭证访问返回 `401/403`。
-- 错误凭证访问返回 `401/403`。
-- 正确凭证访问返回 `200`。
-
-### 3. 统一验收命令（未授权 401/403）
-
-将 `<你的域名>` 替换为生产域名，在无登录态或无凭证条件下执行：
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://<你的域名>/
-```
-
-验收通过条件：输出为 `401` 或 `403`。若输出为 `200`，说明入口门禁未生效。
-
-## 参考文档
+## 文档
 
 - 详细产品与技术约束：`SPEC.md`
+- 测试策略：`docs/testing-strategy.md`
+- 兼容性记录：`docs/compatibility-report.md`
+
+## License
+
+MIT License，详见 `LICENSE`。
