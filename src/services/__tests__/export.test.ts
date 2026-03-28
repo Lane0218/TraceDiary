@@ -65,18 +65,24 @@ describe('exportDiaryData', () => {
 
     const manifest = JSON.parse((await manifestFile?.async('string')) ?? '{}') as {
       version: string
+      generatedAt: string
       entryCount: number
       dailyCount: number
       yearlySummaryCount: number
-      files: Array<{ path: string }>
+      entries: Array<{ path: string; filename: string; entryId: string }>
     }
     expect(manifest.version).toBe('1.1')
     expect(manifest.entryCount).toBe(2)
     expect(manifest.dailyCount).toBe(1)
     expect(manifest.yearlySummaryCount).toBe(1)
-    expect(manifest.files.map((file) => file.path)).toEqual([
+    expect(manifest.generatedAt).toBe('2026-02-15T01:10:11.000Z')
+    expect(manifest.entries.map((file) => file.path)).toEqual([
       'diaries/2026-02-08.md',
       'summaries/2026-summary.md',
+    ])
+    expect(manifest.entries.map((file) => file.filename)).toEqual([
+      '2026-02-08.md.enc',
+      '2026-summary.md.enc',
     ])
   })
 

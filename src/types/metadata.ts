@@ -1,30 +1,5 @@
-import type {
-  DateString,
-  DailyFilename,
-  YearlySummaryFilename,
-} from './diary'
+import type { CanonicalEntry, CanonicalIndexDocument } from './index-manifest'
 
-interface MetadataEntryBase {
-  date: DateString
-  filename: string
-  wordCount: number
-  createdAt: string
-  modifiedAt: string
-}
+export type MetadataEntry = CanonicalEntry
 
-export type MetadataEntry =
-  | ({
-      type: 'daily'
-      filename: DailyFilename
-    } & MetadataEntryBase)
-  | ({
-      type: 'yearly_summary'
-      year: number
-      filename: YearlySummaryFilename
-    } & MetadataEntryBase)
-
-export interface Metadata {
-  version: string
-  lastSync: string
-  entries: MetadataEntry[]
-}
+export type Metadata = CanonicalIndexDocument

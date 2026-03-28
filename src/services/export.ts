@@ -2,6 +2,11 @@ import JSZip from 'jszip'
 import { countVisibleChars } from '../utils/word-count'
 import type { ExportFileItem, ExportManifest, ExportResult } from '../types/export'
 import { DIARY_INDEX_TYPE, listDiariesByIndex, type DiaryRecord } from './indexeddb'
+import {
+  createCanonicalDailyEntry,
+  createCanonicalIndexDocument,
+  createCanonicalYearlySummaryEntry,
+} from './index-manifest'
 
 const DAILY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const SUMMARY_ID_RE = /^summary:(\d{4})$/
@@ -48,6 +53,16 @@ function normalizeModifiedAt(record: DiaryRecord, fallbackIso: string): string {
   }
   if (typeof record.createdAt === 'string' && record.createdAt.trim()) {
     return record.createdAt
+  }
+  return fallbackIso
+}
+
+function normalizeCreatedAt(record: DiaryRecord, fallbackIso: string): string {
+  if (typeof record.createdAt === 'string' && record.createdAt.trim()) {
+    return record.createdAt
+  }
+  if (typeof record.modifiedAt === 'string' && record.modifiedAt.trim()) {
+    return record.modifiedAt
   }
   return fallbackIso
 }
@@ -116,6 +131,7 @@ export function buildArchiveName(now: Date): string {
 
 export function toExportFileItem(record: DiaryRecord, fallbackIso: string): ExportFileItem {
   const content = normalizeContent(record)
+  const createdAt = normalizeCreatedAt(record, fallbackIso)
   const modifiedAt = normalizeModifiedAt(record, fallbackIso)
   const wordCount = normalizeWordCount(record, content)
   const entryId = resolveEntryId(record)
@@ -131,8 +147,10 @@ export function toExportFileItem(record: DiaryRecord, fallbackIso: string): Expo
       path: `diaries/${date}.md`,
       filename: `${date}.md`,
       content,
+      createdAt,
       modifiedAt,
       wordCount,
+      date,
     }
   }
 
@@ -144,8 +162,11 @@ export function toExportFileItem(record: DiaryRecord, fallbackIso: string): Expo
       path: `summaries/${year}-summary.md`,
       filename: `${year}-summary.md`,
       content,
+      createdAt,
       modifiedAt,
       wordCount,
+      date: `${year}-12-31`,
+      year,
     }
   }
 
@@ -157,22 +178,33 @@ export function buildExportManifest(
   archiveName: string,
   exportedAt: string,
 ): ExportManifest {
-  const dailyCount = items.filter((item) => item.type === 'daily').length
-  const yearlySummaryCount = items.length - dailyCount
+  const entries = items.map((item) =>
+    item.type === 'daily'
+      ? createCanonicalDailyEntry({
+          entryId: item.entryId,
+          date: item.date,
+          path: item.path,
+          wordCount: item.wordCount,
+          createdAt: item.createdAt,
+          modifiedAt: item.modifiedAt,
+        })
+      : createCanonicalYearlySummaryEntry({
+          entryId: item.entryId,
+          year: item.year as number,
+          date: item.date,
+          path: item.path,
+          wordCount: item.wordCount,
+          createdAt: item.createdAt,
+          modifiedAt: item.modifiedAt,
+        }),
+  )
 
   return {
-    version: '1.1',
-    exportedAt,
+    ...createCanonicalIndexDocument(entries, exportedAt, {
+      version: '1.1',
+      archiveName,
+    }),
     archiveName,
-    entryCount: items.length,
-    dailyCount,
-    yearlySummaryCount,
-    files: items.map((item) => ({
-      entryId: item.entryId,
-      path: item.path,
-      modifiedAt: item.modifiedAt,
-      wordCount: item.wordCount,
-    })),
   }
 }
 

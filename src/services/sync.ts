@@ -10,6 +10,16 @@ import {
 import { GiteeApiError, readGiteeFileContents, upsertGiteeFile } from './gitee'
 import { decryptWithAesGcm, encryptWithAesGcm } from './crypto'
 import type { Metadata } from '../types/metadata'
+import {
+  buildDailyEntryId,
+  buildDailyEncryptedFilename,
+  buildSummaryEntryId,
+  buildSummaryEncryptedFilename,
+  createCanonicalDailyEntry,
+  createCanonicalIndexDocument,
+  createCanonicalYearlySummaryEntry,
+  normalizeCanonicalIndexDocument,
+} from './index-manifest'
 import { getDiarySyncEntryId, getDiarySyncFingerprint } from '../utils/sync-dirty'
 import { countVisibleChars } from '../utils/word-count'
 
@@ -508,55 +518,11 @@ function toRemoteDiaryMetadata(
 }
 
 function createEmptyMetadata(nowIso: string): Metadata {
-  return {
-    version: '1',
-    lastSync: nowIso,
-    entries: [],
-  }
+  return createCanonicalIndexDocument([], nowIso, { version: '1.1' })
 }
 
 function normalizeMetadata(raw: unknown, nowIso: string): Metadata {
-  if (!raw || typeof raw !== 'object') {
-    return createEmptyMetadata(nowIso)
-  }
-
-  const candidate = raw as Partial<Metadata>
-  const normalizedEntries = Array.isArray(candidate.entries)
-    ? candidate.entries.filter((entry): entry is Metadata['entries'][number] => {
-        if (!entry || typeof entry !== 'object') {
-          return false
-        }
-        const target = entry as Partial<Metadata['entries'][number]>
-        if (target.type === 'daily') {
-          return (
-            typeof target.date === 'string' &&
-            typeof target.filename === 'string' &&
-            typeof target.wordCount === 'number' &&
-            typeof target.createdAt === 'string' &&
-            typeof target.modifiedAt === 'string'
-          )
-        }
-
-        if (target.type === 'yearly_summary') {
-          return (
-            typeof target.year === 'number' &&
-            typeof target.date === 'string' &&
-            typeof target.filename === 'string' &&
-            typeof target.wordCount === 'number' &&
-            typeof target.createdAt === 'string' &&
-            typeof target.modifiedAt === 'string'
-          )
-        }
-
-        return false
-      })
-    : []
-
-  return {
-    version: typeof candidate.version === 'string' && candidate.version.trim() ? candidate.version : '1',
-    lastSync: typeof candidate.lastSync === 'string' && candidate.lastSync.trim() ? candidate.lastSync : nowIso,
-    entries: normalizedEntries,
-  }
+  return normalizeCanonicalIndexDocument(raw, nowIso)
 }
 
 function upsertMetadataEntryFromDiary(
@@ -567,16 +533,17 @@ function upsertMetadataEntryFromDiary(
   const entries = [...metadata.entries]
 
   if (diary.type === 'daily') {
-    const existingIndex = entries.findIndex((entry) => entry.type === 'daily' && entry.date === diary.date)
+    const entryId = buildDailyEntryId(diary.date)
+    const existingIndex = entries.findIndex((entry) => entry.entryId === entryId)
     const existing = existingIndex >= 0 ? entries[existingIndex] : null
-    const nextEntry: Metadata['entries'][number] = {
-      type: 'daily',
-      date: diary.date as `${number}-${number}-${number}`,
-      filename: `${diary.date}.md.enc`,
+    const nextEntry = createCanonicalDailyEntry({
+      entryId,
+      date: diary.date,
+      filename: buildDailyEncryptedFilename(diary.date),
       wordCount: countVisibleChars(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
-    }
+    })
 
     if (existingIndex >= 0) {
       entries[existingIndex] = nextEntry
@@ -584,20 +551,17 @@ function upsertMetadataEntryFromDiary(
       entries.push(nextEntry)
     }
   } else {
-    const summaryDate = `${diary.year}-12-31` as `${number}-${number}-${number}`
-    const existingIndex = entries.findIndex(
-      (entry) => entry.type === 'yearly_summary' && entry.year === diary.year,
-    )
+    const entryId = buildSummaryEntryId(diary.year)
+    const existingIndex = entries.findIndex((entry) => entry.entryId === entryId)
     const existing = existingIndex >= 0 ? entries[existingIndex] : null
-    const nextEntry: Metadata['entries'][number] = {
-      type: 'yearly_summary',
+    const nextEntry = createCanonicalYearlySummaryEntry({
+      entryId,
       year: diary.year,
-      date: summaryDate,
-      filename: `${diary.year}-summary.md.enc`,
+      filename: buildSummaryEncryptedFilename(diary.year),
       wordCount: countVisibleChars(diary.content),
       createdAt: existing?.createdAt ?? diary.modifiedAt ?? nowIso,
       modifiedAt: diary.modifiedAt ?? nowIso,
-    }
+    })
 
     if (existingIndex >= 0) {
       entries[existingIndex] = nextEntry
@@ -606,11 +570,9 @@ function upsertMetadataEntryFromDiary(
     }
   }
 
-  return {
-    version: metadata.version || '1',
-    lastSync: nowIso,
-    entries,
-  }
+  return createCanonicalIndexDocument(entries, nowIso, {
+    version: metadata.version || '1.1',
+  })
 }
 
 export function createDiaryUploadExecutor(
@@ -1079,7 +1041,7 @@ function toDiaryRecordFromMetadataEntry(
 ): DiaryRecord {
   if (entry.type === 'daily') {
     return {
-      id: `daily:${entry.date}`,
+      id: entry.entryId,
       type: 'daily',
       date: entry.date,
       filename: entry.filename,
@@ -1091,7 +1053,7 @@ function toDiaryRecordFromMetadataEntry(
   }
 
   return {
-    id: `summary:${entry.year}`,
+    id: entry.entryId,
     type: 'yearly_summary',
     year: entry.year,
     date: entry.date,
@@ -1144,10 +1106,7 @@ function resolveDirtyByTimestamp(localModifiedAt: string | null, syncedAt: strin
 }
 
 function buildEntryIdFromMetadataEntry(entry: Metadata['entries'][number]): string {
-  if (entry.type === 'daily') {
-    return `daily:${entry.date}`
-  }
-  return `summary:${entry.year}`
+  return entry.entryId
 }
 
 function resolveYearFromSummaryRecord(record: DiaryRecord): number | null {

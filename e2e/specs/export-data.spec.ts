@@ -152,11 +152,17 @@ test('设置页可导出明文 zip（含 manifest 与可回导命名） @smoke',
   const manifestRaw = await manifestFile?.async('string')
   const manifest = JSON.parse(manifestRaw ?? '{}') as {
     version: string
-    files: Array<{ path: string }>
+    entries: Array<{ path: string; filename: string }>
   }
   expect(manifest.version).toBe('1.1')
-  expect(manifest.files.some((item) => item.path === dailyFilePath)).toBe(true)
-  expect(manifest.files.some((item) => item.path === summaryFilePath)).toBe(true)
+  expect(manifest.entries.some((item) => item.path === dailyFilePath && item.filename === `${DAILY_DATE}.md.enc`)).toBe(
+    true,
+  )
+  expect(
+    manifest.entries.some(
+      (item) => item.path === summaryFilePath && item.filename === `${SUMMARY_YEAR}-summary.md.enc`,
+    ),
+  ).toBe(true)
 
   await expect(page.getByTestId('settings-export-result')).toBeVisible()
 })
