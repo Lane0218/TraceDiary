@@ -227,6 +227,54 @@ describe('readGiteeFileContents', () => {
     expect(result).toEqual({ exists: false })
   })
 
+  it('contents API 缺少 content 但提供 sha 时应回退到 blob API 读取完整内容', async () => {
+    const rawContent = '大文件内容-中文'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sha: 'sha-large-1',
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: encodeBase64Utf8(rawContent),
+            encoding: 'base64',
+            size: 1024,
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
+      )
+
+    const result = await readGiteeFileContents({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      path: 'metadata.json.enc',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({
+      exists: true,
+      content: rawContent,
+      sha: 'sha-large-1',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      'https://gitee.com/api/v5/repos/owner/repo/git/blobs/sha-large-1',
+    )
+  })
+
   it('应支持 access_token query 兼容模式且保留 Authorization 头', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

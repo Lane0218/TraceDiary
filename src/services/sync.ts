@@ -644,17 +644,17 @@ export function createDiaryUploadExecutor(
       })
 
       let baseMetadata = createEmptyMetadata(nowIso)
-      if (remoteMetadata.exists && typeof remoteMetadata.content === 'string' && remoteMetadata.content.trim()) {
-        try {
-          const decryptedContent = await decryptWithAesGcm(
-            normalizeEncryptedContent(remoteMetadata.content),
-            params.dataEncryptionKey,
-          )
-          const parsed = defaultParseMetadata<unknown>(decryptedContent)
-          baseMetadata = normalizeMetadata(parsed, nowIso)
-        } catch {
-          baseMetadata = createEmptyMetadata(nowIso)
+      if (remoteMetadata.exists) {
+        if (typeof remoteMetadata.content !== 'string' || !remoteMetadata.content.trim()) {
+          throw new Error('远端 metadata 文件内容为空')
         }
+
+        const decryptedContent = await decryptWithAesGcm(
+          normalizeEncryptedContent(remoteMetadata.content),
+          params.dataEncryptionKey,
+        )
+        const parsed = defaultParseMetadata<unknown>(decryptedContent)
+        baseMetadata = normalizeMetadata(parsed, nowIso)
       }
 
       const mergedMetadata = upsertMetadataEntryFromDiary(baseMetadata, payload.metadata, nowIso)

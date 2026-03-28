@@ -823,6 +823,57 @@ describe('readRemoteMetadataFromGitee', () => {
     )
   })
 
+  it('contents API 缺少 content 但提供 sha 时应通过 blob API 读取 metadata', async () => {
+    const rawContent = 'encrypted-large-metadata\n'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sha: 'sha-large-meta',
+          }),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json',
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: encodeBase64Utf8(rawContent),
+            encoding: 'base64',
+            size: 8192,
+          }),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json',
+            },
+          },
+        ),
+      )
+
+    const result = await readRemoteMetadataFromGitee({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    })
+
+    expect(result).toEqual({
+      missing: false,
+      encryptedContent: 'encrypted-large-metadata',
+      sha: 'sha-large-meta',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      'https://gitee.com/api/v5/repos/owner/repo/git/blobs/sha-large-meta',
+    )
+  })
+
   it('404 时应返回 missing=true', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ message: 'Not Found' }), {
@@ -1027,6 +1078,63 @@ describe('createDiaryUploadExecutor', () => {
       message: string
     }
     expect(metadataUploadBody.message).toBe('chore: metadata @ 2026-02-09T23:00:00+08:00')
+  })
+
+  it('远端 metadata 解密失败时不应按空 metadata 覆盖写回', async () => {
+    const dataEncryptionKey = await createDataEncryptionKey('daily-metadata-corrupt')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: { sha: 'sha-diary-created' },
+            commit: { sha: 'commit-diary-created' },
+          }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: encodeBase64Utf8('not-encrypted-metadata'),
+            encoding: 'base64',
+            sha: 'sha-metadata-old',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    const uploadDiary = createDiaryUploadExecutor({
+      token: 'test-token',
+      owner: 'owner',
+      repo: 'repo',
+      dataEncryptionKey,
+      syncMetadata: true,
+      branch: 'master',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      now: () => '2026-02-09T15:00:00.000Z',
+    })
+
+    const result = await uploadDiary({
+      metadata: {
+        type: 'daily',
+        entryId: 'daily:2026-02-13',
+        date: '2026-02-13',
+        content: 'with metadata',
+        modifiedAt: '2026-02-13T08:00:00.000Z',
+      },
+      reason: 'manual',
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      conflict: false,
+      remoteSha: 'sha-diary-created',
+      syncedAt: '2026-02-09T15:00:00.000Z',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('2026-02-13.md.enc?branch=master')
+    expect(fetchMock.mock.calls[1]?.[0]).toContain('metadata.json.enc?ref=master')
   })
 
   it('配置分支不存在时应自动回退到可用分支并上传成功', async () => {

@@ -103,6 +103,10 @@ function buildContentsEndpoint(apiBase: string | undefined, owner: string, repo:
   return `${normalizeApiBase(apiBase)}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePath(path)}`
 }
 
+function buildBlobEndpoint(apiBase: string | undefined, owner: string, repo: string, sha: string): string {
+  return `${normalizeApiBase(apiBase)}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(sha)}`
+}
+
 function withQueryParams(requestUrl: string, query: Record<string, string | undefined>): string {
   const url = new URL(requestUrl)
 
@@ -308,6 +312,52 @@ function buildContentsRequestUrl(params: {
   })
 }
 
+async function fetchGiteeJson(
+  fetcher: typeof fetch,
+  requestUrl: string,
+  token: string,
+): Promise<Response> {
+  try {
+    return await fetcher(requestUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/json',
+      },
+    })
+  } catch (error) {
+    throw mapNetworkError(error)
+  }
+}
+
+async function readGiteeBlobContents(params: {
+  token: string
+  owner: string
+  repo: string
+  sha: string
+  apiBase?: string
+  fetchImpl?: typeof fetch
+}): Promise<string> {
+  const fetcher = params.fetchImpl ?? fetch
+  const requestUrl = buildBlobEndpoint(params.apiBase, params.owner, params.repo, params.sha)
+  const response = await fetchGiteeJson(fetcher, requestUrl, params.token)
+
+  if (!response.ok) {
+    await throwMappedHttpError(response, '读取文件')
+  }
+
+  const body = (await response.json()) as {
+    content?: unknown
+    encoding?: unknown
+  }
+
+  if (typeof body.content !== 'string') {
+    throw new GiteeApiError('api', '读取文件失败：Blob 响应缺少 content 字段', response.status)
+  }
+
+  return body.encoding === 'base64' ? decodeBase64Utf8(body.content) : body.content
+}
+
 export async function readGiteeFileContents(
   params: ReadGiteeFileContentsParams,
 ): Promise<ReadGiteeFileContentsResult> {
@@ -326,18 +376,7 @@ export async function readGiteeFileContents(
   })
   const fetcher = params.fetchImpl ?? fetch
 
-  let response: Response
-  try {
-    response = await fetcher(requestUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/json',
-      },
-    })
-  } catch (error) {
-    throw mapNetworkError(error)
-  }
+  const response = await fetchGiteeJson(fetcher, requestUrl, token)
 
   if (response.status === 404) {
     return { exists: false }
@@ -360,7 +399,26 @@ export async function readGiteeFileContents(
     return { exists: false }
   }
 
+  const sha = typeof body.sha === 'string' ? body.sha : undefined
+
   if (typeof body.content !== 'string') {
+    if (sha) {
+      const content = await readGiteeBlobContents({
+        token,
+        owner,
+        repo,
+        sha,
+        apiBase: params.apiBase,
+        fetchImpl: fetcher,
+      })
+
+      return {
+        exists: true,
+        content,
+        sha,
+      }
+    }
+
     throw new GiteeApiError('api', '读取文件失败：响应缺少 content 字段', response.status)
   }
 
@@ -369,7 +427,7 @@ export async function readGiteeFileContents(
   return {
     exists: true,
     content,
-    sha: typeof body.sha === 'string' ? body.sha : undefined,
+    sha,
   }
 }
 
