@@ -102,39 +102,112 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
   ]
 
   return (
-    <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
-        {guestMode?.enabled ? (
-          <button
-            type="button"
-            className="td-guest-pill cursor-pointer"
-            data-testid="guest-mode-pill"
-            aria-label="游客模式提示，点击退出游客模式"
-            onClick={() => {
-              guestMode.onExit?.()
-            }}
-          >
-            <span className="td-guest-pill-dot" aria-hidden="true" />
-            <span>游客模式</span>
-            {guestModeDescription ? (
-              <>
-                <span className="td-guest-pill-sep" aria-hidden="true">/</span>
-                <span className="td-guest-pill-desc">{guestModeDescription}</span>
-              </>
+    <header className="sticky top-0 z-10 border-b border-td-line bg-td-bg/95 py-3 backdrop-blur-sm">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start justify-between gap-2 sm:flex-1 sm:items-center">
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="font-display text-2xl text-td-text">TraceDiary</h1>
+            {guestMode?.enabled ? (
+              <button
+                type="button"
+                className="td-guest-pill cursor-pointer"
+                data-testid="guest-mode-pill"
+                aria-label="游客模式提示，点击退出游客模式"
+                onClick={() => {
+                  guestMode.onExit?.()
+                }}
+              >
+                <span className="td-guest-pill-dot" aria-hidden="true" />
+                <span>游客模式</span>
+                {guestModeDescription ? (
+                  <>
+                    <span className="td-guest-pill-sep hidden sm:inline" aria-hidden="true">
+                      /
+                    </span>
+                    <span className="td-guest-pill-desc hidden sm:inline">{guestModeDescription}</span>
+                  </>
+                ) : null}
+              </button>
             ) : null}
-          </button>
-        ) : null}
-      </div>
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        <nav className="flex flex-wrap items-center gap-2" aria-label="应用主导航">
+          </div>
+
+          {authEntry ? (
+            <div className="relative shrink-0" ref={accountMenuRef}>
+              {!isSignedIn ? (
+                <button
+                  type="button"
+                  className="td-btn td-btn-primary-ink min-h-[40px] px-3 text-sm sm:min-w-[108px]"
+                  onClick={authEntry.onOpenAuthModal}
+                  data-testid="app-header-auth-trigger"
+                >
+                  登录 / 注册
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="td-btn inline-flex min-h-[40px] items-center gap-2 border-[#d2ccc0] bg-[#fffdfa] px-2.5 py-1.5 sm:min-w-[124px]"
+                    onClick={() => setAccountMenuOpen((prev) => !prev)}
+                    aria-expanded={accountMenuOpen}
+                    aria-haspopup="menu"
+                    data-testid="app-header-account-trigger"
+                  >
+                    <span
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d2ccc0] bg-white text-xs font-semibold text-[#3f4742]"
+                      aria-hidden="true"
+                    >
+                      {(emailAlias[0] ?? 'U').toUpperCase()}
+                    </span>
+                    <span className="hidden min-w-0 flex-1 truncate text-left text-xs text-[#4a4a4a] sm:inline">
+                      {emailAlias}
+                    </span>
+                  </button>
+                  {accountMenuOpen ? (
+                    <div
+                      className="absolute right-0 top-[calc(100%+8px)] z-30 w-[280px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[#ddd6c8] bg-[#fffefa] p-3 shadow-card"
+                      role="menu"
+                      aria-label="账号菜单"
+                    >
+                      <div className="rounded-[10px] border border-[#e7e1d5] bg-white px-3 py-2">
+                        <p className="text-[11px] text-[#6f6a60]">当前账号</p>
+                        <p
+                          className="mt-1 truncate text-sm font-medium text-[#292724]"
+                          data-testid="app-header-account-email"
+                        >
+                          {sessionEmail}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <button
+                          type="button"
+                          className="td-btn justify-center border-[#efc6c6] bg-[#fff5f5] text-sm text-[#a63f3f]"
+                          onClick={() => {
+                            setAccountMenuOpen(false)
+                            authEntry.onSignOut()
+                          }}
+                          role="menuitem"
+                          disabled={authEntry.isSigningOut}
+                          data-testid="app-header-account-signout-btn"
+                        >
+                          {authEntry.isSigningOut ? '退出中...' : '退出登录'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        <nav className="grid w-full grid-cols-4 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center" aria-label="应用主导航">
           {navItems.map((item) => {
             const isActive = item.id === currentPage
             return (
               <button
                 key={item.id}
                 type="button"
-                className={`td-btn ${
+                className={`td-btn min-h-[40px] justify-center whitespace-nowrap px-2 py-2 text-[13px] leading-none sm:px-3 sm:text-sm ${
                   isActive
                     ? 'border-[#3f4742] bg-[#3f4742] text-white hover:border-[#333a36] hover:bg-[#333a36] hover:shadow-none'
                     : ''
@@ -150,74 +223,6 @@ export default function AppHeader({ currentPage, yearlyHref, guestMode, authEntr
             )
           })}
         </nav>
-
-        {authEntry ? (
-          <div className="relative" ref={accountMenuRef}>
-            {!isSignedIn ? (
-              <button
-                type="button"
-                className="td-btn td-btn-primary-ink min-w-[108px] text-sm"
-                onClick={authEntry.onOpenAuthModal}
-                data-testid="app-header-auth-trigger"
-              >
-                登录 / 注册
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="td-btn inline-flex min-w-[124px] items-center gap-2 border-[#d2ccc0] bg-[#fffdfa] px-2 py-1.5"
-                  onClick={() => setAccountMenuOpen((prev) => !prev)}
-                  aria-expanded={accountMenuOpen}
-                  aria-haspopup="menu"
-                  data-testid="app-header-account-trigger"
-                >
-                  <span
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d2ccc0] bg-white text-xs font-semibold text-[#3f4742]"
-                    aria-hidden="true"
-                  >
-                    {(emailAlias[0] ?? 'U').toUpperCase()}
-                  </span>
-                  <span className="hidden min-w-0 flex-1 truncate text-left text-xs text-[#4a4a4a] sm:inline">
-                    {emailAlias}
-                  </span>
-                </button>
-                {accountMenuOpen ? (
-                  <div
-                    className="absolute right-0 top-[calc(100%+8px)] z-30 w-[280px] rounded-[14px] border border-[#ddd6c8] bg-[#fffefa] p-3 shadow-card"
-                    role="menu"
-                    aria-label="账号菜单"
-                  >
-                    <div className="rounded-[10px] border border-[#e7e1d5] bg-white px-3 py-2">
-                      <p className="text-[11px] text-[#6f6a60]">当前账号</p>
-                      <p
-                        className="mt-1 truncate text-sm font-medium text-[#292724]"
-                        data-testid="app-header-account-email"
-                      >
-                        {sessionEmail}
-                      </p>
-                    </div>
-                    <div className="mt-3 flex flex-col gap-2">
-                      <button
-                        type="button"
-                        className="td-btn justify-center border-[#efc6c6] bg-[#fff5f5] text-sm text-[#a63f3f]"
-                        onClick={() => {
-                          setAccountMenuOpen(false)
-                          authEntry.onSignOut()
-                        }}
-                        role="menuitem"
-                        disabled={authEntry.isSigningOut}
-                        data-testid="app-header-account-signout-btn"
-                      >
-                        {authEntry.isSigningOut ? '退出中...' : '退出登录'}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </>
-            )}
-          </div>
-        ) : null}
       </div>
     </header>
   )

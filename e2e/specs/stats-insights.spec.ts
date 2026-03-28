@@ -395,3 +395,33 @@ test('日记页统计分段与统计详情页应展示核心指标', async ({ pa
   await expect(page.getByTestId('insights-yearly-heatmap-selection')).toContainText(todayKey)
   await expect(page.getByTestId('insights-yearly-heatmap-selection')).toContainText('7')
 })
+
+test('手机端统计页应保持整页无横向滚动且热力图仅在组件内横向滚动', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/insights')
+
+  await expect(page.getByTestId('entry-auth-guest-btn')).toBeVisible()
+  await page.getByTestId('entry-auth-guest-btn').click()
+
+  await expect(page.getByLabel('insights-page')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '数据统计' })).toBeVisible()
+
+  const headerHeight = await page
+    .locator('header')
+    .first()
+    .evaluate((node) => node.getBoundingClientRect().height)
+  const heatmapFrameOverflow = await page.getByTestId('insights-yearly-heatmap-grid-frame').evaluate((element) => {
+    return element.scrollWidth - element.clientWidth
+  })
+  const firstCellBox = await page
+    .getByTestId('insights-yearly-heatmap-grid-frame')
+    .locator('button')
+    .first()
+    .boundingBox()
+
+  expect(headerHeight).toBeLessThanOrEqual(150)
+  expect(heatmapFrameOverflow).toBeGreaterThan(0)
+  expect(firstCellBox).not.toBeNull()
+  expect(firstCellBox?.width ?? 0).toBeGreaterThanOrEqual(14)
+  expect(firstCellBox?.height ?? 0).toBeGreaterThanOrEqual(14)
+})

@@ -965,14 +965,14 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
             </section>
 
             <section
-              className="td-card-muted td-panel flex flex-col space-y-2.5 lg:h-[340px]"
+              className="td-card-muted td-panel flex flex-col space-y-3 lg:h-[340px] lg:space-y-2.5"
               data-testid="diary-left-panel"
             >
               <div className="flex items-center gap-2">
                 <div className="grid min-w-0 flex-1 grid-cols-3 rounded-[11px] border border-[#d2d1cd] bg-[#ebe9e4] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-[8px] px-2 py-2 text-[12px] font-semibold leading-none transition-colors sm:px-2.5 sm:py-1.5 sm:text-xs ${
                       leftPanelTab === 'history'
                         ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
                         : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
@@ -986,7 +986,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
                   </button>
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-[8px] px-2 py-2 text-[12px] font-semibold leading-none transition-colors sm:px-2.5 sm:py-1.5 sm:text-xs ${
                       leftPanelTab === 'stats'
                         ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
                         : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
@@ -1000,7 +1000,7 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
                   </button>
                   <button
                     type="button"
-                    className={`rounded-[8px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-[8px] px-2 py-2 text-[12px] font-semibold leading-none transition-colors sm:px-2.5 sm:py-1.5 sm:text-xs ${
                       leftPanelTab === 'search'
                         ? 'bg-[#333a36] text-[#f7f5ef] shadow-[0_2px_6px_rgba(16,24,20,0.2)]'
                         : 'text-[#4f5751] hover:bg-[#f7f5ef] hover:text-[#1f2622]'
@@ -1083,7 +1083,10 @@ export default function DiaryPage({ auth, headerAuthEntry, isGuestMode, onEnterU
               style={diaryPanelDesktopStyle}
             >
               <h3 className="font-display text-xl text-td-text">{date} 日记</h3>
-              <div className="h-[1800px] overflow-hidden lg:min-h-0 lg:h-auto lg:flex-1" data-testid="diary-editor-slot">
+              <div
+                className="h-[360px] overflow-hidden sm:h-[400px] lg:min-h-0 lg:h-auto lg:flex-1"
+                data-testid="diary-editor-slot"
+              >
                 {isGuestMode || !diary.isLoading ? (
                   <MarkdownEditor
                     key={

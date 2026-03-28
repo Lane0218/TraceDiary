@@ -433,7 +433,7 @@
   }
 
   .td-sync-control-bar {
-    @apply relative flex flex-wrap items-center gap-2.5 rounded-[14px] border px-3 py-3 sm:px-4;
+    @apply relative grid gap-2.5 rounded-[14px] border px-3 py-3 sm:px-4;
     border-color: var(--td-line);
     background-color: var(--td-surface-soft);
   }
@@ -443,17 +443,19 @@
   }
 
   .td-sync-control-main {
-    @apply relative z-[1] flex min-w-0 flex-1 flex-wrap items-center gap-2;
+    @apply relative z-[1] flex w-full min-w-0 flex-wrap items-center justify-between gap-2;
   }
 
   .td-sync-control-hint {
-    @apply flex-shrink-0;
+    @apply min-w-0 flex-shrink-0;
   }
 
   .td-sync-summary-trigger {
     @apply inline-flex items-center gap-1 rounded-full border px-1 py-0.5 transition;
     border-color: #ddd9cf;
     background-color: rgba(255, 255, 255, 0.86);
+    margin-left: auto;
+    max-width: 100%;
   }
 
   .td-sync-summary-trigger:hover {
@@ -485,7 +487,12 @@
   }
 
   .td-sync-control-actions {
-    @apply relative z-[1] ml-auto flex max-w-full flex-wrap items-center gap-2;
+    @apply relative z-[1] grid w-full grid-cols-2 gap-2;
+  }
+
+  .td-sync-control-actions .td-btn {
+    width: 100%;
+    min-width: 0;
   }
 
   .td-sync-details-popover {
@@ -762,7 +769,7 @@
 
   @media (min-width: 1024px) {
     .td-sync-control-bar {
-      @apply flex-nowrap gap-3;
+      @apply flex gap-3;
     }
 
     .td-sync-control-main {
@@ -771,7 +778,11 @@
     }
 
     .td-sync-control-actions {
-      @apply flex-nowrap;
+      @apply ml-auto flex w-auto flex-nowrap items-center;
+    }
+
+    .td-sync-control-actions .td-btn {
+      width: auto;
     }
 
     .td-sync-details-popover {

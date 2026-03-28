@@ -106,10 +106,10 @@ export default function SyncControlBar({
           </button>
         </div>
 
-        <div className="td-sync-control-actions">
+        <div className="td-sync-control-actions" data-testid="sync-control-actions">
           <button
             type="button"
-            className="td-btn td-sync-control-btn-secondary"
+            className="td-btn td-sync-control-btn-secondary min-h-[40px] justify-center"
             onClick={onPull}
             disabled={isActionRunning}
             aria-busy={isPulling}
@@ -122,7 +122,7 @@ export default function SyncControlBar({
           </button>
           <button
             type="button"
-            className="td-btn td-sync-control-btn-primary"
+            className="td-btn td-sync-control-btn-primary min-h-[40px] justify-center"
             onClick={onPush}
             disabled={isActionRunning}
             aria-busy={isPushing}

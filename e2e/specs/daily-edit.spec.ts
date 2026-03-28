@@ -114,11 +114,11 @@ test('日记页 WYSIWYG 模式应保持外框固定并在内部滚动', async ({
 })
 
 test('移动端空白日记编辑区应保持最小高度且内层填充', async ({ page }) => {
-  const env = getE2EEnv()
-
   await page.setViewportSize({ width: 390, height: 844 })
-  await gotoDiary(page, TEST_DATE)
-  await ensureReadySession(page, env)
+  await page.goto(`/diary?date=${TEST_DATE}`)
+  await expect(page.getByTestId('entry-auth-guest-btn')).toBeVisible()
+  await page.getByTestId('entry-auth-guest-btn').click()
+  await expect(page.getByLabel('diary-layout')).toBeVisible()
 
   const editorSlot = page.getByTestId('diary-editor-slot')
   const editorRoot = page.getByTestId('daily-editor').first()
@@ -131,12 +131,33 @@ test('移动端空白日记编辑区应保持最小高度且内层填充', async
   const rootHeight = await editorRoot.evaluate((node) => node.getBoundingClientRect().height)
   const proseHeight = await proseMirror.evaluate((node) => node.getBoundingClientRect().height)
   const slotToRootGap = Math.abs(slotHeight - rootHeight)
+  const pageHasOverflow = await page.evaluate(() => {
+    return Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > window.innerWidth + 1
+  })
+  const headerHeight = await page
+    .locator('header')
+    .first()
+    .evaluate((node) => node.getBoundingClientRect().height)
+  const [pullButtonBox, pushButtonBox] = await Promise.all([
+    page.getByTestId('manual-pull-button').boundingBox(),
+    page.getByTestId('manual-sync-button').boundingBox(),
+  ])
 
   expect(slotHeight).toBeGreaterThanOrEqual(280)
+  expect(slotHeight).toBeLessThanOrEqual(430)
   expect(rootHeight).toBeGreaterThanOrEqual(240)
   expect(slotToRootGap).toBeGreaterThanOrEqual(20)
   expect(slotToRootGap).toBeLessThanOrEqual(48)
   expect(proseHeight).toBeGreaterThanOrEqual(200)
+  expect(pageHasOverflow).toBeFalsy()
+  expect(headerHeight).toBeLessThanOrEqual(150)
+  expect(pullButtonBox).not.toBeNull()
+  expect(pushButtonBox).not.toBeNull()
+  expect(pullButtonBox?.height ?? 0).toBeGreaterThanOrEqual(40)
+  expect(pushButtonBox?.height ?? 0).toBeGreaterThanOrEqual(40)
+  expect(pullButtonBox?.width ?? 0).toBeGreaterThanOrEqual(120)
+  expect(pushButtonBox?.width ?? 0).toBeGreaterThanOrEqual(120)
+  expect(Math.abs((pullButtonBox?.y ?? 0) - (pushButtonBox?.y ?? 0))).toBeLessThanOrEqual(2)
 })
 
 test('日记页布局应保持左右列底部对齐（视觉回归）', async ({ page }) => {

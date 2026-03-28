@@ -54,6 +54,11 @@ export async function gotoYearly(page: Page, year: number): Promise<void> {
 }
 
 async function fillSetupForm(page: Page, env: E2EEnv): Promise<void> {
+  const closeEntryModal = page.getByTestId('entry-auth-close-btn').first()
+  if (await closeEntryModal.isVisible().catch(() => false)) {
+    await closeEntryModal.click()
+    await page.waitForTimeout(200)
+  }
   await page.getByTestId('auth-setup-repo-input').fill(`${env.owner}/${env.repo}`)
   await page.getByTestId('auth-setup-branch-input').fill(env.branch)
   await page.getByTestId('auth-setup-token-input').fill(env.token)
@@ -161,6 +166,9 @@ export async function ensureReadySession(
     const headerVisible = await appHeader.isVisible().catch(() => false)
     const modalVisible = await authModal.isVisible().catch(() => false)
     const entryModalVisible = await entryAuthModal.isVisible().catch(() => false)
+    const isSettingsPage = await page
+      .evaluate(() => window.location.pathname === '/settings')
+      .catch(() => false)
     if (isUnlocked && headerVisible && !modalVisible && !entryModalVisible) {
       if (page.url() !== initialUrl) {
         await page.goto(initialUrl)
@@ -170,16 +178,13 @@ export async function ensureReadySession(
       return
     }
 
-    if (entryModalVisible) {
+    if (entryModalVisible && !isSettingsPage) {
       const goSettingsFromEntry = page.getByTestId('entry-auth-go-settings-btn').first()
       if (await goSettingsFromEntry.isVisible().catch(() => false)) {
         await goSettingsFromEntry.click()
         await page.waitForTimeout(retryIntervalMs)
         continue
       }
-      const isSettingsPage = await page
-        .evaluate(() => window.location.pathname === '/settings')
-        .catch(() => false)
       if (!isSettingsPage) {
         await page.goto('/settings')
         await page.waitForTimeout(retryIntervalMs)
@@ -190,15 +195,26 @@ export async function ensureReadySession(
     }
 
     if (!modalVisible) {
+      const closeEntryModal = page.getByTestId('entry-auth-close-btn').first()
+      if (entryModalVisible && (await closeEntryModal.isVisible().catch(() => false))) {
+        await closeEntryModal.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
       if (await page.getByTestId('auth-setup-submit').isVisible().catch(() => false)) {
         await fillSetupForm(page, env)
         await page.waitForTimeout(retryIntervalMs)
         continue
       }
 
-      const isSettingsPage = await page
-        .evaluate(() => window.location.pathname === '/settings')
-        .catch(() => false)
+      const headerAuthTrigger = page.getByTestId('app-header-auth-trigger').first()
+      if (await headerAuthTrigger.isVisible().catch(() => false)) {
+        await headerAuthTrigger.click()
+        await page.waitForTimeout(retryIntervalMs)
+        continue
+      }
+
       if (!isSettingsPage) {
         await page.goto('/settings')
         await page.waitForTimeout(retryIntervalMs)

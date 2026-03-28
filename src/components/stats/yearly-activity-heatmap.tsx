@@ -17,7 +17,7 @@ interface YearlyActivityHeatmapProps {
 const numberFormatter = new Intl.NumberFormat('zh-CN')
 
 const DAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
-const CELL_SIZE = 13
+const CELL_SIZE = 14
 const CELL_GAP = 3
 const MIN_YEAR = 1970
 const MAX_YEAR = 9999
@@ -100,7 +100,7 @@ export default function YearlyActivityHeatmap({
   }
 
   return (
-    <section className="space-y-3" data-testid="insights-yearly-heatmap" aria-label="年度热力图">
+    <section className="min-w-0 space-y-3" data-testid="insights-yearly-heatmap" aria-label="年度热力图">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-base font-semibold text-td-text">年度热力图</h4>
 
@@ -156,10 +156,10 @@ export default function YearlyActivityHeatmap({
         </div>
       </header>
 
-      <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_272px] xl:items-stretch">
-        <div className="space-y-2 xl:min-w-0" data-testid="insights-yearly-heatmap-main-panel">
+      <div className="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_272px] xl:items-stretch">
+        <div className="min-w-0 space-y-2 xl:min-w-0" data-testid="insights-yearly-heatmap-main-panel">
           <div
-            className="w-full max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
+            className="min-w-0 w-full max-w-full overflow-x-auto rounded-[12px] border border-td-line bg-td-surface p-3 md:p-4"
             data-testid="insights-yearly-heatmap-grid-frame"
           >
             <div className="min-w-fit">
@@ -169,7 +169,7 @@ export default function YearlyActivityHeatmap({
                   {heatmapModel.monthTicks.map((tick) => (
                     <span
                       key={tick.month}
-                      className="absolute top-0 text-[10px] text-td-muted"
+                      className="absolute top-0 text-[11px] text-td-muted"
                       style={{ left: `${tick.weekIndex * (CELL_SIZE + CELL_GAP)}px` }}
                     >
                       {tick.label}
@@ -180,11 +180,11 @@ export default function YearlyActivityHeatmap({
 
               <div className="flex gap-2">
                 <div
-                  className="grid grid-rows-7 gap-[3px] text-[10px] leading-none text-td-muted"
+                  className="grid grid-rows-7 gap-[3px] text-[11px] leading-none text-td-muted"
                   data-testid="insights-yearly-heatmap-weekday-axis"
                 >
                   {DAY_LABELS.map((label, index) => (
-                    <span key={label} className="h-[12px] w-[16px] text-left">
+                    <span key={label} className="h-[14px] w-[16px] text-left">
                       {index % 2 === 0 ? label : ''}
                     </span>
                   ))}
@@ -198,7 +198,7 @@ export default function YearlyActivityHeatmap({
                           return (
                             <span
                               key={`${week.index}-${dayIndex}`}
-                              className="h-[12px] w-[12px] opacity-0"
+                              className="h-[14px] w-[14px] opacity-0"
                               aria-hidden="true"
                             />
                           )
@@ -210,7 +210,7 @@ export default function YearlyActivityHeatmap({
                           <button
                             key={cell.dateKey}
                             type="button"
-                            className={`h-[12px] w-[12px] rounded-[3px] border transition ${
+                            className={`h-[14px] w-[14px] rounded-[4px] border transition ${
                               isSelected
                                 ? 'border-[#111111] shadow-[0_0_0_1px_rgba(17,17,17,0.12)]'
                                 : 'border-transparent hover:border-[#111111]/45'
