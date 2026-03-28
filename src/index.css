@@ -101,7 +101,8 @@
 
   .td-settings-data-stack {
     margin-top: 14px;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0;
   }
 
@@ -119,7 +120,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
   }
 
@@ -755,10 +756,16 @@
     .td-settings-data-row-top {
       flex-direction: column;
       align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    .td-settings-data-row-header {
+      flex: 0 0 auto;
     }
 
     .td-settings-data-row-actions {
       width: 100%;
+      margin-top: 6px;
     }
 
     .td-settings-data-row-actions .td-btn {
