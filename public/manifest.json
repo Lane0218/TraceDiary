@@ -1,7 +1,6 @@
 {
-  "name": "TraceDiary - 时光追溯日记",
+  "name": "TraceDiary",
   "short_name": "TraceDiary",
-  "description": "隐私至上的 Web 日记应用",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -55,8 +55,7 @@ export default function WelcomePage() {
   return (
     <article className="space-y-4" aria-label="welcome-page">
       <div className="space-y-2">
-        <h2 className="text-3xl font-semibold text-ink-900 sm:text-4xl">欢迎使用 TraceDiary</h2>
-        <p className="text-slate-600">你的私密、可同步、加密日记。请先完成仓库与密钥初始化。</p>
+        <h2 className="text-3xl font-semibold text-ink-900 sm:text-4xl">TraceDiary</h2>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700">

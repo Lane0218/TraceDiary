@@ -342,8 +342,7 @@ export default function EntryAuthModal({
 
           <section className="space-y-4">
             <header className="border-b border-[#ece5d8] pb-4">
-              <h2 className="text-[26px] leading-tight text-td-text sm:text-[30px]">继续使用 TraceDiary</h2>
-              <p className="mt-2 text-sm text-[#6c6459]">首次使用将自动引导完成账号创建与配置。</p>
+              <h2 className="text-[26px] leading-tight text-td-text sm:text-[30px]">TraceDiary</h2>
             </header>
 
             {!cloudAuthEnabled ? (
